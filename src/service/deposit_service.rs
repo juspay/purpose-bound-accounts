@@ -3,12 +3,9 @@ use uuid::Uuid;
 
 use crate::error::AppError;
 use crate::repository::account_repo::AccountRepo;
-use crate::repository::ledger_repo::LedgerRepo;
+use crate::repository::ledger_repo::{LedgerRepo, FUNDING_SOURCE_TB_ID};
 
 const DEPOSIT_TRANSFER_CODE: u16 = 100;
-/// A designated "funding source" account in TB that deposits originate from.
-/// In production this would be configured per-integration.
-const FUNDING_SOURCE_TB_ID: u128 = 0;
 
 pub struct DepositService {
     pub account_repo: Arc<AccountRepo>,
@@ -45,7 +42,12 @@ impl DepositService {
         };
 
         self.ledger_repo
-            .create_transfer(FUNDING_SOURCE_TB_ID, credit_tb_id, amount, DEPOSIT_TRANSFER_CODE)
+            .create_transfer(
+                FUNDING_SOURCE_TB_ID,
+                credit_tb_id,
+                amount,
+                DEPOSIT_TRANSFER_CODE,
+            )
             .await?;
 
         Ok(DepositResult {

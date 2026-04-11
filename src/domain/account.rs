@@ -20,7 +20,7 @@ impl AccountStatus {
     }
 
     pub fn from_str(s: &str) -> Option<Self> {
-        match s {
+        match s.to_ascii_lowercase().as_str() {
             "active" => Some(Self::Active),
             "frozen" => Some(Self::Frozen),
             "closed" => Some(Self::Closed),

@@ -1,9 +1,7 @@
 use std::sync::Arc;
 use uuid::Uuid;
 
-use crate::domain::account::{
-    tb_others_id, tb_self_id, AccountStatus, PurposeBoundAccount,
-};
+use crate::domain::account::{tb_others_id, tb_self_id, AccountStatus, PurposeBoundAccount};
 use crate::error::AppError;
 use crate::repository::account_repo::AccountRepo;
 use crate::repository::ledger_repo::LedgerRepo;

@@ -10,10 +10,9 @@ pub struct AppConfig {
 
 impl AppConfig {
     pub fn from_env() -> Self {
-        let database_url =
-            std::env::var("DATABASE_URL").expect("DATABASE_URL must be set");
-        let tb_addresses = std::env::var("TIGERBEETLE_ADDRESSES")
-            .unwrap_or_else(|_| "3000".to_string());
+        let database_url = std::env::var("DATABASE_URL").expect("DATABASE_URL must be set");
+        let tb_addresses =
+            std::env::var("TIGERBEETLE_ADDRESSES").unwrap_or_else(|_| "3000".to_string());
         let tb_cluster_id: u128 = std::env::var("TIGERBEETLE_CLUSTER_ID")
             .unwrap_or_else(|_| "0".to_string())
             .parse()

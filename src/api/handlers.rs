@@ -39,9 +39,8 @@ pub async fn update_account_status(
     Path(account_id): Path<Uuid>,
     Json(req): Json<UpdateStatusRequest>,
 ) -> Result<Json<AccountResponse>, AppError> {
-    let status = AccountStatus::from_str(&req.status).ok_or_else(|| {
-        AppError::DatabaseError(format!("Invalid status: {}", req.status))
-    })?;
+    let status = AccountStatus::from_str(&req.status)
+        .ok_or_else(|| AppError::DatabaseError(format!("Invalid status: {}", req.status)))?;
     let account = state
         .account_service
         .update_status(account_id, status)
@@ -152,9 +151,11 @@ pub async fn withdraw(
 
 pub async fn list_purpose_types(
     State(state): State<AppState>,
-) -> Result<Json<Vec<PurposeTypeResponse>>, AppError> {
+) -> Result<Json<ListPurposeTypesResponse>, AppError> {
     let types = state.account_repo.list_purpose_types().await?;
-    Ok(Json(types.into_iter().map(|t| t.into()).collect()))
+    Ok(Json(ListPurposeTypesResponse {
+        purpose_types: types.into_iter().map(|t| t.into()).collect(),
+    }))
 }
 
 pub async fn get_purpose_type(

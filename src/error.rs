@@ -50,24 +50,16 @@ impl IntoResponse for AppError {
         let (status, error_type) = match &self {
             AppError::AccountNotFound(_) => (StatusCode::NOT_FOUND, "AccountNotFound"),
             AppError::AccountNotActive(_) => (StatusCode::CONFLICT, "AccountNotActive"),
-            AppError::PurposeTypeNotFound(_) => {
-                (StatusCode::NOT_FOUND, "PurposeTypeNotFound")
-            }
+            AppError::PurposeTypeNotFound(_) => (StatusCode::NOT_FOUND, "PurposeTypeNotFound"),
             AppError::InsufficientFunds { .. } => {
                 (StatusCode::UNPROCESSABLE_ENTITY, "InsufficientFunds")
             }
-            AppError::InvalidMcc { .. } => {
-                (StatusCode::UNPROCESSABLE_ENTITY, "InvalidMcc")
-            }
-            AppError::DuplicateAccount(_) => {
-                (StatusCode::CONFLICT, "DuplicateAccount")
-            }
+            AppError::InvalidMcc { .. } => (StatusCode::UNPROCESSABLE_ENTITY, "InvalidMcc"),
+            AppError::DuplicateAccount(_) => (StatusCode::CONFLICT, "DuplicateAccount"),
             AppError::TigerBeetleError(_) => {
                 (StatusCode::INTERNAL_SERVER_ERROR, "TigerBeetleError")
             }
-            AppError::DatabaseError(_) => {
-                (StatusCode::INTERNAL_SERVER_ERROR, "DatabaseError")
-            }
+            AppError::DatabaseError(_) => (StatusCode::INTERNAL_SERVER_ERROR, "DatabaseError"),
         };
 
         let body = ErrorBody {

@@ -1,2 +1,9 @@
 .worktrees/
 target/
+.pg_data/
+.pg.log
+.tb_data/
+.direnv/
+result
+.env
+sdk/output/

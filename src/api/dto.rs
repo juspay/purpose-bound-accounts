@@ -4,6 +4,7 @@ use uuid::Uuid;
 // ── CreateAccount ──
 
 #[derive(Debug, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct CreateAccountRequest {
     pub holder_id: Uuid,
     pub purpose_code: String,
@@ -12,14 +13,18 @@ pub struct CreateAccountRequest {
 }
 
 #[derive(Debug, Serialize)]
+#[serde(rename_all = "camelCase")]
 pub struct AccountResponse {
     pub id: Uuid,
     pub holder_id: Uuid,
     pub purpose_code: String,
     pub origin_ifsc: String,
     pub origin_account_number: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub vpa: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub virtual_ifsc: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub virtual_account_number: Option<String>,
     pub kyc_tier: String,
     pub status: String,
@@ -49,6 +54,7 @@ impl From<crate::domain::account::PurposeBoundAccount> for AccountResponse {
 // ── Balance ──
 
 #[derive(Debug, Serialize)]
+#[serde(rename_all = "camelCase")]
 pub struct BalanceResponse {
     pub account_id: Uuid,
     pub self_contribution: u64,
@@ -59,6 +65,7 @@ pub struct BalanceResponse {
 // ── Deposit ──
 
 #[derive(Debug, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct DepositRequest {
     pub source_ifsc: String,
     pub source_account_number: String,
@@ -66,6 +73,7 @@ pub struct DepositRequest {
 }
 
 #[derive(Debug, Serialize)]
+#[serde(rename_all = "camelCase")]
 pub struct DepositResponse {
     pub account_id: Uuid,
     pub amount: u64,
@@ -75,6 +83,7 @@ pub struct DepositResponse {
 // ── Payment ──
 
 #[derive(Debug, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct PaymentRequest {
     pub amount: u64,
     pub merchant_mcc: String,
@@ -83,6 +92,7 @@ pub struct PaymentRequest {
 }
 
 #[derive(Debug, Serialize)]
+#[serde(rename_all = "camelCase")]
 pub struct PaymentResponse {
     pub account_id: Uuid,
     pub amount: u64,
@@ -95,11 +105,13 @@ pub struct PaymentResponse {
 // ── Withdrawal ──
 
 #[derive(Debug, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct WithdrawalRequest {
     pub amount: u64,
 }
 
 #[derive(Debug, Serialize)]
+#[serde(rename_all = "camelCase")]
 pub struct WithdrawalResponse {
     pub account_id: Uuid,
     pub amount: u64,
@@ -108,6 +120,7 @@ pub struct WithdrawalResponse {
 // ── Status Update ──
 
 #[derive(Debug, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct UpdateStatusRequest {
     pub status: String,
 }
@@ -115,14 +128,23 @@ pub struct UpdateStatusRequest {
 // ── Purpose Types ──
 
 #[derive(Debug, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct ListPurposeTypesResponse {
+    pub purpose_types: Vec<PurposeTypeResponse>,
+}
+
+#[derive(Debug, Serialize)]
+#[serde(rename_all = "camelCase")]
 pub struct PurposeTypeResponse {
     pub purpose_code: String,
     pub allowed_mccs: Vec<MccEntryResponse>,
 }
 
 #[derive(Debug, Serialize)]
+#[serde(rename_all = "camelCase")]
 pub struct MccEntryResponse {
     pub mcc: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub description: Option<String>,
 }
 

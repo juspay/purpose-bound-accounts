@@ -6,10 +6,9 @@ use crate::error::AppError;
 use crate::repository::account_repo::AccountRepo;
 use crate::repository::ledger_repo::LedgerRepo;
 
+use crate::repository::ledger_repo::MERCHANT_SETTLEMENT_TB_ID;
+
 const PAYMENT_TRANSFER_CODE: u16 = 200;
-/// A designated "merchant settlement" account in TB that payments flow to.
-/// In production this would be resolved per-merchant.
-const MERCHANT_SETTLEMENT_TB_ID: u128 = 1;
 
 pub struct PaymentService {
     pub account_repo: Arc<AccountRepo>,
@@ -57,12 +56,11 @@ impl PaymentService {
             .await?;
 
         // Calculate payment split (others-first priority)
-        let split = PaymentSplit::calculate(&balance, amount).ok_or(
-            AppError::InsufficientFunds {
+        let split =
+            PaymentSplit::calculate(&balance, amount).ok_or(AppError::InsufficientFunds {
                 requested: amount,
                 available: balance.total(),
-            },
-        )?;
+            })?;
 
         // Execute transfer(s)
         if split.from_others > 0 && split.from_self > 0 {

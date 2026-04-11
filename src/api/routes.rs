@@ -14,15 +14,9 @@ pub fn create_router() -> Router<AppState> {
             patch(handlers::update_account_status),
         )
         // Balance
-        .route(
-            "/accounts/{accountId}/balance",
-            get(handlers::get_balance),
-        )
+        .route("/accounts/{accountId}/balance", get(handlers::get_balance))
         // Deposit
-        .route(
-            "/accounts/{accountId}/deposits",
-            post(handlers::deposit),
-        )
+        .route("/accounts/{accountId}/deposits", post(handlers::deposit))
         // Payment
         .route(
             "/accounts/{accountId}/payments",

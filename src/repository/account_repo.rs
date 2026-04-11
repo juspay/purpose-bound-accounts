@@ -14,6 +14,7 @@ impl AccountRepo {
         Self { pool }
     }
 
+    #[allow(clippy::too_many_arguments)]
     pub async fn create_account(
         &self,
         id: Uuid,
@@ -121,10 +122,7 @@ impl AccountRepo {
         Ok(group_by_purpose(rows))
     }
 
-    pub async fn get_purpose_type(
-        &self,
-        purpose_code: &str,
-    ) -> Result<PurposeType, AppError> {
+    pub async fn get_purpose_type(&self, purpose_code: &str) -> Result<PurposeType, AppError> {
         let rows = sqlx::query_as::<_, MccRow>(
             r#"
             SELECT purpose_code, mcc, mcc_description
@@ -153,11 +151,7 @@ impl AccountRepo {
         })
     }
 
-    pub async fn is_mcc_allowed(
-        &self,
-        purpose_code: &str,
-        mcc: &str,
-    ) -> Result<bool, AppError> {
+    pub async fn is_mcc_allowed(&self, purpose_code: &str, mcc: &str) -> Result<bool, AppError> {
         let count: (i64,) = sqlx::query_as(
             r#"
             SELECT COUNT(*) FROM purpose_mcc_allowlist

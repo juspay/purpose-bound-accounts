@@ -56,6 +56,12 @@ async fn main() {
         config.tigerbeetle_addresses,
     ));
 
+    // Create sentinel TB accounts (funding source, merchant settlement, withdrawal settlement)
+    ledger_repo
+        .init_sentinel_accounts()
+        .await
+        .expect("Failed to initialize sentinel TB accounts");
+
     // Initialize services
     let account_service = Arc::new(AccountService::new(
         Arc::clone(&account_repo),
@@ -91,7 +97,5 @@ async fn main() {
     let listener = tokio::net::TcpListener::bind(&addr)
         .await
         .expect("Failed to bind address");
-    axum::serve(listener, app)
-        .await
-        .expect("Server error");
+    axum::serve(listener, app).await.expect("Server error");
 }

@@ -5,9 +5,9 @@ use crate::error::AppError;
 use crate::repository::account_repo::AccountRepo;
 use crate::repository::ledger_repo::LedgerRepo;
 
+use crate::repository::ledger_repo::WITHDRAWAL_SETTLEMENT_TB_ID;
+
 const WITHDRAWAL_TRANSFER_CODE: u16 = 300;
-/// A designated "withdrawal settlement" account in TB.
-const WITHDRAWAL_SETTLEMENT_TB_ID: u128 = 2;
 
 pub struct WithdrawalService {
     pub account_repo: Arc<AccountRepo>,
@@ -55,10 +55,7 @@ impl WithdrawalService {
             )
             .await?;
 
-        Ok(WithdrawalResult {
-            account_id,
-            amount,
-        })
+        Ok(WithdrawalResult { account_id, amount })
     }
 }
 
