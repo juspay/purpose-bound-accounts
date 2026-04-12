@@ -45,6 +45,37 @@ Feature: Payments
     When I attempt to pay 100 to merchant "BOOKSTORE001" with MCC "5942" described as "bookstore"
     Then the payment should be rejected as invalid MCC
 
+  Scenario: Payment on a frozen account is rejected
+    Given a "health" account exists for holder "44444444-4444-4444-4444-444444444448" with origin IFSC "HDFC0044448" and account number "4444400088"
+    And the account has 10000 in self-pool and 5000 in others-pool
+    And the account is frozen
+    When I attempt to pay 100 to merchant "PHARMACY001" with MCC "5912" described as "pharmacy"
+    Then the payment should be rejected as account not active
+
+  Scenario: Payment on a closed account is rejected
+    Given a "health" account exists for holder "44444444-4444-4444-4444-444444444449" with origin IFSC "HDFC0044449" and account number "4444400099"
+    And the account has 10000 in self-pool and 5000 in others-pool
+    And the account is closed
+    When I attempt to pay 100 to merchant "PHARMACY001" with MCC "5912" described as "pharmacy"
+    Then the payment should be rejected as account not active
+
+  Scenario: Payment that exactly drains both pools
+    Given a "health" account exists for holder "44444444-4444-4444-4444-44444444444a" with origin IFSC "HDFC004444a" and account number "444440000a"
+    And the account has 3000 in self-pool and 2000 in others-pool
+    When I pay 5000 to merchant "PHARMACY001" with MCC "5912" described as "exact drain"
+    Then the payment should succeed
+    And 2000 should come from others-pool
+    And 3000 should come from self-pool
+    And the total balance should be 0
+
+  Scenario: Food account accepts food MCC and rejects health MCC
+    Given a "food" account exists for holder "56565656-5656-5656-5656-565656565656" with origin IFSC "SBIN0056565" and account number "5656500001"
+    And the account has 5000 in self-pool and 0 in others-pool
+    When I pay 1000 to merchant "GROCERY001" with MCC "5411" described as "groceries"
+    Then the payment should succeed
+    When I attempt to pay 100 to merchant "PHARMACY001" with MCC "5912" described as "pharmacy"
+    Then the payment should be rejected as invalid MCC
+
   Scenario: Education account accepts education MCC
     Given a "education" account exists for holder "55555555-5555-5555-5555-555555555555" with origin IFSC "SBIN0055555" and account number "5555500001"
     And the account has 5000 in self-pool and 0 in others-pool

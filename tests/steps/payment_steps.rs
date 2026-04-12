@@ -66,17 +66,14 @@ async fn attempt_payment(
         }
         Err(e) => {
             let err_str = format!("{e:?}");
-            let kind = if err_str.contains("InvalidMcc") {
+            let kind = if err_str.contains("AccountNotActive") || err_str.contains("409") {
+                "account_not_active"
+            } else if err_str.contains("InvalidMcc") {
                 "invalid_mcc"
             } else if err_str.contains("InsufficientFunds") {
                 "insufficient_funds"
             } else if err_str.contains("422") {
-                // Fallback: check the raw body for error type
-                if err_str.contains("InvalidMcc") {
-                    "invalid_mcc"
-                } else {
-                    "insufficient_funds"
-                }
+                "insufficient_funds"
             } else {
                 "unknown"
             };
@@ -130,4 +127,17 @@ async fn payment_rejected_insufficient(world: &mut PbaWorld) {
 async fn payment_rejected_invalid_mcc(world: &mut PbaWorld) {
     let err = world.last_error.as_ref().expect("Expected an error");
     assert_eq!(err.kind, "invalid_mcc");
+}
+
+#[then("the payment should be rejected as account not active")]
+async fn payment_rejected_not_active(world: &mut PbaWorld) {
+    let err = world
+        .last_error
+        .as_ref()
+        .expect("Expected an error but got success");
+    assert_eq!(
+        err.kind, "account_not_active",
+        "Expected account_not_active but got: {}",
+        err.kind
+    );
 }

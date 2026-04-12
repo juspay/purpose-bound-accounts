@@ -52,3 +52,33 @@ async fn should_have_mccs(world: &mut PbaWorld) {
         .expect("No MCC count available");
     assert!(count > 0, "Expected at least 1 allowed MCC, got 0");
 }
+
+#[when(regex = r#"^I attempt to get the "([^"]*)" purpose type$"#)]
+async fn attempt_get_purpose_type(world: &mut PbaWorld, purpose_code: String) {
+    let result = world
+        .client
+        .get_purpose_type()
+        .purpose_code(&purpose_code)
+        .send()
+        .await;
+    match result {
+        Ok(output) => {
+            world.last_purpose_code = Some(output.purpose_code().to_string());
+            world.last_error = None;
+        }
+        Err(_) => {
+            world.last_error = Some(crate::PbaError {
+                kind: "not_found".into(),
+            });
+        }
+    }
+}
+
+#[then("the purpose type should not be found")]
+async fn purpose_type_not_found(world: &mut PbaWorld) {
+    let err = world
+        .last_error
+        .as_ref()
+        .expect("Expected an error but got success");
+    assert_eq!(err.kind, "not_found");
+}

@@ -36,9 +36,15 @@ async fn attempt_withdraw(world: &mut PbaWorld, amount: i64) {
             world.last_withdrawal_amount = Some(output.amount());
             world.last_error = None;
         }
-        Err(_) => {
+        Err(e) => {
+            let err_str = format!("{e:?}");
+            let kind = if err_str.contains("AccountNotActive") || err_str.contains("409") {
+                "account_not_active"
+            } else {
+                "insufficient_funds"
+            };
             world.last_error = Some(crate::PbaError {
-                kind: "insufficient_funds".into(),
+                kind: kind.to_string(),
             });
         }
     }
@@ -54,8 +60,19 @@ async fn withdrawal_succeed(world: &mut PbaWorld, expected: i64) {
 
 #[then("the withdrawal should be rejected as insufficient funds")]
 async fn withdrawal_rejected(world: &mut PbaWorld) {
-    assert!(
-        world.last_error.is_some(),
-        "Expected withdrawal to be rejected"
+    let err = world.last_error.as_ref().expect("Expected withdrawal to be rejected");
+    assert_eq!(err.kind, "insufficient_funds");
+}
+
+#[then("the withdrawal should be rejected as account not active")]
+async fn withdrawal_rejected_not_active(world: &mut PbaWorld) {
+    let err = world
+        .last_error
+        .as_ref()
+        .expect("Expected withdrawal to be rejected");
+    assert_eq!(
+        err.kind, "account_not_active",
+        "Expected account_not_active but got: {}",
+        err.kind
     );
 }

@@ -9,3 +9,7 @@ Feature: Purpose Types
     When I get the "health" purpose type
     Then the purpose code should be "health"
     And it should have allowed MCCs
+
+  Scenario: Get a non-existent purpose type returns error
+    When I attempt to get the "nonexistent" purpose type
+    Then the purpose type should not be found

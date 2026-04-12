@@ -177,9 +177,28 @@ async fn reactivate_account(world: &mut PbaWorld) {
     world.last_account_status = Some(output.status().to_string());
 }
 
+#[when("I close the account")]
+async fn close_account(world: &mut PbaWorld) {
+    let account_id = world.account_id.as_ref().expect("No account ID");
+    let output = world
+        .client
+        .update_account_status()
+        .account_id(account_id)
+        .status(Status::Closed)
+        .send()
+        .await
+        .expect("Failed to close account");
+    world.last_account_status = Some(output.status().to_string());
+}
+
 #[given("the account is frozen")]
 async fn given_account_frozen(world: &mut PbaWorld) {
     freeze_account(world).await;
+}
+
+#[given("the account is closed")]
+async fn given_account_closed(world: &mut PbaWorld) {
+    close_account(world).await;
 }
 
 #[then("the duplicate should be rejected")]
