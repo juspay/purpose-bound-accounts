@@ -18,11 +18,11 @@ build-release:
 
 # Run the service (requires Postgres + TigerBeetle running)
 run:
-    cargo run
+    cargo run -p pba-service
 
 # Run with file watching (restarts on changes)
 watch:
-    cargo watch -x run
+    cargo watch -x 'run -p pba-service'
 
 # ── Testing & CI ─────────────────────────────────────────────
 
@@ -79,7 +79,7 @@ e2e-start: e2e-reset-db tb-start-test
     @pkill -f "target/debug/pba-service.*{{E2E_APP_PORT}}" 2>/dev/null || true
     @sleep 1
     @echo "Starting pba-service for E2E tests on port {{E2E_APP_PORT}}..."
-    @DATABASE_URL="{{E2E_DATABASE_URL}}" TIGERBEETLE_ADDRESSES={{E2E_TB_PORT}} PORT={{E2E_APP_PORT}} cargo run &
+    @DATABASE_URL="{{E2E_DATABASE_URL}}" TIGERBEETLE_ADDRESSES={{E2E_TB_PORT}} PORT={{E2E_APP_PORT}} cargo run -p pba-service &
     @echo "Waiting for service to be ready..."
     @for i in $(seq 1 30); do \
         if curl -sf http://127.0.0.1:{{E2E_APP_PORT}}/purpose-types > /dev/null 2>&1; then \
@@ -96,7 +96,7 @@ e2e-stop: tb-stop-test
 
 # Run Cucumber E2E tests (service must be running)
 e2e-run:
-    PBA_SERVICE_URL="http://127.0.0.1:{{E2E_APP_PORT}}" cargo test --test e2e
+    PBA_SERVICE_URL="http://127.0.0.1:{{E2E_APP_PORT}}" cargo test -p pba-service --test e2e
 
 # Full E2E cycle: reset DB, start service, run tests, stop service
 e2e: e2e-start e2e-run e2e-stop
@@ -106,11 +106,11 @@ e2e: e2e-start e2e-run e2e-stop
 
 # Run sqlx migrations
 migrate:
-    sqlx migrate run --source src/db/migrations
+    sqlx migrate run --source crates/pba_service/src/db/migrations
 
 # Create a new migration
 migrate-new name:
-    sqlx migrate add --source src/db/migrations {{name}}
+    sqlx migrate add --source crates/pba_service/src/db/migrations {{name}}
 
 # ── Local Infrastructure ─────────────────────────────────────
 
@@ -172,7 +172,7 @@ stop-all: services-stop
 
 # Start services, run the application, and stop services on exit/Ctrl+C
 run-all: services-start
-    @trap 'echo ""; just stop-all' EXIT; cargo run
+    @trap 'echo ""; just stop-all' EXIT; cargo run -p pba-service
 
 
 # ── Install ──────────────────────────────────────────────────
@@ -190,7 +190,7 @@ install-deps:
 
 # Install pba-service binary to ~/.cargo/bin
 install:
-    cargo install --path .
+    cargo install --path crates/pba_service
 
 # ── Smithy ───────────────────────────────────────────────────
 
