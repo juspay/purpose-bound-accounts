@@ -24,4 +24,16 @@ pub fn create_router() -> Router<AppState> {
             "/admin/accounts/{accountId}/transfers",
             get(handlers::account_transfers_fragment),
         )
+        .route(
+            "/admin/accounts/{accountId}/deposit",
+            get(handlers::deposit_form).post(handlers::process_deposit),
+        )
+        .route(
+            "/admin/accounts/{accountId}/payment",
+            get(handlers::payment_form).post(handlers::process_payment),
+        )
+        .route(
+            "/admin/accounts/{accountId}/withdrawal",
+            get(handlers::withdrawal_form).post(handlers::process_withdrawal),
+        )
 }

@@ -326,3 +326,175 @@ pub async fn account_transfers_fragment(
 
     render(TransfersFragmentTemplate { transfers: rows })
 }
+
+#[derive(Template)]
+#[template(path = "admin/deposit.html")]
+struct DepositTemplate {
+    account_id: String,
+    purpose_code: String,
+    error: Option<String>,
+}
+
+pub async fn deposit_form(
+    State(state): State<AppState>,
+    Path(account_id): Path<Uuid>,
+) -> Response {
+    let account = match state.account_repo.get_account(account_id).await {
+        Ok(a) => a,
+        Err(_) => return (StatusCode::NOT_FOUND, "Account not found").into_response(),
+    };
+    render(DepositTemplate {
+        account_id: account_id.to_string(),
+        purpose_code: account.purpose_code,
+        error: None,
+    })
+}
+
+#[derive(Deserialize)]
+pub struct DepositForm {
+    amount: u64,
+    source_ifsc: String,
+    source_account_number: String,
+}
+
+pub async fn process_deposit(
+    State(state): State<AppState>,
+    Path(account_id): Path<Uuid>,
+    axum::extract::Form(form): axum::extract::Form<DepositForm>,
+) -> Response {
+    match state
+        .deposit_service
+        .deposit(account_id, &form.source_ifsc, &form.source_account_number, form.amount)
+        .await
+    {
+        Ok(_) => Redirect::to(&format!("/admin/accounts/{account_id}")).into_response(),
+        Err(e) => {
+            let purpose_code = state
+                .account_repo
+                .get_account(account_id)
+                .await
+                .map(|a| a.purpose_code)
+                .unwrap_or_default();
+            render(DepositTemplate {
+                account_id: account_id.to_string(),
+                purpose_code,
+                error: Some(format!("{e}")),
+            })
+        }
+    }
+}
+
+#[derive(Template)]
+#[template(path = "admin/payment.html")]
+struct PaymentTemplate {
+    account_id: String,
+    purpose_code: String,
+    error: Option<String>,
+}
+
+pub async fn payment_form(
+    State(state): State<AppState>,
+    Path(account_id): Path<Uuid>,
+) -> Response {
+    let account = match state.account_repo.get_account(account_id).await {
+        Ok(a) => a,
+        Err(_) => return (StatusCode::NOT_FOUND, "Account not found").into_response(),
+    };
+    render(PaymentTemplate {
+        account_id: account_id.to_string(),
+        purpose_code: account.purpose_code,
+        error: None,
+    })
+}
+
+#[derive(Deserialize)]
+pub struct PaymentForm {
+    amount: u64,
+    merchant_id: String,
+    merchant_mcc: String,
+    description: String,
+}
+
+pub async fn process_payment(
+    State(state): State<AppState>,
+    Path(account_id): Path<Uuid>,
+    axum::extract::Form(form): axum::extract::Form<PaymentForm>,
+) -> Response {
+    match state
+        .payment_service
+        .make_payment(
+            account_id,
+            form.amount,
+            &form.merchant_mcc,
+            &form.merchant_id,
+            &form.description,
+        )
+        .await
+    {
+        Ok(_) => Redirect::to(&format!("/admin/accounts/{account_id}")).into_response(),
+        Err(e) => {
+            let purpose_code = state
+                .account_repo
+                .get_account(account_id)
+                .await
+                .map(|a| a.purpose_code)
+                .unwrap_or_default();
+            render(PaymentTemplate {
+                account_id: account_id.to_string(),
+                purpose_code,
+                error: Some(format!("{e}")),
+            })
+        }
+    }
+}
+
+#[derive(Template)]
+#[template(path = "admin/withdrawal.html")]
+struct WithdrawalTemplate {
+    account_id: String,
+    purpose_code: String,
+    error: Option<String>,
+}
+
+pub async fn withdrawal_form(
+    State(state): State<AppState>,
+    Path(account_id): Path<Uuid>,
+) -> Response {
+    let account = match state.account_repo.get_account(account_id).await {
+        Ok(a) => a,
+        Err(_) => return (StatusCode::NOT_FOUND, "Account not found").into_response(),
+    };
+    render(WithdrawalTemplate {
+        account_id: account_id.to_string(),
+        purpose_code: account.purpose_code,
+        error: None,
+    })
+}
+
+#[derive(Deserialize)]
+pub struct WithdrawalForm {
+    amount: u64,
+}
+
+pub async fn process_withdrawal(
+    State(state): State<AppState>,
+    Path(account_id): Path<Uuid>,
+    axum::extract::Form(form): axum::extract::Form<WithdrawalForm>,
+) -> Response {
+    match state.withdrawal_service.withdraw(account_id, form.amount).await {
+        Ok(_) => Redirect::to(&format!("/admin/accounts/{account_id}")).into_response(),
+        Err(e) => {
+            let purpose_code = state
+                .account_repo
+                .get_account(account_id)
+                .await
+                .map(|a| a.purpose_code)
+                .unwrap_or_default();
+            render(WithdrawalTemplate {
+                account_id: account_id.to_string(),
+                purpose_code,
+                error: Some(format!("{e}")),
+            })
+        }
+    }
+}
