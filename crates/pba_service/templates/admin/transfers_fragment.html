@@ -6,6 +6,7 @@
         <tr>
             <th>Timestamp</th>
             <th>Type</th>
+            <th>Pool</th>
             <th>Direction</th>
             <th>Amount (INR)</th>
         </tr>
@@ -15,6 +16,7 @@
         <tr>
             <td>{{ t.timestamp }}</td>
             <td>{{ t.transfer_type }}</td>
+            <td>{{ t.pool }}</td>
             <td class="{{ t.direction_class }}">{{ t.direction }}</td>
             <td>{{ t.amount }}</td>
         </tr>

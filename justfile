@@ -18,6 +18,7 @@ build-release:
 
 # Run the service (requires Postgres + TigerBeetle running)
 run:
+    @echo "Admin dashboard will be at http://localhost:${PORT:-3030}/admin"
     cargo run -p pba-service
 
 # Run with file watching (restarts on changes)
@@ -197,14 +198,18 @@ services-start: pg-start tb-start
 services-stop: tb-stop pg-stop
     @echo "Services stopped"
 
-# Stop pba-service and all dependent services
-stop-all: services-stop
+# Stop pba-service only (leaves Postgres + TigerBeetle running)
+stop:
     @pkill -f "target/debug/pba-service" 2>/dev/null \
         || pkill -f "target/release/pba-service" 2>/dev/null \
         || echo "pba-service not running"
 
+# Stop pba-service and all dependent services
+stop-all: services-stop stop
+
 # Start services, run the application, and stop services on exit/Ctrl+C
 run-all: services-start
+    @echo "Admin dashboard will be at http://localhost:${PORT:-3030}/admin"
     @trap 'echo ""; just stop-all' EXIT; cargo run -p pba-service
 
 

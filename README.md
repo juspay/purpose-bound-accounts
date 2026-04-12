@@ -71,7 +71,13 @@ just services-start    # Postgres on :5432, TigerBeetle on :3000
 just run               # or: just watch (auto-restarts on changes)
 ```
 
-The service starts on `http://localhost:3030`.
+The service starts on `http://localhost:3030`. Open the **Admin Dashboard** at:
+
+```
+http://localhost:3030/admin
+```
+
+From there you can browse accounts, create new ones, make deposits/payments/withdrawals, and view purpose types with their allowed MCCs.
 
 **Stop everything:**
 
@@ -97,7 +103,17 @@ just test
 **E2E tests (Cucumber BDD):**
 
 ```bash
-just e2e
+just e2e           # API tests only (via Smithy SDK client)
+just ui-e2e        # Browser UI tests only (headless Chrome)
+just e2e-all       # Both API + browser tests
+```
+
+To run browser tests with visible Chrome (useful for debugging):
+
+```bash
+just e2e-start
+just ui-e2e-watch  # opens Chrome so you can watch the tests
+just e2e-stop
 ```
 
 E2E tests use isolated infrastructure — a separate Postgres database (`pba_service_test`), TigerBeetle instance (port 3001), and app port (3031) — so they never touch dev data.
@@ -144,10 +160,14 @@ just services-start   # Start Postgres + TigerBeetle
 just services-stop    # Stop Postgres + TigerBeetle
 just run              # Run the service
 just run-all          # Start services + run (auto-cleanup on exit)
+just stop             # Stop pba-service only (services keep running)
 just stop-all         # Stop app + all services
 just build            # Build the project
 just test             # Unit tests
-just e2e              # E2E tests (isolated infra)
+just e2e              # API E2E tests (isolated infra)
+just ui-e2e           # Browser UI E2E tests (headless Chrome)
+just ui-e2e-watch     # Browser UI tests with visible Chrome
+just e2e-all          # All E2E tests (API + browser)
 just local-ci         # Format + lint + build + test
 just migrate          # Run database migrations
 just smithy-build     # Regenerate Smithy SDK

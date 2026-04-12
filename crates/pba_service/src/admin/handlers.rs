@@ -283,6 +283,7 @@ struct TransferRow {
     transfer_type: String,
     direction: String,
     direction_class: String,
+    pool: String,
     amount: String,
 }
 
@@ -314,14 +315,31 @@ pub async fn account_transfers_fragment(
         }
     };
 
+    let self_tb_id = account.tb_self_account_id;
+    let others_tb_id = account.tb_others_account_id;
+
     let rows: Vec<TransferRow> = transfers
         .into_iter()
-        .map(|t| TransferRow {
-            timestamp: t.timestamp.format("%Y-%m-%d %H:%M:%S").to_string(),
-            transfer_type: t.transfer_type.label().to_string(),
-            direction: t.direction.label().to_string(),
-            direction_class: t.direction.css_class().to_string(),
-            amount: t.amount_display(),
+        .map(|t| {
+            let pool = if t.credit_account_id == self_tb_id
+                || t.debit_account_id == self_tb_id
+            {
+                "Self"
+            } else if t.credit_account_id == others_tb_id
+                || t.debit_account_id == others_tb_id
+            {
+                "Others"
+            } else {
+                "—"
+            };
+            TransferRow {
+                timestamp: t.timestamp.format("%Y-%m-%d %H:%M:%S").to_string(),
+                transfer_type: t.transfer_type.label().to_string(),
+                direction: t.direction.label().to_string(),
+                direction_class: t.direction.css_class().to_string(),
+                pool: pool.to_string(),
+                amount: t.amount_display(),
+            }
         })
         .collect();
 
