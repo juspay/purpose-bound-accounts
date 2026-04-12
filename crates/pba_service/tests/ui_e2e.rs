@@ -104,8 +104,19 @@ impl UiWorld {
 
 #[tokio::main]
 async fn main() {
-    UiWorld::cucumber()
+    use cucumber::StatsWriter as _;
+
+    let w1 = UiWorld::cucumber()
         .max_concurrent_scenarios(1)
-        .run_and_exit("tests/features")
+        .run("tests/features")
         .await;
+
+    let w2 = UiWorld::cucumber()
+        .max_concurrent_scenarios(1)
+        .run("tests/ui_features")
+        .await;
+
+    if w1.execution_has_failed() || w2.execution_has_failed() {
+        std::process::exit(1);
+    }
 }
