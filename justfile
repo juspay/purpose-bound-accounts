@@ -102,6 +102,39 @@ e2e-run:
 e2e: e2e-start e2e-run e2e-stop
     @echo "E2E tests complete"
 
+# Run browser UI tests (full cycle: start services, run tests, stop)
+ui-e2e: e2e-start ui-e2e-run e2e-stop
+    @echo "UI E2E tests complete"
+
+# Run browser UI tests only (service must be running)
+ui-e2e-run:
+    PBA_SERVICE_URL="http://127.0.0.1:{{E2E_APP_PORT}}" cargo test -p pba-service --test ui_e2e
+
+# Run browser UI tests with visible Chrome (service must be running)
+ui-e2e-watch:
+    UI_HEAD=1 PBA_SERVICE_URL="http://127.0.0.1:{{E2E_APP_PORT}}" cargo test -p pba-service --test ui_e2e
+
+# Run all E2E tests: API + browser (resets DB between suites)
+e2e-all:
+    just e2e-start
+    just e2e-run
+    @echo "Resetting DB for UI tests..."
+    @kill $(lsof -ti :{{E2E_APP_PORT}} -sTCP:LISTEN) 2>/dev/null || true
+    @sleep 1
+    just e2e-reset-db
+    @echo "Starting pba-service for UI tests on port {{E2E_APP_PORT}}..."
+    @DATABASE_URL="{{E2E_DATABASE_URL}}" TIGERBEETLE_ADDRESSES={{E2E_TB_PORT}} PORT={{E2E_APP_PORT}} cargo run -p pba-service &
+    @for i in $(seq 1 30); do \
+        if curl -sf http://127.0.0.1:{{E2E_APP_PORT}}/purpose-types > /dev/null 2>&1; then \
+            echo "Service ready on port {{E2E_APP_PORT}}"; \
+            break; \
+        fi; \
+        sleep 1; \
+    done
+    just ui-e2e-run
+    just e2e-stop
+    @echo "All E2E tests complete"
+
 # ── Database ─────────────────────────────────────────────────
 
 # Run sqlx migrations

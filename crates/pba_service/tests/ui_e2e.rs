@@ -25,10 +25,13 @@ pub struct PaymentInfo {
     pub from_self: i64,
 }
 
-#[derive(Debug, cucumber::World)]
+#[derive(cucumber::World)]
 pub struct UiWorld {
     #[world(init)]
     page: Option<Arc<Page>>,
+    /// Keep the browser alive so the page connection doesn't drop
+    #[world(init)]
+    _browser: Option<Browser>,
     base_url: String,
     account_id: Option<String>,
     origin_ifsc: Option<String>,
@@ -45,12 +48,23 @@ pub struct UiWorld {
     duplicate_rejected: bool,
 }
 
+impl std::fmt::Debug for UiWorld {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("UiWorld")
+            .field("base_url", &self.base_url)
+            .field("account_id", &self.account_id)
+            .field("duplicate_rejected", &self.duplicate_rejected)
+            .finish_non_exhaustive()
+    }
+}
+
 impl Default for UiWorld {
     fn default() -> Self {
         let base_url =
             std::env::var("PBA_SERVICE_URL").unwrap_or_else(|_| "http://127.0.0.1:3030".into());
         Self {
             page: None,
+            _browser: None,
             base_url,
             account_id: None,
             origin_ifsc: None,
@@ -73,10 +87,14 @@ impl UiWorld {
     pub async fn ensure_page(&mut self) -> &Page {
         if self.page.is_none() {
             let (browser, mut handler) = Browser::launch(
-                BrowserConfig::builder()
-                    .no_sandbox()
-                    .arg("--headless=new")
-                    .build()
+                {
+                    let mut builder = BrowserConfig::builder();
+                    builder = builder.no_sandbox();
+                    if std::env::var("UI_HEAD").is_ok() {
+                        builder = builder.with_head();
+                    }
+                    builder.build()
+                }
                     .expect("Failed to build browser config"),
             )
             .await
@@ -92,6 +110,7 @@ impl UiWorld {
                 .new_page("about:blank")
                 .await
                 .expect("Failed to create page");
+            self._browser = Some(browser);
             self.page = Some(Arc::new(page));
         }
         self.page.as_ref().unwrap()

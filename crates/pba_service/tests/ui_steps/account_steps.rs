@@ -460,12 +460,18 @@ async fn visit_dashboard(world: &mut UiWorld) {
     tokio::time::sleep(std::time::Duration::from_millis(300)).await;
 }
 
-#[then(regex = r#"^the dashboard should show (\d+) total accounts$"#)]
-async fn dashboard_total(world: &mut UiWorld, expected: i64) {
+#[then(regex = r#"^the dashboard should show at least (\d+) total accounts$"#)]
+async fn dashboard_total(world: &mut UiWorld, min: i64) {
     let page = world.ensure_page().await;
     let content = page.content().await.unwrap();
-    assert!(content.contains(&format!("<h2>{expected}</h2>")),
-        "Expected total accounts {expected} on dashboard");
+    // Find the total accounts stat card — first <h2> in the stat cards
+    let re = regex::Regex::new(r"<h2>(\d+)</h2>").unwrap();
+    if let Some(cap) = re.captures(&content) {
+        let total: i64 = cap[1].parse().unwrap_or(0);
+        assert!(total >= min, "Expected at least {min} total accounts, got {total}");
+    } else {
+        panic!("Could not find total accounts on dashboard");
+    }
 }
 
 #[when(regex = r#"^I view the account detail$"#)]

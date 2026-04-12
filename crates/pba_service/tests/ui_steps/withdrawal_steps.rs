@@ -70,32 +70,22 @@ async fn do_withdrawal(world: &mut UiWorld, amount: i64) -> Result<i64, String> 
 }
 
 fn classify_withdrawal_error(content: &str) -> String {
-    let lower = content.to_lowercase();
-    if lower.contains("accountnotactive")
-        || lower.contains("account not active")
-        || lower.contains("account is not active")
-        || lower.contains("frozen")
-        || lower.contains("closed")
-    {
-        "account_not_active".to_string()
-    } else if lower.contains("insufficientfunds")
-        || lower.contains("insufficient funds")
-        || lower.contains("insufficient")
-        || lower.contains("exceed")
-    {
-        "insufficient_funds".to_string()
-    } else {
-        // Check for form-error element
-        if let Some(pos) = content.find(r#"id="form-error""#) {
-            let snippet = &content[pos..content.len().min(pos + 200)];
-            let snippet_lower = snippet.to_lowercase();
-            if snippet_lower.contains("active") || snippet_lower.contains("frozen") || snippet_lower.contains("closed") {
-                return "account_not_active".to_string();
-            }
-            if snippet_lower.contains("fund") || snippet_lower.contains("balance") || snippet_lower.contains("insufficient") {
-                return "insufficient_funds".to_string();
-            }
+    // Extract just the error message from the form-error element for precise matching
+    if let Some(pos) = content.find(r#"id="form-error""#) {
+        let snippet = &content[pos..content.len().min(pos + 500)];
+        let lower = snippet.to_lowercase();
+        if lower.contains("not active") || lower.contains("accountnotactive") {
+            return "account_not_active".to_string();
         }
+        if lower.contains("insufficient") || lower.contains("exceeds") {
+            return "insufficient_funds".to_string();
+        }
+    }
+    // Fallback
+    let lower = content.to_lowercase();
+    if lower.contains("not active") {
+        "account_not_active".to_string()
+    } else {
         "insufficient_funds".to_string()
     }
 }

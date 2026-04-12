@@ -150,41 +150,30 @@ async fn do_payment(
 }
 
 fn classify_error(content: &str) -> String {
-    // Look for <p id="form-error">Error: {message}</p>
-    let lower = content.to_lowercase();
-    if lower.contains("accountnotactive")
-        || lower.contains("account not active")
-        || lower.contains("account is not active")
-        || lower.contains("frozen")
-        || lower.contains("closed")
-    {
-        "account_not_active".to_string()
-    } else if lower.contains("invalidmcc")
-        || lower.contains("invalid mcc")
-        || lower.contains("mcc not allowed")
-        || lower.contains("mcc")
-    {
-        "invalid_mcc".to_string()
-    } else if lower.contains("insufficientfunds")
-        || lower.contains("insufficient funds")
-        || lower.contains("insufficient")
-    {
-        "insufficient_funds".to_string()
-    } else {
-        // If we can find the form-error element, inspect more closely
-        if let Some(pos) = content.find(r#"id="form-error""#) {
-            let snippet = &content[pos..pos.min(content.len()).min(pos + 200)];
-            let snippet_lower = snippet.to_lowercase();
-            if snippet_lower.contains("mcc") {
-                return "invalid_mcc".to_string();
-            }
-            if snippet_lower.contains("fund") || snippet_lower.contains("balance") {
-                return "insufficient_funds".to_string();
-            }
-            if snippet_lower.contains("active") || snippet_lower.contains("frozen") || snippet_lower.contains("closed") {
-                return "account_not_active".to_string();
-            }
+    // Extract just the error message from the form-error element for precise matching
+    if let Some(pos) = content.find(r#"id="form-error""#) {
+        let snippet = &content[pos..content.len().min(pos + 500)];
+        let lower = snippet.to_lowercase();
+        // Check MCC error first — "not allowed for purpose" is unique to InvalidMcc
+        if lower.contains("not allowed for purpose") || lower.contains("invalidmcc") {
+            return "invalid_mcc".to_string();
         }
+        if lower.contains("insufficient") || lower.contains("exceeds") {
+            return "insufficient_funds".to_string();
+        }
+        if lower.contains("not active") || lower.contains("accountnotactive") {
+            return "account_not_active".to_string();
+        }
+    }
+    // Fallback: check full page content
+    let lower = content.to_lowercase();
+    if lower.contains("not allowed for purpose") {
+        "invalid_mcc".to_string()
+    } else if lower.contains("insufficient") {
+        "insufficient_funds".to_string()
+    } else if lower.contains("not active") {
+        "account_not_active".to_string()
+    } else {
         "unknown".to_string()
     }
 }

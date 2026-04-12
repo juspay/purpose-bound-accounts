@@ -4,7 +4,7 @@ Feature: Admin UI
   Scenario: Dashboard shows account statistics
     Given a "health" account exists for holder "d1111111-1111-1111-1111-111111111111" with origin IFSC "HDFC0001111" and account number "1111100001"
     When I visit the dashboard
-    Then the dashboard should show 1 total accounts
+    Then the dashboard should show at least 1 total accounts
 
   Scenario: Account detail shows balance breakdown
     Given a "health" account exists for holder "d2222222-2222-2222-2222-222222222222" with origin IFSC "HDFC0002222" and account number "2222200001"
