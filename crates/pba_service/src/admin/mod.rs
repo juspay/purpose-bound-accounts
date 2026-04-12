@@ -36,4 +36,5 @@ pub fn create_router() -> Router<AppState> {
             "/admin/accounts/{accountId}/withdrawal",
             get(handlers::withdrawal_form).post(handlers::process_withdrawal),
         )
+        .route("/admin/purpose-types", get(handlers::purpose_types_page))
 }

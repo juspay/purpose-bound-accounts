@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+
+{% block title %}Purpose Types - PBA Admin{% endblock %}
+
+{% block content %}
+<h1>Purpose Types</h1>
+
+<p id="purpose-count">{{ purpose_types.len() }} purpose types available.</p>
+
+{% for pt in &purpose_types %}
+<article>
+    <h3 id="purpose-{{ pt.purpose_code }}">{{ pt.purpose_code }}</h3>
+    <table>
+        <thead>
+            <tr>
+                <th>MCC</th>
+                <th>Description</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for mcc in &pt.allowed_mccs %}
+            <tr>
+                <td>{{ mcc.mcc }}</td>
+                <td>{{ mcc.description.as_deref().unwrap_or("—") }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</article>
+{% endfor %}
+{% endblock %}

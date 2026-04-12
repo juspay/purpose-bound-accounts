@@ -5,6 +5,7 @@ use axum::response::{Html, IntoResponse, Redirect, Response};
 use serde::Deserialize;
 use uuid::Uuid;
 
+use crate::domain::purpose::PurposeType;
 use crate::AppState;
 
 fn render<T: Template>(tmpl: T) -> Response {
@@ -497,4 +498,21 @@ pub async fn process_withdrawal(
             })
         }
     }
+}
+
+#[derive(Template)]
+#[template(path = "admin/purpose_types.html")]
+struct PurposeTypesTemplate {
+    purpose_types: Vec<PurposeType>,
+}
+
+pub async fn purpose_types_page(State(state): State<AppState>) -> Response {
+    let purpose_types = match state.account_repo.list_purpose_types().await {
+        Ok(pts) => pts,
+        Err(e) => {
+            tracing::error!("Failed to list purpose types: {e}");
+            return (StatusCode::INTERNAL_SERVER_ERROR, "Database error").into_response();
+        }
+    };
+    render(PurposeTypesTemplate { purpose_types })
 }
