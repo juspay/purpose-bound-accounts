@@ -1,4 +1,4 @@
-# pba-service
+# Purpose Bound Account Service
 
 Purpose-Bound Account Service — dual-pool accounts with purpose-based MCC validation, powered by TigerBeetle.
 
