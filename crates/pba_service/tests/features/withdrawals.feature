@@ -1,5 +1,6 @@
 Feature: Withdrawals
   Withdrawals can only be made from the self-contribution pool.
+  All amounts are in paisa (1 INR = 100 paisa).
 
   Scenario: Withdraw from self-pool
     Given a "health" account exists for holder "66666666-6666-6666-6666-666666666666" with origin IFSC "HDFC0006666" and account number "6666666666"

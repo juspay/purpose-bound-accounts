@@ -11,7 +11,8 @@ pub const FUNDING_SOURCE_TB_ID: u128 = u128::MAX - 10;
 pub const MERCHANT_SETTLEMENT_TB_ID: u128 = u128::MAX - 11;
 pub const WITHDRAWAL_SETTLEMENT_TB_ID: u128 = u128::MAX - 12;
 
-const LEDGER_INR: u32 = 1;
+/// Ledger ID for Indian Rupee. All amounts are in paisa (1 INR = 100 paisa).
+const LEDGER_INR_PAISA: u32 = 1;
 const CODE_SELF_POOL: u16 = 1;
 const CODE_OTHERS_POOL: u16 = 2;
 const CODE_SENTINEL: u16 = 99;
@@ -35,11 +36,11 @@ impl LedgerRepo {
     /// Create sentinel accounts that serve as counterparties for deposits, payments, and withdrawals.
     /// These are idempotent — TigerBeetle returns `Exists` for already-created accounts which we ignore.
     pub async fn init_sentinel_accounts(&self) -> Result<(), AppError> {
-        let funding = tb::Account::new(FUNDING_SOURCE_TB_ID, LEDGER_INR, CODE_SENTINEL)
+        let funding = tb::Account::new(FUNDING_SOURCE_TB_ID, LEDGER_INR_PAISA, CODE_SENTINEL)
             .with_flags(AccountFlags::LINKED);
-        let merchant = tb::Account::new(MERCHANT_SETTLEMENT_TB_ID, LEDGER_INR, CODE_SENTINEL)
+        let merchant = tb::Account::new(MERCHANT_SETTLEMENT_TB_ID, LEDGER_INR_PAISA, CODE_SENTINEL)
             .with_flags(AccountFlags::LINKED);
-        let withdrawal = tb::Account::new(WITHDRAWAL_SETTLEMENT_TB_ID, LEDGER_INR, CODE_SENTINEL);
+        let withdrawal = tb::Account::new(WITHDRAWAL_SETTLEMENT_TB_ID, LEDGER_INR_PAISA, CODE_SENTINEL);
 
         // Best-effort: ignore errors (accounts may already exist)
         match self
@@ -63,10 +64,10 @@ impl LedgerRepo {
         self_id: u128,
         others_id: u128,
     ) -> Result<(), AppError> {
-        let self_account = tb::Account::new(self_id, LEDGER_INR, CODE_SELF_POOL)
+        let self_account = tb::Account::new(self_id, LEDGER_INR_PAISA, CODE_SELF_POOL)
             .with_flags(AccountFlags::DEBITS_MUST_NOT_EXCEED_CREDITS | AccountFlags::LINKED);
 
-        let others_account = tb::Account::new(others_id, LEDGER_INR, CODE_OTHERS_POOL)
+        let others_account = tb::Account::new(others_id, LEDGER_INR_PAISA, CODE_OTHERS_POOL)
             .with_flags(AccountFlags::DEBITS_MUST_NOT_EXCEED_CREDITS);
 
         self.client
@@ -125,7 +126,7 @@ impl LedgerRepo {
             .with_debit_account_id(debit_account_id)
             .with_credit_account_id(credit_account_id)
             .with_amount(amount as u128)
-            .with_ledger(LEDGER_INR)
+            .with_ledger(LEDGER_INR_PAISA)
             .with_code(transfer_code);
 
         self.client
@@ -153,7 +154,7 @@ impl LedgerRepo {
             .with_debit_account_id(others_debit_account_id)
             .with_credit_account_id(credit_account_id)
             .with_amount(others_amount as u128)
-            .with_ledger(LEDGER_INR)
+            .with_ledger(LEDGER_INR_PAISA)
             .with_code(transfer_code)
             .with_flags(TransferFlags::LINKED);
 
@@ -161,7 +162,7 @@ impl LedgerRepo {
             .with_debit_account_id(self_debit_account_id)
             .with_credit_account_id(credit_account_id)
             .with_amount(self_amount as u128)
-            .with_ledger(LEDGER_INR)
+            .with_ledger(LEDGER_INR_PAISA)
             .with_code(transfer_code);
 
         self.client

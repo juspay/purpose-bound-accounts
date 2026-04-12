@@ -1,5 +1,6 @@
 Feature: Payments
   Payments use others-pool first, then self-pool, and validate MCC against purpose.
+  All amounts are in paisa (1 INR = 100 paisa).
 
   Scenario: Payment fully from others-pool
     Given a "health" account exists for holder "44444444-4444-4444-4444-444444444441" with origin IFSC "HDFC0044441" and account number "4444400011"

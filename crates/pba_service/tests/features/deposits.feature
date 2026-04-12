@@ -1,5 +1,6 @@
 Feature: Deposits
   Deposits are routed to self or others pool based on the source bank.
+  All amounts are in paisa (1 INR = 100 paisa).
 
   Scenario: Deposit from origin bank goes to self-pool
     Given a "health" account exists for holder "11111111-1111-1111-1111-111111111111" with origin IFSC "HDFC0011111" and account number "1111100001"
