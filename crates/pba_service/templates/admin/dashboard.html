@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard - PBA Admin{% endblock %}
+
+{% block content %}
+<h1>Dashboard</h1>
+
+<div class="grid">
+    <article class="stat-card">
+        <h2>{{ total_accounts }}</h2>
+        <p>Total Accounts</p>
+    </article>
+    <article class="stat-card">
+        <h2 class="status-active">{{ active_accounts }}</h2>
+        <p>Active</p>
+    </article>
+    <article class="stat-card">
+        <h2 class="status-frozen">{{ frozen_accounts }}</h2>
+        <p>Frozen</p>
+    </article>
+    <article class="stat-card">
+        <h2 class="status-closed">{{ closed_accounts }}</h2>
+        <p>Closed</p>
+    </article>
+</div>
+
+{% if !purpose_counts.is_empty() %}
+<h2>Accounts by Purpose</h2>
+<table>
+    <thead>
+        <tr>
+            <th>Purpose</th>
+            <th>Count</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for (purpose, count) in &purpose_counts %}
+        <tr>
+            <td>{{ purpose }}</td>
+            <td>{{ count }}</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endif %}
+{% endblock %}

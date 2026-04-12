@@ -1,0 +1,64 @@
+{% extends "base.html" %}
+
+{% block title %}Account {{ id }} - PBA Admin{% endblock %}
+
+{% block content %}
+<h1>Account Detail</h1>
+
+<article>
+    <div class="grid">
+        <div>
+            <p><strong>Account ID:</strong> {{ id }}</p>
+            <p><strong>Holder ID:</strong> {{ holder_id }}</p>
+            <p><strong>Purpose:</strong> {{ purpose_code }}</p>
+            <p>
+                <strong>Status:</strong> <span class="{{ status_class }}">{{ status }}</span>
+                {% if status != "closed" %}
+                &nbsp;
+                {% if status == "active" %}
+                <form method="post" action="/admin/accounts/{{ id }}/status" class="inline-form">
+                    <input type="hidden" name="status" value="frozen">
+                    <button type="submit" class="outline secondary" style="padding: 0.25rem 0.75rem; font-size: 0.85rem;">Freeze</button>
+                </form>
+                <form method="post" action="/admin/accounts/{{ id }}/status" class="inline-form">
+                    <input type="hidden" name="status" value="closed">
+                    <button type="submit" class="outline" style="padding: 0.25rem 0.75rem; font-size: 0.85rem; color: #c62828; border-color: #c62828;">Close</button>
+                </form>
+                {% else if status == "frozen" %}
+                <form method="post" action="/admin/accounts/{{ id }}/status" class="inline-form">
+                    <input type="hidden" name="status" value="active">
+                    <button type="submit" class="outline" style="padding: 0.25rem 0.75rem; font-size: 0.85rem; color: #2e7d32; border-color: #2e7d32;">Activate</button>
+                </form>
+                <form method="post" action="/admin/accounts/{{ id }}/status" class="inline-form">
+                    <input type="hidden" name="status" value="closed">
+                    <button type="submit" class="outline" style="padding: 0.25rem 0.75rem; font-size: 0.85rem; color: #c62828; border-color: #c62828;">Close</button>
+                </form>
+                {% endif %}
+                {% endif %}
+            </p>
+        </div>
+        <div>
+            <p><strong>Origin IFSC:</strong> {{ origin_ifsc }}</p>
+            <p><strong>Origin Account:</strong> {{ origin_account_number }}</p>
+            <p><strong>VPA:</strong> {{ vpa }}</p>
+        </div>
+    </div>
+
+    <div class="grid">
+        <div>
+            <p><strong>Self Pool:</strong> {{ self_balance }} INR</p>
+            <p><strong>Others Pool:</strong> {{ others_balance }} INR</p>
+            <p><strong>Total Balance:</strong> {{ total_balance }} INR</p>
+        </div>
+        <div>
+            <p><strong>Created:</strong> {{ created_at }}</p>
+            <p><strong>Updated:</strong> {{ updated_at }}</p>
+        </div>
+    </div>
+</article>
+
+<h2>Transaction History</h2>
+<div id="transfers" hx-get="/admin/accounts/{{ id }}/transfers" hx-trigger="load" hx-swap="innerHTML">
+    <p aria-busy="true">Loading transfers...</p>
+</div>
+{% endblock %}

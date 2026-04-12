@@ -1,0 +1,24 @@
+{% if transfers.is_empty() %}
+<p>No transactions yet.</p>
+{% else %}
+<table>
+    <thead>
+        <tr>
+            <th>Timestamp</th>
+            <th>Type</th>
+            <th>Direction</th>
+            <th>Amount (INR)</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for t in &transfers %}
+        <tr>
+            <td>{{ t.timestamp }}</td>
+            <td>{{ t.transfer_type }}</td>
+            <td class="{{ t.direction_class }}">{{ t.direction }}</td>
+            <td>{{ t.amount }}</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endif %}

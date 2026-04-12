@@ -151,6 +151,57 @@ impl AccountRepo {
         })
     }
 
+    pub async fn list_accounts(&self) -> Result<Vec<PurposeBoundAccount>, AppError> {
+        let rows = sqlx::query_as::<_, AccountRow>(
+            r#"
+            SELECT id, holder_id, purpose_code, origin_ifsc, origin_account_number,
+                   vpa, virtual_ifsc, virtual_account_number,
+                   tb_self_account_id::text as tb_self_account_id,
+                   tb_others_account_id::text as tb_others_account_id,
+                   kyc_tier, status, created_at, updated_at
+            FROM accounts
+            ORDER BY created_at DESC
+            "#,
+        )
+        .fetch_all(&self.pool)
+        .await?;
+
+        Ok(rows.into_iter().map(|r| r.into_domain()).collect())
+    }
+
+    pub async fn count_accounts_by_status(
+        &self,
+    ) -> Result<Vec<(String, i64)>, AppError> {
+        let rows: Vec<(String, i64)> = sqlx::query_as(
+            r#"
+            SELECT status, COUNT(*) as count
+            FROM accounts
+            GROUP BY status
+            "#,
+        )
+        .fetch_all(&self.pool)
+        .await?;
+
+        Ok(rows)
+    }
+
+    pub async fn count_accounts_by_purpose(
+        &self,
+    ) -> Result<Vec<(String, i64)>, AppError> {
+        let rows: Vec<(String, i64)> = sqlx::query_as(
+            r#"
+            SELECT purpose_code, COUNT(*) as count
+            FROM accounts
+            GROUP BY purpose_code
+            ORDER BY purpose_code
+            "#,
+        )
+        .fetch_all(&self.pool)
+        .await?;
+
+        Ok(rows)
+    }
+
     pub async fn is_mcc_allowed(&self, purpose_code: &str, mcc: &str) -> Result<bool, AppError> {
         let count: (i64,) = sqlx::query_as(
             r#"

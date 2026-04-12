@@ -1,4 +1,5 @@
 use crate::domain::pool::PoolBalance;
+use crate::domain::transfer::TransferRecord;
 use crate::error::AppError;
 use tb::account::Flags as AccountFlags;
 use tb::transfer::Flags as TransferFlags;
@@ -65,10 +66,10 @@ impl LedgerRepo {
         others_id: u128,
     ) -> Result<(), AppError> {
         let self_account = tb::Account::new(self_id, LEDGER_INR_PAISA, CODE_SELF_POOL)
-            .with_flags(AccountFlags::DEBITS_MUST_NOT_EXCEED_CREDITS | AccountFlags::LINKED);
+            .with_flags(AccountFlags::DEBITS_MUST_NOT_EXCEED_CREDITS | AccountFlags::HISTORY | AccountFlags::LINKED);
 
         let others_account = tb::Account::new(others_id, LEDGER_INR_PAISA, CODE_OTHERS_POOL)
-            .with_flags(AccountFlags::DEBITS_MUST_NOT_EXCEED_CREDITS);
+            .with_flags(AccountFlags::DEBITS_MUST_NOT_EXCEED_CREDITS | AccountFlags::HISTORY);
 
         self.client
             .create_accounts(vec![self_account, others_account])
@@ -138,6 +139,63 @@ impl LedgerRepo {
 
         tracing::info!(debit = %debit_account_id, credit = %credit_account_id, amount, code = transfer_code, "Created TB transfer");
         Ok(())
+    }
+
+    pub async fn get_account_transfers(
+        &self,
+        self_tb_id: u128,
+        others_tb_id: u128,
+        limit: u32,
+    ) -> Result<Vec<TransferRecord>, AppError> {
+        let filter = Box::new(
+            tb::account::Filter::new(self_tb_id, limit)
+                .with_flags(
+                tb::account::FilterFlags::DEBITS
+                    | tb::account::FilterFlags::CREDITS
+                    | tb::account::FilterFlags::REVERSED,
+            ),
+        );
+
+        let self_transfers = self
+            .client
+            .get_account_transfers(filter)
+            .await
+            .map_err(|e| {
+                AppError::TigerBeetleError(format!("get_account_transfers failed: {e:?}"))
+            })?;
+
+        let others_filter = Box::new(
+            tb::account::Filter::new(others_tb_id, limit)
+                .with_flags(
+                tb::account::FilterFlags::DEBITS
+                    | tb::account::FilterFlags::CREDITS
+                    | tb::account::FilterFlags::REVERSED,
+            ),
+        );
+
+        let others_transfers = self
+            .client
+            .get_account_transfers(others_filter)
+            .await
+            .map_err(|e| {
+                AppError::TigerBeetleError(format!("get_account_transfers failed: {e:?}"))
+            })?;
+
+        // Merge and deduplicate (linked transfers share same ID pattern but are separate)
+        let mut all_transfers: Vec<TransferRecord> = Vec::new();
+        let mut seen_ids = std::collections::HashSet::new();
+
+        for t in self_transfers.iter().chain(others_transfers.iter()) {
+            if seen_ids.insert(t.id()) {
+                all_transfers.push(TransferRecord::from_tb_transfer(t, self_tb_id, others_tb_id));
+            }
+        }
+
+        // Sort by timestamp descending (most recent first)
+        all_transfers.sort_by(|a, b| b.timestamp.cmp(&a.timestamp));
+        all_transfers.truncate(limit as usize);
+
+        Ok(all_transfers)
     }
 
     #[allow(clippy::too_many_arguments)]

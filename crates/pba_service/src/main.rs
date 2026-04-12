@@ -1,5 +1,6 @@
 use std::sync::Arc;
 
+mod admin;
 mod api;
 mod config;
 mod domain;
@@ -89,7 +90,9 @@ async fn main() {
         ledger_repo,
     };
 
-    let app = api::routes::create_router().with_state(state);
+    let app = api::routes::create_router()
+        .merge(admin::create_router())
+        .with_state(state);
 
     let addr = format!("{}:{}", config.host, config.port);
     tracing::info!("Starting PBA service on {addr}");

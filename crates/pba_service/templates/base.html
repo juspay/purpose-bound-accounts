@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>{% block title %}PBA Admin{% endblock %}</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.min.css">
+    <script src="https://unpkg.com/htmx.org@2.0.4"></script>
+    <style>
+        .status-active { color: #2e7d32; font-weight: bold; }
+        .status-frozen { color: #e65100; font-weight: bold; }
+        .status-closed { color: #c62828; font-weight: bold; }
+        .inbound { color: #2e7d32; }
+        .outbound { color: #c62828; }
+        .stat-card { text-align: center; padding: 1rem; }
+        .stat-card h2 { margin-bottom: 0.25rem; }
+        .stat-card p { margin: 0; color: var(--pico-muted-color); }
+        nav { margin-bottom: 1rem; }
+        .inline-form { display: inline-block !important; margin: 0 !important; padding: 0 !important; }
+        .inline-form button { display: inline-block !important; width: auto !important; margin: 0 0.25rem !important; }
+    </style>
+</head>
+<body>
+    <nav class="container">
+        <ul>
+            <li><strong>PBA Admin</strong></li>
+        </ul>
+        <ul>
+            <li><a href="/admin">Dashboard</a></li>
+            <li><a href="/admin/accounts">Accounts</a></li>
+        </ul>
+    </nav>
+    <main class="container">
+        {% block content %}{% endblock %}
+    </main>
+</body>
+</html>
