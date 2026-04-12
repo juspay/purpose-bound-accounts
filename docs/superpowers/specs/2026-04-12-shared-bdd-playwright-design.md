@@ -2,7 +2,7 @@
 
 ## Summary
 
-Add deposit, payment, and withdrawal pages to the admin UI, then create a browser-based BDD test suite using `cucumber` + `chromiumoxide` (all Rust) that shares the same Gherkin feature files as the existing API tests. Both test binaries execute the same 32+ business scenarios — one via Smithy SDK, one via headless Chrome.
+Add deposit, payment, and withdrawal pages to the admin UI, then create a browser-based BDD test binary using `cucumber` + `chromiumoxide` (all Rust) that shares the same Gherkin feature files as the existing API tests. Both test binaries live inside `crates/pba_service/` — no new crate needed.
 
 ## Goals
 
@@ -21,11 +21,11 @@ Add deposit, payment, and withdrawal pages to the admin UI, then create a browse
 
 ## 1. Shared Feature Files
 
-### Location change
+### No location change
 
-Move feature files from `crates/pba_service/tests/features/` to `tests/features/` at workspace root. Both test binaries point here.
+Feature files stay at `crates/pba_service/tests/features/`. Both test binaries (`e2e` and `ui_e2e`) read from the same directory.
 
-**Files moved (unchanged content, minor step wording adjustments where needed):**
+**Existing files (minor step wording adjustments where needed):**
 - `tests/features/accounts.feature`
 - `tests/features/deposits.feature`
 - `tests/features/payments.feature`
@@ -46,10 +46,6 @@ And 0 should come from self-pool
 ```
 
 The API step implementation calls the Smithy SDK. The browser step implementation navigates to the payment page, fills the form, submits, and reads the result from the account detail page.
-
-### Rust Cucumber adaptation
-
-Update `crates/pba_service/tests/e2e.rs` to load features from `../../tests/features` (relative to crate root). No other API test changes needed — step implementations stay in `crates/pba_service/tests/steps/`.
 
 ---
 
@@ -125,51 +121,59 @@ Simple page listing all purpose types with their allowed MCCs. Added to admin na
 
 ---
 
-## 3. Browser Test Crate
+## 3. Browser Test Binary
 
 ### Approach
 
-A new crate `pba_ui_tests` in the workspace using `cucumber` (same BDD crate as the API tests) + `chromiumoxide` for headless Chrome automation. This keeps the entire test stack in Rust.
+A second `[[test]]` binary in `crates/pba_service/` using `cucumber` (same BDD crate as the API tests) + `chromiumoxide` for headless Chrome automation. Everything stays in one crate.
 
 ### Structure
 
 ```
-crates/pba_ui_tests/
-  Cargo.toml
+crates/pba_service/
+  Cargo.toml              ← add chromiumoxide, futures to [dev-dependencies]
   tests/
-    ui_e2e.rs            ← test harness (UiWorld, cucumber main)
-    steps/
+    features/             ← shared .feature files (unchanged location)
+      accounts.feature
+      deposits.feature
+      payments.feature
+      withdrawals.feature
+      purpose_types.feature
+    ui_features/          ← UI-only feature files
+      admin_ui.feature
+    steps/                ← API step implementations (existing)
       mod.rs
       account_steps.rs
       deposit_steps.rs
       payment_steps.rs
       withdrawal_steps.rs
       purpose_steps.rs
-    features/
-      admin_ui.feature   ← UI-only visual/navigation tests
-
-tests/
-  features/              ← shared Gherkin (moved here)
-    accounts.feature
-    deposits.feature
-    payments.feature
-    withdrawals.feature
-    purpose_types.feature
+    ui_steps/             ← browser step implementations (new)
+      mod.rs
+      account_steps.rs
+      deposit_steps.rs
+      payment_steps.rs
+      withdrawal_steps.rs
+      purpose_steps.rs
+    e2e.rs                ← API test harness (existing, unchanged)
+    ui_e2e.rs             ← browser test harness (new)
 ```
 
-### Cargo.toml
+### Cargo.toml changes
+
+Add to `[dev-dependencies]`:
 
 ```toml
-[package]
-name = "pba-ui-tests"
-version = "0.1.0"
-edition = "2021"
-
-[dev-dependencies]
-cucumber = "0.22"
 chromiumoxide = { version = "0.7", features = ["tokio-runtime"] }
-tokio = { version = "1", features = ["macros", "rt-multi-thread"] }
 futures = "0.3"
+```
+
+Add second test binary:
+
+```toml
+[[test]]
+name = "e2e"
+harness = false
 
 [[test]]
 name = "ui_e2e"
@@ -180,7 +184,6 @@ harness = false
 
 ```rust
 pub struct UiWorld {
-    browser: Browser,
     page: Page,
     base_url: String,
     account_id: Option<String>,
@@ -250,7 +253,7 @@ The `UiWorld` launches a headless Chrome browser via `chromiumoxide` on init and
 
 ## 4. UI-Only Feature File
 
-`crates/pba_ui_tests/tests/features/admin_ui.feature`:
+`crates/pba_service/tests/ui_features/admin_ui.feature`:
 
 Covers aspects only testable in the browser:
 - Dashboard shows correct stat cards after creating accounts
@@ -276,38 +279,20 @@ ui-e2e: e2e-start ui-e2e-run e2e-stop
 
 # Run browser UI tests only (service must be running)
 ui-e2e-run:
-    PBA_SERVICE_URL="http://127.0.0.1:{{E2E_APP_PORT}}" cargo test -p pba-ui-tests --test ui_e2e
-```
+    PBA_SERVICE_URL="http://127.0.0.1:{{E2E_APP_PORT}}" cargo test -p pba-service --test ui_e2e
 
-### Updated targets
-
-```just
 # Full E2E: both API and UI tests
 e2e-all: e2e-start e2e-run ui-e2e-run e2e-stop
     @echo "All E2E tests complete"
 ```
 
-### Rust Cucumber path update
+### Existing targets unchanged
 
-In `crates/pba_service/tests/e2e.rs`, change feature path from `"tests/features"` to `"../../tests/features"`.
-
-In `crates/pba_ui_tests/tests/ui_e2e.rs`, load shared features from `"../../tests/features"` and UI-only features from `"tests/features"`.
+`e2e`, `e2e-run`, `e2e-start`, `e2e-stop` remain as-is. The `e2e.rs` harness continues to read from `tests/features/`.
 
 ---
 
-## 6. Workspace Updates
-
-Add the new crate to the workspace `Cargo.toml`:
-
-```toml
-[workspace]
-members = ["crates/pba_service", "crates/pba_client", "crates/pba_ui_tests"]
-resolver = "2"
-```
-
----
-
-## 7. Test Infrastructure
+## 6. Test Infrastructure
 
 Both test binaries share the same test infrastructure:
 - PostgreSQL: `pba_service_test` on port 5432
@@ -324,7 +309,7 @@ The TB data file for tests is recreated each run (accounts need HISTORY flag for
 
 ---
 
-## 8. Risks and Mitigations
+## 7. Risks and Mitigations
 
 | Risk | Mitigation |
 |------|-----------|
@@ -337,14 +322,14 @@ The TB data file for tests is recreated each run (accounts need HISTORY flag for
 
 ---
 
-## 9. Implementation Order
+## 8. Implementation Order
 
-1. Move feature files to `tests/features/`, update Rust Cucumber path, verify `just e2e` still passes
-2. Add deposit/payment/withdrawal pages to admin UI
-3. Add purpose types page to admin UI
-4. Add action links to account detail page
-5. Create `crates/pba_ui_tests/` crate with `cucumber` + `chromiumoxide`
-6. Implement browser step definitions for all shared features
-7. Implement UI-only feature file and steps
+1. Add deposit/payment/withdrawal pages to admin UI
+2. Add purpose types page to admin UI
+3. Add action links to account detail page
+4. Add `chromiumoxide` and `futures` to dev-dependencies, add `[[test]] ui_e2e` entry
+5. Create `ui_e2e.rs` harness with `UiWorld` and chromiumoxide browser setup
+6. Implement browser step definitions in `tests/ui_steps/`
+7. Create UI-only feature file in `tests/ui_features/admin_ui.feature`
 8. Add justfile targets (`ui-e2e`, `ui-e2e-run`, `e2e-all`)
 9. Verify both `just e2e` and `just ui-e2e` pass
