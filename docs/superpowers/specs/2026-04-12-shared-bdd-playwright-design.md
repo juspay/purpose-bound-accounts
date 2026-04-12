@@ -1,14 +1,14 @@
-# Shared BDD Tests + Playwright UI Testing
+# Shared BDD Tests + Browser UI Testing
 
 ## Summary
 
-Add deposit, payment, and withdrawal pages to the admin UI, then create a Playwright BDD test suite that shares the same Gherkin feature files as the existing Rust Cucumber tests. Both test runners execute the same 32+ business scenarios — one via API, one via browser.
+Add deposit, payment, and withdrawal pages to the admin UI, then create a browser-based BDD test suite using `cucumber` + `chromiumoxide` (all Rust) that shares the same Gherkin feature files as the existing API tests. Both test binaries execute the same 32+ business scenarios — one via Smithy SDK, one via headless Chrome.
 
 ## Goals
 
 1. All account operations (create, deposit, pay, withdraw, status change) available in the admin UI
-2. Single set of `.feature` files consumed by both Rust Cucumber and Playwright BDD
-3. Step implementations in Rust (API) and TypeScript (UI) interpret the same neutral business steps
+2. Single set of `.feature` files consumed by both test binaries
+3. Step implementations in Rust — API steps (existing) and browser steps (new) interpret the same neutral business steps
 4. A small UI-only feature file covers navigation, visual assertions, and HTMX behavior
 
 ## Non-goals
@@ -23,7 +23,7 @@ Add deposit, payment, and withdrawal pages to the admin UI, then create a Playwr
 
 ### Location change
 
-Move feature files from `crates/pba_service/tests/features/` to `tests/features/` at workspace root. Both test runners point here.
+Move feature files from `crates/pba_service/tests/features/` to `tests/features/` at workspace root. Both test binaries point here.
 
 **Files moved (unchanged content, minor step wording adjustments where needed):**
 - `tests/features/accounts.feature`
@@ -45,11 +45,11 @@ And 3000 should come from others-pool
 And 0 should come from self-pool
 ```
 
-The Rust step implementation calls the API. The Playwright step implementation navigates to the payment page, fills the form, submits, and reads the result from the account detail page.
+The API step implementation calls the Smithy SDK. The browser step implementation navigates to the payment page, fills the form, submits, and reads the result from the account detail page.
 
 ### Rust Cucumber adaptation
 
-Update `crates/pba_service/tests/e2e.rs` to load features from `../../tests/features` (relative to crate root). No other Rust test changes needed — step implementations stay in `crates/pba_service/tests/steps/`.
+Update `crates/pba_service/tests/e2e.rs` to load features from `../../tests/features` (relative to crate root). No other API test changes needed — step implementations stay in `crates/pba_service/tests/steps/`.
 
 ---
 
@@ -115,100 +115,142 @@ Each form page shows errors inline (same pattern as create account form). The er
 
 For successful operations that return result details (e.g., payment split amounts), the redirect to account detail is sufficient — the balance and transaction history on that page show the outcome.
 
+### 2.7 Purpose Types Page — `/admin/purpose-types`
+
+Simple page listing all purpose types with their allowed MCCs. Added to admin nav.
+
+**GET:** Calls `AccountRepo::list_purpose_types()`, renders a table per purpose showing MCC code and description.
+
+**Template:** `templates/admin/purpose_types.html` (extends `base.html`)
+
 ---
 
-## 3. Playwright Project
+## 3. Browser Test Crate
+
+### Approach
+
+A new crate `pba_ui_tests` in the workspace using `cucumber` (same BDD crate as the API tests) + `chromiumoxide` for headless Chrome automation. This keeps the entire test stack in Rust.
 
 ### Structure
 
 ```
+crates/pba_ui_tests/
+  Cargo.toml
+  tests/
+    ui_e2e.rs            ← test harness (UiWorld, cucumber main)
+    steps/
+      mod.rs
+      account_steps.rs
+      deposit_steps.rs
+      payment_steps.rs
+      withdrawal_steps.rs
+      purpose_steps.rs
+    features/
+      admin_ui.feature   ← UI-only visual/navigation tests
+
 tests/
-  features/                    ← shared Gherkin (moved here)
+  features/              ← shared Gherkin (moved here)
     accounts.feature
     deposits.feature
     payments.feature
     withdrawals.feature
     purpose_types.feature
-  playwright/
-    package.json
-    playwright.config.ts
-    tsconfig.json
-    steps/
-      account_steps.ts
-      deposit_steps.ts
-      payment_steps.ts
-      withdrawal_steps.ts
-      purpose_steps.ts
-    features/
-      admin_ui.feature         ← UI-only visual/navigation tests
 ```
 
-### Dependencies
+### Cargo.toml
 
-```json
-{
-  "devDependencies": {
-    "@playwright/test": "^1.50",
-    "playwright-bdd": "^8",
-    "@cucumber/cucumber": "^11"
-  }
+```toml
+[package]
+name = "pba-ui-tests"
+version = "0.1.0"
+edition = "2021"
+
+[dev-dependencies]
+cucumber = "0.22"
+chromiumoxide = { version = "0.7", features = ["tokio-runtime"] }
+tokio = { version = "1", features = ["macros", "rt-multi-thread"] }
+futures = "0.3"
+
+[[test]]
+name = "ui_e2e"
+harness = false
+```
+
+### UiWorld
+
+```rust
+pub struct UiWorld {
+    browser: Browser,
+    page: Page,
+    base_url: String,
+    account_id: Option<String>,
+    origin_ifsc: Option<String>,
+    origin_account_number: Option<String>,
+    last_error: Option<String>,
+    last_payment_from_others: Option<i64>,
+    last_payment_from_self: Option<i64>,
+    last_withdrawal_amount: Option<i64>,
+    purpose_types_count: Option<usize>,
+    last_purpose_code: Option<String>,
+    last_purpose_mccs_count: Option<usize>,
+    last_balance: Option<BalanceResult>,
+    last_account_status: Option<String>,
+    duplicate_rejected: bool,
 }
 ```
 
-### Configuration
+The `UiWorld` launches a headless Chrome browser via `chromiumoxide` on init and shares a single `Page` across steps within each scenario.
 
-`playwright.config.ts`:
-- Base URL: `http://127.0.0.1:3031` (test service)
-- Browser: chromium (headless)
-- Feature paths: `../features/**/*.feature` + `features/**/*.feature`
-- Step paths: `steps/**/*.ts`
-
-### Step Implementations
-
-Each TypeScript step file mirrors the Rust step file. Key patterns:
+### Step Implementation Patterns
 
 **Given "a {purpose} account exists...":**
 1. Navigate to `/admin/accounts`
-2. Open the create form (click details/summary)
-3. Fill holder ID, select purpose, fill IFSC and account number
-4. Submit form
-5. Extract account ID from redirect URL
-6. Store in world context
+2. Click the "Create New Account" summary to expand the form
+3. Fill holder ID, select purpose from dropdown, fill IFSC and account number
+4. Click "Create Account" button
+5. Wait for navigation to account detail page
+6. Extract account ID from URL path
+7. Store account_id, origin_ifsc, origin_account_number in world
 
 **Given "the account has N in self-pool and M in others-pool":**
 1. Navigate to `/admin/accounts/{id}/deposit`
-2. Fill amount with N, source IFSC matching origin (self-pool), submit
-3. Navigate to deposit page again
-4. Fill amount with M, source IFSC different from origin (others-pool), submit
+2. Fill amount=N, source IFSC=origin IFSC (routes to self-pool), source account=origin account
+3. Submit, wait for redirect to account detail
+4. Navigate to `/admin/accounts/{id}/deposit` again
+5. Fill amount=M, source IFSC=different value (routes to others-pool), source account=different
+6. Submit, wait for redirect
 
 **When "I pay N to merchant ... with MCC ... described as ...":**
 1. Navigate to `/admin/accounts/{id}/payment`
 2. Fill amount, merchant ID, MCC, description
 3. Submit form
-4. Check result: if redirected to detail → success; if error shown → capture error
+4. If redirected to account detail → success, read balance from page
+5. If error displayed on form → store error text in last_error
 
 **Then "the self contribution should be N":**
-1. Navigate to `/admin/accounts/{id}` (or already there)
-2. Read self pool balance text from the page
-3. Assert value matches N (converted from paisa to display format)
+1. Navigate to `/admin/accounts/{id}` (or already there from redirect)
+2. Find the "Self Pool:" text element, extract the numeric value
+3. Convert display format (e.g., "50.00") back to paisa (5000)
+4. Assert equals N
 
 **Error assertions ("rejected as insufficient funds"):**
-1. After form submission, check that the page shows an error message
-2. Match error text against expected error type
+1. Check that the current page shows an error message element
+2. Match error text to determine kind (InsufficientFunds, InvalidMcc, AccountNotActive)
 
-### World / Context
+### chromiumoxide specifics
 
-Playwright BDD uses a shared test context (similar to Cucumber World):
-- `accountId: string` — current account under test
-- `originIfsc: string` — origin bank IFSC for self-pool routing
-- `originAccountNumber: string` — origin bank account number
-- `lastError: string | null` — captured error message from form
+- Launch with `BrowserConfig::builder().no_sandbox().build()`
+- Use `page.goto(url).await` for navigation
+- Use `page.find_element("css selector").await` + `.click().await` / `.type_str().await` for form interaction
+- Use `page.wait_for_navigation().await` after form submissions
+- Use `page.content().await` or element text extraction for assertions
+- Headless by default; can be toggled for debugging
 
 ---
 
 ## 4. UI-Only Feature File
 
-`tests/playwright/features/admin_ui.feature`:
+`crates/pba_ui_tests/tests/features/admin_ui.feature`:
 
 Covers aspects only testable in the browser:
 - Dashboard shows correct stat cards after creating accounts
@@ -216,9 +258,10 @@ Covers aspects only testable in the browser:
 - Account detail page shows balance breakdown
 - Transaction history loads via HTMX (appears after page load)
 - Status buttons change based on current status (active → freeze/close, frozen → activate/close, closed → no buttons)
-- Navigation between pages works (breadcrumb-style links)
+- Navigation between pages works
 - Form validation (empty required fields, invalid UUID format)
 - Action links hidden on frozen/closed accounts
+- Purpose types page lists all purposes with MCCs
 
 ---
 
@@ -227,78 +270,81 @@ Covers aspects only testable in the browser:
 ### New targets
 
 ```just
-# Install Playwright dependencies
-playwright-install:
-    cd tests/playwright && npm install && npx playwright install chromium
+# Run browser UI tests (full cycle)
+ui-e2e: e2e-start ui-e2e-run e2e-stop
+    @echo "UI E2E tests complete"
 
-# Run Playwright BDD tests (full cycle)
-playwright: e2e-start
-    cd tests/playwright && npx bddgen && npx playwright test
-    just e2e-stop
-
-# Run Playwright tests only (service must be running)
-playwright-run:
-    cd tests/playwright && npx bddgen && npx playwright test
+# Run browser UI tests only (service must be running)
+ui-e2e-run:
+    PBA_SERVICE_URL="http://127.0.0.1:{{E2E_APP_PORT}}" cargo test -p pba-ui-tests --test ui_e2e
 ```
 
 ### Updated targets
 
 ```just
-# Rust Cucumber now reads from workspace-root tests/features/
-e2e-run:
-    PBA_SERVICE_URL="http://127.0.0.1:3031" cargo test -p pba-service --test e2e
-
 # Full E2E: both API and UI tests
-e2e-all: e2e-start e2e-run playwright-run e2e-stop
+e2e-all: e2e-start e2e-run ui-e2e-run e2e-stop
+    @echo "All E2E tests complete"
 ```
 
 ### Rust Cucumber path update
 
 In `crates/pba_service/tests/e2e.rs`, change feature path from `"tests/features"` to `"../../tests/features"`.
 
+In `crates/pba_ui_tests/tests/ui_e2e.rs`, load shared features from `"../../tests/features"` and UI-only features from `"tests/features"`.
+
 ---
 
-## 6. Test Infrastructure
+## 6. Workspace Updates
 
-Both Rust Cucumber and Playwright share the same test infrastructure:
+Add the new crate to the workspace `Cargo.toml`:
+
+```toml
+[workspace]
+members = ["crates/pba_service", "crates/pba_client", "crates/pba_ui_tests"]
+resolver = "2"
+```
+
+---
+
+## 7. Test Infrastructure
+
+Both test binaries share the same test infrastructure:
 - PostgreSQL: `pba_service_test` on port 5432
 - TigerBeetle: port 3001 with `.tb_data/test/`
 - pba-service: port 3031
 
-Test database is reset before each test run (`just e2e-reset-db`). Tests run sequentially (Cucumber: `max_concurrent_scenarios(1)`, Playwright: `workers: 1`).
+Test database is reset before each test run (`just e2e-reset-db`). Tests run sequentially (both binaries: `max_concurrent_scenarios(1)`).
 
 The TB data file for tests is recreated each run (accounts need HISTORY flag for transfer queries).
 
+### Chrome requirement
+
+`chromiumoxide` requires a Chrome or Chromium binary. In the Nix flake, add `chromium` to the dev inputs. Outside Nix, document that Chrome/Chromium must be installed.
+
 ---
 
-## 7. Risks and Mitigations
+## 8. Risks and Mitigations
 
 | Risk | Mitigation |
 |------|-----------|
-| Playwright step timing (HTMX loads) | Use `page.waitForSelector` for async content |
+| Browser step timing (HTMX loads, redirects) | Use `page.wait_for_navigation()` and element wait selectors |
 | Form error text matching across API/UI | Error messages come from same service layer |
 | Feature file wording too API-specific | Review and neutralize before moving |
-| Flaky browser tests | Single worker, explicit waits, retry config |
-| Purpose types step ("I list all purpose types") has no UI equivalent | Add purpose types to admin nav or skip in Playwright |
-
-### Purpose types handling
-
-The `purpose_types.feature` scenarios (list, get, not-found) test metadata endpoints. The admin UI doesn't have a dedicated purpose types page. Options:
-- Add a simple `/admin/purpose-types` page listing purposes and their MCCs
-- Or mark these scenarios with a `@api-only` tag and skip in Playwright
-
-Recommendation: Add a simple purpose types page — it's useful for the admin anyway and keeps full scenario coverage.
+| chromiumoxide API stability | Pin to specific version, wrap in helper functions |
+| Chrome not available in CI/dev | Add to Nix flake; document requirement |
+| Headless Chrome startup time | Reuse browser instance across scenarios in same feature |
 
 ---
 
-## 8. Implementation Order
+## 9. Implementation Order
 
 1. Move feature files to `tests/features/`, update Rust Cucumber path, verify `just e2e` still passes
 2. Add deposit/payment/withdrawal pages to admin UI
 3. Add purpose types page to admin UI
 4. Add action links to account detail page
-5. Scaffold Playwright project (`tests/playwright/`)
-6. Implement Playwright step definitions
-7. Implement UI-only feature file
-8. Add justfile targets
-9. Verify both `just e2e` and `just playwright` pass
+5. Create `crates/pba_ui_tests/` crate with `cucumber` + `chromiumoxide`
+6. Implement browser step definitions for all shared features
+7. Implement UI-only feature file and steps
+8. Add justfile targets (`ui-e2e`, `ui-e2e-run`, `e2e-all`)
+9. Verify both `just e2e` and `just ui-e2e` pass
