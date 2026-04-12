@@ -21,7 +21,14 @@ askama = "0.13"
 cucumber = "0.22"
 pba_client = { path = "../pba_client" }
 tokio = { version = "1", features = ["macros", "rt-multi-thread"] }
+chromiumoxide = { version = "0.9" }
+futures = "0.3"
+regex = "1"
 
 [[test]]
 name = "e2e"
+harness = false
+
+[[test]]
+name = "ui_e2e"
 harness = false
