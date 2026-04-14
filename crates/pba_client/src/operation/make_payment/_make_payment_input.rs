@@ -2,7 +2,7 @@
 #[allow(missing_docs)] // documentation missing in model
 #[non_exhaustive]
 #[derive(::std::clone::Clone, ::std::cmp::PartialEq, ::std::fmt::Debug)]
-pub struct MakePaymentInput {
+pub struct MakePaymentInput  {
     #[allow(missing_docs)] // documentation missing in model
     pub account_id: ::std::option::Option<::std::string::String>,
     /// Monetary amount in the smallest currency unit (e.g., paise for INR).
@@ -14,7 +14,7 @@ pub struct MakePaymentInput {
     #[allow(missing_docs)] // documentation missing in model
     pub description: ::std::option::Option<::std::string::String>,
 }
-impl MakePaymentInput {
+impl  MakePaymentInput  {
     #[allow(missing_docs)] // documentation missing in model
     pub fn account_id(&self) -> ::std::option::Option<&str> {
         self.account_id.as_deref()
@@ -62,8 +62,7 @@ impl MakePaymentInputBuilder {
     }
     #[allow(missing_docs)] // documentation missing in model
     pub fn set_account_id(mut self, input: ::std::option::Option<::std::string::String>) -> Self {
-        self.account_id = input;
-        self
+        self.account_id = input; self
     }
     #[allow(missing_docs)] // documentation missing in model
     pub fn get_account_id(&self) -> &::std::option::Option<::std::string::String> {
@@ -77,8 +76,7 @@ impl MakePaymentInputBuilder {
     }
     /// Monetary amount in the smallest currency unit (e.g., paise for INR).
     pub fn set_amount(mut self, input: ::std::option::Option<i64>) -> Self {
-        self.amount = input;
-        self
+        self.amount = input; self
     }
     /// Monetary amount in the smallest currency unit (e.g., paise for INR).
     pub fn get_amount(&self) -> &::std::option::Option<i64> {
@@ -92,8 +90,7 @@ impl MakePaymentInputBuilder {
     }
     #[allow(missing_docs)] // documentation missing in model
     pub fn set_merchant_mcc(mut self, input: ::std::option::Option<::std::string::String>) -> Self {
-        self.merchant_mcc = input;
-        self
+        self.merchant_mcc = input; self
     }
     #[allow(missing_docs)] // documentation missing in model
     pub fn get_merchant_mcc(&self) -> &::std::option::Option<::std::string::String> {
@@ -107,8 +104,7 @@ impl MakePaymentInputBuilder {
     }
     #[allow(missing_docs)] // documentation missing in model
     pub fn set_merchant_id(mut self, input: ::std::option::Option<::std::string::String>) -> Self {
-        self.merchant_id = input;
-        self
+        self.merchant_id = input; self
     }
     #[allow(missing_docs)] // documentation missing in model
     pub fn get_merchant_id(&self) -> &::std::option::Option<::std::string::String> {
@@ -122,8 +118,7 @@ impl MakePaymentInputBuilder {
     }
     #[allow(missing_docs)] // documentation missing in model
     pub fn set_description(mut self, input: ::std::option::Option<::std::string::String>) -> Self {
-        self.description = input;
-        self
+        self.description = input; self
     }
     #[allow(missing_docs)] // documentation missing in model
     pub fn get_description(&self) -> &::std::option::Option<::std::string::String> {
@@ -131,12 +126,20 @@ impl MakePaymentInputBuilder {
     }
     /// Consumes the builder and constructs a [`MakePaymentInput`](crate::operation::make_payment::MakePaymentInput).
     pub fn build(self) -> ::std::result::Result<crate::operation::make_payment::MakePaymentInput, ::aws_smithy_types::error::operation::BuildError> {
-        ::std::result::Result::Ok(crate::operation::make_payment::MakePaymentInput {
-            account_id: self.account_id,
-            amount: self.amount,
-            merchant_mcc: self.merchant_mcc,
-            merchant_id: self.merchant_id,
-            description: self.description,
-        })
+        ::std::result::Result::Ok(
+            crate::operation::make_payment::MakePaymentInput {
+                account_id: self.account_id
+                ,
+                amount: self.amount
+                ,
+                merchant_mcc: self.merchant_mcc
+                ,
+                merchant_id: self.merchant_id
+                ,
+                description: self.description
+                ,
+            }
+        )
     }
 }
+

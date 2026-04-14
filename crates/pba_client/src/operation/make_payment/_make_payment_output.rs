@@ -2,7 +2,7 @@
 #[allow(missing_docs)] // documentation missing in model
 #[non_exhaustive]
 #[derive(::std::clone::Clone, ::std::cmp::PartialEq, ::std::fmt::Debug)]
-pub struct MakePaymentOutput {
+pub struct MakePaymentOutput  {
     #[allow(missing_docs)] // documentation missing in model
     pub account_id: ::std::string::String,
     /// Monetary amount in the smallest currency unit (e.g., paise for INR).
@@ -16,11 +16,10 @@ pub struct MakePaymentOutput {
     #[allow(missing_docs)] // documentation missing in model
     pub merchant_mcc: ::std::string::String,
 }
-impl MakePaymentOutput {
+impl  MakePaymentOutput  {
     #[allow(missing_docs)] // documentation missing in model
     pub fn account_id(&self) -> &str {
-        use std::ops::Deref;
-        self.account_id.deref()
+        use std::ops::Deref; self.account_id.deref()
     }
     /// Monetary amount in the smallest currency unit (e.g., paise for INR).
     pub fn amount(&self) -> i64 {
@@ -36,13 +35,11 @@ impl MakePaymentOutput {
     }
     #[allow(missing_docs)] // documentation missing in model
     pub fn merchant_id(&self) -> &str {
-        use std::ops::Deref;
-        self.merchant_id.deref()
+        use std::ops::Deref; self.merchant_id.deref()
     }
     #[allow(missing_docs)] // documentation missing in model
     pub fn merchant_mcc(&self) -> &str {
-        use std::ops::Deref;
-        self.merchant_mcc.deref()
+        use std::ops::Deref; self.merchant_mcc.deref()
     }
 }
 impl MakePaymentOutput {
@@ -72,8 +69,7 @@ impl MakePaymentOutputBuilder {
     }
     #[allow(missing_docs)] // documentation missing in model
     pub fn set_account_id(mut self, input: ::std::option::Option<::std::string::String>) -> Self {
-        self.account_id = input;
-        self
+        self.account_id = input; self
     }
     #[allow(missing_docs)] // documentation missing in model
     pub fn get_account_id(&self) -> &::std::option::Option<::std::string::String> {
@@ -87,8 +83,7 @@ impl MakePaymentOutputBuilder {
     }
     /// Monetary amount in the smallest currency unit (e.g., paise for INR).
     pub fn set_amount(mut self, input: ::std::option::Option<i64>) -> Self {
-        self.amount = input;
-        self
+        self.amount = input; self
     }
     /// Monetary amount in the smallest currency unit (e.g., paise for INR).
     pub fn get_amount(&self) -> &::std::option::Option<i64> {
@@ -102,8 +97,7 @@ impl MakePaymentOutputBuilder {
     }
     /// Monetary amount in the smallest currency unit (e.g., paise for INR).
     pub fn set_from_others(mut self, input: ::std::option::Option<i64>) -> Self {
-        self.from_others = input;
-        self
+        self.from_others = input; self
     }
     /// Monetary amount in the smallest currency unit (e.g., paise for INR).
     pub fn get_from_others(&self) -> &::std::option::Option<i64> {
@@ -117,8 +111,7 @@ impl MakePaymentOutputBuilder {
     }
     /// Monetary amount in the smallest currency unit (e.g., paise for INR).
     pub fn set_from_self(mut self, input: ::std::option::Option<i64>) -> Self {
-        self.from_self = input;
-        self
+        self.from_self = input; self
     }
     /// Monetary amount in the smallest currency unit (e.g., paise for INR).
     pub fn get_from_self(&self) -> &::std::option::Option<i64> {
@@ -132,8 +125,7 @@ impl MakePaymentOutputBuilder {
     }
     #[allow(missing_docs)] // documentation missing in model
     pub fn set_merchant_id(mut self, input: ::std::option::Option<::std::string::String>) -> Self {
-        self.merchant_id = input;
-        self
+        self.merchant_id = input; self
     }
     #[allow(missing_docs)] // documentation missing in model
     pub fn get_merchant_id(&self) -> &::std::option::Option<::std::string::String> {
@@ -147,8 +139,7 @@ impl MakePaymentOutputBuilder {
     }
     #[allow(missing_docs)] // documentation missing in model
     pub fn set_merchant_mcc(mut self, input: ::std::option::Option<::std::string::String>) -> Self {
-        self.merchant_mcc = input;
-        self
+        self.merchant_mcc = input; self
     }
     #[allow(missing_docs)] // documentation missing in model
     pub fn get_merchant_mcc(&self) -> &::std::option::Option<::std::string::String> {
@@ -163,43 +154,40 @@ impl MakePaymentOutputBuilder {
     /// - [`merchant_id`](crate::operation::make_payment::builders::MakePaymentOutputBuilder::merchant_id)
     /// - [`merchant_mcc`](crate::operation::make_payment::builders::MakePaymentOutputBuilder::merchant_mcc)
     pub fn build(self) -> ::std::result::Result<crate::operation::make_payment::MakePaymentOutput, ::aws_smithy_types::error::operation::BuildError> {
-        ::std::result::Result::Ok(crate::operation::make_payment::MakePaymentOutput {
-            account_id: self.account_id.ok_or_else(|| {
-                ::aws_smithy_types::error::operation::BuildError::missing_field(
-                    "account_id",
-                    "account_id was not specified but it is required when building MakePaymentOutput",
-                )
-            })?,
-            amount: self.amount.ok_or_else(|| {
-                ::aws_smithy_types::error::operation::BuildError::missing_field(
-                    "amount",
-                    "amount was not specified but it is required when building MakePaymentOutput",
-                )
-            })?,
-            from_others: self.from_others.ok_or_else(|| {
-                ::aws_smithy_types::error::operation::BuildError::missing_field(
-                    "from_others",
-                    "from_others was not specified but it is required when building MakePaymentOutput",
-                )
-            })?,
-            from_self: self.from_self.ok_or_else(|| {
-                ::aws_smithy_types::error::operation::BuildError::missing_field(
-                    "from_self",
-                    "from_self was not specified but it is required when building MakePaymentOutput",
-                )
-            })?,
-            merchant_id: self.merchant_id.ok_or_else(|| {
-                ::aws_smithy_types::error::operation::BuildError::missing_field(
-                    "merchant_id",
-                    "merchant_id was not specified but it is required when building MakePaymentOutput",
-                )
-            })?,
-            merchant_mcc: self.merchant_mcc.ok_or_else(|| {
-                ::aws_smithy_types::error::operation::BuildError::missing_field(
-                    "merchant_mcc",
-                    "merchant_mcc was not specified but it is required when building MakePaymentOutput",
-                )
-            })?,
-        })
+        ::std::result::Result::Ok(
+            crate::operation::make_payment::MakePaymentOutput {
+                account_id: self.account_id
+                    .ok_or_else(||
+                        ::aws_smithy_types::error::operation::BuildError::missing_field("account_id", "account_id was not specified but it is required when building MakePaymentOutput")
+                    )?
+                ,
+                amount: self.amount
+                    .ok_or_else(||
+                        ::aws_smithy_types::error::operation::BuildError::missing_field("amount", "amount was not specified but it is required when building MakePaymentOutput")
+                    )?
+                ,
+                from_others: self.from_others
+                    .ok_or_else(||
+                        ::aws_smithy_types::error::operation::BuildError::missing_field("from_others", "from_others was not specified but it is required when building MakePaymentOutput")
+                    )?
+                ,
+                from_self: self.from_self
+                    .ok_or_else(||
+                        ::aws_smithy_types::error::operation::BuildError::missing_field("from_self", "from_self was not specified but it is required when building MakePaymentOutput")
+                    )?
+                ,
+                merchant_id: self.merchant_id
+                    .ok_or_else(||
+                        ::aws_smithy_types::error::operation::BuildError::missing_field("merchant_id", "merchant_id was not specified but it is required when building MakePaymentOutput")
+                    )?
+                ,
+                merchant_mcc: self.merchant_mcc
+                    .ok_or_else(||
+                        ::aws_smithy_types::error::operation::BuildError::missing_field("merchant_mcc", "merchant_mcc was not specified but it is required when building MakePaymentOutput")
+                    )?
+                ,
+            }
+        )
     }
 }
+

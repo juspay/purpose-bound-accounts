@@ -2,7 +2,7 @@
 #[allow(missing_docs)] // documentation missing in model
 #[non_exhaustive]
 #[derive(::std::clone::Clone, ::std::cmp::PartialEq, ::std::fmt::Debug)]
-pub struct DepositInput {
+pub struct DepositInput  {
     #[allow(missing_docs)] // documentation missing in model
     pub account_id: ::std::option::Option<::std::string::String>,
     #[allow(missing_docs)] // documentation missing in model
@@ -11,8 +11,14 @@ pub struct DepositInput {
     pub source_account_number: ::std::option::Option<::std::string::String>,
     /// Monetary amount in the smallest currency unit (e.g., paise for INR).
     pub amount: ::std::option::Option<i64>,
+    #[allow(missing_docs)] // documentation missing in model
+    pub pending: ::std::option::Option<bool>,
+    #[allow(missing_docs)] // documentation missing in model
+    pub gateway_ref: ::std::option::Option<::std::string::String>,
+    #[allow(missing_docs)] // documentation missing in model
+    pub timeout_seconds: ::std::option::Option<i32>,
 }
-impl DepositInput {
+impl  DepositInput  {
     #[allow(missing_docs)] // documentation missing in model
     pub fn account_id(&self) -> ::std::option::Option<&str> {
         self.account_id.as_deref()
@@ -28,6 +34,18 @@ impl DepositInput {
     /// Monetary amount in the smallest currency unit (e.g., paise for INR).
     pub fn amount(&self) -> ::std::option::Option<i64> {
         self.amount
+    }
+    #[allow(missing_docs)] // documentation missing in model
+    pub fn pending(&self) -> ::std::option::Option<bool> {
+        self.pending
+    }
+    #[allow(missing_docs)] // documentation missing in model
+    pub fn gateway_ref(&self) -> ::std::option::Option<&str> {
+        self.gateway_ref.as_deref()
+    }
+    #[allow(missing_docs)] // documentation missing in model
+    pub fn timeout_seconds(&self) -> ::std::option::Option<i32> {
+        self.timeout_seconds
     }
 }
 impl DepositInput {
@@ -45,6 +63,9 @@ pub struct DepositInputBuilder {
     pub(crate) source_ifsc: ::std::option::Option<::std::string::String>,
     pub(crate) source_account_number: ::std::option::Option<::std::string::String>,
     pub(crate) amount: ::std::option::Option<i64>,
+    pub(crate) pending: ::std::option::Option<bool>,
+    pub(crate) gateway_ref: ::std::option::Option<::std::string::String>,
+    pub(crate) timeout_seconds: ::std::option::Option<i32>,
 }
 impl DepositInputBuilder {
     #[allow(missing_docs)] // documentation missing in model
@@ -55,8 +76,7 @@ impl DepositInputBuilder {
     }
     #[allow(missing_docs)] // documentation missing in model
     pub fn set_account_id(mut self, input: ::std::option::Option<::std::string::String>) -> Self {
-        self.account_id = input;
-        self
+        self.account_id = input; self
     }
     #[allow(missing_docs)] // documentation missing in model
     pub fn get_account_id(&self) -> &::std::option::Option<::std::string::String> {
@@ -70,8 +90,7 @@ impl DepositInputBuilder {
     }
     #[allow(missing_docs)] // documentation missing in model
     pub fn set_source_ifsc(mut self, input: ::std::option::Option<::std::string::String>) -> Self {
-        self.source_ifsc = input;
-        self
+        self.source_ifsc = input; self
     }
     #[allow(missing_docs)] // documentation missing in model
     pub fn get_source_ifsc(&self) -> &::std::option::Option<::std::string::String> {
@@ -85,8 +104,7 @@ impl DepositInputBuilder {
     }
     #[allow(missing_docs)] // documentation missing in model
     pub fn set_source_account_number(mut self, input: ::std::option::Option<::std::string::String>) -> Self {
-        self.source_account_number = input;
-        self
+        self.source_account_number = input; self
     }
     #[allow(missing_docs)] // documentation missing in model
     pub fn get_source_account_number(&self) -> &::std::option::Option<::std::string::String> {
@@ -100,20 +118,71 @@ impl DepositInputBuilder {
     }
     /// Monetary amount in the smallest currency unit (e.g., paise for INR).
     pub fn set_amount(mut self, input: ::std::option::Option<i64>) -> Self {
-        self.amount = input;
-        self
+        self.amount = input; self
     }
     /// Monetary amount in the smallest currency unit (e.g., paise for INR).
     pub fn get_amount(&self) -> &::std::option::Option<i64> {
         &self.amount
     }
+    #[allow(missing_docs)] // documentation missing in model
+    pub fn pending(mut self, input: bool) -> Self {
+        self.pending = ::std::option::Option::Some(input);
+        self
+    }
+    #[allow(missing_docs)] // documentation missing in model
+    pub fn set_pending(mut self, input: ::std::option::Option<bool>) -> Self {
+        self.pending = input; self
+    }
+    #[allow(missing_docs)] // documentation missing in model
+    pub fn get_pending(&self) -> &::std::option::Option<bool> {
+        &self.pending
+    }
+    #[allow(missing_docs)] // documentation missing in model
+    pub fn gateway_ref(mut self, input: impl ::std::convert::Into<::std::string::String>) -> Self {
+        self.gateway_ref = ::std::option::Option::Some(input.into());
+        self
+    }
+    #[allow(missing_docs)] // documentation missing in model
+    pub fn set_gateway_ref(mut self, input: ::std::option::Option<::std::string::String>) -> Self {
+        self.gateway_ref = input; self
+    }
+    #[allow(missing_docs)] // documentation missing in model
+    pub fn get_gateway_ref(&self) -> &::std::option::Option<::std::string::String> {
+        &self.gateway_ref
+    }
+    #[allow(missing_docs)] // documentation missing in model
+    pub fn timeout_seconds(mut self, input: i32) -> Self {
+        self.timeout_seconds = ::std::option::Option::Some(input);
+        self
+    }
+    #[allow(missing_docs)] // documentation missing in model
+    pub fn set_timeout_seconds(mut self, input: ::std::option::Option<i32>) -> Self {
+        self.timeout_seconds = input; self
+    }
+    #[allow(missing_docs)] // documentation missing in model
+    pub fn get_timeout_seconds(&self) -> &::std::option::Option<i32> {
+        &self.timeout_seconds
+    }
     /// Consumes the builder and constructs a [`DepositInput`](crate::operation::deposit::DepositInput).
     pub fn build(self) -> ::std::result::Result<crate::operation::deposit::DepositInput, ::aws_smithy_types::error::operation::BuildError> {
-        ::std::result::Result::Ok(crate::operation::deposit::DepositInput {
-            account_id: self.account_id,
-            source_ifsc: self.source_ifsc,
-            source_account_number: self.source_account_number,
-            amount: self.amount,
-        })
+        ::std::result::Result::Ok(
+            crate::operation::deposit::DepositInput {
+                account_id: self.account_id
+                ,
+                source_ifsc: self.source_ifsc
+                ,
+                source_account_number: self.source_account_number
+                ,
+                amount: self.amount
+                ,
+                pending: self.pending
+                ,
+                gateway_ref: self.gateway_ref
+                ,
+                timeout_seconds: self.timeout_seconds
+                ,
+            }
+        )
     }
 }
+

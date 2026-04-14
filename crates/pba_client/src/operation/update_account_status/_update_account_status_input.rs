@@ -2,13 +2,13 @@
 #[allow(missing_docs)] // documentation missing in model
 #[non_exhaustive]
 #[derive(::std::clone::Clone, ::std::cmp::PartialEq, ::std::fmt::Debug)]
-pub struct UpdateAccountStatusInput {
+pub struct UpdateAccountStatusInput  {
     #[allow(missing_docs)] // documentation missing in model
     pub account_id: ::std::option::Option<::std::string::String>,
     /// Account status.
     pub status: ::std::option::Option<crate::types::Status>,
 }
-impl UpdateAccountStatusInput {
+impl  UpdateAccountStatusInput  {
     #[allow(missing_docs)] // documentation missing in model
     pub fn account_id(&self) -> ::std::option::Option<&str> {
         self.account_id.as_deref()
@@ -41,8 +41,7 @@ impl UpdateAccountStatusInputBuilder {
     }
     #[allow(missing_docs)] // documentation missing in model
     pub fn set_account_id(mut self, input: ::std::option::Option<::std::string::String>) -> Self {
-        self.account_id = input;
-        self
+        self.account_id = input; self
     }
     #[allow(missing_docs)] // documentation missing in model
     pub fn get_account_id(&self) -> &::std::option::Option<::std::string::String> {
@@ -56,21 +55,22 @@ impl UpdateAccountStatusInputBuilder {
     }
     /// Account status.
     pub fn set_status(mut self, input: ::std::option::Option<crate::types::Status>) -> Self {
-        self.status = input;
-        self
+        self.status = input; self
     }
     /// Account status.
     pub fn get_status(&self) -> &::std::option::Option<crate::types::Status> {
         &self.status
     }
     /// Consumes the builder and constructs a [`UpdateAccountStatusInput`](crate::operation::update_account_status::UpdateAccountStatusInput).
-    pub fn build(
-        self,
-    ) -> ::std::result::Result<crate::operation::update_account_status::UpdateAccountStatusInput, ::aws_smithy_types::error::operation::BuildError>
-    {
-        ::std::result::Result::Ok(crate::operation::update_account_status::UpdateAccountStatusInput {
-            account_id: self.account_id,
-            status: self.status,
-        })
+    pub fn build(self) -> ::std::result::Result<crate::operation::update_account_status::UpdateAccountStatusInput, ::aws_smithy_types::error::operation::BuildError> {
+        ::std::result::Result::Ok(
+            crate::operation::update_account_status::UpdateAccountStatusInput {
+                account_id: self.account_id
+                ,
+                status: self.status
+                ,
+            }
+        )
     }
 }
+

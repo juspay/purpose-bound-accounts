@@ -2,22 +2,20 @@
 #[allow(missing_docs)] // documentation missing in model
 #[non_exhaustive]
 #[derive(::std::clone::Clone, ::std::cmp::PartialEq, ::std::fmt::Debug)]
-pub struct PurposeTypeSummary {
+pub struct PurposeTypeSummary  {
     #[allow(missing_docs)] // documentation missing in model
     pub purpose_code: ::std::string::String,
     #[allow(missing_docs)] // documentation missing in model
-    pub allowed_mccs: ::std::vec::Vec<crate::types::MccEntry>,
+    pub allowed_mccs: ::std::vec::Vec::<crate::types::MccEntry>,
 }
-impl PurposeTypeSummary {
+impl  PurposeTypeSummary  {
     #[allow(missing_docs)] // documentation missing in model
     pub fn purpose_code(&self) -> &str {
-        use std::ops::Deref;
-        self.purpose_code.deref()
+        use std::ops::Deref; self.purpose_code.deref()
     }
     #[allow(missing_docs)] // documentation missing in model
     pub fn allowed_mccs(&self) -> &[crate::types::MccEntry] {
-        use std::ops::Deref;
-        self.allowed_mccs.deref()
+        use std::ops::Deref; self.allowed_mccs.deref()
     }
 }
 impl PurposeTypeSummary {
@@ -32,7 +30,7 @@ impl PurposeTypeSummary {
 #[non_exhaustive]
 pub struct PurposeTypeSummaryBuilder {
     pub(crate) purpose_code: ::std::option::Option<::std::string::String>,
-    pub(crate) allowed_mccs: ::std::option::Option<::std::vec::Vec<crate::types::MccEntry>>,
+    pub(crate) allowed_mccs: ::std::option::Option<::std::vec::Vec::<crate::types::MccEntry>>,
 }
 impl PurposeTypeSummaryBuilder {
     #[allow(missing_docs)] // documentation missing in model
@@ -43,8 +41,7 @@ impl PurposeTypeSummaryBuilder {
     }
     #[allow(missing_docs)] // documentation missing in model
     pub fn set_purpose_code(mut self, input: ::std::option::Option<::std::string::String>) -> Self {
-        self.purpose_code = input;
-        self
+        self.purpose_code = input; self
     }
     #[allow(missing_docs)] // documentation missing in model
     pub fn get_purpose_code(&self) -> &::std::option::Option<::std::string::String> {
@@ -56,17 +53,16 @@ impl PurposeTypeSummaryBuilder {
     ///
     pub fn allowed_mccs(mut self, input: crate::types::MccEntry) -> Self {
         let mut v = self.allowed_mccs.unwrap_or_default();
-        v.push(input);
-        self.allowed_mccs = ::std::option::Option::Some(v);
-        self
+                        v.push(input);
+                        self.allowed_mccs = ::std::option::Option::Some(v);
+                        self
     }
     #[allow(missing_docs)] // documentation missing in model
-    pub fn set_allowed_mccs(mut self, input: ::std::option::Option<::std::vec::Vec<crate::types::MccEntry>>) -> Self {
-        self.allowed_mccs = input;
-        self
+    pub fn set_allowed_mccs(mut self, input: ::std::option::Option<::std::vec::Vec::<crate::types::MccEntry>>) -> Self {
+        self.allowed_mccs = input; self
     }
     #[allow(missing_docs)] // documentation missing in model
-    pub fn get_allowed_mccs(&self) -> &::std::option::Option<::std::vec::Vec<crate::types::MccEntry>> {
+    pub fn get_allowed_mccs(&self) -> &::std::option::Option<::std::vec::Vec::<crate::types::MccEntry>> {
         &self.allowed_mccs
     }
     /// Consumes the builder and constructs a [`PurposeTypeSummary`](crate::types::PurposeTypeSummary).
@@ -74,19 +70,20 @@ impl PurposeTypeSummaryBuilder {
     /// - [`purpose_code`](crate::types::builders::PurposeTypeSummaryBuilder::purpose_code)
     /// - [`allowed_mccs`](crate::types::builders::PurposeTypeSummaryBuilder::allowed_mccs)
     pub fn build(self) -> ::std::result::Result<crate::types::PurposeTypeSummary, ::aws_smithy_types::error::operation::BuildError> {
-        ::std::result::Result::Ok(crate::types::PurposeTypeSummary {
-            purpose_code: self.purpose_code.ok_or_else(|| {
-                ::aws_smithy_types::error::operation::BuildError::missing_field(
-                    "purpose_code",
-                    "purpose_code was not specified but it is required when building PurposeTypeSummary",
-                )
-            })?,
-            allowed_mccs: self.allowed_mccs.ok_or_else(|| {
-                ::aws_smithy_types::error::operation::BuildError::missing_field(
-                    "allowed_mccs",
-                    "allowed_mccs was not specified but it is required when building PurposeTypeSummary",
-                )
-            })?,
-        })
+        ::std::result::Result::Ok(
+            crate::types::PurposeTypeSummary {
+                purpose_code: self.purpose_code
+                    .ok_or_else(||
+                        ::aws_smithy_types::error::operation::BuildError::missing_field("purpose_code", "purpose_code was not specified but it is required when building PurposeTypeSummary")
+                    )?
+                ,
+                allowed_mccs: self.allowed_mccs
+                    .ok_or_else(||
+                        ::aws_smithy_types::error::operation::BuildError::missing_field("allowed_mccs", "allowed_mccs was not specified but it is required when building PurposeTypeSummary")
+                    )?
+                ,
+            }
+        )
     }
 }
+

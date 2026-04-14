@@ -46,7 +46,9 @@ pub(crate) mod paginator {
     use aws_smithy_runtime_api::box_error::BoxError;
     use aws_smithy_runtime_api::client::interceptors::context::BeforeSerializationInterceptorContextMut;
     use aws_smithy_runtime_api::client::interceptors::{Intercept, SharedInterceptor};
-    use aws_smithy_runtime_api::client::runtime_components::{RuntimeComponents, RuntimeComponentsBuilder};
+    use aws_smithy_runtime_api::client::runtime_components::{
+        RuntimeComponents, RuntimeComponentsBuilder,
+    };
     use aws_smithy_runtime_api::client::runtime_plugin::RuntimePlugin;
     use aws_smithy_types::config_bag::ConfigBag;
     use std::borrow::Cow;
@@ -71,7 +73,8 @@ pub(crate) mod paginator {
             _runtime_components: &RuntimeComponents,
             cfg: &mut ConfigBag,
         ) -> Result<(), BoxError> {
-            cfg.interceptor_state().store_append::<SmithySdkFeature>(SmithySdkFeature::Paginator);
+            cfg.interceptor_state()
+                .store_append::<SmithySdkFeature>(SmithySdkFeature::Paginator);
             Ok(())
         }
     }
@@ -84,14 +87,21 @@ pub(crate) mod paginator {
     impl PaginatorFeatureTrackerRuntimePlugin {
         pub(crate) fn new() -> Self {
             Self {
-                runtime_components: RuntimeComponentsBuilder::new("PaginatorFeatureTrackerRuntimePlugin")
-                    .with_interceptor(SharedInterceptor::new(PaginatorFeatureTrackerInterceptor::new())),
+                runtime_components: RuntimeComponentsBuilder::new(
+                    "PaginatorFeatureTrackerRuntimePlugin",
+                )
+                .with_interceptor(SharedInterceptor::new(
+                    PaginatorFeatureTrackerInterceptor::new(),
+                )),
             }
         }
     }
 
     impl RuntimePlugin for PaginatorFeatureTrackerRuntimePlugin {
-        fn runtime_components(&self, _: &RuntimeComponentsBuilder) -> Cow<'_, RuntimeComponentsBuilder> {
+        fn runtime_components(
+            &self,
+            _: &RuntimeComponentsBuilder,
+        ) -> Cow<'_, RuntimeComponentsBuilder> {
             Cow::Borrowed(&self.runtime_components)
         }
     }
@@ -103,7 +113,9 @@ pub(crate) mod waiter {
     use aws_smithy_runtime_api::box_error::BoxError;
     use aws_smithy_runtime_api::client::interceptors::context::BeforeSerializationInterceptorContextMut;
     use aws_smithy_runtime_api::client::interceptors::{Intercept, SharedInterceptor};
-    use aws_smithy_runtime_api::client::runtime_components::{RuntimeComponents, RuntimeComponentsBuilder};
+    use aws_smithy_runtime_api::client::runtime_components::{
+        RuntimeComponents, RuntimeComponentsBuilder,
+    };
     use aws_smithy_runtime_api::client::runtime_plugin::RuntimePlugin;
     use aws_smithy_types::config_bag::ConfigBag;
     use std::borrow::Cow;
@@ -128,7 +140,8 @@ pub(crate) mod waiter {
             _runtime_components: &RuntimeComponents,
             cfg: &mut ConfigBag,
         ) -> Result<(), BoxError> {
-            cfg.interceptor_state().store_append::<SmithySdkFeature>(SmithySdkFeature::Waiter);
+            cfg.interceptor_state()
+                .store_append::<SmithySdkFeature>(SmithySdkFeature::Waiter);
             Ok(())
         }
     }
@@ -141,14 +154,21 @@ pub(crate) mod waiter {
     impl WaiterFeatureTrackerRuntimePlugin {
         pub(crate) fn new() -> Self {
             Self {
-                runtime_components: RuntimeComponentsBuilder::new("WaiterFeatureTrackerRuntimePlugin")
-                    .with_interceptor(SharedInterceptor::new(WaiterFeatureTrackerInterceptor::new())),
+                runtime_components: RuntimeComponentsBuilder::new(
+                    "WaiterFeatureTrackerRuntimePlugin",
+                )
+                .with_interceptor(SharedInterceptor::new(
+                    WaiterFeatureTrackerInterceptor::new(),
+                )),
             }
         }
     }
 
     impl RuntimePlugin for WaiterFeatureTrackerRuntimePlugin {
-        fn runtime_components(&self, _: &RuntimeComponentsBuilder) -> Cow<'_, RuntimeComponentsBuilder> {
+        fn runtime_components(
+            &self,
+            _: &RuntimeComponentsBuilder,
+        ) -> Cow<'_, RuntimeComponentsBuilder> {
             Cow::Borrowed(&self.runtime_components)
         }
     }
@@ -190,9 +210,13 @@ pub(crate) mod retry_mode {
                     RetryMode::Adaptive => SmithySdkFeature::RetryModeAdaptive,
                     _ => unreachable!("retry mode must be standard or adaptive"),
                 })
-                .map(|feature| cfg.interceptor_state().store_append::<SmithySdkFeature>(feature));
+                .map(|feature| {
+                    cfg.interceptor_state()
+                        .store_append::<SmithySdkFeature>(feature)
+                });
 
             Ok(())
         }
     }
 }
+

@@ -2,13 +2,13 @@
 #[allow(missing_docs)] // documentation missing in model
 #[non_exhaustive]
 #[derive(::std::clone::Clone, ::std::cmp::PartialEq, ::std::fmt::Debug)]
-pub struct WithdrawInput {
+pub struct WithdrawInput  {
     #[allow(missing_docs)] // documentation missing in model
     pub account_id: ::std::option::Option<::std::string::String>,
     /// Monetary amount in the smallest currency unit (e.g., paise for INR).
     pub amount: ::std::option::Option<i64>,
 }
-impl WithdrawInput {
+impl  WithdrawInput  {
     #[allow(missing_docs)] // documentation missing in model
     pub fn account_id(&self) -> ::std::option::Option<&str> {
         self.account_id.as_deref()
@@ -41,8 +41,7 @@ impl WithdrawInputBuilder {
     }
     #[allow(missing_docs)] // documentation missing in model
     pub fn set_account_id(mut self, input: ::std::option::Option<::std::string::String>) -> Self {
-        self.account_id = input;
-        self
+        self.account_id = input; self
     }
     #[allow(missing_docs)] // documentation missing in model
     pub fn get_account_id(&self) -> &::std::option::Option<::std::string::String> {
@@ -56,8 +55,7 @@ impl WithdrawInputBuilder {
     }
     /// Monetary amount in the smallest currency unit (e.g., paise for INR).
     pub fn set_amount(mut self, input: ::std::option::Option<i64>) -> Self {
-        self.amount = input;
-        self
+        self.amount = input; self
     }
     /// Monetary amount in the smallest currency unit (e.g., paise for INR).
     pub fn get_amount(&self) -> &::std::option::Option<i64> {
@@ -65,9 +63,14 @@ impl WithdrawInputBuilder {
     }
     /// Consumes the builder and constructs a [`WithdrawInput`](crate::operation::withdraw::WithdrawInput).
     pub fn build(self) -> ::std::result::Result<crate::operation::withdraw::WithdrawInput, ::aws_smithy_types::error::operation::BuildError> {
-        ::std::result::Result::Ok(crate::operation::withdraw::WithdrawInput {
-            account_id: self.account_id,
-            amount: self.amount,
-        })
+        ::std::result::Result::Ok(
+            crate::operation::withdraw::WithdrawInput {
+                account_id: self.account_id
+                ,
+                amount: self.amount
+                ,
+            }
+        )
     }
 }
+

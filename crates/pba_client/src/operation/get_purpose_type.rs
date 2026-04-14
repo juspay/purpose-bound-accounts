@@ -9,238 +9,185 @@ impl GetPurposeType {
         Self
     }
     pub(crate) async fn orchestrate(
-        runtime_plugins: &::aws_smithy_runtime_api::client::runtime_plugin::RuntimePlugins,
-        input: crate::operation::get_purpose_type::GetPurposeTypeInput,
-    ) -> ::std::result::Result<
-        crate::operation::get_purpose_type::GetPurposeTypeOutput,
-        ::aws_smithy_runtime_api::client::result::SdkError<
-            crate::operation::get_purpose_type::GetPurposeTypeError,
-            ::aws_smithy_runtime_api::client::orchestrator::HttpResponse,
-        >,
-    > {
-        let map_err = |err: ::aws_smithy_runtime_api::client::result::SdkError<
-            ::aws_smithy_runtime_api::client::interceptors::context::Error,
-            ::aws_smithy_runtime_api::client::orchestrator::HttpResponse,
-        >| {
-            err.map_service_error(|err| {
-                err.downcast::<crate::operation::get_purpose_type::GetPurposeTypeError>()
-                    .expect("correct error type")
-            })
-        };
-        let context = Self::orchestrate_with_stop_point(runtime_plugins, input, ::aws_smithy_runtime::client::orchestrator::StopPoint::None)
-            .await
-            .map_err(map_err)?;
-        let output = context.finalize().map_err(map_err)?;
-        ::std::result::Result::Ok(
-            output
-                .downcast::<crate::operation::get_purpose_type::GetPurposeTypeOutput>()
-                .expect("correct output type"),
-        )
-    }
-
-    pub(crate) async fn orchestrate_with_stop_point(
-        runtime_plugins: &::aws_smithy_runtime_api::client::runtime_plugin::RuntimePlugins,
-        input: crate::operation::get_purpose_type::GetPurposeTypeInput,
-        stop_point: ::aws_smithy_runtime::client::orchestrator::StopPoint,
-    ) -> ::std::result::Result<
-        ::aws_smithy_runtime_api::client::interceptors::context::InterceptorContext,
-        ::aws_smithy_runtime_api::client::result::SdkError<
-            ::aws_smithy_runtime_api::client::interceptors::context::Error,
-            ::aws_smithy_runtime_api::client::orchestrator::HttpResponse,
-        >,
-    > {
-        let input = ::aws_smithy_runtime_api::client::interceptors::context::Input::erase(input);
-        use ::tracing::Instrument;
-        ::aws_smithy_runtime::client::orchestrator::invoke_with_stop_point(
-            "PurposeBoundAccountService",
-            "GetPurposeType",
-            input,
-            runtime_plugins,
-            stop_point,
-        )
-        // Create a parent span for the entire operation. Includes a random, internal-only,
-        // seven-digit ID for the operation orchestration so that it can be correlated in the logs.
-        .instrument(::tracing::debug_span!(
-            "PurposeBoundAccountService.GetPurposeType",
-            "rpc.service" = "PurposeBoundAccountService",
-            "rpc.method" = "GetPurposeType",
-            "sdk_invocation_id" = ::fastrand::u32(1_000_000..10_000_000),
-        ))
-        .await
-    }
-
-    pub(crate) fn operation_runtime_plugins(
-        client_runtime_plugins: ::aws_smithy_runtime_api::client::runtime_plugin::RuntimePlugins,
-        client_config: &crate::config::Config,
-        config_override: ::std::option::Option<crate::config::Builder>,
-    ) -> ::aws_smithy_runtime_api::client::runtime_plugin::RuntimePlugins {
-        let mut runtime_plugins = client_runtime_plugins.with_operation_plugin(Self::new());
-        runtime_plugins = runtime_plugins.with_client_plugin(crate::auth_plugin::DefaultAuthOptionsPlugin::new(vec![
-            ::aws_smithy_runtime::client::auth::no_auth::NO_AUTH_SCHEME_ID,
-        ]));
-        if let ::std::option::Option::Some(config_override) = config_override {
-            for plugin in config_override.runtime_plugins.iter().cloned() {
-                runtime_plugins = runtime_plugins.with_operation_plugin(plugin);
-            }
-            runtime_plugins = runtime_plugins.with_operation_plugin(crate::config::ConfigOverrideRuntimePlugin::new(
-                config_override,
-                client_config.config.clone(),
-                &client_config.runtime_components,
-            ));
-        }
-        runtime_plugins
-    }
+                        runtime_plugins: &::aws_smithy_runtime_api::client::runtime_plugin::RuntimePlugins,
+                        input: crate::operation::get_purpose_type::GetPurposeTypeInput,
+                    ) -> ::std::result::Result<crate::operation::get_purpose_type::GetPurposeTypeOutput, ::aws_smithy_runtime_api::client::result::SdkError<crate::operation::get_purpose_type::GetPurposeTypeError, ::aws_smithy_runtime_api::client::orchestrator::HttpResponse>> {
+                        let map_err = |err: ::aws_smithy_runtime_api::client::result::SdkError<::aws_smithy_runtime_api::client::interceptors::context::Error, ::aws_smithy_runtime_api::client::orchestrator::HttpResponse>| {
+                            err.map_service_error(|err| {
+                                err.downcast::<crate::operation::get_purpose_type::GetPurposeTypeError>().expect("correct error type")
+                            })
+                        };
+                        let context = Self::orchestrate_with_stop_point(runtime_plugins, input, ::aws_smithy_runtime::client::orchestrator::StopPoint::None)
+                            .await
+                            .map_err(map_err)?;
+                        let output = context.finalize().map_err(map_err)?;
+                        ::std::result::Result::Ok(output.downcast::<crate::operation::get_purpose_type::GetPurposeTypeOutput>().expect("correct output type"))
+                    }
+    
+                    pub(crate) async fn orchestrate_with_stop_point(
+                        runtime_plugins: &::aws_smithy_runtime_api::client::runtime_plugin::RuntimePlugins,
+                        input: crate::operation::get_purpose_type::GetPurposeTypeInput,
+                        stop_point: ::aws_smithy_runtime::client::orchestrator::StopPoint,
+                    ) -> ::std::result::Result<::aws_smithy_runtime_api::client::interceptors::context::InterceptorContext, ::aws_smithy_runtime_api::client::result::SdkError<::aws_smithy_runtime_api::client::interceptors::context::Error, ::aws_smithy_runtime_api::client::orchestrator::HttpResponse>> {
+                        let input = ::aws_smithy_runtime_api::client::interceptors::context::Input::erase(input);
+                        use ::tracing::Instrument;
+                        ::aws_smithy_runtime::client::orchestrator::invoke_with_stop_point(
+                            "PurposeBoundAccountService",
+                            "GetPurposeType",
+                            input,
+                            runtime_plugins,
+                            stop_point
+                        )
+                        // Create a parent span for the entire operation. Includes a random, internal-only,
+                        // seven-digit ID for the operation orchestration so that it can be correlated in the logs.
+                        .instrument(::tracing::debug_span!(
+                                "PurposeBoundAccountService.GetPurposeType",
+                                "rpc.service" = "PurposeBoundAccountService",
+                                "rpc.method" = "GetPurposeType",
+                                "sdk_invocation_id" = ::fastrand::u32(1_000_000..10_000_000),
+                                
+                            ))
+                        .await
+                    }
+    
+                    pub(crate) fn operation_runtime_plugins(
+                        client_runtime_plugins: ::aws_smithy_runtime_api::client::runtime_plugin::RuntimePlugins,
+                        client_config: &crate::config::Config,
+                        config_override: ::std::option::Option<crate::config::Builder>,
+                    ) -> ::aws_smithy_runtime_api::client::runtime_plugin::RuntimePlugins {
+                        let mut runtime_plugins = client_runtime_plugins.with_operation_plugin(Self::new());
+                        runtime_plugins = runtime_plugins
+                                        .with_client_plugin(crate::auth_plugin::DefaultAuthOptionsPlugin::new(vec![::aws_smithy_runtime::client::auth::no_auth::NO_AUTH_SCHEME_ID]));
+                        if let ::std::option::Option::Some(config_override) = config_override {
+                            for plugin in config_override.runtime_plugins.iter().cloned() {
+                                runtime_plugins = runtime_plugins.with_operation_plugin(plugin);
+                            }
+                            runtime_plugins = runtime_plugins.with_operation_plugin(
+                                crate::config::ConfigOverrideRuntimePlugin::new(config_override, client_config.config.clone(), &client_config.runtime_components)
+                            );
+                        }
+                        runtime_plugins
+                    }
 }
 impl ::aws_smithy_runtime_api::client::runtime_plugin::RuntimePlugin for GetPurposeType {
-    fn config(&self) -> ::std::option::Option<::aws_smithy_types::config_bag::FrozenLayer> {
-        let mut cfg = ::aws_smithy_types::config_bag::Layer::new("GetPurposeType");
+                fn config(&self) -> ::std::option::Option<::aws_smithy_types::config_bag::FrozenLayer> {
+                    let mut cfg = ::aws_smithy_types::config_bag::Layer::new("GetPurposeType");
 
-        cfg.store_put(::aws_smithy_runtime_api::client::ser_de::SharedRequestSerializer::new(
-            GetPurposeTypeRequestSerializer,
-        ));
-        cfg.store_put(::aws_smithy_runtime_api::client::ser_de::SharedResponseDeserializer::new(
-            GetPurposeTypeResponseDeserializer,
-        ));
+                    cfg.store_put(::aws_smithy_runtime_api::client::ser_de::SharedRequestSerializer::new(GetPurposeTypeRequestSerializer));
+                    cfg.store_put(::aws_smithy_runtime_api::client::ser_de::SharedResponseDeserializer::new(GetPurposeTypeResponseDeserializer));
 
-        cfg.store_put(::aws_smithy_runtime_api::client::auth::AuthSchemeOptionResolverParams::new(
-            ::aws_smithy_runtime_api::client::auth::static_resolver::StaticAuthSchemeOptionResolverParams::new(),
-        ));
+                    
+                    cfg.store_put(::aws_smithy_runtime_api::client::auth::AuthSchemeOptionResolverParams::new(::aws_smithy_runtime_api::client::auth::static_resolver::StaticAuthSchemeOptionResolverParams::new()));
 
-        cfg.store_put(::aws_smithy_runtime_api::client::orchestrator::Metadata::new(
-            "GetPurposeType",
-            "PurposeBoundAccountService",
-        ));
+                    cfg.store_put(::aws_smithy_runtime_api::client::orchestrator::Metadata::new(
+                            "GetPurposeType",
+                            "PurposeBoundAccountService",
+                        ));
 
-        ::std::option::Option::Some(cfg.freeze())
-    }
-
-    fn runtime_components(
-        &self,
-        _: &::aws_smithy_runtime_api::client::runtime_components::RuntimeComponentsBuilder,
-    ) -> ::std::borrow::Cow<'_, ::aws_smithy_runtime_api::client::runtime_components::RuntimeComponentsBuilder> {
-        #[allow(unused_mut)]
-        let mut rcb = ::aws_smithy_runtime_api::client::runtime_components::RuntimeComponentsBuilder::new("GetPurposeType")
-            .with_interceptor(::aws_smithy_runtime::client::stalled_stream_protection::StalledStreamProtectionInterceptor::default())
-            .with_interceptor(GetPurposeTypeEndpointParamsInterceptor)
-            .with_retry_classifier(::aws_smithy_runtime::client::retries::classifiers::TransientErrorClassifier::<
-                crate::operation::get_purpose_type::GetPurposeTypeError,
-            >::new())
-            .with_retry_classifier(::aws_smithy_runtime::client::retries::classifiers::ModeledAsRetryableClassifier::<
-                crate::operation::get_purpose_type::GetPurposeTypeError,
-            >::new());
-
-        ::std::borrow::Cow::Owned(rcb)
-    }
-}
-
-#[derive(Debug)]
-struct GetPurposeTypeResponseDeserializer;
-impl ::aws_smithy_runtime_api::client::ser_de::DeserializeResponse for GetPurposeTypeResponseDeserializer {
-    fn deserialize_nonstreaming(
-        &self,
-        response: &::aws_smithy_runtime_api::client::orchestrator::HttpResponse,
-    ) -> ::aws_smithy_runtime_api::client::interceptors::context::OutputOrError {
-        let (success, status) = (response.status().is_success(), response.status().as_u16());
-        let headers = response.headers();
-        let body = response.body().bytes().expect("body loaded");
-        #[allow(unused_mut)]
-        let mut force_error = false;
-
-        let parse_result = if !success && status != 200 || force_error {
-            crate::protocol_serde::shape_get_purpose_type::de_get_purpose_type_http_error(status, headers, body)
-        } else {
-            crate::protocol_serde::shape_get_purpose_type::de_get_purpose_type_http_response(status, headers, body)
-        };
-        crate::protocol_serde::type_erase_result(parse_result)
-    }
-}
-#[derive(Debug)]
-struct GetPurposeTypeRequestSerializer;
-impl ::aws_smithy_runtime_api::client::ser_de::SerializeRequest for GetPurposeTypeRequestSerializer {
-    #[allow(unused_mut, clippy::let_and_return, clippy::needless_borrow, clippy::useless_conversion)]
-    fn serialize_input(
-        &self,
-        input: ::aws_smithy_runtime_api::client::interceptors::context::Input,
-        _cfg: &mut ::aws_smithy_types::config_bag::ConfigBag,
-    ) -> ::std::result::Result<::aws_smithy_runtime_api::client::orchestrator::HttpRequest, ::aws_smithy_runtime_api::box_error::BoxError> {
-        let input = input
-            .downcast::<crate::operation::get_purpose_type::GetPurposeTypeInput>()
-            .expect("correct type");
-        let _header_serialization_settings = _cfg
-            .load::<crate::serialization_settings::HeaderSerializationSettings>()
-            .cloned()
-            .unwrap_or_default();
-        let mut request_builder = {
-            fn uri_base(
-                _input: &crate::operation::get_purpose_type::GetPurposeTypeInput,
-                output: &mut ::std::string::String,
-            ) -> ::std::result::Result<(), ::aws_smithy_types::error::operation::BuildError> {
-                use ::std::fmt::Write as _;
-                let input_1 = &_input.purpose_code;
-                let input_1 = input_1
-                    .as_ref()
-                    .ok_or_else(|| ::aws_smithy_types::error::operation::BuildError::missing_field("purpose_code", "cannot be empty or unset"))?;
-                let purpose_code = ::aws_smithy_http::label::fmt_string(input_1, ::aws_smithy_http::label::EncodingStrategy::Default);
-                if purpose_code.is_empty() {
-                    return ::std::result::Result::Err(::aws_smithy_types::error::operation::BuildError::missing_field(
-                        "purpose_code",
-                        "cannot be empty or unset",
-                    ));
+                    ::std::option::Option::Some(cfg.freeze())
                 }
-                ::std::write!(output, "/purpose-types/{purposeCode}", purposeCode = purpose_code).expect("formatting should succeed");
-                ::std::result::Result::Ok(())
-            }
-            #[allow(clippy::unnecessary_wraps)]
-            fn update_http_builder(
-                input: &crate::operation::get_purpose_type::GetPurposeTypeInput,
-                builder: ::http::request::Builder,
-            ) -> ::std::result::Result<::http::request::Builder, ::aws_smithy_types::error::operation::BuildError> {
-                let mut uri = ::std::string::String::new();
-                uri_base(input, &mut uri)?;
-                ::std::result::Result::Ok(builder.method("GET").uri(uri))
-            }
-            let mut builder = update_http_builder(&input, ::http::request::Builder::new())?;
-            builder
-        };
-        let body = ::aws_smithy_types::body::SdkBody::from("");
 
-        ::std::result::Result::Ok(request_builder.body(body).expect("valid request").try_into().unwrap())
-    }
-}
+                fn runtime_components(&self, _: &::aws_smithy_runtime_api::client::runtime_components::RuntimeComponentsBuilder) -> ::std::borrow::Cow<'_, ::aws_smithy_runtime_api::client::runtime_components::RuntimeComponentsBuilder> {
+                    #[allow(unused_mut)]
+                    let mut rcb = ::aws_smithy_runtime_api::client::runtime_components::RuntimeComponentsBuilder::new("GetPurposeType")
+                            .with_interceptor(::aws_smithy_runtime::client::stalled_stream_protection::StalledStreamProtectionInterceptor::default())
+.with_interceptor(GetPurposeTypeEndpointParamsInterceptor)
+                            .with_retry_classifier(::aws_smithy_runtime::client::retries::classifiers::TransientErrorClassifier::<crate::operation::get_purpose_type::GetPurposeTypeError>::new())
+.with_retry_classifier(::aws_smithy_runtime::client::retries::classifiers::ModeledAsRetryableClassifier::<crate::operation::get_purpose_type::GetPurposeTypeError>::new());
+
+                    ::std::borrow::Cow::Owned(rcb)
+                }
+            }
+
+            
 #[derive(Debug)]
-struct GetPurposeTypeEndpointParamsInterceptor;
+            struct GetPurposeTypeResponseDeserializer;
+            impl ::aws_smithy_runtime_api::client::ser_de::DeserializeResponse for GetPurposeTypeResponseDeserializer {
+                
 
-impl ::aws_smithy_runtime_api::client::interceptors::Intercept for GetPurposeTypeEndpointParamsInterceptor {
-    fn name(&self) -> &'static str {
-        "GetPurposeTypeEndpointParamsInterceptor"
-    }
-
-    fn read_before_execution(
-        &self,
-        context: &::aws_smithy_runtime_api::client::interceptors::context::BeforeSerializationInterceptorContextRef<
-            '_,
-            ::aws_smithy_runtime_api::client::interceptors::context::Input,
-            ::aws_smithy_runtime_api::client::interceptors::context::Output,
-            ::aws_smithy_runtime_api::client::interceptors::context::Error,
-        >,
-        cfg: &mut ::aws_smithy_types::config_bag::ConfigBag,
-    ) -> ::std::result::Result<(), ::aws_smithy_runtime_api::box_error::BoxError> {
-        let _input = context
-            .input()
-            .downcast_ref::<GetPurposeTypeInput>()
-            .ok_or("failed to downcast to GetPurposeTypeInput")?;
-
-        let params = crate::config::endpoint::Params::builder().build().map_err(|err| {
-            ::aws_smithy_runtime_api::client::interceptors::error::ContextAttachedError::new("endpoint params could not be built", err)
-        })?;
-        cfg.interceptor_state()
-            .store_put(::aws_smithy_runtime_api::client::endpoint::EndpointResolverParams::new(params));
-        ::std::result::Result::Ok(())
-    }
+                fn deserialize_nonstreaming(&self, response: &::aws_smithy_runtime_api::client::orchestrator::HttpResponse) -> ::aws_smithy_runtime_api::client::interceptors::context::OutputOrError {
+                    let (success, status) = (response.status().is_success(), response.status().as_u16());
+            let headers = response.headers();
+            let body = response.body().bytes().expect("body loaded");
+            #[allow(unused_mut)]
+            let mut force_error = false;
+            
+            let parse_result = if !success && status != 200 || force_error {
+                crate::protocol_serde::shape_get_purpose_type::de_get_purpose_type_http_error(status, headers, body)
+            } else {
+                crate::protocol_serde::shape_get_purpose_type::de_get_purpose_type_http_response(status, headers, body)
+            };
+            crate::protocol_serde::type_erase_result(parse_result)
+                }
+            }
+#[derive(Debug)]
+            struct GetPurposeTypeRequestSerializer;
+            impl ::aws_smithy_runtime_api::client::ser_de::SerializeRequest for GetPurposeTypeRequestSerializer {
+                #[allow(unused_mut, clippy::let_and_return, clippy::needless_borrow, clippy::useless_conversion)]
+                fn serialize_input(&self, input: ::aws_smithy_runtime_api::client::interceptors::context::Input, _cfg: &mut ::aws_smithy_types::config_bag::ConfigBag) -> ::std::result::Result<::aws_smithy_runtime_api::client::orchestrator::HttpRequest, ::aws_smithy_runtime_api::box_error::BoxError> {
+                    let input = input.downcast::<crate::operation::get_purpose_type::GetPurposeTypeInput>().expect("correct type");
+                    let _header_serialization_settings = _cfg.load::<crate::serialization_settings::HeaderSerializationSettings>().cloned().unwrap_or_default();
+                    let mut request_builder = {
+                        fn uri_base(_input: &crate::operation::get_purpose_type::GetPurposeTypeInput, output: &mut ::std::string::String) -> ::std::result::Result<(), ::aws_smithy_types::error::operation::BuildError> {
+    use ::std::fmt::Write as _;
+    let input_1 = &_input.purpose_code;
+    let input_1 = input_1.as_ref().ok_or_else(|| ::aws_smithy_types::error::operation::BuildError::missing_field("purpose_code", "cannot be empty or unset"))?;
+    let purpose_code = ::aws_smithy_http::label::fmt_string(input_1, ::aws_smithy_http::label::EncodingStrategy::Default);
+    if purpose_code.is_empty() {
+                    return ::std::result::Result::Err(::aws_smithy_types::error::operation::BuildError::missing_field("purpose_code", "cannot be empty or unset"))
+                }
+    ::std::write!(output, "/purpose-types/{purposeCode}", purposeCode = purpose_code).expect("formatting should succeed");
+    ::std::result::Result::Ok(())
 }
+#[allow(clippy::unnecessary_wraps)]
+fn update_http_builder(
+                input: &crate::operation::get_purpose_type::GetPurposeTypeInput,
+                builder: ::http::request::Builder
+            ) -> ::std::result::Result<::http::request::Builder, ::aws_smithy_types::error::operation::BuildError> {
+    let mut uri = ::std::string::String::new();
+    uri_base(input, &mut uri)?;
+    ::std::result::Result::Ok(builder.method("GET").uri(uri))
+}
+let mut builder = update_http_builder(&input, ::http::request::Builder::new())?;
+builder
+                    };
+                    let body = ::aws_smithy_types::body::SdkBody::from("");
+                    
+                    ::std::result::Result::Ok(request_builder.body(body).expect("valid request").try_into().unwrap())
+                }
+            }
+#[derive(Debug)]
+            struct GetPurposeTypeEndpointParamsInterceptor;
 
-// The get_* functions below are generated from JMESPath expressions in the
-// operationContextParams trait. They target the operation's input shape.
+            impl ::aws_smithy_runtime_api::client::interceptors::Intercept for GetPurposeTypeEndpointParamsInterceptor {
+                fn name(&self) -> &'static str {
+                    "GetPurposeTypeEndpointParamsInterceptor"
+                }
+
+                fn read_before_execution(
+                    &self,
+                    context: &::aws_smithy_runtime_api::client::interceptors::context::BeforeSerializationInterceptorContextRef<'_, ::aws_smithy_runtime_api::client::interceptors::context::Input, ::aws_smithy_runtime_api::client::interceptors::context::Output, ::aws_smithy_runtime_api::client::interceptors::context::Error>,
+                    cfg: &mut ::aws_smithy_types::config_bag::ConfigBag,
+                ) -> ::std::result::Result<(), ::aws_smithy_runtime_api::box_error::BoxError> {
+                    let _input = context.input()
+                        .downcast_ref::<GetPurposeTypeInput>()
+                        .ok_or("failed to downcast to GetPurposeTypeInput")?;
+
+                    
+
+                    let params = crate::config::endpoint::Params::builder()
+                        
+                        .build()
+                        .map_err(|err| ::aws_smithy_runtime_api::client::interceptors::error::ContextAttachedError::new("endpoint params could not be built", err))?;
+                    cfg.interceptor_state().store_put(::aws_smithy_runtime_api::client::endpoint::EndpointResolverParams::new(params));
+                    ::std::result::Result::Ok(())
+                }
+            }
+
+            // The get_* functions below are generated from JMESPath expressions in the
+            // operationContextParams trait. They target the operation's input shape.
+
+            
 
 /// Error type for the `GetPurposeTypeError` operation.
 #[non_exhaustive]
@@ -249,36 +196,28 @@ pub enum GetPurposeTypeError {
     #[allow(missing_docs)] // documentation missing in model
     PurposeTypeNotFoundError(crate::types::error::PurposeTypeNotFoundError),
     /// An unexpected error occurred (e.g., invalid JSON returned by the service or an unknown error code).
-    #[deprecated(note = "Matching `Unhandled` directly is not forwards compatible. Instead, match using a \
+                    #[deprecated(note = "Matching `Unhandled` directly is not forwards compatible. Instead, match using a \
     variable wildcard pattern and check `.code()`:
      \
     &nbsp;&nbsp;&nbsp;`err if err.code() == Some(\"SpecificExceptionCode\") => { /* handle the error */ }`
      \
     See [`ProvideErrorMetadata`](#impl-ProvideErrorMetadata-for-GetPurposeTypeError) for what information is available for the error.")]
-    Unhandled(crate::error::sealed_unhandled::Unhandled),
+                    Unhandled(crate::error::sealed_unhandled::Unhandled),
 }
 impl GetPurposeTypeError {
     /// Creates the `GetPurposeTypeError::Unhandled` variant from any error type.
-    pub fn unhandled(
-        err: impl ::std::convert::Into<::std::boxed::Box<dyn ::std::error::Error + ::std::marker::Send + ::std::marker::Sync + 'static>>,
-    ) -> Self {
-        Self::Unhandled(crate::error::sealed_unhandled::Unhandled {
-            source: err.into(),
-            meta: ::std::default::Default::default(),
-        })
-    }
-
-    /// Creates the `GetPurposeTypeError::Unhandled` variant from an [`ErrorMetadata`](::aws_smithy_types::error::ErrorMetadata).
-    pub fn generic(err: ::aws_smithy_types::error::ErrorMetadata) -> Self {
-        Self::Unhandled(crate::error::sealed_unhandled::Unhandled {
-            source: err.clone().into(),
-            meta: err,
-        })
-    }
-    ///
+                    pub fn unhandled(err: impl ::std::convert::Into<::std::boxed::Box<dyn ::std::error::Error + ::std::marker::Send + ::std::marker::Sync + 'static>>) -> Self {
+                        Self::Unhandled(crate::error::sealed_unhandled::Unhandled { source: err.into(), meta: ::std::default::Default::default() })
+                    }
+    
+                    /// Creates the `GetPurposeTypeError::Unhandled` variant from an [`ErrorMetadata`](::aws_smithy_types::error::ErrorMetadata).
+                    pub fn generic(err: ::aws_smithy_types::error::ErrorMetadata) -> Self {
+                        Self::Unhandled(crate::error::sealed_unhandled::Unhandled { source: err.clone().into(), meta: err })
+                    }
+    /// 
     /// Returns error metadata, which includes the error code, message,
     /// request ID, and potentially additional information.
-    ///
+    /// 
     pub fn meta(&self) -> &::aws_smithy_types::error::ErrorMetadata {
         match self {
             Self::PurposeTypeNotFoundError(e) => ::aws_smithy_types::error::metadata::ProvideErrorMetadata::meta(e),
@@ -293,21 +232,27 @@ impl GetPurposeTypeError {
 impl ::std::error::Error for GetPurposeTypeError {
     fn source(&self) -> ::std::option::Option<&(dyn ::std::error::Error + 'static)> {
         match self {
-            Self::PurposeTypeNotFoundError(_inner) => ::std::option::Option::Some(_inner),
-            Self::Unhandled(_inner) => ::std::option::Option::Some(&*_inner.source),
+            Self::PurposeTypeNotFoundError(_inner) =>
+            ::std::option::Option::Some(_inner)
+            ,
+            Self::Unhandled(_inner) => {
+                ::std::option::Option::Some(&*_inner.source)
+            }
         }
     }
 }
 impl ::std::fmt::Display for GetPurposeTypeError {
     fn fmt(&self, f: &mut ::std::fmt::Formatter<'_>) -> ::std::fmt::Result {
         match self {
-            Self::PurposeTypeNotFoundError(_inner) => _inner.fmt(f),
+            Self::PurposeTypeNotFoundError(_inner) =>
+            _inner.fmt(f)
+            ,
             Self::Unhandled(_inner) => {
                 if let ::std::option::Option::Some(code) = ::aws_smithy_types::error::metadata::ProvideErrorMetadata::code(self) {
-                    write!(f, "unhandled error ({code})")
-                } else {
-                    f.write_str("unhandled error")
-                }
+                                                        write!(f, "unhandled error ({code})")
+                                                    } else {
+                                                        f.write_str("unhandled error")
+                                                    }
             }
         }
     }
@@ -323,20 +268,21 @@ impl ::aws_smithy_types::retry::ProvideErrorKind for GetPurposeTypeError {
 impl ::aws_smithy_types::error::metadata::ProvideErrorMetadata for GetPurposeTypeError {
     fn meta(&self) -> &::aws_smithy_types::error::ErrorMetadata {
         match self {
-            Self::PurposeTypeNotFoundError(_inner) => ::aws_smithy_types::error::metadata::ProvideErrorMetadata::meta(_inner),
-            Self::Unhandled(_inner) => &_inner.meta,
+            Self::PurposeTypeNotFoundError(_inner) =>
+            ::aws_smithy_types::error::metadata::ProvideErrorMetadata::meta(_inner)
+            ,
+            Self::Unhandled(_inner) => {
+                &_inner.meta
+            }
         }
     }
 }
 impl ::aws_smithy_runtime_api::client::result::CreateUnhandledError for GetPurposeTypeError {
     fn create_unhandled_error(
-        source: ::std::boxed::Box<dyn ::std::error::Error + ::std::marker::Send + ::std::marker::Sync + 'static>,
-        meta: ::std::option::Option<::aws_smithy_types::error::ErrorMetadata>,
-    ) -> Self {
-        Self::Unhandled(crate::error::sealed_unhandled::Unhandled {
-            source,
-            meta: meta.unwrap_or_default(),
-        })
+                        source: ::std::boxed::Box<dyn ::std::error::Error + ::std::marker::Send + ::std::marker::Sync + 'static>,
+                        meta: ::std::option::Option<::aws_smithy_types::error::ErrorMetadata>
+                    ) -> Self {
+        Self::Unhandled(crate::error::sealed_unhandled::Unhandled { source, meta: meta.unwrap_or_default() })
     }
 }
 
@@ -350,3 +296,4 @@ mod _get_purpose_type_output;
 
 /// Builders
 pub mod builders;
+

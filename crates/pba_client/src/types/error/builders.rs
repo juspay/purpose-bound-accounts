@@ -9,4 +9,9 @@ pub use crate::types::error::_account_not_active_error::AccountNotActiveErrorBui
 
 pub use crate::types::error::_invalid_mcc_error::InvalidMccErrorBuilder;
 
+pub use crate::types::error::_deposit_not_pending_error::DepositNotPendingErrorBuilder;
+
+pub use crate::types::error::_deposit_not_found_error::DepositNotFoundErrorBuilder;
+
 pub use crate::types::error::_duplicate_account_error::DuplicateAccountErrorBuilder;
+

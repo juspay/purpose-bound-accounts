@@ -2,7 +2,8 @@
 #[allow(missing_docs)] // documentation missing in model
 #[non_exhaustive]
 #[derive(::std::clone::Clone, ::std::cmp::PartialEq, ::std::fmt::Debug)]
-pub struct ListPurposeTypesInput {}
+pub struct ListPurposeTypesInput  {
+}
 impl ListPurposeTypesInput {
     /// Creates a new builder-style object to manufacture [`ListPurposeTypesInput`](crate::operation::list_purpose_types::ListPurposeTypesInput).
     pub fn builder() -> crate::operation::list_purpose_types::builders::ListPurposeTypesInputBuilder {
@@ -13,12 +14,15 @@ impl ListPurposeTypesInput {
 /// A builder for [`ListPurposeTypesInput`](crate::operation::list_purpose_types::ListPurposeTypesInput).
 #[derive(::std::clone::Clone, ::std::cmp::PartialEq, ::std::default::Default, ::std::fmt::Debug)]
 #[non_exhaustive]
-pub struct ListPurposeTypesInputBuilder {}
+pub struct ListPurposeTypesInputBuilder {
+}
 impl ListPurposeTypesInputBuilder {
     /// Consumes the builder and constructs a [`ListPurposeTypesInput`](crate::operation::list_purpose_types::ListPurposeTypesInput).
-    pub fn build(
-        self,
-    ) -> ::std::result::Result<crate::operation::list_purpose_types::ListPurposeTypesInput, ::aws_smithy_types::error::operation::BuildError> {
-        ::std::result::Result::Ok(crate::operation::list_purpose_types::ListPurposeTypesInput {})
+    pub fn build(self) -> ::std::result::Result<crate::operation::list_purpose_types::ListPurposeTypesInput, ::aws_smithy_types::error::operation::BuildError> {
+        ::std::result::Result::Ok(
+            crate::operation::list_purpose_types::ListPurposeTypesInput {
+            }
+        )
     }
 }
+

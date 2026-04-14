@@ -2,7 +2,7 @@
 #[allow(missing_docs)] // documentation missing in model
 #[non_exhaustive]
 #[derive(::std::clone::Clone, ::std::cmp::PartialEq, ::std::fmt::Debug)]
-pub struct CreateAccountInput {
+pub struct CreateAccountInput  {
     #[allow(missing_docs)] // documentation missing in model
     pub holder_id: ::std::option::Option<::std::string::String>,
     #[allow(missing_docs)] // documentation missing in model
@@ -12,7 +12,7 @@ pub struct CreateAccountInput {
     #[allow(missing_docs)] // documentation missing in model
     pub origin_account_number: ::std::option::Option<::std::string::String>,
 }
-impl CreateAccountInput {
+impl  CreateAccountInput  {
     #[allow(missing_docs)] // documentation missing in model
     pub fn holder_id(&self) -> ::std::option::Option<&str> {
         self.holder_id.as_deref()
@@ -55,8 +55,7 @@ impl CreateAccountInputBuilder {
     }
     #[allow(missing_docs)] // documentation missing in model
     pub fn set_holder_id(mut self, input: ::std::option::Option<::std::string::String>) -> Self {
-        self.holder_id = input;
-        self
+        self.holder_id = input; self
     }
     #[allow(missing_docs)] // documentation missing in model
     pub fn get_holder_id(&self) -> &::std::option::Option<::std::string::String> {
@@ -70,8 +69,7 @@ impl CreateAccountInputBuilder {
     }
     #[allow(missing_docs)] // documentation missing in model
     pub fn set_purpose_code(mut self, input: ::std::option::Option<::std::string::String>) -> Self {
-        self.purpose_code = input;
-        self
+        self.purpose_code = input; self
     }
     #[allow(missing_docs)] // documentation missing in model
     pub fn get_purpose_code(&self) -> &::std::option::Option<::std::string::String> {
@@ -85,8 +83,7 @@ impl CreateAccountInputBuilder {
     }
     #[allow(missing_docs)] // documentation missing in model
     pub fn set_origin_ifsc(mut self, input: ::std::option::Option<::std::string::String>) -> Self {
-        self.origin_ifsc = input;
-        self
+        self.origin_ifsc = input; self
     }
     #[allow(missing_docs)] // documentation missing in model
     pub fn get_origin_ifsc(&self) -> &::std::option::Option<::std::string::String> {
@@ -100,22 +97,26 @@ impl CreateAccountInputBuilder {
     }
     #[allow(missing_docs)] // documentation missing in model
     pub fn set_origin_account_number(mut self, input: ::std::option::Option<::std::string::String>) -> Self {
-        self.origin_account_number = input;
-        self
+        self.origin_account_number = input; self
     }
     #[allow(missing_docs)] // documentation missing in model
     pub fn get_origin_account_number(&self) -> &::std::option::Option<::std::string::String> {
         &self.origin_account_number
     }
     /// Consumes the builder and constructs a [`CreateAccountInput`](crate::operation::create_account::CreateAccountInput).
-    pub fn build(
-        self,
-    ) -> ::std::result::Result<crate::operation::create_account::CreateAccountInput, ::aws_smithy_types::error::operation::BuildError> {
-        ::std::result::Result::Ok(crate::operation::create_account::CreateAccountInput {
-            holder_id: self.holder_id,
-            purpose_code: self.purpose_code,
-            origin_ifsc: self.origin_ifsc,
-            origin_account_number: self.origin_account_number,
-        })
+    pub fn build(self) -> ::std::result::Result<crate::operation::create_account::CreateAccountInput, ::aws_smithy_types::error::operation::BuildError> {
+        ::std::result::Result::Ok(
+            crate::operation::create_account::CreateAccountInput {
+                holder_id: self.holder_id
+                ,
+                purpose_code: self.purpose_code
+                ,
+                origin_ifsc: self.origin_ifsc
+                ,
+                origin_account_number: self.origin_account_number
+                ,
+            }
+        )
     }
 }
+
