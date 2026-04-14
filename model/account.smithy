@@ -55,6 +55,12 @@ operation GetBalance {
 
         @required
         total: Money
+
+        @required
+        pendingSelf: Money
+
+        @required
+        pendingOthers: Money
     }
     errors: [AccountNotFoundError]
 }

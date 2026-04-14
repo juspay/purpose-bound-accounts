@@ -98,22 +98,30 @@ impl LedgerRepo {
 
         let mut self_balance: u64 = 0;
         let mut others_balance: u64 = 0;
+        let mut pending_self: u64 = 0;
+        let mut pending_others: u64 = 0;
 
         for account in &accounts {
-            let balance = account
+            let posted = account
                 .credits_posted()
                 .saturating_sub(account.debits_posted());
-            let balance_u64 = u64::try_from(balance).unwrap_or(u64::MAX);
+            let posted_u64 = u64::try_from(posted).unwrap_or(u64::MAX);
+            let pending = u64::try_from(account.credits_pending()).unwrap_or(u64::MAX);
+
             if account.id() == self_id {
-                self_balance = balance_u64;
+                self_balance = posted_u64;
+                pending_self = pending;
             } else if account.id() == others_id {
-                others_balance = balance_u64;
+                others_balance = posted_u64;
+                pending_others = pending;
             }
         }
 
         Ok(PoolBalance {
             self_contribution: self_balance,
             others_contribution: others_balance,
+            pending_self,
+            pending_others,
         })
     }
 
@@ -234,6 +242,79 @@ impl LedgerRepo {
             others_amount, self_amount, code = transfer_code,
             "Created linked TB transfer chain"
         );
+        Ok(())
+    }
+
+    /// Create a pending transfer. Returns the TB transfer ID (needed for post/void).
+    pub async fn create_pending_transfer(
+        &self,
+        debit_account_id: u128,
+        credit_account_id: u128,
+        amount: u64,
+        transfer_code: u16,
+        timeout_seconds: u32,
+    ) -> Result<u128, AppError> {
+        let transfer_id = generate_transfer_id();
+        let transfer = tb::Transfer::new(transfer_id)
+            .with_debit_account_id(debit_account_id)
+            .with_credit_account_id(credit_account_id)
+            .with_amount(amount as u128)
+            .with_ledger(LEDGER_INR_PAISA)
+            .with_code(transfer_code)
+            .with_flags(TransferFlags::PENDING)
+            .with_timeout(timeout_seconds);
+
+        self.client
+            .create_transfers(vec![transfer])
+            .await
+            .map_err(|e| classify_transfer_error(e, "create_pending_transfer"))?;
+
+        tracing::info!(
+            debit = %debit_account_id, credit = %credit_account_id,
+            amount, code = transfer_code, timeout = timeout_seconds,
+            transfer_id = %transfer_id,
+            "Created pending TB transfer"
+        );
+        Ok(transfer_id)
+    }
+
+    /// Post (confirm) a pending transfer.
+    pub async fn post_pending_transfer(
+        &self,
+        pending_id: u128,
+    ) -> Result<(), AppError> {
+        let transfer = tb::Transfer::new(generate_transfer_id())
+            .with_pending_id(pending_id)
+            .with_flags(TransferFlags::POST_PENDING_TRANSFER);
+
+        self.client
+            .create_transfers(vec![transfer])
+            .await
+            .map_err(|e| {
+                AppError::TigerBeetleError(format!("post_pending_transfer failed: {e:?}"))
+            })?;
+
+        tracing::info!(pending_id = %pending_id, "Posted pending TB transfer");
+        Ok(())
+    }
+
+    /// Void (cancel) a pending transfer.
+    pub async fn void_pending_transfer(
+        &self,
+        pending_id: u128,
+    ) -> Result<(), AppError> {
+        let transfer = tb::Transfer::new(generate_transfer_id())
+            .with_pending_id(pending_id)
+            .with_flags(TransferFlags::VOID_PENDING_TRANSFER);
+
+        self.client
+            .create_transfers(vec![transfer])
+            .await
+            .map_err(|e| {
+                AppError::TigerBeetleError(format!("void_pending_transfer failed: {e:?}"))
+            })?;
+
+        tracing::info!(pending_id = %pending_id, "Voided pending TB transfer");
         Ok(())
     }
 }

@@ -17,6 +17,14 @@ pub fn create_router() -> Router<AppState> {
         .route("/accounts/{accountId}/balance", get(handlers::get_balance))
         // Deposit
         .route("/accounts/{accountId}/deposits", post(handlers::deposit))
+        .route(
+            "/accounts/{accountId}/deposits/{depositId}/post",
+            post(handlers::post_deposit),
+        )
+        .route(
+            "/accounts/{accountId}/deposits/{depositId}/void",
+            post(handlers::void_deposit),
+        )
         // Payment
         .route(
             "/accounts/{accountId}/payments",

@@ -2,30 +2,27 @@
 #[allow(missing_docs)] // documentation missing in model
 #[non_exhaustive]
 #[derive(::std::clone::Clone, ::std::cmp::PartialEq, ::std::fmt::Debug)]
-pub struct AccountNotFoundError {
+pub struct AccountNotFoundError  {
     #[allow(missing_docs)] // documentation missing in model
     pub error: ::std::string::String,
     #[allow(missing_docs)] // documentation missing in model
     pub message: ::std::string::String,
     pub(crate) meta: ::aws_smithy_types::error::ErrorMetadata,
 }
-impl AccountNotFoundError {
+impl  AccountNotFoundError  {
     #[allow(missing_docs)] // documentation missing in model
     pub fn error(&self) -> &str {
-        use std::ops::Deref;
-        self.error.deref()
+        use std::ops::Deref; self.error.deref()
     }
 }
 impl AccountNotFoundError {
     /// Returns the error message.
-    pub fn message(&self) -> &str {
-        &self.message
-    }
+                        pub fn message(&self) -> &str { &self.message }
 }
 impl ::std::fmt::Display for AccountNotFoundError {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         ::std::write!(f, "AccountNotFoundError")?;
-        {
+         {
             ::std::write!(f, ": {}", &self.message)?;
         }
         Ok(())
@@ -33,9 +30,7 @@ impl ::std::fmt::Display for AccountNotFoundError {
 }
 impl ::std::error::Error for AccountNotFoundError {}
 impl ::aws_smithy_types::error::metadata::ProvideErrorMetadata for AccountNotFoundError {
-    fn meta(&self) -> &::aws_smithy_types::error::ErrorMetadata {
-        &self.meta
-    }
+    fn meta(&self) -> &::aws_smithy_types::error::ErrorMetadata { &self.meta }
 }
 impl AccountNotFoundError {
     /// Creates a new builder-style object to manufacture [`AccountNotFoundError`](crate::types::error::AccountNotFoundError).
@@ -61,8 +56,7 @@ impl AccountNotFoundErrorBuilder {
     }
     #[allow(missing_docs)] // documentation missing in model
     pub fn set_error(mut self, input: ::std::option::Option<::std::string::String>) -> Self {
-        self.error = input;
-        self
+        self.error = input; self
     }
     #[allow(missing_docs)] // documentation missing in model
     pub fn get_error(&self) -> &::std::option::Option<::std::string::String> {
@@ -76,43 +70,43 @@ impl AccountNotFoundErrorBuilder {
     }
     #[allow(missing_docs)] // documentation missing in model
     pub fn set_message(mut self, input: ::std::option::Option<::std::string::String>) -> Self {
-        self.message = input;
-        self
+        self.message = input; self
     }
     #[allow(missing_docs)] // documentation missing in model
     pub fn get_message(&self) -> &::std::option::Option<::std::string::String> {
         &self.message
     }
     /// Sets error metadata
-    pub fn meta(mut self, meta: ::aws_smithy_types::error::ErrorMetadata) -> Self {
-        self.meta = Some(meta);
-        self
-    }
-
-    /// Sets error metadata
-    pub fn set_meta(&mut self, meta: std::option::Option<::aws_smithy_types::error::ErrorMetadata>) -> &mut Self {
-        self.meta = meta;
-        self
-    }
+                                                pub fn meta(mut self, meta: ::aws_smithy_types::error::ErrorMetadata) -> Self {
+                                                    self.meta = Some(meta);
+                                                    self
+                                                }
+    
+                                                /// Sets error metadata
+                                                pub fn set_meta(&mut self, meta: std::option::Option<::aws_smithy_types::error::ErrorMetadata>) -> &mut Self {
+                                                    self.meta = meta;
+                                                    self
+                                                }
     /// Consumes the builder and constructs a [`AccountNotFoundError`](crate::types::error::AccountNotFoundError).
     /// This method will fail if any of the following fields are not set:
     /// - [`error`](crate::types::error::builders::AccountNotFoundErrorBuilder::error)
     /// - [`message`](crate::types::error::builders::AccountNotFoundErrorBuilder::message)
     pub fn build(self) -> ::std::result::Result<crate::types::error::AccountNotFoundError, ::aws_smithy_types::error::operation::BuildError> {
-        ::std::result::Result::Ok(crate::types::error::AccountNotFoundError {
-            error: self.error.ok_or_else(|| {
-                ::aws_smithy_types::error::operation::BuildError::missing_field(
-                    "error",
-                    "error was not specified but it is required when building AccountNotFoundError",
-                )
-            })?,
-            message: self.message.ok_or_else(|| {
-                ::aws_smithy_types::error::operation::BuildError::missing_field(
-                    "message",
-                    "message was not specified but it is required when building AccountNotFoundError",
-                )
-            })?,
-            meta: self.meta.unwrap_or_default(),
-        })
+        ::std::result::Result::Ok(
+            crate::types::error::AccountNotFoundError {
+                error: self.error
+                    .ok_or_else(||
+                        ::aws_smithy_types::error::operation::BuildError::missing_field("error", "error was not specified but it is required when building AccountNotFoundError")
+                    )?
+                ,
+                message: self.message
+                    .ok_or_else(||
+                        ::aws_smithy_types::error::operation::BuildError::missing_field("message", "message was not specified but it is required when building AccountNotFoundError")
+                    )?
+                ,
+                meta: self.meta.unwrap_or_default(),
+            }
+        )
     }
 }
+

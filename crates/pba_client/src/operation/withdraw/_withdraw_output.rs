@@ -2,17 +2,16 @@
 #[allow(missing_docs)] // documentation missing in model
 #[non_exhaustive]
 #[derive(::std::clone::Clone, ::std::cmp::PartialEq, ::std::fmt::Debug)]
-pub struct WithdrawOutput {
+pub struct WithdrawOutput  {
     #[allow(missing_docs)] // documentation missing in model
     pub account_id: ::std::string::String,
     /// Monetary amount in the smallest currency unit (e.g., paise for INR).
     pub amount: i64,
 }
-impl WithdrawOutput {
+impl  WithdrawOutput  {
     #[allow(missing_docs)] // documentation missing in model
     pub fn account_id(&self) -> &str {
-        use std::ops::Deref;
-        self.account_id.deref()
+        use std::ops::Deref; self.account_id.deref()
     }
     /// Monetary amount in the smallest currency unit (e.g., paise for INR).
     pub fn amount(&self) -> i64 {
@@ -42,8 +41,7 @@ impl WithdrawOutputBuilder {
     }
     #[allow(missing_docs)] // documentation missing in model
     pub fn set_account_id(mut self, input: ::std::option::Option<::std::string::String>) -> Self {
-        self.account_id = input;
-        self
+        self.account_id = input; self
     }
     #[allow(missing_docs)] // documentation missing in model
     pub fn get_account_id(&self) -> &::std::option::Option<::std::string::String> {
@@ -57,8 +55,7 @@ impl WithdrawOutputBuilder {
     }
     /// Monetary amount in the smallest currency unit (e.g., paise for INR).
     pub fn set_amount(mut self, input: ::std::option::Option<i64>) -> Self {
-        self.amount = input;
-        self
+        self.amount = input; self
     }
     /// Monetary amount in the smallest currency unit (e.g., paise for INR).
     pub fn get_amount(&self) -> &::std::option::Option<i64> {
@@ -69,19 +66,20 @@ impl WithdrawOutputBuilder {
     /// - [`account_id`](crate::operation::withdraw::builders::WithdrawOutputBuilder::account_id)
     /// - [`amount`](crate::operation::withdraw::builders::WithdrawOutputBuilder::amount)
     pub fn build(self) -> ::std::result::Result<crate::operation::withdraw::WithdrawOutput, ::aws_smithy_types::error::operation::BuildError> {
-        ::std::result::Result::Ok(crate::operation::withdraw::WithdrawOutput {
-            account_id: self.account_id.ok_or_else(|| {
-                ::aws_smithy_types::error::operation::BuildError::missing_field(
-                    "account_id",
-                    "account_id was not specified but it is required when building WithdrawOutput",
-                )
-            })?,
-            amount: self.amount.ok_or_else(|| {
-                ::aws_smithy_types::error::operation::BuildError::missing_field(
-                    "amount",
-                    "amount was not specified but it is required when building WithdrawOutput",
-                )
-            })?,
-        })
+        ::std::result::Result::Ok(
+            crate::operation::withdraw::WithdrawOutput {
+                account_id: self.account_id
+                    .ok_or_else(||
+                        ::aws_smithy_types::error::operation::BuildError::missing_field("account_id", "account_id was not specified but it is required when building WithdrawOutput")
+                    )?
+                ,
+                amount: self.amount
+                    .ok_or_else(||
+                        ::aws_smithy_types::error::operation::BuildError::missing_field("amount", "amount was not specified but it is required when building WithdrawOutput")
+                    )?
+                ,
+            }
+        )
     }
 }
+

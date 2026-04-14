@@ -6,6 +6,8 @@ pub struct AppConfig {
     pub tigerbeetle_cluster_id: u128,
     pub host: String,
     pub port: u16,
+    pub deposit_timeout_seconds: u32,
+    pub deposit_poller_interval_seconds: u64,
 }
 
 impl AppConfig {
@@ -22,6 +24,14 @@ impl AppConfig {
             .unwrap_or_else(|_| "3000".to_string())
             .parse()
             .expect("PORT must be a valid u16");
+        let deposit_timeout_seconds: u32 = std::env::var("DEPOSIT_TIMEOUT_SECONDS")
+            .unwrap_or_else(|_| "1800".to_string())
+            .parse()
+            .expect("DEPOSIT_TIMEOUT_SECONDS must be a valid u32");
+        let deposit_poller_interval_seconds: u64 = std::env::var("DEPOSIT_POLLER_INTERVAL_SECONDS")
+            .unwrap_or_else(|_| "60".to_string())
+            .parse()
+            .expect("DEPOSIT_POLLER_INTERVAL_SECONDS must be a valid u64");
 
         Self {
             database_url,
@@ -32,6 +42,8 @@ impl AppConfig {
             tigerbeetle_cluster_id: tb_cluster_id,
             host,
             port,
+            deposit_timeout_seconds,
+            deposit_poller_interval_seconds,
         }
     }
 }

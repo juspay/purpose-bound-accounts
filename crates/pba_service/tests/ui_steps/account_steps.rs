@@ -22,20 +22,25 @@ pub fn parse_display_to_paisa(s: &str) -> i64 {
     }
 }
 
-/// Find `"Label: X.XX INR"` in page content and return value in paisa.
+/// Find `"Label: ₹X.XX"` in page content and return value in paisa.
 pub fn extract_balance(content: &str, label: &str) -> i64 {
-    // Look for pattern: label followed by number and "INR"
+    // Look for pattern: label followed by optional currency symbol and number
     let search = format!("{}:", label);
     if let Some(pos) = content.find(&search) {
         let after = &content[pos + search.len()..];
         // Skip whitespace / HTML tags
         let stripped = strip_html_tags(after);
         let trimmed = stripped.trim();
-        // Take up to first space or non-numeric (excluding '.')
-        let end = trimmed
-            .find(|c: char| !c.is_ascii_digit() && c != '.')
+        // Skip any non-digit prefix (e.g. ₹ symbol)
+        let start = trimmed
+            .find(|c: char| c.is_ascii_digit())
             .unwrap_or(trimmed.len());
-        let num_str = &trimmed[..end];
+        let rest = &trimmed[start..];
+        // Take up to first non-numeric (excluding '.')
+        let end = rest
+            .find(|c: char| !c.is_ascii_digit() && c != '.')
+            .unwrap_or(rest.len());
+        let num_str = &rest[..end];
         if !num_str.is_empty() {
             return parse_display_to_paisa(num_str);
         }
@@ -487,24 +492,24 @@ async fn view_detail(world: &mut UiWorld) {
 async fn page_self_pool(world: &mut UiWorld, expected: String) {
     let page = world.ensure_page().await;
     let content = page.content().await.unwrap();
-    assert!(content.contains(&format!("{expected} INR")),
-        "Expected self pool '{expected} INR' on page");
+    assert!(content.contains(&format!("₹{expected}")),
+        "Expected self pool '₹{expected}' on page");
 }
 
 #[then(regex = r#"^the page should show others pool as "([^"]*)"$"#)]
 async fn page_others_pool(world: &mut UiWorld, expected: String) {
     let page = world.ensure_page().await;
     let content = page.content().await.unwrap();
-    assert!(content.contains(&format!("{expected} INR")),
-        "Expected others pool '{expected} INR' on page");
+    assert!(content.contains(&format!("₹{expected}")),
+        "Expected others pool '₹{expected}' on page");
 }
 
 #[then(regex = r#"^the page should show total balance as "([^"]*)"$"#)]
 async fn page_total_balance(world: &mut UiWorld, expected: String) {
     let page = world.ensure_page().await;
     let content = page.content().await.unwrap();
-    assert!(content.contains(&format!("{expected} INR")),
-        "Expected total '{expected} INR' on page");
+    assert!(content.contains(&format!("₹{expected}")),
+        "Expected total '₹{expected}' on page");
 }
 
 #[then(regex = r#"^the transaction history should load$"#)]

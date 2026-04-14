@@ -16,6 +16,8 @@ pub enum AppError {
     InsufficientFunds { requested: u64, available: u64 },
     InvalidMcc { mcc: String, purpose_code: String },
     DuplicateAccount(String),
+    DepositNotFound(String),
+    DepositNotPending(String),
     /// Transfer rejected by TigerBeetle because debit would exceed credits (overdraft).
     /// This is retryable with a fresh balance read.
     ExceedsBalance,
@@ -42,6 +44,8 @@ impl std::fmt::Display for AppError {
                 write!(f, "MCC {mcc} not allowed for purpose {purpose_code}")
             }
             Self::DuplicateAccount(msg) => write!(f, "Duplicate account: {msg}"),
+            Self::DepositNotFound(id) => write!(f, "Deposit not found: {id}"),
+            Self::DepositNotPending(id) => write!(f, "Deposit is not in pending state: {id}"),
             Self::ExceedsBalance => write!(f, "Transfer exceeds available balance"),
             Self::TigerBeetleError(msg) => write!(f, "TigerBeetle error: {msg}"),
             Self::DatabaseError(msg) => write!(f, "Database error: {msg}"),
@@ -60,6 +64,8 @@ impl IntoResponse for AppError {
             }
             AppError::InvalidMcc { .. } => (StatusCode::UNPROCESSABLE_ENTITY, "InvalidMcc"),
             AppError::DuplicateAccount(_) => (StatusCode::CONFLICT, "DuplicateAccount"),
+            AppError::DepositNotFound(_) => (StatusCode::NOT_FOUND, "DepositNotFound"),
+            AppError::DepositNotPending(_) => (StatusCode::CONFLICT, "DepositNotPending"),
             AppError::ExceedsBalance => {
                 (StatusCode::UNPROCESSABLE_ENTITY, "InsufficientFunds")
             }

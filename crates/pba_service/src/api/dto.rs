@@ -60,6 +60,8 @@ pub struct BalanceResponse {
     pub self_contribution: u64,
     pub others_contribution: u64,
     pub total: u64,
+    pub pending_self: u64,
+    pub pending_others: u64,
 }
 
 // ── Deposit ──
@@ -70,14 +72,30 @@ pub struct DepositRequest {
     pub source_ifsc: String,
     pub source_account_number: String,
     pub amount: u64,
+    #[serde(default)]
+    pub pending: bool,
+    pub gateway_ref: Option<String>,
+    pub timeout_seconds: Option<u32>,
 }
 
 #[derive(Debug, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct DepositResponse {
+    pub deposit_id: Uuid,
     pub account_id: Uuid,
     pub amount: u64,
     pub pool: String,
+    pub status: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub gateway_ref: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub timeout_seconds: Option<u32>,
+}
+
+#[derive(Debug, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct VoidDepositRequest {
+    pub reason: Option<String>,
 }
 
 // ── Payment ──

@@ -2,11 +2,11 @@
 #[allow(missing_docs)] // documentation missing in model
 #[non_exhaustive]
 #[derive(::std::clone::Clone, ::std::cmp::PartialEq, ::std::fmt::Debug)]
-pub struct GetBalanceInput {
+pub struct GetBalanceInput  {
     #[allow(missing_docs)] // documentation missing in model
     pub account_id: ::std::option::Option<::std::string::String>,
 }
-impl GetBalanceInput {
+impl  GetBalanceInput  {
     #[allow(missing_docs)] // documentation missing in model
     pub fn account_id(&self) -> ::std::option::Option<&str> {
         self.account_id.as_deref()
@@ -34,8 +34,7 @@ impl GetBalanceInputBuilder {
     }
     #[allow(missing_docs)] // documentation missing in model
     pub fn set_account_id(mut self, input: ::std::option::Option<::std::string::String>) -> Self {
-        self.account_id = input;
-        self
+        self.account_id = input; self
     }
     #[allow(missing_docs)] // documentation missing in model
     pub fn get_account_id(&self) -> &::std::option::Option<::std::string::String> {
@@ -43,6 +42,12 @@ impl GetBalanceInputBuilder {
     }
     /// Consumes the builder and constructs a [`GetBalanceInput`](crate::operation::get_balance::GetBalanceInput).
     pub fn build(self) -> ::std::result::Result<crate::operation::get_balance::GetBalanceInput, ::aws_smithy_types::error::operation::BuildError> {
-        ::std::result::Result::Ok(crate::operation::get_balance::GetBalanceInput { account_id: self.account_id })
+        ::std::result::Result::Ok(
+            crate::operation::get_balance::GetBalanceInput {
+                account_id: self.account_id
+                ,
+            }
+        )
     }
 }
+

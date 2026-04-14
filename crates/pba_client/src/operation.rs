@@ -21,8 +21,15 @@ pub mod list_purpose_types;
 /// Types for the `MakePayment` operation.
 pub mod make_payment;
 
+/// Types for the `PostDeposit` operation.
+pub mod post_deposit;
+
 /// Types for the `UpdateAccountStatus` operation.
 pub mod update_account_status;
 
+/// Types for the `VoidDeposit` operation.
+pub mod void_deposit;
+
 /// Types for the `Withdraw` operation.
 pub mod withdraw;
+

@@ -2,11 +2,11 @@
 #[allow(missing_docs)] // documentation missing in model
 #[non_exhaustive]
 #[derive(::std::clone::Clone, ::std::cmp::PartialEq, ::std::fmt::Debug)]
-pub struct GetPurposeTypeInput {
+pub struct GetPurposeTypeInput  {
     #[allow(missing_docs)] // documentation missing in model
     pub purpose_code: ::std::option::Option<::std::string::String>,
 }
-impl GetPurposeTypeInput {
+impl  GetPurposeTypeInput  {
     #[allow(missing_docs)] // documentation missing in model
     pub fn purpose_code(&self) -> ::std::option::Option<&str> {
         self.purpose_code.as_deref()
@@ -34,19 +34,20 @@ impl GetPurposeTypeInputBuilder {
     }
     #[allow(missing_docs)] // documentation missing in model
     pub fn set_purpose_code(mut self, input: ::std::option::Option<::std::string::String>) -> Self {
-        self.purpose_code = input;
-        self
+        self.purpose_code = input; self
     }
     #[allow(missing_docs)] // documentation missing in model
     pub fn get_purpose_code(&self) -> &::std::option::Option<::std::string::String> {
         &self.purpose_code
     }
     /// Consumes the builder and constructs a [`GetPurposeTypeInput`](crate::operation::get_purpose_type::GetPurposeTypeInput).
-    pub fn build(
-        self,
-    ) -> ::std::result::Result<crate::operation::get_purpose_type::GetPurposeTypeInput, ::aws_smithy_types::error::operation::BuildError> {
-        ::std::result::Result::Ok(crate::operation::get_purpose_type::GetPurposeTypeInput {
-            purpose_code: self.purpose_code,
-        })
+    pub fn build(self) -> ::std::result::Result<crate::operation::get_purpose_type::GetPurposeTypeInput, ::aws_smithy_types::error::operation::BuildError> {
+        ::std::result::Result::Ok(
+            crate::operation::get_purpose_type::GetPurposeTypeInput {
+                purpose_code: self.purpose_code
+                ,
+            }
+        )
     }
 }
+

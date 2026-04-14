@@ -9,11 +9,19 @@ pub use crate::types::error::_account_not_active_error::AccountNotActiveError;
 
 pub use crate::types::error::_invalid_mcc_error::InvalidMccError;
 
+pub use crate::types::error::_deposit_not_pending_error::DepositNotPendingError;
+
+pub use crate::types::error::_deposit_not_found_error::DepositNotFoundError;
+
 pub use crate::types::error::_duplicate_account_error::DuplicateAccountError;
 
 mod _account_not_active_error;
 
 mod _account_not_found_error;
+
+mod _deposit_not_found_error;
+
+mod _deposit_not_pending_error;
 
 mod _duplicate_account_error;
 
@@ -25,3 +33,4 @@ mod _purpose_type_not_found_error;
 
 /// Builders
 pub mod builders;
+

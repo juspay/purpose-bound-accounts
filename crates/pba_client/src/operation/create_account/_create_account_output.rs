@@ -3,7 +3,7 @@
 /// Shared account fields.
 #[non_exhaustive]
 #[derive(::std::clone::Clone, ::std::cmp::PartialEq, ::std::fmt::Debug)]
-pub struct CreateAccountOutput {
+pub struct CreateAccountOutput  {
     #[allow(missing_docs)] // documentation missing in model
     pub id: ::std::string::String,
     #[allow(missing_docs)] // documentation missing in model
@@ -29,31 +29,26 @@ pub struct CreateAccountOutput {
     #[allow(missing_docs)] // documentation missing in model
     pub updated_at: ::std::string::String,
 }
-impl CreateAccountOutput {
+impl  CreateAccountOutput  {
     #[allow(missing_docs)] // documentation missing in model
     pub fn id(&self) -> &str {
-        use std::ops::Deref;
-        self.id.deref()
+        use std::ops::Deref; self.id.deref()
     }
     #[allow(missing_docs)] // documentation missing in model
     pub fn holder_id(&self) -> &str {
-        use std::ops::Deref;
-        self.holder_id.deref()
+        use std::ops::Deref; self.holder_id.deref()
     }
     #[allow(missing_docs)] // documentation missing in model
     pub fn purpose_code(&self) -> &str {
-        use std::ops::Deref;
-        self.purpose_code.deref()
+        use std::ops::Deref; self.purpose_code.deref()
     }
     #[allow(missing_docs)] // documentation missing in model
     pub fn origin_ifsc(&self) -> &str {
-        use std::ops::Deref;
-        self.origin_ifsc.deref()
+        use std::ops::Deref; self.origin_ifsc.deref()
     }
     #[allow(missing_docs)] // documentation missing in model
     pub fn origin_account_number(&self) -> &str {
-        use std::ops::Deref;
-        self.origin_account_number.deref()
+        use std::ops::Deref; self.origin_account_number.deref()
     }
     #[allow(missing_docs)] // documentation missing in model
     pub fn vpa(&self) -> ::std::option::Option<&str> {
@@ -69,23 +64,19 @@ impl CreateAccountOutput {
     }
     #[allow(missing_docs)] // documentation missing in model
     pub fn kyc_tier(&self) -> &str {
-        use std::ops::Deref;
-        self.kyc_tier.deref()
+        use std::ops::Deref; self.kyc_tier.deref()
     }
     #[allow(missing_docs)] // documentation missing in model
     pub fn status(&self) -> &str {
-        use std::ops::Deref;
-        self.status.deref()
+        use std::ops::Deref; self.status.deref()
     }
     #[allow(missing_docs)] // documentation missing in model
     pub fn created_at(&self) -> &str {
-        use std::ops::Deref;
-        self.created_at.deref()
+        use std::ops::Deref; self.created_at.deref()
     }
     #[allow(missing_docs)] // documentation missing in model
     pub fn updated_at(&self) -> &str {
-        use std::ops::Deref;
-        self.updated_at.deref()
+        use std::ops::Deref; self.updated_at.deref()
     }
 }
 impl CreateAccountOutput {
@@ -121,8 +112,7 @@ impl CreateAccountOutputBuilder {
     }
     #[allow(missing_docs)] // documentation missing in model
     pub fn set_id(mut self, input: ::std::option::Option<::std::string::String>) -> Self {
-        self.id = input;
-        self
+        self.id = input; self
     }
     #[allow(missing_docs)] // documentation missing in model
     pub fn get_id(&self) -> &::std::option::Option<::std::string::String> {
@@ -136,8 +126,7 @@ impl CreateAccountOutputBuilder {
     }
     #[allow(missing_docs)] // documentation missing in model
     pub fn set_holder_id(mut self, input: ::std::option::Option<::std::string::String>) -> Self {
-        self.holder_id = input;
-        self
+        self.holder_id = input; self
     }
     #[allow(missing_docs)] // documentation missing in model
     pub fn get_holder_id(&self) -> &::std::option::Option<::std::string::String> {
@@ -151,8 +140,7 @@ impl CreateAccountOutputBuilder {
     }
     #[allow(missing_docs)] // documentation missing in model
     pub fn set_purpose_code(mut self, input: ::std::option::Option<::std::string::String>) -> Self {
-        self.purpose_code = input;
-        self
+        self.purpose_code = input; self
     }
     #[allow(missing_docs)] // documentation missing in model
     pub fn get_purpose_code(&self) -> &::std::option::Option<::std::string::String> {
@@ -166,8 +154,7 @@ impl CreateAccountOutputBuilder {
     }
     #[allow(missing_docs)] // documentation missing in model
     pub fn set_origin_ifsc(mut self, input: ::std::option::Option<::std::string::String>) -> Self {
-        self.origin_ifsc = input;
-        self
+        self.origin_ifsc = input; self
     }
     #[allow(missing_docs)] // documentation missing in model
     pub fn get_origin_ifsc(&self) -> &::std::option::Option<::std::string::String> {
@@ -181,8 +168,7 @@ impl CreateAccountOutputBuilder {
     }
     #[allow(missing_docs)] // documentation missing in model
     pub fn set_origin_account_number(mut self, input: ::std::option::Option<::std::string::String>) -> Self {
-        self.origin_account_number = input;
-        self
+        self.origin_account_number = input; self
     }
     #[allow(missing_docs)] // documentation missing in model
     pub fn get_origin_account_number(&self) -> &::std::option::Option<::std::string::String> {
@@ -195,8 +181,7 @@ impl CreateAccountOutputBuilder {
     }
     #[allow(missing_docs)] // documentation missing in model
     pub fn set_vpa(mut self, input: ::std::option::Option<::std::string::String>) -> Self {
-        self.vpa = input;
-        self
+        self.vpa = input; self
     }
     #[allow(missing_docs)] // documentation missing in model
     pub fn get_vpa(&self) -> &::std::option::Option<::std::string::String> {
@@ -209,8 +194,7 @@ impl CreateAccountOutputBuilder {
     }
     #[allow(missing_docs)] // documentation missing in model
     pub fn set_virtual_ifsc(mut self, input: ::std::option::Option<::std::string::String>) -> Self {
-        self.virtual_ifsc = input;
-        self
+        self.virtual_ifsc = input; self
     }
     #[allow(missing_docs)] // documentation missing in model
     pub fn get_virtual_ifsc(&self) -> &::std::option::Option<::std::string::String> {
@@ -223,8 +207,7 @@ impl CreateAccountOutputBuilder {
     }
     #[allow(missing_docs)] // documentation missing in model
     pub fn set_virtual_account_number(mut self, input: ::std::option::Option<::std::string::String>) -> Self {
-        self.virtual_account_number = input;
-        self
+        self.virtual_account_number = input; self
     }
     #[allow(missing_docs)] // documentation missing in model
     pub fn get_virtual_account_number(&self) -> &::std::option::Option<::std::string::String> {
@@ -238,8 +221,7 @@ impl CreateAccountOutputBuilder {
     }
     #[allow(missing_docs)] // documentation missing in model
     pub fn set_kyc_tier(mut self, input: ::std::option::Option<::std::string::String>) -> Self {
-        self.kyc_tier = input;
-        self
+        self.kyc_tier = input; self
     }
     #[allow(missing_docs)] // documentation missing in model
     pub fn get_kyc_tier(&self) -> &::std::option::Option<::std::string::String> {
@@ -253,8 +235,7 @@ impl CreateAccountOutputBuilder {
     }
     #[allow(missing_docs)] // documentation missing in model
     pub fn set_status(mut self, input: ::std::option::Option<::std::string::String>) -> Self {
-        self.status = input;
-        self
+        self.status = input; self
     }
     #[allow(missing_docs)] // documentation missing in model
     pub fn get_status(&self) -> &::std::option::Option<::std::string::String> {
@@ -268,8 +249,7 @@ impl CreateAccountOutputBuilder {
     }
     #[allow(missing_docs)] // documentation missing in model
     pub fn set_created_at(mut self, input: ::std::option::Option<::std::string::String>) -> Self {
-        self.created_at = input;
-        self
+        self.created_at = input; self
     }
     #[allow(missing_docs)] // documentation missing in model
     pub fn get_created_at(&self) -> &::std::option::Option<::std::string::String> {
@@ -283,8 +263,7 @@ impl CreateAccountOutputBuilder {
     }
     #[allow(missing_docs)] // documentation missing in model
     pub fn set_updated_at(mut self, input: ::std::option::Option<::std::string::String>) -> Self {
-        self.updated_at = input;
-        self
+        self.updated_at = input; self
     }
     #[allow(missing_docs)] // documentation missing in model
     pub fn get_updated_at(&self) -> &::std::option::Option<::std::string::String> {
@@ -301,67 +280,62 @@ impl CreateAccountOutputBuilder {
     /// - [`status`](crate::operation::create_account::builders::CreateAccountOutputBuilder::status)
     /// - [`created_at`](crate::operation::create_account::builders::CreateAccountOutputBuilder::created_at)
     /// - [`updated_at`](crate::operation::create_account::builders::CreateAccountOutputBuilder::updated_at)
-    pub fn build(
-        self,
-    ) -> ::std::result::Result<crate::operation::create_account::CreateAccountOutput, ::aws_smithy_types::error::operation::BuildError> {
-        ::std::result::Result::Ok(crate::operation::create_account::CreateAccountOutput {
-            id: self.id.ok_or_else(|| {
-                ::aws_smithy_types::error::operation::BuildError::missing_field(
-                    "id",
-                    "id was not specified but it is required when building CreateAccountOutput",
-                )
-            })?,
-            holder_id: self.holder_id.ok_or_else(|| {
-                ::aws_smithy_types::error::operation::BuildError::missing_field(
-                    "holder_id",
-                    "holder_id was not specified but it is required when building CreateAccountOutput",
-                )
-            })?,
-            purpose_code: self.purpose_code.ok_or_else(|| {
-                ::aws_smithy_types::error::operation::BuildError::missing_field(
-                    "purpose_code",
-                    "purpose_code was not specified but it is required when building CreateAccountOutput",
-                )
-            })?,
-            origin_ifsc: self.origin_ifsc.ok_or_else(|| {
-                ::aws_smithy_types::error::operation::BuildError::missing_field(
-                    "origin_ifsc",
-                    "origin_ifsc was not specified but it is required when building CreateAccountOutput",
-                )
-            })?,
-            origin_account_number: self.origin_account_number.ok_or_else(|| {
-                ::aws_smithy_types::error::operation::BuildError::missing_field(
-                    "origin_account_number",
-                    "origin_account_number was not specified but it is required when building CreateAccountOutput",
-                )
-            })?,
-            vpa: self.vpa,
-            virtual_ifsc: self.virtual_ifsc,
-            virtual_account_number: self.virtual_account_number,
-            kyc_tier: self.kyc_tier.ok_or_else(|| {
-                ::aws_smithy_types::error::operation::BuildError::missing_field(
-                    "kyc_tier",
-                    "kyc_tier was not specified but it is required when building CreateAccountOutput",
-                )
-            })?,
-            status: self.status.ok_or_else(|| {
-                ::aws_smithy_types::error::operation::BuildError::missing_field(
-                    "status",
-                    "status was not specified but it is required when building CreateAccountOutput",
-                )
-            })?,
-            created_at: self.created_at.ok_or_else(|| {
-                ::aws_smithy_types::error::operation::BuildError::missing_field(
-                    "created_at",
-                    "created_at was not specified but it is required when building CreateAccountOutput",
-                )
-            })?,
-            updated_at: self.updated_at.ok_or_else(|| {
-                ::aws_smithy_types::error::operation::BuildError::missing_field(
-                    "updated_at",
-                    "updated_at was not specified but it is required when building CreateAccountOutput",
-                )
-            })?,
-        })
+    pub fn build(self) -> ::std::result::Result<crate::operation::create_account::CreateAccountOutput, ::aws_smithy_types::error::operation::BuildError> {
+        ::std::result::Result::Ok(
+            crate::operation::create_account::CreateAccountOutput {
+                id: self.id
+                    .ok_or_else(||
+                        ::aws_smithy_types::error::operation::BuildError::missing_field("id", "id was not specified but it is required when building CreateAccountOutput")
+                    )?
+                ,
+                holder_id: self.holder_id
+                    .ok_or_else(||
+                        ::aws_smithy_types::error::operation::BuildError::missing_field("holder_id", "holder_id was not specified but it is required when building CreateAccountOutput")
+                    )?
+                ,
+                purpose_code: self.purpose_code
+                    .ok_or_else(||
+                        ::aws_smithy_types::error::operation::BuildError::missing_field("purpose_code", "purpose_code was not specified but it is required when building CreateAccountOutput")
+                    )?
+                ,
+                origin_ifsc: self.origin_ifsc
+                    .ok_or_else(||
+                        ::aws_smithy_types::error::operation::BuildError::missing_field("origin_ifsc", "origin_ifsc was not specified but it is required when building CreateAccountOutput")
+                    )?
+                ,
+                origin_account_number: self.origin_account_number
+                    .ok_or_else(||
+                        ::aws_smithy_types::error::operation::BuildError::missing_field("origin_account_number", "origin_account_number was not specified but it is required when building CreateAccountOutput")
+                    )?
+                ,
+                vpa: self.vpa
+                ,
+                virtual_ifsc: self.virtual_ifsc
+                ,
+                virtual_account_number: self.virtual_account_number
+                ,
+                kyc_tier: self.kyc_tier
+                    .ok_or_else(||
+                        ::aws_smithy_types::error::operation::BuildError::missing_field("kyc_tier", "kyc_tier was not specified but it is required when building CreateAccountOutput")
+                    )?
+                ,
+                status: self.status
+                    .ok_or_else(||
+                        ::aws_smithy_types::error::operation::BuildError::missing_field("status", "status was not specified but it is required when building CreateAccountOutput")
+                    )?
+                ,
+                created_at: self.created_at
+                    .ok_or_else(||
+                        ::aws_smithy_types::error::operation::BuildError::missing_field("created_at", "created_at was not specified but it is required when building CreateAccountOutput")
+                    )?
+                ,
+                updated_at: self.updated_at
+                    .ok_or_else(||
+                        ::aws_smithy_types::error::operation::BuildError::missing_field("updated_at", "updated_at was not specified but it is required when building CreateAccountOutput")
+                    )?
+                ,
+            }
+        )
     }
 }
+

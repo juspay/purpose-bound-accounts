@@ -2,15 +2,14 @@
 #[allow(missing_docs)] // documentation missing in model
 #[non_exhaustive]
 #[derive(::std::clone::Clone, ::std::cmp::PartialEq, ::std::fmt::Debug)]
-pub struct ListPurposeTypesOutput {
+pub struct ListPurposeTypesOutput  {
     #[allow(missing_docs)] // documentation missing in model
-    pub purpose_types: ::std::vec::Vec<crate::types::PurposeTypeSummary>,
+    pub purpose_types: ::std::vec::Vec::<crate::types::PurposeTypeSummary>,
 }
-impl ListPurposeTypesOutput {
+impl  ListPurposeTypesOutput  {
     #[allow(missing_docs)] // documentation missing in model
     pub fn purpose_types(&self) -> &[crate::types::PurposeTypeSummary] {
-        use std::ops::Deref;
-        self.purpose_types.deref()
+        use std::ops::Deref; self.purpose_types.deref()
     }
 }
 impl ListPurposeTypesOutput {
@@ -24,7 +23,7 @@ impl ListPurposeTypesOutput {
 #[derive(::std::clone::Clone, ::std::cmp::PartialEq, ::std::default::Default, ::std::fmt::Debug)]
 #[non_exhaustive]
 pub struct ListPurposeTypesOutputBuilder {
-    pub(crate) purpose_types: ::std::option::Option<::std::vec::Vec<crate::types::PurposeTypeSummary>>,
+    pub(crate) purpose_types: ::std::option::Option<::std::vec::Vec::<crate::types::PurposeTypeSummary>>,
 }
 impl ListPurposeTypesOutputBuilder {
     /// Appends an item to `purpose_types`.
@@ -33,32 +32,31 @@ impl ListPurposeTypesOutputBuilder {
     ///
     pub fn purpose_types(mut self, input: crate::types::PurposeTypeSummary) -> Self {
         let mut v = self.purpose_types.unwrap_or_default();
-        v.push(input);
-        self.purpose_types = ::std::option::Option::Some(v);
-        self
+                        v.push(input);
+                        self.purpose_types = ::std::option::Option::Some(v);
+                        self
     }
     #[allow(missing_docs)] // documentation missing in model
-    pub fn set_purpose_types(mut self, input: ::std::option::Option<::std::vec::Vec<crate::types::PurposeTypeSummary>>) -> Self {
-        self.purpose_types = input;
-        self
+    pub fn set_purpose_types(mut self, input: ::std::option::Option<::std::vec::Vec::<crate::types::PurposeTypeSummary>>) -> Self {
+        self.purpose_types = input; self
     }
     #[allow(missing_docs)] // documentation missing in model
-    pub fn get_purpose_types(&self) -> &::std::option::Option<::std::vec::Vec<crate::types::PurposeTypeSummary>> {
+    pub fn get_purpose_types(&self) -> &::std::option::Option<::std::vec::Vec::<crate::types::PurposeTypeSummary>> {
         &self.purpose_types
     }
     /// Consumes the builder and constructs a [`ListPurposeTypesOutput`](crate::operation::list_purpose_types::ListPurposeTypesOutput).
     /// This method will fail if any of the following fields are not set:
     /// - [`purpose_types`](crate::operation::list_purpose_types::builders::ListPurposeTypesOutputBuilder::purpose_types)
-    pub fn build(
-        self,
-    ) -> ::std::result::Result<crate::operation::list_purpose_types::ListPurposeTypesOutput, ::aws_smithy_types::error::operation::BuildError> {
-        ::std::result::Result::Ok(crate::operation::list_purpose_types::ListPurposeTypesOutput {
-            purpose_types: self.purpose_types.ok_or_else(|| {
-                ::aws_smithy_types::error::operation::BuildError::missing_field(
-                    "purpose_types",
-                    "purpose_types was not specified but it is required when building ListPurposeTypesOutput",
-                )
-            })?,
-        })
+    pub fn build(self) -> ::std::result::Result<crate::operation::list_purpose_types::ListPurposeTypesOutput, ::aws_smithy_types::error::operation::BuildError> {
+        ::std::result::Result::Ok(
+            crate::operation::list_purpose_types::ListPurposeTypesOutput {
+                purpose_types: self.purpose_types
+                    .ok_or_else(||
+                        ::aws_smithy_types::error::operation::BuildError::missing_field("purpose_types", "purpose_types was not specified but it is required when building ListPurposeTypesOutput")
+                    )?
+                ,
+            }
+        )
     }
 }
+

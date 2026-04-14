@@ -2,17 +2,16 @@
 #[allow(missing_docs)] // documentation missing in model
 #[non_exhaustive]
 #[derive(::std::clone::Clone, ::std::cmp::PartialEq, ::std::fmt::Debug)]
-pub struct MccEntry {
+pub struct MccEntry  {
     #[allow(missing_docs)] // documentation missing in model
     pub mcc: ::std::string::String,
     #[allow(missing_docs)] // documentation missing in model
     pub description: ::std::option::Option<::std::string::String>,
 }
-impl MccEntry {
+impl  MccEntry  {
     #[allow(missing_docs)] // documentation missing in model
     pub fn mcc(&self) -> &str {
-        use std::ops::Deref;
-        self.mcc.deref()
+        use std::ops::Deref; self.mcc.deref()
     }
     #[allow(missing_docs)] // documentation missing in model
     pub fn description(&self) -> ::std::option::Option<&str> {
@@ -42,8 +41,7 @@ impl MccEntryBuilder {
     }
     #[allow(missing_docs)] // documentation missing in model
     pub fn set_mcc(mut self, input: ::std::option::Option<::std::string::String>) -> Self {
-        self.mcc = input;
-        self
+        self.mcc = input; self
     }
     #[allow(missing_docs)] // documentation missing in model
     pub fn get_mcc(&self) -> &::std::option::Option<::std::string::String> {
@@ -56,8 +54,7 @@ impl MccEntryBuilder {
     }
     #[allow(missing_docs)] // documentation missing in model
     pub fn set_description(mut self, input: ::std::option::Option<::std::string::String>) -> Self {
-        self.description = input;
-        self
+        self.description = input; self
     }
     #[allow(missing_docs)] // documentation missing in model
     pub fn get_description(&self) -> &::std::option::Option<::std::string::String> {
@@ -67,14 +64,17 @@ impl MccEntryBuilder {
     /// This method will fail if any of the following fields are not set:
     /// - [`mcc`](crate::types::builders::MccEntryBuilder::mcc)
     pub fn build(self) -> ::std::result::Result<crate::types::MccEntry, ::aws_smithy_types::error::operation::BuildError> {
-        ::std::result::Result::Ok(crate::types::MccEntry {
-            mcc: self.mcc.ok_or_else(|| {
-                ::aws_smithy_types::error::operation::BuildError::missing_field(
-                    "mcc",
-                    "mcc was not specified but it is required when building MccEntry",
-                )
-            })?,
-            description: self.description,
-        })
+        ::std::result::Result::Ok(
+            crate::types::MccEntry {
+                mcc: self.mcc
+                    .ok_or_else(||
+                        ::aws_smithy_types::error::operation::BuildError::missing_field("mcc", "mcc was not specified but it is required when building MccEntry")
+                    )?
+                ,
+                description: self.description
+                ,
+            }
+        )
     }
 }
+

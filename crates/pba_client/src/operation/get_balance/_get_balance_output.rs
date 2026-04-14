@@ -2,7 +2,7 @@
 #[allow(missing_docs)] // documentation missing in model
 #[non_exhaustive]
 #[derive(::std::clone::Clone, ::std::cmp::PartialEq, ::std::fmt::Debug)]
-pub struct GetBalanceOutput {
+pub struct GetBalanceOutput  {
     #[allow(missing_docs)] // documentation missing in model
     pub account_id: ::std::string::String,
     /// Monetary amount in the smallest currency unit (e.g., paise for INR).
@@ -11,12 +11,15 @@ pub struct GetBalanceOutput {
     pub others_contribution: i64,
     /// Monetary amount in the smallest currency unit (e.g., paise for INR).
     pub total: i64,
+    /// Monetary amount in the smallest currency unit (e.g., paise for INR).
+    pub pending_self: i64,
+    /// Monetary amount in the smallest currency unit (e.g., paise for INR).
+    pub pending_others: i64,
 }
-impl GetBalanceOutput {
+impl  GetBalanceOutput  {
     #[allow(missing_docs)] // documentation missing in model
     pub fn account_id(&self) -> &str {
-        use std::ops::Deref;
-        self.account_id.deref()
+        use std::ops::Deref; self.account_id.deref()
     }
     /// Monetary amount in the smallest currency unit (e.g., paise for INR).
     pub fn self_contribution(&self) -> i64 {
@@ -29,6 +32,14 @@ impl GetBalanceOutput {
     /// Monetary amount in the smallest currency unit (e.g., paise for INR).
     pub fn total(&self) -> i64 {
         self.total
+    }
+    /// Monetary amount in the smallest currency unit (e.g., paise for INR).
+    pub fn pending_self(&self) -> i64 {
+        self.pending_self
+    }
+    /// Monetary amount in the smallest currency unit (e.g., paise for INR).
+    pub fn pending_others(&self) -> i64 {
+        self.pending_others
     }
 }
 impl GetBalanceOutput {
@@ -46,6 +57,8 @@ pub struct GetBalanceOutputBuilder {
     pub(crate) self_contribution: ::std::option::Option<i64>,
     pub(crate) others_contribution: ::std::option::Option<i64>,
     pub(crate) total: ::std::option::Option<i64>,
+    pub(crate) pending_self: ::std::option::Option<i64>,
+    pub(crate) pending_others: ::std::option::Option<i64>,
 }
 impl GetBalanceOutputBuilder {
     #[allow(missing_docs)] // documentation missing in model
@@ -56,8 +69,7 @@ impl GetBalanceOutputBuilder {
     }
     #[allow(missing_docs)] // documentation missing in model
     pub fn set_account_id(mut self, input: ::std::option::Option<::std::string::String>) -> Self {
-        self.account_id = input;
-        self
+        self.account_id = input; self
     }
     #[allow(missing_docs)] // documentation missing in model
     pub fn get_account_id(&self) -> &::std::option::Option<::std::string::String> {
@@ -71,8 +83,7 @@ impl GetBalanceOutputBuilder {
     }
     /// Monetary amount in the smallest currency unit (e.g., paise for INR).
     pub fn set_self_contribution(mut self, input: ::std::option::Option<i64>) -> Self {
-        self.self_contribution = input;
-        self
+        self.self_contribution = input; self
     }
     /// Monetary amount in the smallest currency unit (e.g., paise for INR).
     pub fn get_self_contribution(&self) -> &::std::option::Option<i64> {
@@ -86,8 +97,7 @@ impl GetBalanceOutputBuilder {
     }
     /// Monetary amount in the smallest currency unit (e.g., paise for INR).
     pub fn set_others_contribution(mut self, input: ::std::option::Option<i64>) -> Self {
-        self.others_contribution = input;
-        self
+        self.others_contribution = input; self
     }
     /// Monetary amount in the smallest currency unit (e.g., paise for INR).
     pub fn get_others_contribution(&self) -> &::std::option::Option<i64> {
@@ -101,12 +111,39 @@ impl GetBalanceOutputBuilder {
     }
     /// Monetary amount in the smallest currency unit (e.g., paise for INR).
     pub fn set_total(mut self, input: ::std::option::Option<i64>) -> Self {
-        self.total = input;
-        self
+        self.total = input; self
     }
     /// Monetary amount in the smallest currency unit (e.g., paise for INR).
     pub fn get_total(&self) -> &::std::option::Option<i64> {
         &self.total
+    }
+    /// Monetary amount in the smallest currency unit (e.g., paise for INR).
+    /// This field is required.
+    pub fn pending_self(mut self, input: i64) -> Self {
+        self.pending_self = ::std::option::Option::Some(input);
+        self
+    }
+    /// Monetary amount in the smallest currency unit (e.g., paise for INR).
+    pub fn set_pending_self(mut self, input: ::std::option::Option<i64>) -> Self {
+        self.pending_self = input; self
+    }
+    /// Monetary amount in the smallest currency unit (e.g., paise for INR).
+    pub fn get_pending_self(&self) -> &::std::option::Option<i64> {
+        &self.pending_self
+    }
+    /// Monetary amount in the smallest currency unit (e.g., paise for INR).
+    /// This field is required.
+    pub fn pending_others(mut self, input: i64) -> Self {
+        self.pending_others = ::std::option::Option::Some(input);
+        self
+    }
+    /// Monetary amount in the smallest currency unit (e.g., paise for INR).
+    pub fn set_pending_others(mut self, input: ::std::option::Option<i64>) -> Self {
+        self.pending_others = input; self
+    }
+    /// Monetary amount in the smallest currency unit (e.g., paise for INR).
+    pub fn get_pending_others(&self) -> &::std::option::Option<i64> {
+        &self.pending_others
     }
     /// Consumes the builder and constructs a [`GetBalanceOutput`](crate::operation::get_balance::GetBalanceOutput).
     /// This method will fail if any of the following fields are not set:
@@ -114,32 +151,43 @@ impl GetBalanceOutputBuilder {
     /// - [`self_contribution`](crate::operation::get_balance::builders::GetBalanceOutputBuilder::self_contribution)
     /// - [`others_contribution`](crate::operation::get_balance::builders::GetBalanceOutputBuilder::others_contribution)
     /// - [`total`](crate::operation::get_balance::builders::GetBalanceOutputBuilder::total)
+    /// - [`pending_self`](crate::operation::get_balance::builders::GetBalanceOutputBuilder::pending_self)
+    /// - [`pending_others`](crate::operation::get_balance::builders::GetBalanceOutputBuilder::pending_others)
     pub fn build(self) -> ::std::result::Result<crate::operation::get_balance::GetBalanceOutput, ::aws_smithy_types::error::operation::BuildError> {
-        ::std::result::Result::Ok(crate::operation::get_balance::GetBalanceOutput {
-            account_id: self.account_id.ok_or_else(|| {
-                ::aws_smithy_types::error::operation::BuildError::missing_field(
-                    "account_id",
-                    "account_id was not specified but it is required when building GetBalanceOutput",
-                )
-            })?,
-            self_contribution: self.self_contribution.ok_or_else(|| {
-                ::aws_smithy_types::error::operation::BuildError::missing_field(
-                    "self_contribution",
-                    "self_contribution was not specified but it is required when building GetBalanceOutput",
-                )
-            })?,
-            others_contribution: self.others_contribution.ok_or_else(|| {
-                ::aws_smithy_types::error::operation::BuildError::missing_field(
-                    "others_contribution",
-                    "others_contribution was not specified but it is required when building GetBalanceOutput",
-                )
-            })?,
-            total: self.total.ok_or_else(|| {
-                ::aws_smithy_types::error::operation::BuildError::missing_field(
-                    "total",
-                    "total was not specified but it is required when building GetBalanceOutput",
-                )
-            })?,
-        })
+        ::std::result::Result::Ok(
+            crate::operation::get_balance::GetBalanceOutput {
+                account_id: self.account_id
+                    .ok_or_else(||
+                        ::aws_smithy_types::error::operation::BuildError::missing_field("account_id", "account_id was not specified but it is required when building GetBalanceOutput")
+                    )?
+                ,
+                self_contribution: self.self_contribution
+                    .ok_or_else(||
+                        ::aws_smithy_types::error::operation::BuildError::missing_field("self_contribution", "self_contribution was not specified but it is required when building GetBalanceOutput")
+                    )?
+                ,
+                others_contribution: self.others_contribution
+                    .ok_or_else(||
+                        ::aws_smithy_types::error::operation::BuildError::missing_field("others_contribution", "others_contribution was not specified but it is required when building GetBalanceOutput")
+                    )?
+                ,
+                total: self.total
+                    .ok_or_else(||
+                        ::aws_smithy_types::error::operation::BuildError::missing_field("total", "total was not specified but it is required when building GetBalanceOutput")
+                    )?
+                ,
+                pending_self: self.pending_self
+                    .ok_or_else(||
+                        ::aws_smithy_types::error::operation::BuildError::missing_field("pending_self", "pending_self was not specified but it is required when building GetBalanceOutput")
+                    )?
+                ,
+                pending_others: self.pending_others
+                    .ok_or_else(||
+                        ::aws_smithy_types::error::operation::BuildError::missing_field("pending_others", "pending_others was not specified but it is required when building GetBalanceOutput")
+                    )?
+                ,
+            }
+        )
     }
 }
+

@@ -217,6 +217,8 @@ struct AccountDetailTemplate {
     self_balance: String,
     others_balance: String,
     total_balance: String,
+    pending_self: String,
+    pending_others: String,
     created_at: String,
     updated_at: String,
 }
@@ -267,6 +269,8 @@ pub async fn account_detail(
         self_balance: fmt(balance.self_contribution),
         others_balance: fmt(balance.others_contribution),
         total_balance: fmt(balance.self_contribution + balance.others_contribution),
+        pending_self: fmt(balance.pending_self),
+        pending_others: fmt(balance.pending_others),
         created_at: account.created_at.format("%Y-%m-%d %H:%M:%S").to_string(),
         updated_at: account.updated_at.format("%Y-%m-%d %H:%M:%S").to_string(),
     })
@@ -383,7 +387,7 @@ pub async fn process_deposit(
 ) -> Response {
     match state
         .deposit_service
-        .deposit(account_id, &form.source_ifsc, &form.source_account_number, form.amount)
+        .deposit(account_id, &form.source_ifsc, &form.source_account_number, form.amount, false, None, None)
         .await
     {
         Ok(_) => Redirect::to(&format!("/admin/accounts/{account_id}")).into_response(),

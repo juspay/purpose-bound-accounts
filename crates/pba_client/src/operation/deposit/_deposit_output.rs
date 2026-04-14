@@ -2,19 +2,30 @@
 #[allow(missing_docs)] // documentation missing in model
 #[non_exhaustive]
 #[derive(::std::clone::Clone, ::std::cmp::PartialEq, ::std::fmt::Debug)]
-pub struct DepositOutput {
+pub struct DepositOutput  {
+    #[allow(missing_docs)] // documentation missing in model
+    pub deposit_id: ::std::string::String,
     #[allow(missing_docs)] // documentation missing in model
     pub account_id: ::std::string::String,
     /// Monetary amount in the smallest currency unit (e.g., paise for INR).
     pub amount: i64,
     #[allow(missing_docs)] // documentation missing in model
     pub pool: ::std::string::String,
+    #[allow(missing_docs)] // documentation missing in model
+    pub status: ::std::string::String,
+    #[allow(missing_docs)] // documentation missing in model
+    pub gateway_ref: ::std::option::Option<::std::string::String>,
+    #[allow(missing_docs)] // documentation missing in model
+    pub timeout_seconds: ::std::option::Option<i32>,
 }
-impl DepositOutput {
+impl  DepositOutput  {
+    #[allow(missing_docs)] // documentation missing in model
+    pub fn deposit_id(&self) -> &str {
+        use std::ops::Deref; self.deposit_id.deref()
+    }
     #[allow(missing_docs)] // documentation missing in model
     pub fn account_id(&self) -> &str {
-        use std::ops::Deref;
-        self.account_id.deref()
+        use std::ops::Deref; self.account_id.deref()
     }
     /// Monetary amount in the smallest currency unit (e.g., paise for INR).
     pub fn amount(&self) -> i64 {
@@ -22,8 +33,19 @@ impl DepositOutput {
     }
     #[allow(missing_docs)] // documentation missing in model
     pub fn pool(&self) -> &str {
-        use std::ops::Deref;
-        self.pool.deref()
+        use std::ops::Deref; self.pool.deref()
+    }
+    #[allow(missing_docs)] // documentation missing in model
+    pub fn status(&self) -> &str {
+        use std::ops::Deref; self.status.deref()
+    }
+    #[allow(missing_docs)] // documentation missing in model
+    pub fn gateway_ref(&self) -> ::std::option::Option<&str> {
+        self.gateway_ref.as_deref()
+    }
+    #[allow(missing_docs)] // documentation missing in model
+    pub fn timeout_seconds(&self) -> ::std::option::Option<i32> {
+        self.timeout_seconds
     }
 }
 impl DepositOutput {
@@ -37,11 +59,29 @@ impl DepositOutput {
 #[derive(::std::clone::Clone, ::std::cmp::PartialEq, ::std::default::Default, ::std::fmt::Debug)]
 #[non_exhaustive]
 pub struct DepositOutputBuilder {
+    pub(crate) deposit_id: ::std::option::Option<::std::string::String>,
     pub(crate) account_id: ::std::option::Option<::std::string::String>,
     pub(crate) amount: ::std::option::Option<i64>,
     pub(crate) pool: ::std::option::Option<::std::string::String>,
+    pub(crate) status: ::std::option::Option<::std::string::String>,
+    pub(crate) gateway_ref: ::std::option::Option<::std::string::String>,
+    pub(crate) timeout_seconds: ::std::option::Option<i32>,
 }
 impl DepositOutputBuilder {
+    #[allow(missing_docs)] // documentation missing in model
+    /// This field is required.
+    pub fn deposit_id(mut self, input: impl ::std::convert::Into<::std::string::String>) -> Self {
+        self.deposit_id = ::std::option::Option::Some(input.into());
+        self
+    }
+    #[allow(missing_docs)] // documentation missing in model
+    pub fn set_deposit_id(mut self, input: ::std::option::Option<::std::string::String>) -> Self {
+        self.deposit_id = input; self
+    }
+    #[allow(missing_docs)] // documentation missing in model
+    pub fn get_deposit_id(&self) -> &::std::option::Option<::std::string::String> {
+        &self.deposit_id
+    }
     #[allow(missing_docs)] // documentation missing in model
     /// This field is required.
     pub fn account_id(mut self, input: impl ::std::convert::Into<::std::string::String>) -> Self {
@@ -50,8 +90,7 @@ impl DepositOutputBuilder {
     }
     #[allow(missing_docs)] // documentation missing in model
     pub fn set_account_id(mut self, input: ::std::option::Option<::std::string::String>) -> Self {
-        self.account_id = input;
-        self
+        self.account_id = input; self
     }
     #[allow(missing_docs)] // documentation missing in model
     pub fn get_account_id(&self) -> &::std::option::Option<::std::string::String> {
@@ -65,8 +104,7 @@ impl DepositOutputBuilder {
     }
     /// Monetary amount in the smallest currency unit (e.g., paise for INR).
     pub fn set_amount(mut self, input: ::std::option::Option<i64>) -> Self {
-        self.amount = input;
-        self
+        self.amount = input; self
     }
     /// Monetary amount in the smallest currency unit (e.g., paise for INR).
     pub fn get_amount(&self) -> &::std::option::Option<i64> {
@@ -80,38 +118,93 @@ impl DepositOutputBuilder {
     }
     #[allow(missing_docs)] // documentation missing in model
     pub fn set_pool(mut self, input: ::std::option::Option<::std::string::String>) -> Self {
-        self.pool = input;
-        self
+        self.pool = input; self
     }
     #[allow(missing_docs)] // documentation missing in model
     pub fn get_pool(&self) -> &::std::option::Option<::std::string::String> {
         &self.pool
     }
+    #[allow(missing_docs)] // documentation missing in model
+    /// This field is required.
+    pub fn status(mut self, input: impl ::std::convert::Into<::std::string::String>) -> Self {
+        self.status = ::std::option::Option::Some(input.into());
+        self
+    }
+    #[allow(missing_docs)] // documentation missing in model
+    pub fn set_status(mut self, input: ::std::option::Option<::std::string::String>) -> Self {
+        self.status = input; self
+    }
+    #[allow(missing_docs)] // documentation missing in model
+    pub fn get_status(&self) -> &::std::option::Option<::std::string::String> {
+        &self.status
+    }
+    #[allow(missing_docs)] // documentation missing in model
+    pub fn gateway_ref(mut self, input: impl ::std::convert::Into<::std::string::String>) -> Self {
+        self.gateway_ref = ::std::option::Option::Some(input.into());
+        self
+    }
+    #[allow(missing_docs)] // documentation missing in model
+    pub fn set_gateway_ref(mut self, input: ::std::option::Option<::std::string::String>) -> Self {
+        self.gateway_ref = input; self
+    }
+    #[allow(missing_docs)] // documentation missing in model
+    pub fn get_gateway_ref(&self) -> &::std::option::Option<::std::string::String> {
+        &self.gateway_ref
+    }
+    #[allow(missing_docs)] // documentation missing in model
+    pub fn timeout_seconds(mut self, input: i32) -> Self {
+        self.timeout_seconds = ::std::option::Option::Some(input);
+        self
+    }
+    #[allow(missing_docs)] // documentation missing in model
+    pub fn set_timeout_seconds(mut self, input: ::std::option::Option<i32>) -> Self {
+        self.timeout_seconds = input; self
+    }
+    #[allow(missing_docs)] // documentation missing in model
+    pub fn get_timeout_seconds(&self) -> &::std::option::Option<i32> {
+        &self.timeout_seconds
+    }
     /// Consumes the builder and constructs a [`DepositOutput`](crate::operation::deposit::DepositOutput).
     /// This method will fail if any of the following fields are not set:
+    /// - [`deposit_id`](crate::operation::deposit::builders::DepositOutputBuilder::deposit_id)
     /// - [`account_id`](crate::operation::deposit::builders::DepositOutputBuilder::account_id)
     /// - [`amount`](crate::operation::deposit::builders::DepositOutputBuilder::amount)
     /// - [`pool`](crate::operation::deposit::builders::DepositOutputBuilder::pool)
+    /// - [`status`](crate::operation::deposit::builders::DepositOutputBuilder::status)
     pub fn build(self) -> ::std::result::Result<crate::operation::deposit::DepositOutput, ::aws_smithy_types::error::operation::BuildError> {
-        ::std::result::Result::Ok(crate::operation::deposit::DepositOutput {
-            account_id: self.account_id.ok_or_else(|| {
-                ::aws_smithy_types::error::operation::BuildError::missing_field(
-                    "account_id",
-                    "account_id was not specified but it is required when building DepositOutput",
-                )
-            })?,
-            amount: self.amount.ok_or_else(|| {
-                ::aws_smithy_types::error::operation::BuildError::missing_field(
-                    "amount",
-                    "amount was not specified but it is required when building DepositOutput",
-                )
-            })?,
-            pool: self.pool.ok_or_else(|| {
-                ::aws_smithy_types::error::operation::BuildError::missing_field(
-                    "pool",
-                    "pool was not specified but it is required when building DepositOutput",
-                )
-            })?,
-        })
+        ::std::result::Result::Ok(
+            crate::operation::deposit::DepositOutput {
+                deposit_id: self.deposit_id
+                    .ok_or_else(||
+                        ::aws_smithy_types::error::operation::BuildError::missing_field("deposit_id", "deposit_id was not specified but it is required when building DepositOutput")
+                    )?
+                ,
+                account_id: self.account_id
+                    .ok_or_else(||
+                        ::aws_smithy_types::error::operation::BuildError::missing_field("account_id", "account_id was not specified but it is required when building DepositOutput")
+                    )?
+                ,
+                amount: self.amount
+                    .ok_or_else(||
+                        ::aws_smithy_types::error::operation::BuildError::missing_field("amount", "amount was not specified but it is required when building DepositOutput")
+                    )?
+                ,
+                pool: self.pool
+                    .ok_or_else(||
+                        ::aws_smithy_types::error::operation::BuildError::missing_field("pool", "pool was not specified but it is required when building DepositOutput")
+                    )?
+                ,
+                status: self.status
+                    .ok_or_else(||
+                        ::aws_smithy_types::error::operation::BuildError::missing_field("status", "status was not specified but it is required when building DepositOutput")
+                    )?
+                ,
+                gateway_ref: self.gateway_ref
+                ,
+                timeout_seconds: self.timeout_seconds
+                ,
+            }
+        )
     }
 }
+

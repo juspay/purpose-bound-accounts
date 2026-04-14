@@ -46,9 +46,9 @@
 
     <div class="grid">
         <div>
-            <p><strong>Self Pool:</strong> {{ self_balance }} INR</p>
-            <p><strong>Others Pool:</strong> {{ others_balance }} INR</p>
-            <p><strong>Total Balance:</strong> {{ total_balance }} INR</p>
+            <p><strong>Self Pool:</strong> ₹{{ self_balance }}{% if pending_self != "0.00" %} <span style="color: #b45309;">+ ₹{{ pending_self }} pending</span>{% endif %}</p>
+            <p><strong>Others Pool:</strong> ₹{{ others_balance }}{% if pending_others != "0.00" %} <span style="color: #b45309;">+ ₹{{ pending_others }} pending</span>{% endif %}</p>
+            <p><strong>Total Balance:</strong> ₹{{ total_balance }}</p>
         </div>
         <div>
             <p><strong>Created:</strong> {{ created_at }}</p>
