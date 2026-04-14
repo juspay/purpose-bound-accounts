@@ -59,6 +59,7 @@ async fn deposit(world: &mut PbaWorld, amount: i64, ifsc: String, account_number
     match result {
         Ok(output) => {
             world.last_deposit_pool = Some(output.pool().to_string());
+            world.last_deposit_id = Some(output.deposit_id().to_string());
         }
         Err(e) => panic!("Deposit failed: {e:?}"),
     }
@@ -147,5 +148,257 @@ async fn deposit_rejected_not_active(world: &mut PbaWorld) {
     assert!(
         world.last_error.is_some(),
         "Expected deposit to be rejected"
+    );
+}
+
+#[when(regex = r#"^I create a pending deposit of (\d+) from IFSC "([^"]*)" account "([^"]*)"$"#)]
+async fn create_pending_deposit(
+    world: &mut PbaWorld,
+    amount: i64,
+    ifsc: String,
+    account_number: String,
+) {
+    let account_id = world.account_id.as_ref().expect("No account ID");
+    let result = world
+        .client
+        .deposit()
+        .account_id(account_id)
+        .source_ifsc(&ifsc)
+        .source_account_number(&account_number)
+        .amount(amount)
+        .pending(true)
+        .send()
+        .await;
+    match result {
+        Ok(output) => {
+            world.last_deposit_id = Some(output.deposit_id().to_string());
+            world.last_deposit_pool = Some(output.pool().to_string());
+            world.last_error = None;
+        }
+        Err(e) => panic!("Pending deposit failed: {e:?}"),
+    }
+}
+
+#[when(
+    regex = r#"^I create a pending deposit of (\d+) from IFSC "([^"]*)" account "([^"]*)" with gateway ref "([^"]*)"$"#
+)]
+async fn create_pending_deposit_with_ref(
+    world: &mut PbaWorld,
+    amount: i64,
+    ifsc: String,
+    account_number: String,
+    gateway_ref: String,
+) {
+    let account_id = world.account_id.as_ref().expect("No account ID");
+    let result = world
+        .client
+        .deposit()
+        .account_id(account_id)
+        .source_ifsc(&ifsc)
+        .source_account_number(&account_number)
+        .amount(amount)
+        .pending(true)
+        .gateway_ref(&gateway_ref)
+        .send()
+        .await;
+    match result {
+        Ok(output) => {
+            world.last_deposit_id = Some(output.deposit_id().to_string());
+            world.last_deposit_pool = Some(output.pool().to_string());
+            world.last_error = None;
+        }
+        Err(e) => panic!("Pending deposit with gateway ref failed: {e:?}"),
+    }
+}
+
+#[when("I post the pending deposit")]
+async fn post_pending_deposit(world: &mut PbaWorld) {
+    let account_id = world.account_id.as_ref().expect("No account ID").clone();
+    let deposit_id = world
+        .last_deposit_id
+        .as_ref()
+        .expect("No deposit ID to post")
+        .clone();
+    let result = world
+        .client
+        .post_deposit()
+        .account_id(&account_id)
+        .deposit_id(&deposit_id)
+        .send()
+        .await;
+    match result {
+        Ok(output) => {
+            assert_eq!(output.status(), "posted", "Expected status 'posted' after posting");
+            world.last_error = None;
+        }
+        Err(e) => panic!("Post deposit failed: {e:?}"),
+    }
+}
+
+#[when("I void the pending deposit")]
+async fn void_pending_deposit(world: &mut PbaWorld) {
+    let account_id = world.account_id.as_ref().expect("No account ID").clone();
+    let deposit_id = world
+        .last_deposit_id
+        .as_ref()
+        .expect("No deposit ID to void")
+        .clone();
+    let result = world
+        .client
+        .void_deposit()
+        .account_id(&account_id)
+        .deposit_id(&deposit_id)
+        .send()
+        .await;
+    match result {
+        Ok(output) => {
+            assert_eq!(output.status(), "voided", "Expected status 'voided' after voiding");
+            world.last_error = None;
+        }
+        Err(e) => panic!("Void deposit failed: {e:?}"),
+    }
+}
+
+#[when(regex = r#"^I attempt to post deposit "([^"]*)"$"#)]
+async fn attempt_post_deposit(world: &mut PbaWorld, deposit_id: String) {
+    let account_id = world.account_id.as_ref().expect("No account ID").clone();
+    let result = world
+        .client
+        .post_deposit()
+        .account_id(&account_id)
+        .deposit_id(&deposit_id)
+        .send()
+        .await;
+    match result {
+        Ok(_) => {
+            world.last_error = None;
+        }
+        Err(_) => {
+            world.last_error = Some(crate::PbaError {
+                kind: "deposit_error".into(),
+            });
+        }
+    }
+}
+
+#[when(regex = r#"^I attempt to void deposit "([^"]*)"$"#)]
+async fn attempt_void_deposit(world: &mut PbaWorld, deposit_id: String) {
+    let account_id = world.account_id.as_ref().expect("No account ID").clone();
+    let result = world
+        .client
+        .void_deposit()
+        .account_id(&account_id)
+        .deposit_id(&deposit_id)
+        .send()
+        .await;
+    match result {
+        Ok(_) => {
+            world.last_error = None;
+        }
+        Err(_) => {
+            world.last_error = Some(crate::PbaError {
+                kind: "deposit_error".into(),
+            });
+        }
+    }
+}
+
+#[when("I attempt to post the pending deposit again")]
+async fn attempt_post_again(world: &mut PbaWorld) {
+    let account_id = world.account_id.as_ref().expect("No account ID").clone();
+    let deposit_id = world
+        .last_deposit_id
+        .as_ref()
+        .expect("No deposit ID")
+        .clone();
+    let result = world
+        .client
+        .post_deposit()
+        .account_id(&account_id)
+        .deposit_id(&deposit_id)
+        .send()
+        .await;
+    match result {
+        Ok(_) => {
+            world.last_error = None;
+        }
+        Err(_) => {
+            world.last_error = Some(crate::PbaError {
+                kind: "deposit_not_pending".into(),
+            });
+        }
+    }
+}
+
+#[when("I attempt to void the pending deposit again")]
+async fn attempt_void_again(world: &mut PbaWorld) {
+    let account_id = world.account_id.as_ref().expect("No account ID").clone();
+    let deposit_id = world
+        .last_deposit_id
+        .as_ref()
+        .expect("No deposit ID")
+        .clone();
+    let result = world
+        .client
+        .void_deposit()
+        .account_id(&account_id)
+        .deposit_id(&deposit_id)
+        .send()
+        .await;
+    match result {
+        Ok(_) => {
+            world.last_error = None;
+        }
+        Err(_) => {
+            world.last_error = Some(crate::PbaError {
+                kind: "deposit_not_pending".into(),
+            });
+        }
+    }
+}
+
+#[then("the operation should be rejected")]
+async fn operation_rejected(world: &mut PbaWorld) {
+    assert!(
+        world.last_error.is_some(),
+        "Expected operation to be rejected, but no error was recorded"
+    );
+}
+
+#[then(regex = r"^the pending self should be (\d+)$")]
+async fn pending_self_should_be(world: &mut PbaWorld, expected: i64) {
+    let account_id = world.account_id.as_ref().expect("No account ID");
+    let balance = world
+        .client
+        .get_balance()
+        .account_id(account_id)
+        .send()
+        .await
+        .expect("Failed to get balance");
+    assert_eq!(
+        balance.pending_self(),
+        expected,
+        "Pending self mismatch: expected {} but got {}",
+        expected,
+        balance.pending_self()
+    );
+}
+
+#[then(regex = r"^the pending others should be (\d+)$")]
+async fn pending_others_should_be(world: &mut PbaWorld, expected: i64) {
+    let account_id = world.account_id.as_ref().expect("No account ID");
+    let balance = world
+        .client
+        .get_balance()
+        .account_id(account_id)
+        .send()
+        .await
+        .expect("Failed to get balance");
+    assert_eq!(
+        balance.pending_others(),
+        expected,
+        "Pending others mismatch: expected {} but got {}",
+        expected,
+        balance.pending_others()
     );
 }
