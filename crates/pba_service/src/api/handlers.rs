@@ -65,6 +65,8 @@ pub async fn get_balance(
         self_contribution: balance.self_contribution,
         others_contribution: balance.others_contribution,
         total: balance.total(),
+        pending_self: balance.pending_self,
+        pending_others: balance.pending_others,
     }))
 }
 
@@ -82,20 +84,65 @@ pub async fn deposit(
             &req.source_ifsc,
             &req.source_account_number,
             req.amount,
-            false,
-            None,
-            None,
+            req.pending,
+            req.gateway_ref.as_deref(),
+            req.timeout_seconds,
         )
         .await?;
 
     Ok((
         axum::http::StatusCode::CREATED,
         Json(DepositResponse {
+            deposit_id: result.deposit_id,
             account_id: result.account_id,
             amount: result.amount,
             pool: result.pool.to_string(),
+            status: result.status.as_str().to_string(),
+            gateway_ref: result.gateway_ref,
+            timeout_seconds: result.timeout_seconds,
         }),
     ))
+}
+
+pub async fn post_deposit(
+    State(state): State<AppState>,
+    Path((account_id, deposit_id)): Path<(Uuid, Uuid)>,
+) -> Result<Json<DepositResponse>, AppError> {
+    let result = state
+        .deposit_service
+        .post_deposit(account_id, deposit_id)
+        .await?;
+
+    Ok(Json(DepositResponse {
+        deposit_id: result.deposit_id,
+        account_id: result.account_id,
+        amount: result.amount,
+        pool: result.pool.to_string(),
+        status: result.status.as_str().to_string(),
+        gateway_ref: result.gateway_ref,
+        timeout_seconds: result.timeout_seconds,
+    }))
+}
+
+pub async fn void_deposit(
+    State(state): State<AppState>,
+    Path((account_id, deposit_id)): Path<(Uuid, Uuid)>,
+    Json(req): Json<VoidDepositRequest>,
+) -> Result<Json<DepositResponse>, AppError> {
+    let result = state
+        .deposit_service
+        .void_deposit(account_id, deposit_id, req.reason.as_deref())
+        .await?;
+
+    Ok(Json(DepositResponse {
+        deposit_id: result.deposit_id,
+        account_id: result.account_id,
+        amount: result.amount,
+        pool: result.pool.to_string(),
+        status: result.status.as_str().to_string(),
+        gateway_ref: result.gateway_ref,
+        timeout_seconds: result.timeout_seconds,
+    }))
 }
 
 // ── Payment ──
