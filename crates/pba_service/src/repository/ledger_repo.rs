@@ -2,6 +2,7 @@ use crate::domain::pool::PoolBalance;
 use crate::domain::transfer::TransferRecord;
 use crate::error::AppError;
 use tb::account::Flags as AccountFlags;
+use tb::error::CreateTransferErrorKind;
 use tb::transfer::Flags as TransferFlags;
 use tigerbeetle_unofficial as tb;
 use uuid::Uuid;
@@ -133,9 +134,7 @@ impl LedgerRepo {
         self.client
             .create_transfers(vec![transfer])
             .await
-            .map_err(|e| {
-                AppError::TigerBeetleError(format!("create_transfers failed: {e:?}"))
-            })?;
+            .map_err(|e| classify_transfer_error(e, "create_transfer"))?;
 
         tracing::info!(debit = %debit_account_id, credit = %credit_account_id, amount, code = transfer_code, "Created TB transfer");
         Ok(())
@@ -226,9 +225,7 @@ impl LedgerRepo {
         self.client
             .create_transfers(vec![transfer1, transfer2])
             .await
-            .map_err(|e| {
-                AppError::TigerBeetleError(format!("create_linked_transfers failed: {e:?}"))
-            })?;
+            .map_err(|e| classify_transfer_error(e, "create_linked_transfers"))?;
 
         tracing::info!(
             others_debit = %others_debit_account_id,
@@ -239,4 +236,23 @@ impl LedgerRepo {
         );
         Ok(())
     }
+}
+
+/// Classify a TigerBeetle transfer error into an appropriate AppError.
+/// Returns `ExceedsBalance` for overdraft rejections (retryable), generic error otherwise.
+fn classify_transfer_error(e: tb::error::CreateTransfersError, context: &str) -> AppError {
+    if let tb::error::CreateTransfersError::Api(ref api_err) = e {
+        let is_balance_exceeded = api_err.as_slice().iter().any(|individual| {
+            matches!(
+                individual.kind(),
+                CreateTransferErrorKind::ExceedsCredits
+                    | CreateTransferErrorKind::ExceedsDebits
+                    | CreateTransferErrorKind::LinkedEventFailed
+            )
+        });
+        if is_balance_exceeded {
+            return AppError::ExceedsBalance;
+        }
+    }
+    AppError::TigerBeetleError(format!("{context} failed: {e:?}"))
 }

@@ -29,6 +29,9 @@ pub struct PbaWorld {
     duplicate_rejected: bool,
     /// Last withdrawal amount
     last_withdrawal_amount: Option<i64>,
+    /// Results from concurrent payment tests
+    concurrent_successes: Option<usize>,
+    concurrent_failures: Option<usize>,
 }
 
 #[derive(Debug, Clone)]
@@ -74,6 +77,8 @@ impl Default for PbaWorld {
             last_account_status: None,
             duplicate_rejected: false,
             last_withdrawal_amount: None,
+            concurrent_successes: None,
+            concurrent_failures: None,
         }
     }
 }

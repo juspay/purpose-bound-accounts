@@ -1,4 +1,5 @@
 use cucumber::{then, when};
+use futures::future::join_all;
 
 use crate::PbaWorld;
 
@@ -139,5 +140,48 @@ async fn payment_rejected_not_active(world: &mut PbaWorld) {
         err.kind, "account_not_active",
         "Expected account_not_active but got: {}",
         err.kind
+    );
+}
+
+#[when(regex = r#"^(\d+) concurrent payments of (\d+) each are made to MCC "([^"]*)"$"#)]
+async fn concurrent_payments(world: &mut PbaWorld, count: usize, amount: i64, mcc: String) {
+    let account_id = world.account_id.clone().expect("No account ID");
+    let client = world.client.clone();
+
+    let futures: Vec<_> = (0..count)
+        .map(|i| {
+            let client = client.clone();
+            let account_id = account_id.clone();
+            let mcc = mcc.clone();
+            async move {
+                client
+                    .make_payment()
+                    .account_id(&account_id)
+                    .amount(amount)
+                    .merchant_mcc(&mcc)
+                    .merchant_id(&format!("CONCURRENT{i:03}"))
+                    .description("concurrent test")
+                    .send()
+                    .await
+            }
+        })
+        .collect();
+
+    let results = join_all(futures).await;
+    let successes = results.iter().filter(|r| r.is_ok()).count();
+    let failures = results.iter().filter(|r| r.is_err()).count();
+
+    world.concurrent_successes = Some(successes);
+    world.concurrent_failures = Some(failures);
+}
+
+#[then(regex = r"^exactly (\d+) payments should succeed$")]
+async fn exactly_n_succeed(world: &mut PbaWorld, expected: usize) {
+    let successes = world
+        .concurrent_successes
+        .expect("No concurrent payment results");
+    assert_eq!(
+        successes, expected,
+        "Expected {expected} successes but got {successes}"
     );
 }

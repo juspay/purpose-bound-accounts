@@ -62,7 +62,7 @@ just install-deps
 **Start services (once, leave running):**
 
 ```bash
-just services-start    # Postgres on :5432, TigerBeetle on :3000
+just infra-start       # Postgres on :5432, TigerBeetle on :3000
 ```
 
 **Edit, build, run (inner loop):**
@@ -82,8 +82,8 @@ From there you can browse accounts, create new ones, make deposits/payments/with
 **Stop everything:**
 
 ```bash
-just services-stop     # stop Postgres + TigerBeetle
-just stop-all          # stop the app + all services
+just stop              # stop pba-service only (infra keeps running)
+just stop-all          # stop the app + all infrastructure
 ```
 
 **All-in-one (starts services, runs app, cleans up on Ctrl+C):**
@@ -156,12 +156,12 @@ Environment variables (loaded from `.env`):
 Run `just` to see all targets:
 
 ```
-just services-start   # Start Postgres + TigerBeetle
-just services-stop    # Stop Postgres + TigerBeetle
-just run              # Run the service
-just run-all          # Start services + run (auto-cleanup on exit)
-just stop             # Stop pba-service only (services keep running)
-just stop-all         # Stop app + all services
+just infra-start      # Start Postgres + TigerBeetle
+just infra-stop       # Stop Postgres + TigerBeetle
+just run              # Run the service (foreground)
+just run-all          # Start infra + run (auto-cleanup on exit)
+just stop             # Stop pba-service only (infra keeps running)
+just stop-all         # Stop app + all infrastructure
 just build            # Build the project
 just test             # Unit tests
 just e2e              # API E2E tests (isolated infra)
