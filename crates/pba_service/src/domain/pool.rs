@@ -13,6 +13,8 @@ pub enum PoolType {
 pub struct PoolBalance {
     pub self_contribution: u64,
     pub others_contribution: u64,
+    pub pending_self: u64,
+    pub pending_others: u64,
 }
 
 impl PoolBalance {
@@ -60,6 +62,8 @@ mod tests {
         let balance = PoolBalance {
             self_contribution: 1000,
             others_contribution: 5000,
+            pending_self: 0,
+            pending_others: 0,
         };
         let split = PaymentSplit::calculate(&balance, 3000).unwrap();
         assert_eq!(split.from_others, 3000);
@@ -71,6 +75,8 @@ mod tests {
         let balance = PoolBalance {
             self_contribution: 3000,
             others_contribution: 2000,
+            pending_self: 0,
+            pending_others: 0,
         };
         let split = PaymentSplit::calculate(&balance, 4000).unwrap();
         assert_eq!(split.from_others, 2000);
@@ -82,6 +88,8 @@ mod tests {
         let balance = PoolBalance {
             self_contribution: 5000,
             others_contribution: 0,
+            pending_self: 0,
+            pending_others: 0,
         };
         let split = PaymentSplit::calculate(&balance, 3000).unwrap();
         assert_eq!(split.from_others, 0);
@@ -93,6 +101,8 @@ mod tests {
         let balance = PoolBalance {
             self_contribution: 1000,
             others_contribution: 1000,
+            pending_self: 0,
+            pending_others: 0,
         };
         assert!(PaymentSplit::calculate(&balance, 3000).is_none());
     }
