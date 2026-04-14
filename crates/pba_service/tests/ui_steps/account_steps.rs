@@ -487,24 +487,24 @@ async fn view_detail(world: &mut UiWorld) {
 async fn page_self_pool(world: &mut UiWorld, expected: String) {
     let page = world.ensure_page().await;
     let content = page.content().await.unwrap();
-    assert!(content.contains(&format!("{expected} INR")),
-        "Expected self pool '{expected} INR' on page");
+    assert!(content.contains(&format!("₹{expected}")),
+        "Expected self pool '₹{expected}' on page");
 }
 
 #[then(regex = r#"^the page should show others pool as "([^"]*)"$"#)]
 async fn page_others_pool(world: &mut UiWorld, expected: String) {
     let page = world.ensure_page().await;
     let content = page.content().await.unwrap();
-    assert!(content.contains(&format!("{expected} INR")),
-        "Expected others pool '{expected} INR' on page");
+    assert!(content.contains(&format!("₹{expected}")),
+        "Expected others pool '₹{expected}' on page");
 }
 
 #[then(regex = r#"^the page should show total balance as "([^"]*)"$"#)]
 async fn page_total_balance(world: &mut UiWorld, expected: String) {
     let page = world.ensure_page().await;
     let content = page.content().await.unwrap();
-    assert!(content.contains(&format!("{expected} INR")),
-        "Expected total '{expected} INR' on page");
+    assert!(content.contains(&format!("₹{expected}")),
+        "Expected total '₹{expected}' on page");
 }
 
 #[then(regex = r#"^the transaction history should load$"#)]
