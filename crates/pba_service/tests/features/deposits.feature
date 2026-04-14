@@ -34,3 +34,69 @@ Feature: Deposits
     And the account is closed
     When I attempt to deposit 1000 from IFSC "HDFC0035353" account "3535300001"
     Then the deposit should be rejected as account not active
+
+  @api
+  Scenario: Pending deposit then post moves funds to posted balance
+    Given a "health" account exists for holder "a1a1a1a1-a1a1-a1a1-a1a1-a1a1a1a1a1a1" with origin IFSC "HDFC0051111" and account number "5111100001"
+    When I create a pending deposit of 10000 from IFSC "HDFC0051111" account "5111100001"
+    Then the self contribution should be 0
+    And the pending self should be 10000
+    When I post the pending deposit
+    Then the self contribution should be 10000
+    And the pending self should be 0
+
+  @api
+  Scenario: Pending deposit then void leaves balance unchanged
+    Given a "health" account exists for holder "a2a2a2a2-a2a2-a2a2-a2a2-a2a2a2a2a2a2" with origin IFSC "HDFC0052222" and account number "5222200001"
+    When I create a pending deposit of 5000 from IFSC "HDFC0052222" account "5222200001"
+    Then the pending self should be 5000
+    When I void the pending deposit
+    Then the self contribution should be 0
+    And the pending self should be 0
+
+  @api
+  Scenario: Pending deposit from other bank goes to others pending pool
+    Given a "health" account exists for holder "a3a3a3a3-a3a3-a3a3-a3a3-a3a3a3a3a3a3" with origin IFSC "HDFC0053333" and account number "5333300001"
+    When I create a pending deposit of 7000 from IFSC "ICIC0009999" account "9876543210"
+    Then the deposit should go to "others_contribution" pool
+    And the others contribution should be 0
+    And the pending others should be 7000
+    When I post the pending deposit
+    Then the others contribution should be 7000
+    And the pending others should be 0
+
+  @api
+  Scenario: Pending deposit with gateway reference
+    Given a "health" account exists for holder "a4a4a4a4-a4a4-a4a4-a4a4-a4a4a4a4a4a4" with origin IFSC "HDFC0054444" and account number "5444400001"
+    When I create a pending deposit of 3000 from IFSC "HDFC0054444" account "5444400001" with gateway ref "gw-txn-12345"
+    Then the pending self should be 3000
+    When I post the pending deposit
+    Then the self contribution should be 3000
+
+  @api
+  Scenario: Post on non-existent deposit is rejected
+    Given a "health" account exists for holder "a5a5a5a5-a5a5-a5a5-a5a5-a5a5a5a5a5a5" with origin IFSC "HDFC0055555" and account number "5555500001"
+    When I attempt to post deposit "00000000-0000-0000-0000-000000000000"
+    Then the operation should be rejected
+
+  @api
+  Scenario: Void on non-existent deposit is rejected
+    Given a "health" account exists for holder "a6a6a6a6-a6a6-a6a6-a6a6-a6a6a6a6a6a6" with origin IFSC "HDFC0056666" and account number "5666600001"
+    When I attempt to void deposit "00000000-0000-0000-0000-000000000000"
+    Then the operation should be rejected
+
+  @api
+  Scenario: Post on already-posted deposit is rejected
+    Given a "health" account exists for holder "a7a7a7a7-a7a7-a7a7-a7a7-a7a7a7a7a7a7" with origin IFSC "HDFC0057777" and account number "5777700001"
+    When I create a pending deposit of 2000 from IFSC "HDFC0057777" account "5777700001"
+    And I post the pending deposit
+    And I attempt to post the pending deposit again
+    Then the operation should be rejected
+
+  @api
+  Scenario: Void on already-voided deposit is rejected
+    Given a "health" account exists for holder "a8a8a8a8-a8a8-a8a8-a8a8-a8a8a8a8a8a8" with origin IFSC "HDFC0058888" and account number "5888800001"
+    When I create a pending deposit of 2000 from IFSC "HDFC0058888" account "5888800001"
+    And I void the pending deposit
+    And I attempt to void the pending deposit again
+    Then the operation should be rejected
