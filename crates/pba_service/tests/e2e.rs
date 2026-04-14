@@ -12,6 +12,8 @@ pub struct PbaWorld {
     account_id: Option<String>,
     /// Last deposit result
     last_deposit_pool: Option<String>,
+    /// Last deposit ID (for two-phase deposit tracking)
+    last_deposit_id: Option<String>,
     /// Last payment result
     last_payment: Option<PaymentResult>,
     /// Last error (for negative test cases)
@@ -68,6 +70,7 @@ impl Default for PbaWorld {
             client: Arc::new(client),
             account_id: None,
             last_deposit_pool: None,
+            last_deposit_id: None,
             last_payment: None,
             last_error: None,
             purpose_types_count: None,

@@ -127,7 +127,9 @@ async fn main() {
 
     let w1 = UiWorld::cucumber()
         .max_concurrent_scenarios(1)
-        .run("tests/features")
+        .filter_run("tests/features", |_feature, _rule, scenario| {
+            !scenario.tags.iter().any(|t| t == "api")
+        })
         .await;
 
     let w2 = UiWorld::cucumber()
