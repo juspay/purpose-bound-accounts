@@ -37,6 +37,7 @@ impl TransferDirection {
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum TransferType {
     Deposit,
+    PendingDeposit,
     Payment,
     Withdrawal,
     Unknown,
@@ -46,6 +47,7 @@ impl TransferType {
     pub fn from_code(code: u16) -> Self {
         match code {
             100 => Self::Deposit,
+            101 => Self::PendingDeposit,
             200 => Self::Payment,
             300 => Self::Withdrawal,
             _ => Self::Unknown,
@@ -55,6 +57,7 @@ impl TransferType {
     pub fn label(&self) -> &'static str {
         match self {
             Self::Deposit => "Deposit",
+            Self::PendingDeposit => "Deposit (Pending)",
             Self::Payment => "Payment",
             Self::Withdrawal => "Withdrawal",
             Self::Unknown => "Unknown",
