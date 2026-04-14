@@ -285,6 +285,7 @@ impl LedgerRepo {
     ) -> Result<(), AppError> {
         let transfer = tb::Transfer::new(generate_transfer_id())
             .with_pending_id(pending_id)
+            .with_amount(u128::MAX)
             .with_flags(TransferFlags::POST_PENDING_TRANSFER);
 
         self.client
@@ -305,6 +306,7 @@ impl LedgerRepo {
     ) -> Result<(), AppError> {
         let transfer = tb::Transfer::new(generate_transfer_id())
             .with_pending_id(pending_id)
+            .with_amount(u128::MAX)
             .with_flags(TransferFlags::VOID_PENDING_TRANSFER);
 
         self.client
