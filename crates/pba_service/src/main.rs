@@ -53,7 +53,7 @@ async fn main() {
 
     // Initialize repositories
     let account_repo = Arc::new(AccountRepo::new(pg_pool.clone()));
-    let deposit_repo = Arc::new(DepositRepo::new(pg_pool));
+    let deposit_repo = Arc::new(DepositRepo::new(pg_pool.clone()));
     let ledger_repo = Arc::new(LedgerRepo::new(
         config.tigerbeetle_cluster_id,
         config.tigerbeetle_addresses,
@@ -93,6 +93,12 @@ async fn main() {
         account_repo,
         ledger_repo,
     };
+
+    // Spawn background deposit timeout poller
+    tokio::spawn(service::deposit_timeout::run_deposit_timeout_poller(
+        Arc::clone(&deposit_repo),
+        config.deposit_poller_interval_seconds,
+    ));
 
     let app = api::routes::create_router()
         .merge(admin::create_router())
