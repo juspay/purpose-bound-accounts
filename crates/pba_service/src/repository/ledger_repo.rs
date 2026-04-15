@@ -193,6 +193,11 @@ impl LedgerRepo {
         let mut seen_ids = std::collections::HashSet::new();
 
         for t in self_transfers.iter().chain(others_transfers.iter()) {
+            // Skip raw pending transfers (timed-out or still in-flight).
+            // Posted/voided resolutions appear as separate transfers.
+            if t.flags().contains(TransferFlags::PENDING) {
+                continue;
+            }
             if seen_ids.insert(t.id()) {
                 all_transfers.push(TransferRecord::from_tb_transfer(t, self_tb_id, others_tb_id));
             }

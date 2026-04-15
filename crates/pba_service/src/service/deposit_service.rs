@@ -66,7 +66,23 @@ impl DepositService {
         if pending {
             let timeout = timeout_seconds.unwrap_or(self.default_timeout_seconds);
 
-            // Create pending transfer in TigerBeetle
+            // 1. Record in PostgreSQL first (status = created, tb_transfer_id = 0)
+            self.deposit_repo
+                .insert(
+                    deposit_id,
+                    account_id,
+                    amount,
+                    pool,
+                    source_ifsc,
+                    source_account_number,
+                    DepositStatus::Created,
+                    0_u128,
+                    gateway_ref,
+                    Some(timeout),
+                )
+                .await?;
+
+            // 2. Create pending transfer in TigerBeetle
             let tb_transfer_id = self
                 .ledger_repo
                 .create_pending_transfer(
@@ -78,21 +94,10 @@ impl DepositService {
                 )
                 .await?;
 
-            // Record in PostgreSQL
+            // 3. Activate: update PG with real tb_transfer_id and status = pending
             let record = self
                 .deposit_repo
-                .insert(
-                    deposit_id,
-                    account_id,
-                    amount,
-                    pool,
-                    source_ifsc,
-                    source_account_number,
-                    DepositStatus::Pending,
-                    tb_transfer_id,
-                    gateway_ref,
-                    Some(timeout),
-                )
+                .activate_pending(deposit_id, tb_transfer_id)
                 .await?;
 
             Ok(DepositResult {

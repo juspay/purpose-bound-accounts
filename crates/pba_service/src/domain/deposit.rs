@@ -3,6 +3,7 @@ use uuid::Uuid;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum DepositStatus {
+    Created,
     Pending,
     Posted,
     Voided,
@@ -11,6 +12,7 @@ pub enum DepositStatus {
 impl DepositStatus {
     pub fn as_str(&self) -> &'static str {
         match self {
+            Self::Created => "created",
             Self::Pending => "pending",
             Self::Posted => "posted",
             Self::Voided => "voided",
@@ -19,6 +21,7 @@ impl DepositStatus {
 
     pub fn from_str(s: &str) -> Option<Self> {
         match s {
+            "created" => Some(Self::Created),
             "pending" => Some(Self::Pending),
             "posted" => Some(Self::Posted),
             "voided" => Some(Self::Voided),

@@ -1,4 +1,5 @@
 use chrono::{DateTime, Utc};
+use tigerbeetle_unofficial::transfer::Flags as TransferFlags;
 
 #[derive(Debug, Clone)]
 pub struct TransferRecord {
@@ -37,17 +38,20 @@ impl TransferDirection {
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum TransferType {
     Deposit,
-    PendingDeposit,
+    DepositPosted,
+    DepositVoided,
     Payment,
     Withdrawal,
     Unknown,
 }
 
 impl TransferType {
-    pub fn from_code(code: u16) -> Self {
+    pub fn from_code_and_flags(code: u16, flags: TransferFlags) -> Self {
         match code {
             100 => Self::Deposit,
-            101 => Self::PendingDeposit,
+            101 if flags.contains(TransferFlags::POST_PENDING_TRANSFER) => Self::DepositPosted,
+            101 if flags.contains(TransferFlags::VOID_PENDING_TRANSFER) => Self::DepositVoided,
+            101 => Self::Deposit, // fallback for code 101
             200 => Self::Payment,
             300 => Self::Withdrawal,
             _ => Self::Unknown,
@@ -57,7 +61,8 @@ impl TransferType {
     pub fn label(&self) -> &'static str {
         match self {
             Self::Deposit => "Deposit",
-            Self::PendingDeposit => "Deposit (Pending)",
+            Self::DepositPosted => "Deposit (Posted)",
+            Self::DepositVoided => "Deposit (Voided)",
             Self::Payment => "Payment",
             Self::Withdrawal => "Withdrawal",
             Self::Unknown => "Unknown",
@@ -91,7 +96,7 @@ impl TransferRecord {
             code: transfer.code(),
             timestamp,
             direction,
-            transfer_type: TransferType::from_code(transfer.code()),
+            transfer_type: TransferType::from_code_and_flags(transfer.code(), transfer.flags()),
         }
     }
 

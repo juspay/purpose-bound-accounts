@@ -136,6 +136,30 @@ impl DepositRepo {
         Ok(row.into_domain())
     }
 
+    pub async fn activate_pending(
+        &self,
+        deposit_id: Uuid,
+        tb_transfer_id: u128,
+    ) -> Result<DepositRecord, AppError> {
+        let tb_id_str = tb_transfer_id.to_string();
+        let row = sqlx::query_as::<_, DepositRow>(
+            r#"
+            UPDATE deposits SET status = 'pending', tb_transfer_id = $2::numeric, updated_at = now()
+            WHERE id = $1 AND status = 'created'
+            RETURNING id, account_id, amount, pool, source_ifsc, source_account,
+                      status, tb_transfer_id::text as tb_transfer_id,
+                      gateway_ref, timeout_seconds, created_at, updated_at
+            "#,
+        )
+        .bind(deposit_id)
+        .bind(&tb_id_str)
+        .fetch_optional(&self.pool)
+        .await?
+        .ok_or_else(|| AppError::DepositNotFound(deposit_id.to_string()))?;
+
+        Ok(row.into_domain())
+    }
+
     pub async fn list_pending_by_account(
         &self,
         account_id: Uuid,
