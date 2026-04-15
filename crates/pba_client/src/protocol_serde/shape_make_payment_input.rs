@@ -10,10 +10,10 @@ pub fn ser_make_payment_input_input(
         object.key("description").string(var_2.as_str());
     }
     if let Some(var_3) = &input.merchant_id {
-        object.key("merchantId").string(var_3.as_str());
+        object.key("merchant_id").string(var_3.as_str());
     }
     if let Some(var_4) = &input.merchant_mcc {
-        object.key("merchantMcc").string(var_4.as_str());
+        object.key("merchant_mcc").string(var_4.as_str());
     }
     Ok(())
 }

@@ -53,13 +53,13 @@
                 }
             }
         },
-        "/accounts/{accountId}": {
+        "/accounts/{account_id}": {
             "get": {
                 "description": "Get account metadata.",
                 "operationId": "GetAccount",
                 "parameters": [
                     {
-                        "name": "accountId",
+                        "name": "account_id",
                         "in": "path",
                         "schema": {
                             "type": "string"
@@ -91,13 +91,13 @@
                 }
             }
         },
-        "/accounts/{accountId}/balance": {
+        "/accounts/{account_id}/balance": {
             "get": {
                 "description": "Get pool balances for an account.",
                 "operationId": "GetBalance",
                 "parameters": [
                     {
-                        "name": "accountId",
+                        "name": "account_id",
                         "in": "path",
                         "schema": {
                             "type": "string"
@@ -129,7 +129,7 @@
                 }
             }
         },
-        "/accounts/{accountId}/deposits": {
+        "/accounts/{account_id}/deposits": {
             "post": {
                 "description": "Deposit funds into a purpose-bound account.\nAutomatically routes to self-contribution or others-contribution pool\nbased on whether the source matches the account's origin bank.\nSet `pending` to true for two-phase deposits (pending → post/void).",
                 "operationId": "Deposit",
@@ -145,7 +145,7 @@
                 },
                 "parameters": [
                     {
-                        "name": "accountId",
+                        "name": "account_id",
                         "in": "path",
                         "schema": {
                             "type": "string"
@@ -187,13 +187,13 @@
                 }
             }
         },
-        "/accounts/{accountId}/deposits/{depositId}/post": {
+        "/accounts/{account_id}/deposits/{deposit_id}/post": {
             "post": {
                 "description": "Confirm a pending deposit (post the held funds).",
                 "operationId": "PostDeposit",
                 "parameters": [
                     {
-                        "name": "accountId",
+                        "name": "account_id",
                         "in": "path",
                         "schema": {
                             "type": "string"
@@ -201,7 +201,7 @@
                         "required": true
                     },
                     {
-                        "name": "depositId",
+                        "name": "deposit_id",
                         "in": "path",
                         "schema": {
                             "type": "string"
@@ -243,7 +243,7 @@
                 }
             }
         },
-        "/accounts/{accountId}/deposits/{depositId}/void": {
+        "/accounts/{account_id}/deposits/{deposit_id}/void": {
             "post": {
                 "description": "Cancel a pending deposit (void the held funds).",
                 "operationId": "VoidDeposit",
@@ -258,7 +258,7 @@
                 },
                 "parameters": [
                     {
-                        "name": "accountId",
+                        "name": "account_id",
                         "in": "path",
                         "schema": {
                             "type": "string"
@@ -266,7 +266,7 @@
                         "required": true
                     },
                     {
-                        "name": "depositId",
+                        "name": "deposit_id",
                         "in": "path",
                         "schema": {
                             "type": "string"
@@ -308,7 +308,7 @@
                 }
             }
         },
-        "/accounts/{accountId}/payments": {
+        "/accounts/{account_id}/payments": {
             "post": {
                 "description": "Make a payment from a purpose-bound account.\nValidates the merchant's MCC against the account's purpose type.\nUses others-contribution pool first, then self-contribution.",
                 "operationId": "MakePayment",
@@ -324,7 +324,7 @@
                 },
                 "parameters": [
                     {
-                        "name": "accountId",
+                        "name": "account_id",
                         "in": "path",
                         "schema": {
                             "type": "string"
@@ -376,7 +376,7 @@
                 }
             }
         },
-        "/accounts/{accountId}/status": {
+        "/accounts/{account_id}/status": {
             "patch": {
                 "description": "Update account status (freeze, close, reactivate).",
                 "operationId": "UpdateAccountStatus",
@@ -392,7 +392,7 @@
                 },
                 "parameters": [
                     {
-                        "name": "accountId",
+                        "name": "account_id",
                         "in": "path",
                         "schema": {
                             "type": "string"
@@ -424,7 +424,7 @@
                 }
             }
         },
-        "/accounts/{accountId}/withdrawals": {
+        "/accounts/{account_id}/withdrawals": {
             "post": {
                 "description": "Withdraw funds from the self-contribution pool only.\nCannot withdraw from the others-contribution pool.",
                 "operationId": "Withdraw",
@@ -440,7 +440,7 @@
                 },
                 "parameters": [
                     {
-                        "name": "accountId",
+                        "name": "account_id",
                         "in": "path",
                         "schema": {
                             "type": "string"
@@ -510,13 +510,13 @@
                 }
             }
         },
-        "/purpose-types/{purposeCode}": {
+        "/purpose-types/{purpose_code}": {
             "get": {
                 "description": "Get a specific purpose type and its allowed MCCs.",
                 "operationId": "GetPurposeType",
                 "parameters": [
                     {
-                        "name": "purposeCode",
+                        "name": "purpose_code",
                         "in": "path",
                         "schema": {
                             "type": "string"
@@ -584,24 +584,24 @@
             "CreateAccountRequestContent": {
                 "type": "object",
                 "properties": {
-                    "holderId": {
+                    "holder_id": {
                         "type": "string"
                     },
-                    "purposeCode": {
+                    "purpose_code": {
                         "type": "string"
                     },
-                    "originIfsc": {
+                    "origin_ifsc": {
                         "type": "string"
                     },
-                    "originAccountNumber": {
+                    "origin_account_number": {
                         "type": "string"
                     }
                 },
                 "required": [
-                    "holderId",
-                    "originAccountNumber",
-                    "originIfsc",
-                    "purposeCode"
+                    "holder_id",
+                    "origin_account_number",
+                    "origin_ifsc",
+                    "purpose_code"
                 ]
             },
             "CreateAccountResponseContent": {
@@ -611,50 +611,50 @@
                     "id": {
                         "type": "string"
                     },
-                    "holderId": {
+                    "holder_id": {
                         "type": "string"
                     },
-                    "purposeCode": {
+                    "purpose_code": {
                         "type": "string"
                     },
-                    "originIfsc": {
+                    "origin_ifsc": {
                         "type": "string"
                     },
-                    "originAccountNumber": {
+                    "origin_account_number": {
                         "type": "string"
                     },
                     "vpa": {
                         "type": "string"
                     },
-                    "virtualIfsc": {
+                    "virtual_ifsc": {
                         "type": "string"
                     },
-                    "virtualAccountNumber": {
+                    "virtual_account_number": {
                         "type": "string"
                     },
-                    "kycTier": {
+                    "kyc_tier": {
                         "type": "string"
                     },
                     "status": {
                         "type": "string"
                     },
-                    "createdAt": {
+                    "created_at": {
                         "type": "string"
                     },
-                    "updatedAt": {
+                    "updated_at": {
                         "type": "string"
                     }
                 },
                 "required": [
-                    "createdAt",
-                    "holderId",
+                    "created_at",
+                    "holder_id",
                     "id",
-                    "kycTier",
-                    "originAccountNumber",
-                    "originIfsc",
-                    "purposeCode",
+                    "kyc_tier",
+                    "origin_account_number",
+                    "origin_ifsc",
+                    "purpose_code",
                     "status",
-                    "updatedAt"
+                    "updated_at"
                 ]
             },
             "DepositNotFoundErrorResponseContent": {
@@ -690,10 +690,10 @@
             "DepositRequestContent": {
                 "type": "object",
                 "properties": {
-                    "sourceIfsc": {
+                    "source_ifsc": {
                         "type": "string"
                     },
-                    "sourceAccountNumber": {
+                    "source_account_number": {
                         "type": "string"
                     },
                     "amount": {
@@ -703,26 +703,26 @@
                     "pending": {
                         "type": "boolean"
                     },
-                    "gatewayRef": {
+                    "gateway_ref": {
                         "type": "string"
                     },
-                    "timeoutSeconds": {
+                    "timeout_seconds": {
                         "type": "number"
                     }
                 },
                 "required": [
                     "amount",
-                    "sourceAccountNumber",
-                    "sourceIfsc"
+                    "source_account_number",
+                    "source_ifsc"
                 ]
             },
             "DepositResponseContent": {
                 "type": "object",
                 "properties": {
-                    "depositId": {
+                    "deposit_id": {
                         "type": "string"
                     },
-                    "accountId": {
+                    "account_id": {
                         "type": "string"
                     },
                     "amount": {
@@ -735,17 +735,17 @@
                     "status": {
                         "type": "string"
                     },
-                    "gatewayRef": {
+                    "gateway_ref": {
                         "type": "string"
                     },
-                    "timeoutSeconds": {
+                    "timeout_seconds": {
                         "type": "number"
                     }
                 },
                 "required": [
-                    "accountId",
+                    "account_id",
                     "amount",
-                    "depositId",
+                    "deposit_id",
                     "pool",
                     "status"
                 ]
@@ -772,63 +772,63 @@
                     "id": {
                         "type": "string"
                     },
-                    "holderId": {
+                    "holder_id": {
                         "type": "string"
                     },
-                    "purposeCode": {
+                    "purpose_code": {
                         "type": "string"
                     },
-                    "originIfsc": {
+                    "origin_ifsc": {
                         "type": "string"
                     },
-                    "originAccountNumber": {
+                    "origin_account_number": {
                         "type": "string"
                     },
                     "vpa": {
                         "type": "string"
                     },
-                    "virtualIfsc": {
+                    "virtual_ifsc": {
                         "type": "string"
                     },
-                    "virtualAccountNumber": {
+                    "virtual_account_number": {
                         "type": "string"
                     },
-                    "kycTier": {
+                    "kyc_tier": {
                         "type": "string"
                     },
                     "status": {
                         "type": "string"
                     },
-                    "createdAt": {
+                    "created_at": {
                         "type": "string"
                     },
-                    "updatedAt": {
+                    "updated_at": {
                         "type": "string"
                     }
                 },
                 "required": [
-                    "createdAt",
-                    "holderId",
+                    "created_at",
+                    "holder_id",
                     "id",
-                    "kycTier",
-                    "originAccountNumber",
-                    "originIfsc",
-                    "purposeCode",
+                    "kyc_tier",
+                    "origin_account_number",
+                    "origin_ifsc",
+                    "purpose_code",
                     "status",
-                    "updatedAt"
+                    "updated_at"
                 ]
             },
             "GetBalanceResponseContent": {
                 "type": "object",
                 "properties": {
-                    "accountId": {
+                    "account_id": {
                         "type": "string"
                     },
-                    "selfContribution": {
+                    "self_contribution": {
                         "type": "number",
                         "description": "Monetary amount in the smallest currency unit (e.g., paise for INR)."
                     },
-                    "othersContribution": {
+                    "others_contribution": {
                         "type": "number",
                         "description": "Monetary amount in the smallest currency unit (e.g., paise for INR)."
                     },
@@ -836,31 +836,31 @@
                         "type": "number",
                         "description": "Monetary amount in the smallest currency unit (e.g., paise for INR)."
                     },
-                    "pendingSelf": {
+                    "pending_self": {
                         "type": "number",
                         "description": "Monetary amount in the smallest currency unit (e.g., paise for INR)."
                     },
-                    "pendingOthers": {
+                    "pending_others": {
                         "type": "number",
                         "description": "Monetary amount in the smallest currency unit (e.g., paise for INR)."
                     }
                 },
                 "required": [
-                    "accountId",
-                    "othersContribution",
-                    "pendingOthers",
-                    "pendingSelf",
-                    "selfContribution",
+                    "account_id",
+                    "others_contribution",
+                    "pending_others",
+                    "pending_self",
+                    "self_contribution",
                     "total"
                 ]
             },
             "GetPurposeTypeResponseContent": {
                 "type": "object",
                 "properties": {
-                    "purposeCode": {
+                    "purpose_code": {
                         "type": "string"
                     },
-                    "allowedMccs": {
+                    "allowed_mccs": {
                         "type": "array",
                         "items": {
                             "$ref": "#/components/schemas/MccEntry"
@@ -868,8 +868,8 @@
                     }
                 },
                 "required": [
-                    "allowedMccs",
-                    "purposeCode"
+                    "allowed_mccs",
+                    "purpose_code"
                 ]
             },
             "InsufficientFundsErrorResponseContent": {
@@ -890,7 +890,7 @@
             "ListPurposeTypesResponseContent": {
                 "type": "object",
                 "properties": {
-                    "purposeTypes": {
+                    "purpose_types": {
                         "type": "array",
                         "items": {
                             "$ref": "#/components/schemas/PurposeTypeSummary"
@@ -898,7 +898,7 @@
                     }
                 },
                 "required": [
-                    "purposeTypes"
+                    "purpose_types"
                 ]
             },
             "MakePaymentRequestContent": {
@@ -908,10 +908,10 @@
                         "type": "number",
                         "description": "Monetary amount in the smallest currency unit (e.g., paise for INR)."
                     },
-                    "merchantMcc": {
+                    "merchant_mcc": {
                         "type": "string"
                     },
-                    "merchantId": {
+                    "merchant_id": {
                         "type": "string"
                     },
                     "description": {
@@ -921,42 +921,42 @@
                 "required": [
                     "amount",
                     "description",
-                    "merchantId",
-                    "merchantMcc"
+                    "merchant_id",
+                    "merchant_mcc"
                 ]
             },
             "MakePaymentResponseContent": {
                 "type": "object",
                 "properties": {
-                    "accountId": {
+                    "account_id": {
                         "type": "string"
                     },
                     "amount": {
                         "type": "number",
                         "description": "Monetary amount in the smallest currency unit (e.g., paise for INR)."
                     },
-                    "fromOthers": {
+                    "from_others": {
                         "type": "number",
                         "description": "Monetary amount in the smallest currency unit (e.g., paise for INR)."
                     },
-                    "fromSelf": {
+                    "from_self": {
                         "type": "number",
                         "description": "Monetary amount in the smallest currency unit (e.g., paise for INR)."
                     },
-                    "merchantId": {
+                    "merchant_id": {
                         "type": "string"
                     },
-                    "merchantMcc": {
+                    "merchant_mcc": {
                         "type": "string"
                     }
                 },
                 "required": [
-                    "accountId",
+                    "account_id",
                     "amount",
-                    "fromOthers",
-                    "fromSelf",
-                    "merchantId",
-                    "merchantMcc"
+                    "from_others",
+                    "from_self",
+                    "merchant_id",
+                    "merchant_mcc"
                 ]
             },
             "MccEntry": {
@@ -976,10 +976,10 @@
             "PostDepositResponseContent": {
                 "type": "object",
                 "properties": {
-                    "depositId": {
+                    "deposit_id": {
                         "type": "string"
                     },
-                    "accountId": {
+                    "account_id": {
                         "type": "string"
                     },
                     "amount": {
@@ -992,17 +992,17 @@
                     "status": {
                         "type": "string"
                     },
-                    "gatewayRef": {
+                    "gateway_ref": {
                         "type": "string"
                     },
-                    "timeoutSeconds": {
+                    "timeout_seconds": {
                         "type": "number"
                     }
                 },
                 "required": [
-                    "accountId",
+                    "account_id",
                     "amount",
-                    "depositId",
+                    "deposit_id",
                     "pool",
                     "status"
                 ]
@@ -1025,10 +1025,10 @@
             "PurposeTypeSummary": {
                 "type": "object",
                 "properties": {
-                    "purposeCode": {
+                    "purpose_code": {
                         "type": "string"
                     },
-                    "allowedMccs": {
+                    "allowed_mccs": {
                         "type": "array",
                         "items": {
                             "$ref": "#/components/schemas/MccEntry"
@@ -1036,8 +1036,8 @@
                     }
                 },
                 "required": [
-                    "allowedMccs",
-                    "purposeCode"
+                    "allowed_mccs",
+                    "purpose_code"
                 ]
             },
             "Status": {
@@ -1067,50 +1067,50 @@
                     "id": {
                         "type": "string"
                     },
-                    "holderId": {
+                    "holder_id": {
                         "type": "string"
                     },
-                    "purposeCode": {
+                    "purpose_code": {
                         "type": "string"
                     },
-                    "originIfsc": {
+                    "origin_ifsc": {
                         "type": "string"
                     },
-                    "originAccountNumber": {
+                    "origin_account_number": {
                         "type": "string"
                     },
                     "vpa": {
                         "type": "string"
                     },
-                    "virtualIfsc": {
+                    "virtual_ifsc": {
                         "type": "string"
                     },
-                    "virtualAccountNumber": {
+                    "virtual_account_number": {
                         "type": "string"
                     },
-                    "kycTier": {
+                    "kyc_tier": {
                         "type": "string"
                     },
                     "status": {
                         "type": "string"
                     },
-                    "createdAt": {
+                    "created_at": {
                         "type": "string"
                     },
-                    "updatedAt": {
+                    "updated_at": {
                         "type": "string"
                     }
                 },
                 "required": [
-                    "createdAt",
-                    "holderId",
+                    "created_at",
+                    "holder_id",
                     "id",
-                    "kycTier",
-                    "originAccountNumber",
-                    "originIfsc",
-                    "purposeCode",
+                    "kyc_tier",
+                    "origin_account_number",
+                    "origin_ifsc",
+                    "purpose_code",
                     "status",
-                    "updatedAt"
+                    "updated_at"
                 ]
             },
             "VoidDepositRequestContent": {
@@ -1124,10 +1124,10 @@
             "VoidDepositResponseContent": {
                 "type": "object",
                 "properties": {
-                    "depositId": {
+                    "deposit_id": {
                         "type": "string"
                     },
-                    "accountId": {
+                    "account_id": {
                         "type": "string"
                     },
                     "amount": {
@@ -1140,17 +1140,17 @@
                     "status": {
                         "type": "string"
                     },
-                    "gatewayRef": {
+                    "gateway_ref": {
                         "type": "string"
                     },
-                    "timeoutSeconds": {
+                    "timeout_seconds": {
                         "type": "number"
                     }
                 },
                 "required": [
-                    "accountId",
+                    "account_id",
                     "amount",
-                    "depositId",
+                    "deposit_id",
                     "pool",
                     "status"
                 ]
@@ -1170,7 +1170,7 @@
             "WithdrawResponseContent": {
                 "type": "object",
                 "properties": {
-                    "accountId": {
+                    "account_id": {
                         "type": "string"
                     },
                     "amount": {
@@ -1179,7 +1179,7 @@
                     }
                 },
                 "required": [
-                    "accountId",
+                    "account_id",
                     "amount"
                 ]
             }

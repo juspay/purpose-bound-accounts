@@ -94,7 +94,7 @@ pub(crate) fn de_make_payment(value: &[u8], mut builder: crate::operation::make_
             Some(::aws_smithy_json::deserialize::Token::EndObject { .. }) => break,
                                     Some(::aws_smithy_json::deserialize::Token::ObjectKey { key, .. }) => {
                 match key.to_unescaped()?.as_ref() {
-                    "accountId" => {
+                    "account_id" => {
                         builder = builder.set_account_id(
                             ::aws_smithy_json::deserialize::token::expect_string_or_null(tokens.next())?.map(|s|
                                 s.to_unescaped().map(|u|
@@ -110,21 +110,21 @@ pub(crate) fn de_make_payment(value: &[u8], mut builder: crate::operation::make_
                                                 .transpose()?
                         );
                     }
-                    "fromOthers" => {
+                    "from_others" => {
                         builder = builder.set_from_others(
                             ::aws_smithy_json::deserialize::token::expect_number_or_null(tokens.next())?
                                                 .map(i64::try_from)
                                                 .transpose()?
                         );
                     }
-                    "fromSelf" => {
+                    "from_self" => {
                         builder = builder.set_from_self(
                             ::aws_smithy_json::deserialize::token::expect_number_or_null(tokens.next())?
                                                 .map(i64::try_from)
                                                 .transpose()?
                         );
                     }
-                    "merchantId" => {
+                    "merchant_id" => {
                         builder = builder.set_merchant_id(
                             ::aws_smithy_json::deserialize::token::expect_string_or_null(tokens.next())?.map(|s|
                                 s.to_unescaped().map(|u|
@@ -133,7 +133,7 @@ pub(crate) fn de_make_payment(value: &[u8], mut builder: crate::operation::make_
                             ).transpose()?
                         );
                     }
-                    "merchantMcc" => {
+                    "merchant_mcc" => {
                         builder = builder.set_merchant_mcc(
                             ::aws_smithy_json::deserialize::token::expect_string_or_null(tokens.next())?.map(|s|
                                 s.to_unescaped().map(|u|

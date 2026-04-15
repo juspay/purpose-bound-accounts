@@ -136,7 +136,7 @@ impl ::aws_smithy_runtime_api::client::runtime_plugin::RuntimePlugin for Withdra
     if account_id.is_empty() {
                     return ::std::result::Result::Err(::aws_smithy_types::error::operation::BuildError::missing_field("account_id", "cannot be empty or unset"))
                 }
-    ::std::write!(output, "/accounts/{accountId}/withdrawals", accountId = account_id).expect("formatting should succeed");
+    ::std::write!(output, "/accounts/{account_id}/withdrawals", account_id = account_id).expect("formatting should succeed");
     ::std::result::Result::Ok(())
 }
 #[allow(clippy::unnecessary_wraps)]

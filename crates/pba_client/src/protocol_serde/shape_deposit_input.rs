@@ -7,19 +7,19 @@ pub fn ser_deposit_input_input(
         object.key("amount").number(#[allow(clippy::useless_conversion)]::aws_smithy_types::Number::NegInt((*var_1).into()));
     }
     if let Some(var_2) = &input.gateway_ref {
-        object.key("gatewayRef").string(var_2.as_str());
+        object.key("gateway_ref").string(var_2.as_str());
     }
     if let Some(var_3) = &input.pending {
         object.key("pending").boolean(*var_3);
     }
     if let Some(var_4) = &input.source_account_number {
-        object.key("sourceAccountNumber").string(var_4.as_str());
+        object.key("source_account_number").string(var_4.as_str());
     }
     if let Some(var_5) = &input.source_ifsc {
-        object.key("sourceIfsc").string(var_5.as_str());
+        object.key("source_ifsc").string(var_5.as_str());
     }
     if let Some(var_6) = &input.timeout_seconds {
-        object.key("timeoutSeconds").number(#[allow(clippy::useless_conversion)]::aws_smithy_types::Number::NegInt((*var_6).into()));
+        object.key("timeout_seconds").number(#[allow(clippy::useless_conversion)]::aws_smithy_types::Number::NegInt((*var_6).into()));
     }
     Ok(())
 }

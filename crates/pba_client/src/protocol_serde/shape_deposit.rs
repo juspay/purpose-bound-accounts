@@ -68,7 +68,7 @@ pub(crate) fn de_deposit(value: &[u8], mut builder: crate::operation::deposit::b
             Some(::aws_smithy_json::deserialize::Token::EndObject { .. }) => break,
                                     Some(::aws_smithy_json::deserialize::Token::ObjectKey { key, .. }) => {
                 match key.to_unescaped()?.as_ref() {
-                    "accountId" => {
+                    "account_id" => {
                         builder = builder.set_account_id(
                             ::aws_smithy_json::deserialize::token::expect_string_or_null(tokens.next())?.map(|s|
                                 s.to_unescaped().map(|u|
@@ -84,7 +84,7 @@ pub(crate) fn de_deposit(value: &[u8], mut builder: crate::operation::deposit::b
                                                 .transpose()?
                         );
                     }
-                    "depositId" => {
+                    "deposit_id" => {
                         builder = builder.set_deposit_id(
                             ::aws_smithy_json::deserialize::token::expect_string_or_null(tokens.next())?.map(|s|
                                 s.to_unescaped().map(|u|
@@ -93,7 +93,7 @@ pub(crate) fn de_deposit(value: &[u8], mut builder: crate::operation::deposit::b
                             ).transpose()?
                         );
                     }
-                    "gatewayRef" => {
+                    "gateway_ref" => {
                         builder = builder.set_gateway_ref(
                             ::aws_smithy_json::deserialize::token::expect_string_or_null(tokens.next())?.map(|s|
                                 s.to_unescaped().map(|u|
@@ -120,7 +120,7 @@ pub(crate) fn de_deposit(value: &[u8], mut builder: crate::operation::deposit::b
                             ).transpose()?
                         );
                     }
-                    "timeoutSeconds" => {
+                    "timeout_seconds" => {
                         builder = builder.set_timeout_seconds(
                             ::aws_smithy_json::deserialize::token::expect_number_or_null(tokens.next())?
                                                 .map(i32::try_from)

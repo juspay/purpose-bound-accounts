@@ -47,7 +47,7 @@ pub(crate) fn de_get_account(value: &[u8], mut builder: crate::operation::get_ac
             Some(::aws_smithy_json::deserialize::Token::EndObject { .. }) => break,
                                     Some(::aws_smithy_json::deserialize::Token::ObjectKey { key, .. }) => {
                 match key.to_unescaped()?.as_ref() {
-                    "createdAt" => {
+                    "created_at" => {
                         builder = builder.set_created_at(
                             ::aws_smithy_json::deserialize::token::expect_string_or_null(tokens.next())?.map(|s|
                                 s.to_unescaped().map(|u|
@@ -56,7 +56,7 @@ pub(crate) fn de_get_account(value: &[u8], mut builder: crate::operation::get_ac
                             ).transpose()?
                         );
                     }
-                    "holderId" => {
+                    "holder_id" => {
                         builder = builder.set_holder_id(
                             ::aws_smithy_json::deserialize::token::expect_string_or_null(tokens.next())?.map(|s|
                                 s.to_unescaped().map(|u|
@@ -74,7 +74,7 @@ pub(crate) fn de_get_account(value: &[u8], mut builder: crate::operation::get_ac
                             ).transpose()?
                         );
                     }
-                    "kycTier" => {
+                    "kyc_tier" => {
                         builder = builder.set_kyc_tier(
                             ::aws_smithy_json::deserialize::token::expect_string_or_null(tokens.next())?.map(|s|
                                 s.to_unescaped().map(|u|
@@ -83,7 +83,7 @@ pub(crate) fn de_get_account(value: &[u8], mut builder: crate::operation::get_ac
                             ).transpose()?
                         );
                     }
-                    "originAccountNumber" => {
+                    "origin_account_number" => {
                         builder = builder.set_origin_account_number(
                             ::aws_smithy_json::deserialize::token::expect_string_or_null(tokens.next())?.map(|s|
                                 s.to_unescaped().map(|u|
@@ -92,7 +92,7 @@ pub(crate) fn de_get_account(value: &[u8], mut builder: crate::operation::get_ac
                             ).transpose()?
                         );
                     }
-                    "originIfsc" => {
+                    "origin_ifsc" => {
                         builder = builder.set_origin_ifsc(
                             ::aws_smithy_json::deserialize::token::expect_string_or_null(tokens.next())?.map(|s|
                                 s.to_unescaped().map(|u|
@@ -101,7 +101,7 @@ pub(crate) fn de_get_account(value: &[u8], mut builder: crate::operation::get_ac
                             ).transpose()?
                         );
                     }
-                    "purposeCode" => {
+                    "purpose_code" => {
                         builder = builder.set_purpose_code(
                             ::aws_smithy_json::deserialize::token::expect_string_or_null(tokens.next())?.map(|s|
                                 s.to_unescaped().map(|u|
@@ -119,7 +119,7 @@ pub(crate) fn de_get_account(value: &[u8], mut builder: crate::operation::get_ac
                             ).transpose()?
                         );
                     }
-                    "updatedAt" => {
+                    "updated_at" => {
                         builder = builder.set_updated_at(
                             ::aws_smithy_json::deserialize::token::expect_string_or_null(tokens.next())?.map(|s|
                                 s.to_unescaped().map(|u|
@@ -128,7 +128,7 @@ pub(crate) fn de_get_account(value: &[u8], mut builder: crate::operation::get_ac
                             ).transpose()?
                         );
                     }
-                    "virtualAccountNumber" => {
+                    "virtual_account_number" => {
                         builder = builder.set_virtual_account_number(
                             ::aws_smithy_json::deserialize::token::expect_string_or_null(tokens.next())?.map(|s|
                                 s.to_unescaped().map(|u|
@@ -137,7 +137,7 @@ pub(crate) fn de_get_account(value: &[u8], mut builder: crate::operation::get_ac
                             ).transpose()?
                         );
                     }
-                    "virtualIfsc" => {
+                    "virtual_ifsc" => {
                         builder = builder.set_virtual_ifsc(
                             ::aws_smithy_json::deserialize::token::expect_string_or_null(tokens.next())?.map(|s|
                                 s.to_unescaped().map(|u|

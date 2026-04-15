@@ -47,7 +47,7 @@ pub(crate) fn de_get_balance(value: &[u8], mut builder: crate::operation::get_ba
             Some(::aws_smithy_json::deserialize::Token::EndObject { .. }) => break,
                                     Some(::aws_smithy_json::deserialize::Token::ObjectKey { key, .. }) => {
                 match key.to_unescaped()?.as_ref() {
-                    "accountId" => {
+                    "account_id" => {
                         builder = builder.set_account_id(
                             ::aws_smithy_json::deserialize::token::expect_string_or_null(tokens.next())?.map(|s|
                                 s.to_unescaped().map(|u|
@@ -56,28 +56,28 @@ pub(crate) fn de_get_balance(value: &[u8], mut builder: crate::operation::get_ba
                             ).transpose()?
                         );
                     }
-                    "othersContribution" => {
+                    "others_contribution" => {
                         builder = builder.set_others_contribution(
                             ::aws_smithy_json::deserialize::token::expect_number_or_null(tokens.next())?
                                                 .map(i64::try_from)
                                                 .transpose()?
                         );
                     }
-                    "pendingOthers" => {
+                    "pending_others" => {
                         builder = builder.set_pending_others(
                             ::aws_smithy_json::deserialize::token::expect_number_or_null(tokens.next())?
                                                 .map(i64::try_from)
                                                 .transpose()?
                         );
                     }
-                    "pendingSelf" => {
+                    "pending_self" => {
                         builder = builder.set_pending_self(
                             ::aws_smithy_json::deserialize::token::expect_number_or_null(tokens.next())?
                                                 .map(i64::try_from)
                                                 .transpose()?
                         );
                     }
-                    "selfContribution" => {
+                    "self_contribution" => {
                         builder = builder.set_self_contribution(
                             ::aws_smithy_json::deserialize::token::expect_number_or_null(tokens.next())?
                                                 .map(i64::try_from)

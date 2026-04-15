@@ -26,7 +26,7 @@ pub(crate) fn de_list_purpose_types(value: &[u8], mut builder: crate::operation:
             Some(::aws_smithy_json::deserialize::Token::EndObject { .. }) => break,
                                     Some(::aws_smithy_json::deserialize::Token::ObjectKey { key, .. }) => {
                 match key.to_unescaped()?.as_ref() {
-                    "purposeTypes" => {
+                    "purpose_types" => {
                         builder = builder.set_purpose_types(
                             crate::protocol_serde::shape_purpose_type_list::de_purpose_type_list(tokens)?
                         );

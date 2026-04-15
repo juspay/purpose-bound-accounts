@@ -11,7 +11,7 @@ pub(crate) fn de_purpose_type_summary<'a, I>(tokens: &mut ::std::iter::Peekable<
                     Some(::aws_smithy_json::deserialize::Token::EndObject { .. }) => break,
                                             Some(::aws_smithy_json::deserialize::Token::ObjectKey { key, .. }) => {
                         match key.to_unescaped()?.as_ref() {
-                            "purposeCode" => {
+                            "purpose_code" => {
                                 builder = builder.set_purpose_code(
                                     ::aws_smithy_json::deserialize::token::expect_string_or_null(tokens.next())?.map(|s|
                                         s.to_unescaped().map(|u|
@@ -20,7 +20,7 @@ pub(crate) fn de_purpose_type_summary<'a, I>(tokens: &mut ::std::iter::Peekable<
                                     ).transpose()?
                                 );
                             }
-                            "allowedMccs" => {
+                            "allowed_mccs" => {
                                 builder = builder.set_allowed_mccs(
                                     crate::protocol_serde::shape_mcc_entry_list::de_mcc_entry_list(tokens)?
                                 );

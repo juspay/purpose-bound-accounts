@@ -136,7 +136,7 @@ impl ::aws_smithy_runtime_api::client::runtime_plugin::RuntimePlugin for GetPurp
     if purpose_code.is_empty() {
                     return ::std::result::Result::Err(::aws_smithy_types::error::operation::BuildError::missing_field("purpose_code", "cannot be empty or unset"))
                 }
-    ::std::write!(output, "/purpose-types/{purposeCode}", purposeCode = purpose_code).expect("formatting should succeed");
+    ::std::write!(output, "/purpose-types/{purpose_code}", purpose_code = purpose_code).expect("formatting should succeed");
     ::std::result::Result::Ok(())
 }
 #[allow(clippy::unnecessary_wraps)]

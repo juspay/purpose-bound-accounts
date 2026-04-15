@@ -142,7 +142,7 @@ impl ::aws_smithy_runtime_api::client::runtime_plugin::RuntimePlugin for PostDep
     if deposit_id.is_empty() {
                     return ::std::result::Result::Err(::aws_smithy_types::error::operation::BuildError::missing_field("deposit_id", "cannot be empty or unset"))
                 }
-    ::std::write!(output, "/accounts/{accountId}/deposits/{depositId}/post", accountId = account_id, depositId = deposit_id).expect("formatting should succeed");
+    ::std::write!(output, "/accounts/{account_id}/deposits/{deposit_id}/post", account_id = account_id, deposit_id = deposit_id).expect("formatting should succeed");
     ::std::result::Result::Ok(())
 }
 #[allow(clippy::unnecessary_wraps)]
