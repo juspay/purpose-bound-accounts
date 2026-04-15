@@ -7,25 +7,25 @@ namespace com.ppi.pba
 operation ListPurposeTypes {
     output := {
         @required
-        purposeTypes: PurposeTypeList
+        purpose_types: PurposeTypeList
     }
 }
 
 /// Get a specific purpose type and its allowed MCCs.
 @readonly
-@http(method: "GET", uri: "/purpose-types/{purposeCode}")
+@http(method: "GET", uri: "/purpose-types/{purpose_code}")
 operation GetPurposeType {
     input := {
         @required
         @httpLabel
-        purposeCode: String
+        purpose_code: String
     }
     output := {
         @required
-        purposeCode: String
+        purpose_code: String
 
         @required
-        allowedMccs: MccEntryList
+        allowed_mccs: MccEntryList
     }
     errors: [PurposeTypeNotFoundError]
 }
@@ -36,10 +36,10 @@ list PurposeTypeList {
 
 structure PurposeTypeSummary {
     @required
-    purposeCode: String
+    purpose_code: String
 
     @required
-    allowedMccs: MccEntryList
+    allowed_mccs: MccEntryList
 }
 
 list MccEntryList {

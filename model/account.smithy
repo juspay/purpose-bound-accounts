@@ -6,16 +6,16 @@ namespace com.ppi.pba
 operation CreateAccount {
     input := {
         @required
-        holderId: String
+        holder_id: String
 
         @required
-        purposeCode: String
+        purpose_code: String
 
         @required
-        originIfsc: String
+        origin_ifsc: String
 
         @required
-        originAccountNumber: String
+        origin_account_number: String
     }
     output := with [AccountMixin] {}
     errors: [PurposeTypeNotFoundError, DuplicateAccountError]
@@ -23,12 +23,12 @@ operation CreateAccount {
 
 /// Get account metadata.
 @readonly
-@http(method: "GET", uri: "/accounts/{accountId}")
+@http(method: "GET", uri: "/accounts/{account_id}")
 operation GetAccount {
     input := {
         @required
         @httpLabel
-        accountId: String
+        account_id: String
     }
     output := with [AccountMixin] {}
     errors: [AccountNotFoundError]
@@ -36,42 +36,42 @@ operation GetAccount {
 
 /// Get pool balances for an account.
 @readonly
-@http(method: "GET", uri: "/accounts/{accountId}/balance")
+@http(method: "GET", uri: "/accounts/{account_id}/balance")
 operation GetBalance {
     input := {
         @required
         @httpLabel
-        accountId: String
+        account_id: String
     }
     output := {
         @required
-        accountId: String
+        account_id: String
 
         @required
-        selfContribution: Money
+        self_contribution: Money
 
         @required
-        othersContribution: Money
+        others_contribution: Money
 
         @required
         total: Money
 
         @required
-        pendingSelf: Money
+        pending_self: Money
 
         @required
-        pendingOthers: Money
+        pending_others: Money
     }
     errors: [AccountNotFoundError]
 }
 
 /// Update account status (freeze, close, reactivate).
-@http(method: "PATCH", uri: "/accounts/{accountId}/status")
+@http(method: "PATCH", uri: "/accounts/{account_id}/status")
 operation UpdateAccountStatus {
     input := {
         @required
         @httpLabel
-        accountId: String
+        account_id: String
 
         @required
         status: Status
@@ -87,32 +87,32 @@ structure AccountMixin {
     id: String
 
     @required
-    holderId: String
+    holder_id: String
 
     @required
-    purposeCode: String
+    purpose_code: String
 
     @required
-    originIfsc: String
+    origin_ifsc: String
 
     @required
-    originAccountNumber: String
+    origin_account_number: String
 
     vpa: String
-    virtualIfsc: String
-    virtualAccountNumber: String
+    virtual_ifsc: String
+    virtual_account_number: String
 
     @required
-    kycTier: String
+    kyc_tier: String
 
     @required
     status: String
 
     @required
-    createdAt: String
+    created_at: String
 
     @required
-    updatedAt: String
+    updated_at: String
 }
 
 @error("client")

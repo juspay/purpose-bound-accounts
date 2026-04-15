@@ -5,34 +5,34 @@ namespace com.ppi.pba
 /// Automatically routes to self-contribution or others-contribution pool
 /// based on whether the source matches the account's origin bank.
 /// Set `pending` to true for two-phase deposits (pending → post/void).
-@http(method: "POST", uri: "/accounts/{accountId}/deposits", code: 201)
+@http(method: "POST", uri: "/accounts/{account_id}/deposits", code: 201)
 operation Deposit {
     input := {
         @required
         @httpLabel
-        accountId: String
+        account_id: String
 
         @required
-        sourceIfsc: String
+        source_ifsc: String
 
         @required
-        sourceAccountNumber: String
+        source_account_number: String
 
         @required
         amount: Money
 
         pending: Boolean
 
-        gatewayRef: String
+        gateway_ref: String
 
-        timeoutSeconds: Integer
+        timeout_seconds: Integer
     }
     output := {
         @required
-        depositId: String
+        deposit_id: String
 
         @required
-        accountId: String
+        account_id: String
 
         @required
         amount: Money
@@ -43,31 +43,31 @@ operation Deposit {
         @required
         status: String
 
-        gatewayRef: String
+        gateway_ref: String
 
-        timeoutSeconds: Integer
+        timeout_seconds: Integer
     }
     errors: [AccountNotFoundError, AccountNotActiveError]
 }
 
 /// Confirm a pending deposit (post the held funds).
-@http(method: "POST", uri: "/accounts/{accountId}/deposits/{depositId}/post")
+@http(method: "POST", uri: "/accounts/{account_id}/deposits/{deposit_id}/post")
 operation PostDeposit {
     input := {
         @required
         @httpLabel
-        accountId: String
+        account_id: String
 
         @required
         @httpLabel
-        depositId: String
+        deposit_id: String
     }
     output := {
         @required
-        depositId: String
+        deposit_id: String
 
         @required
-        accountId: String
+        account_id: String
 
         @required
         amount: Money
@@ -78,33 +78,33 @@ operation PostDeposit {
         @required
         status: String
 
-        gatewayRef: String
+        gateway_ref: String
 
-        timeoutSeconds: Integer
+        timeout_seconds: Integer
     }
     errors: [AccountNotFoundError, DepositNotFoundError, DepositNotPendingError]
 }
 
 /// Cancel a pending deposit (void the held funds).
-@http(method: "POST", uri: "/accounts/{accountId}/deposits/{depositId}/void")
+@http(method: "POST", uri: "/accounts/{account_id}/deposits/{deposit_id}/void")
 operation VoidDeposit {
     input := {
         @required
         @httpLabel
-        accountId: String
+        account_id: String
 
         @required
         @httpLabel
-        depositId: String
+        deposit_id: String
 
         reason: String
     }
     output := {
         @required
-        depositId: String
+        deposit_id: String
 
         @required
-        accountId: String
+        account_id: String
 
         @required
         amount: Money
@@ -115,9 +115,9 @@ operation VoidDeposit {
         @required
         status: String
 
-        gatewayRef: String
+        gateway_ref: String
 
-        timeoutSeconds: Integer
+        timeout_seconds: Integer
     }
     errors: [AccountNotFoundError, DepositNotFoundError, DepositNotPendingError]
 }

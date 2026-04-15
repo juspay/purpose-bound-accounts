@@ -4,43 +4,43 @@ namespace com.ppi.pba
 /// Make a payment from a purpose-bound account.
 /// Validates the merchant's MCC against the account's purpose type.
 /// Uses others-contribution pool first, then self-contribution.
-@http(method: "POST", uri: "/accounts/{accountId}/payments", code: 201)
+@http(method: "POST", uri: "/accounts/{account_id}/payments", code: 201)
 operation MakePayment {
     input := {
         @required
         @httpLabel
-        accountId: String
+        account_id: String
 
         @required
         amount: Money
 
         @required
-        merchantMcc: String
+        merchant_mcc: String
 
         @required
-        merchantId: String
+        merchant_id: String
 
         @required
         description: String
     }
     output := {
         @required
-        accountId: String
+        account_id: String
 
         @required
         amount: Money
 
         @required
-        fromOthers: Money
+        from_others: Money
 
         @required
-        fromSelf: Money
+        from_self: Money
 
         @required
-        merchantId: String
+        merchant_id: String
 
         @required
-        merchantMcc: String
+        merchant_mcc: String
     }
     errors: [
         AccountNotFoundError
