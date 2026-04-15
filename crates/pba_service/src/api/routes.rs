@@ -41,4 +41,7 @@ pub fn create_router() -> Router<AppState> {
             "/purpose-types/{purposeCode}",
             get(handlers::get_purpose_type),
         )
+        // API Docs
+        .route("/docs", get(handlers::swagger_ui))
+        .route("/docs/openapi.json", get(handlers::openapi_json))
 }

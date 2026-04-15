@@ -248,6 +248,8 @@ smithy-build:
     @mkdir -p crates/pba_client
     @cp -r sdk/output/source/rust-client-codegen/* crates/pba_client/
     @echo "SDK generated at crates/pba_client/"
+    @cp sdk/output/source/openapi/PurposeBoundAccountService.openapi.json crates/pba_service/src/api/openapi.json
+    @echo "OpenAPI spec generated at crates/pba_service/src/api/openapi.json"
 
 # Clean generated SDK output
 smithy-clean:

@@ -1,0 +1,1188 @@
+{
+    "openapi": "3.0.2",
+    "info": {
+        "title": "PurposeBoundAccountService",
+        "version": "2026-04-14"
+    },
+    "paths": {
+        "/accounts": {
+            "post": {
+                "description": "Create a new purpose-bound account.",
+                "operationId": "CreateAccount",
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/CreateAccountRequestContent"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "responses": {
+                    "201": {
+                        "description": "CreateAccount 201 response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/CreateAccountResponseContent"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "PurposeTypeNotFoundError 404 response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/PurposeTypeNotFoundErrorResponseContent"
+                                }
+                            }
+                        }
+                    },
+                    "409": {
+                        "description": "DuplicateAccountError 409 response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/DuplicateAccountErrorResponseContent"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/accounts/{accountId}": {
+            "get": {
+                "description": "Get account metadata.",
+                "operationId": "GetAccount",
+                "parameters": [
+                    {
+                        "name": "accountId",
+                        "in": "path",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "GetAccount 200 response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/GetAccountResponseContent"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "AccountNotFoundError 404 response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/AccountNotFoundErrorResponseContent"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/accounts/{accountId}/balance": {
+            "get": {
+                "description": "Get pool balances for an account.",
+                "operationId": "GetBalance",
+                "parameters": [
+                    {
+                        "name": "accountId",
+                        "in": "path",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "GetBalance 200 response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/GetBalanceResponseContent"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "AccountNotFoundError 404 response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/AccountNotFoundErrorResponseContent"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/accounts/{accountId}/deposits": {
+            "post": {
+                "description": "Deposit funds into a purpose-bound account.\nAutomatically routes to self-contribution or others-contribution pool\nbased on whether the source matches the account's origin bank.\nSet `pending` to true for two-phase deposits (pending → post/void).",
+                "operationId": "Deposit",
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/DepositRequestContent"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "parameters": [
+                    {
+                        "name": "accountId",
+                        "in": "path",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Deposit 201 response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/DepositResponseContent"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "AccountNotFoundError 404 response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/AccountNotFoundErrorResponseContent"
+                                }
+                            }
+                        }
+                    },
+                    "409": {
+                        "description": "AccountNotActiveError 409 response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/AccountNotActiveErrorResponseContent"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/accounts/{accountId}/deposits/{depositId}/post": {
+            "post": {
+                "description": "Confirm a pending deposit (post the held funds).",
+                "operationId": "PostDeposit",
+                "parameters": [
+                    {
+                        "name": "accountId",
+                        "in": "path",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "required": true
+                    },
+                    {
+                        "name": "depositId",
+                        "in": "path",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "PostDeposit 200 response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/PostDepositResponseContent"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "DepositNotFoundError 404 response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/DepositNotFoundErrorResponseContent"
+                                }
+                            }
+                        }
+                    },
+                    "409": {
+                        "description": "DepositNotPendingError 409 response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/DepositNotPendingErrorResponseContent"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/accounts/{accountId}/deposits/{depositId}/void": {
+            "post": {
+                "description": "Cancel a pending deposit (void the held funds).",
+                "operationId": "VoidDeposit",
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/VoidDepositRequestContent"
+                            }
+                        }
+                    }
+                },
+                "parameters": [
+                    {
+                        "name": "accountId",
+                        "in": "path",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "required": true
+                    },
+                    {
+                        "name": "depositId",
+                        "in": "path",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "VoidDeposit 200 response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/VoidDepositResponseContent"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "DepositNotFoundError 404 response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/DepositNotFoundErrorResponseContent"
+                                }
+                            }
+                        }
+                    },
+                    "409": {
+                        "description": "DepositNotPendingError 409 response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/DepositNotPendingErrorResponseContent"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/accounts/{accountId}/payments": {
+            "post": {
+                "description": "Make a payment from a purpose-bound account.\nValidates the merchant's MCC against the account's purpose type.\nUses others-contribution pool first, then self-contribution.",
+                "operationId": "MakePayment",
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/MakePaymentRequestContent"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "parameters": [
+                    {
+                        "name": "accountId",
+                        "in": "path",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "MakePayment 201 response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/MakePaymentResponseContent"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "AccountNotFoundError 404 response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/AccountNotFoundErrorResponseContent"
+                                }
+                            }
+                        }
+                    },
+                    "409": {
+                        "description": "AccountNotActiveError 409 response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/AccountNotActiveErrorResponseContent"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "InsufficientFundsError 422 response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/InsufficientFundsErrorResponseContent"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/accounts/{accountId}/status": {
+            "patch": {
+                "description": "Update account status (freeze, close, reactivate).",
+                "operationId": "UpdateAccountStatus",
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/UpdateAccountStatusRequestContent"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "parameters": [
+                    {
+                        "name": "accountId",
+                        "in": "path",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "UpdateAccountStatus 200 response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/UpdateAccountStatusResponseContent"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "AccountNotFoundError 404 response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/AccountNotFoundErrorResponseContent"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/accounts/{accountId}/withdrawals": {
+            "post": {
+                "description": "Withdraw funds from the self-contribution pool only.\nCannot withdraw from the others-contribution pool.",
+                "operationId": "Withdraw",
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/WithdrawRequestContent"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "parameters": [
+                    {
+                        "name": "accountId",
+                        "in": "path",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Withdraw 201 response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/WithdrawResponseContent"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "AccountNotFoundError 404 response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/AccountNotFoundErrorResponseContent"
+                                }
+                            }
+                        }
+                    },
+                    "409": {
+                        "description": "AccountNotActiveError 409 response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/AccountNotActiveErrorResponseContent"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "InsufficientFundsError 422 response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/InsufficientFundsErrorResponseContent"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/purpose-types": {
+            "get": {
+                "description": "List all available purpose types.",
+                "operationId": "ListPurposeTypes",
+                "responses": {
+                    "200": {
+                        "description": "ListPurposeTypes 200 response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ListPurposeTypesResponseContent"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/purpose-types/{purposeCode}": {
+            "get": {
+                "description": "Get a specific purpose type and its allowed MCCs.",
+                "operationId": "GetPurposeType",
+                "parameters": [
+                    {
+                        "name": "purposeCode",
+                        "in": "path",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "GetPurposeType 200 response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/GetPurposeTypeResponseContent"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "PurposeTypeNotFoundError 404 response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/PurposeTypeNotFoundErrorResponseContent"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "components": {
+        "schemas": {
+            "AccountNotActiveErrorResponseContent": {
+                "type": "object",
+                "properties": {
+                    "error": {
+                        "type": "string"
+                    },
+                    "message": {
+                        "type": "string"
+                    }
+                },
+                "required": [
+                    "error",
+                    "message"
+                ]
+            },
+            "AccountNotFoundErrorResponseContent": {
+                "type": "object",
+                "properties": {
+                    "error": {
+                        "type": "string"
+                    },
+                    "message": {
+                        "type": "string"
+                    }
+                },
+                "required": [
+                    "error",
+                    "message"
+                ]
+            },
+            "CreateAccountRequestContent": {
+                "type": "object",
+                "properties": {
+                    "holderId": {
+                        "type": "string"
+                    },
+                    "purposeCode": {
+                        "type": "string"
+                    },
+                    "originIfsc": {
+                        "type": "string"
+                    },
+                    "originAccountNumber": {
+                        "type": "string"
+                    }
+                },
+                "required": [
+                    "holderId",
+                    "originAccountNumber",
+                    "originIfsc",
+                    "purposeCode"
+                ]
+            },
+            "CreateAccountResponseContent": {
+                "type": "object",
+                "description": "Shared account fields.",
+                "properties": {
+                    "id": {
+                        "type": "string"
+                    },
+                    "holderId": {
+                        "type": "string"
+                    },
+                    "purposeCode": {
+                        "type": "string"
+                    },
+                    "originIfsc": {
+                        "type": "string"
+                    },
+                    "originAccountNumber": {
+                        "type": "string"
+                    },
+                    "vpa": {
+                        "type": "string"
+                    },
+                    "virtualIfsc": {
+                        "type": "string"
+                    },
+                    "virtualAccountNumber": {
+                        "type": "string"
+                    },
+                    "kycTier": {
+                        "type": "string"
+                    },
+                    "status": {
+                        "type": "string"
+                    },
+                    "createdAt": {
+                        "type": "string"
+                    },
+                    "updatedAt": {
+                        "type": "string"
+                    }
+                },
+                "required": [
+                    "createdAt",
+                    "holderId",
+                    "id",
+                    "kycTier",
+                    "originAccountNumber",
+                    "originIfsc",
+                    "purposeCode",
+                    "status",
+                    "updatedAt"
+                ]
+            },
+            "DepositNotFoundErrorResponseContent": {
+                "type": "object",
+                "properties": {
+                    "error": {
+                        "type": "string"
+                    },
+                    "message": {
+                        "type": "string"
+                    }
+                },
+                "required": [
+                    "error",
+                    "message"
+                ]
+            },
+            "DepositNotPendingErrorResponseContent": {
+                "type": "object",
+                "properties": {
+                    "error": {
+                        "type": "string"
+                    },
+                    "message": {
+                        "type": "string"
+                    }
+                },
+                "required": [
+                    "error",
+                    "message"
+                ]
+            },
+            "DepositRequestContent": {
+                "type": "object",
+                "properties": {
+                    "sourceIfsc": {
+                        "type": "string"
+                    },
+                    "sourceAccountNumber": {
+                        "type": "string"
+                    },
+                    "amount": {
+                        "type": "number",
+                        "description": "Monetary amount in the smallest currency unit (e.g., paise for INR)."
+                    },
+                    "pending": {
+                        "type": "boolean"
+                    },
+                    "gatewayRef": {
+                        "type": "string"
+                    },
+                    "timeoutSeconds": {
+                        "type": "number"
+                    }
+                },
+                "required": [
+                    "amount",
+                    "sourceAccountNumber",
+                    "sourceIfsc"
+                ]
+            },
+            "DepositResponseContent": {
+                "type": "object",
+                "properties": {
+                    "depositId": {
+                        "type": "string"
+                    },
+                    "accountId": {
+                        "type": "string"
+                    },
+                    "amount": {
+                        "type": "number",
+                        "description": "Monetary amount in the smallest currency unit (e.g., paise for INR)."
+                    },
+                    "pool": {
+                        "type": "string"
+                    },
+                    "status": {
+                        "type": "string"
+                    },
+                    "gatewayRef": {
+                        "type": "string"
+                    },
+                    "timeoutSeconds": {
+                        "type": "number"
+                    }
+                },
+                "required": [
+                    "accountId",
+                    "amount",
+                    "depositId",
+                    "pool",
+                    "status"
+                ]
+            },
+            "DuplicateAccountErrorResponseContent": {
+                "type": "object",
+                "properties": {
+                    "error": {
+                        "type": "string"
+                    },
+                    "message": {
+                        "type": "string"
+                    }
+                },
+                "required": [
+                    "error",
+                    "message"
+                ]
+            },
+            "GetAccountResponseContent": {
+                "type": "object",
+                "description": "Shared account fields.",
+                "properties": {
+                    "id": {
+                        "type": "string"
+                    },
+                    "holderId": {
+                        "type": "string"
+                    },
+                    "purposeCode": {
+                        "type": "string"
+                    },
+                    "originIfsc": {
+                        "type": "string"
+                    },
+                    "originAccountNumber": {
+                        "type": "string"
+                    },
+                    "vpa": {
+                        "type": "string"
+                    },
+                    "virtualIfsc": {
+                        "type": "string"
+                    },
+                    "virtualAccountNumber": {
+                        "type": "string"
+                    },
+                    "kycTier": {
+                        "type": "string"
+                    },
+                    "status": {
+                        "type": "string"
+                    },
+                    "createdAt": {
+                        "type": "string"
+                    },
+                    "updatedAt": {
+                        "type": "string"
+                    }
+                },
+                "required": [
+                    "createdAt",
+                    "holderId",
+                    "id",
+                    "kycTier",
+                    "originAccountNumber",
+                    "originIfsc",
+                    "purposeCode",
+                    "status",
+                    "updatedAt"
+                ]
+            },
+            "GetBalanceResponseContent": {
+                "type": "object",
+                "properties": {
+                    "accountId": {
+                        "type": "string"
+                    },
+                    "selfContribution": {
+                        "type": "number",
+                        "description": "Monetary amount in the smallest currency unit (e.g., paise for INR)."
+                    },
+                    "othersContribution": {
+                        "type": "number",
+                        "description": "Monetary amount in the smallest currency unit (e.g., paise for INR)."
+                    },
+                    "total": {
+                        "type": "number",
+                        "description": "Monetary amount in the smallest currency unit (e.g., paise for INR)."
+                    },
+                    "pendingSelf": {
+                        "type": "number",
+                        "description": "Monetary amount in the smallest currency unit (e.g., paise for INR)."
+                    },
+                    "pendingOthers": {
+                        "type": "number",
+                        "description": "Monetary amount in the smallest currency unit (e.g., paise for INR)."
+                    }
+                },
+                "required": [
+                    "accountId",
+                    "othersContribution",
+                    "pendingOthers",
+                    "pendingSelf",
+                    "selfContribution",
+                    "total"
+                ]
+            },
+            "GetPurposeTypeResponseContent": {
+                "type": "object",
+                "properties": {
+                    "purposeCode": {
+                        "type": "string"
+                    },
+                    "allowedMccs": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/MccEntry"
+                        }
+                    }
+                },
+                "required": [
+                    "allowedMccs",
+                    "purposeCode"
+                ]
+            },
+            "InsufficientFundsErrorResponseContent": {
+                "type": "object",
+                "properties": {
+                    "error": {
+                        "type": "string"
+                    },
+                    "message": {
+                        "type": "string"
+                    }
+                },
+                "required": [
+                    "error",
+                    "message"
+                ]
+            },
+            "ListPurposeTypesResponseContent": {
+                "type": "object",
+                "properties": {
+                    "purposeTypes": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/PurposeTypeSummary"
+                        }
+                    }
+                },
+                "required": [
+                    "purposeTypes"
+                ]
+            },
+            "MakePaymentRequestContent": {
+                "type": "object",
+                "properties": {
+                    "amount": {
+                        "type": "number",
+                        "description": "Monetary amount in the smallest currency unit (e.g., paise for INR)."
+                    },
+                    "merchantMcc": {
+                        "type": "string"
+                    },
+                    "merchantId": {
+                        "type": "string"
+                    },
+                    "description": {
+                        "type": "string"
+                    }
+                },
+                "required": [
+                    "amount",
+                    "description",
+                    "merchantId",
+                    "merchantMcc"
+                ]
+            },
+            "MakePaymentResponseContent": {
+                "type": "object",
+                "properties": {
+                    "accountId": {
+                        "type": "string"
+                    },
+                    "amount": {
+                        "type": "number",
+                        "description": "Monetary amount in the smallest currency unit (e.g., paise for INR)."
+                    },
+                    "fromOthers": {
+                        "type": "number",
+                        "description": "Monetary amount in the smallest currency unit (e.g., paise for INR)."
+                    },
+                    "fromSelf": {
+                        "type": "number",
+                        "description": "Monetary amount in the smallest currency unit (e.g., paise for INR)."
+                    },
+                    "merchantId": {
+                        "type": "string"
+                    },
+                    "merchantMcc": {
+                        "type": "string"
+                    }
+                },
+                "required": [
+                    "accountId",
+                    "amount",
+                    "fromOthers",
+                    "fromSelf",
+                    "merchantId",
+                    "merchantMcc"
+                ]
+            },
+            "MccEntry": {
+                "type": "object",
+                "properties": {
+                    "mcc": {
+                        "type": "string"
+                    },
+                    "description": {
+                        "type": "string"
+                    }
+                },
+                "required": [
+                    "mcc"
+                ]
+            },
+            "PostDepositResponseContent": {
+                "type": "object",
+                "properties": {
+                    "depositId": {
+                        "type": "string"
+                    },
+                    "accountId": {
+                        "type": "string"
+                    },
+                    "amount": {
+                        "type": "number",
+                        "description": "Monetary amount in the smallest currency unit (e.g., paise for INR)."
+                    },
+                    "pool": {
+                        "type": "string"
+                    },
+                    "status": {
+                        "type": "string"
+                    },
+                    "gatewayRef": {
+                        "type": "string"
+                    },
+                    "timeoutSeconds": {
+                        "type": "number"
+                    }
+                },
+                "required": [
+                    "accountId",
+                    "amount",
+                    "depositId",
+                    "pool",
+                    "status"
+                ]
+            },
+            "PurposeTypeNotFoundErrorResponseContent": {
+                "type": "object",
+                "properties": {
+                    "error": {
+                        "type": "string"
+                    },
+                    "message": {
+                        "type": "string"
+                    }
+                },
+                "required": [
+                    "error",
+                    "message"
+                ]
+            },
+            "PurposeTypeSummary": {
+                "type": "object",
+                "properties": {
+                    "purposeCode": {
+                        "type": "string"
+                    },
+                    "allowedMccs": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/MccEntry"
+                        }
+                    }
+                },
+                "required": [
+                    "allowedMccs",
+                    "purposeCode"
+                ]
+            },
+            "Status": {
+                "type": "string",
+                "description": "Account status.",
+                "enum": [
+                    "ACTIVE",
+                    "FROZEN",
+                    "CLOSED"
+                ]
+            },
+            "UpdateAccountStatusRequestContent": {
+                "type": "object",
+                "properties": {
+                    "status": {
+                        "$ref": "#/components/schemas/Status"
+                    }
+                },
+                "required": [
+                    "status"
+                ]
+            },
+            "UpdateAccountStatusResponseContent": {
+                "type": "object",
+                "description": "Shared account fields.",
+                "properties": {
+                    "id": {
+                        "type": "string"
+                    },
+                    "holderId": {
+                        "type": "string"
+                    },
+                    "purposeCode": {
+                        "type": "string"
+                    },
+                    "originIfsc": {
+                        "type": "string"
+                    },
+                    "originAccountNumber": {
+                        "type": "string"
+                    },
+                    "vpa": {
+                        "type": "string"
+                    },
+                    "virtualIfsc": {
+                        "type": "string"
+                    },
+                    "virtualAccountNumber": {
+                        "type": "string"
+                    },
+                    "kycTier": {
+                        "type": "string"
+                    },
+                    "status": {
+                        "type": "string"
+                    },
+                    "createdAt": {
+                        "type": "string"
+                    },
+                    "updatedAt": {
+                        "type": "string"
+                    }
+                },
+                "required": [
+                    "createdAt",
+                    "holderId",
+                    "id",
+                    "kycTier",
+                    "originAccountNumber",
+                    "originIfsc",
+                    "purposeCode",
+                    "status",
+                    "updatedAt"
+                ]
+            },
+            "VoidDepositRequestContent": {
+                "type": "object",
+                "properties": {
+                    "reason": {
+                        "type": "string"
+                    }
+                }
+            },
+            "VoidDepositResponseContent": {
+                "type": "object",
+                "properties": {
+                    "depositId": {
+                        "type": "string"
+                    },
+                    "accountId": {
+                        "type": "string"
+                    },
+                    "amount": {
+                        "type": "number",
+                        "description": "Monetary amount in the smallest currency unit (e.g., paise for INR)."
+                    },
+                    "pool": {
+                        "type": "string"
+                    },
+                    "status": {
+                        "type": "string"
+                    },
+                    "gatewayRef": {
+                        "type": "string"
+                    },
+                    "timeoutSeconds": {
+                        "type": "number"
+                    }
+                },
+                "required": [
+                    "accountId",
+                    "amount",
+                    "depositId",
+                    "pool",
+                    "status"
+                ]
+            },
+            "WithdrawRequestContent": {
+                "type": "object",
+                "properties": {
+                    "amount": {
+                        "type": "number",
+                        "description": "Monetary amount in the smallest currency unit (e.g., paise for INR)."
+                    }
+                },
+                "required": [
+                    "amount"
+                ]
+            },
+            "WithdrawResponseContent": {
+                "type": "object",
+                "properties": {
+                    "accountId": {
+                        "type": "string"
+                    },
+                    "amount": {
+                        "type": "number",
+                        "description": "Monetary amount in the smallest currency unit (e.g., paise for INR)."
+                    }
+                },
+                "required": [
+                    "accountId",
+                    "amount"
+                ]
+            }
+        }
+    }
+}
