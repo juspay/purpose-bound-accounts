@@ -203,6 +203,15 @@ pub async fn update_account_status(
     }
 }
 
+struct PendingDepositRow {
+    id: String,
+    amount: String,
+    pool: String,
+    source: String,
+    gateway_ref: String,
+    created_at: String,
+}
+
 #[derive(Template)]
 #[template(path = "admin/account_detail.html")]
 struct AccountDetailTemplate {
@@ -221,6 +230,7 @@ struct AccountDetailTemplate {
     pending_others: String,
     created_at: String,
     updated_at: String,
+    pending_deposits: Vec<PendingDepositRow>,
 }
 
 pub async fn account_detail(
@@ -257,6 +267,33 @@ pub async fn account_detail(
     }
     .to_string();
 
+    let pending_deposits = match state
+        .deposit_service
+        .deposit_repo
+        .list_pending_by_account(account_id)
+        .await
+    {
+        Ok(deps) => deps
+            .into_iter()
+            .map(|d| PendingDepositRow {
+                id: d.id.to_string(),
+                amount: fmt(d.amount),
+                pool: if d.pool == "self" {
+                    "Self".to_string()
+                } else {
+                    "Others".to_string()
+                },
+                source: format!("{} / {}", d.source_ifsc, d.source_account),
+                gateway_ref: d.gateway_ref.unwrap_or_else(|| "—".to_string()),
+                created_at: d.created_at.format("%Y-%m-%d %H:%M:%S").to_string(),
+            })
+            .collect(),
+        Err(e) => {
+            tracing::error!("Failed to list pending deposits: {e}");
+            vec![]
+        }
+    };
+
     render(AccountDetailTemplate {
         id: account.id.to_string(),
         holder_id: account.holder_id.to_string(),
@@ -273,6 +310,7 @@ pub async fn account_detail(
         pending_others: fmt(balance.pending_others),
         created_at: account.created_at.format("%Y-%m-%d %H:%M:%S").to_string(),
         updated_at: account.updated_at.format("%Y-%m-%d %H:%M:%S").to_string(),
+        pending_deposits,
     })
 }
 
@@ -378,6 +416,9 @@ pub struct DepositForm {
     amount: u64,
     source_ifsc: String,
     source_account_number: String,
+    #[serde(default)]
+    pending: Option<String>,
+    gateway_ref: Option<String>,
 }
 
 pub async fn process_deposit(
@@ -385,9 +426,11 @@ pub async fn process_deposit(
     Path(account_id): Path<Uuid>,
     axum::extract::Form(form): axum::extract::Form<DepositForm>,
 ) -> Response {
+    let is_pending = form.pending.as_deref() == Some("true");
+    let gateway_ref = form.gateway_ref.as_deref().filter(|s| !s.is_empty());
     match state
         .deposit_service
-        .deposit(account_id, &form.source_ifsc, &form.source_account_number, form.amount, false, None, None)
+        .deposit(account_id, &form.source_ifsc, &form.source_account_number, form.amount, is_pending, gateway_ref, None)
         .await
     {
         Ok(_) => Redirect::to(&format!("/admin/accounts/{account_id}")).into_response(),
@@ -403,6 +446,32 @@ pub async fn process_deposit(
                 purpose_code,
                 error: Some(format!("{e}")),
             })
+        }
+    }
+}
+
+pub async fn post_deposit(
+    State(state): State<AppState>,
+    Path((account_id, deposit_id)): Path<(Uuid, Uuid)>,
+) -> Response {
+    match state.deposit_service.post_deposit(account_id, deposit_id).await {
+        Ok(_) => Redirect::to(&format!("/admin/accounts/{account_id}")).into_response(),
+        Err(e) => {
+            tracing::error!("Failed to post deposit: {e}");
+            Redirect::to(&format!("/admin/accounts/{account_id}")).into_response()
+        }
+    }
+}
+
+pub async fn void_deposit(
+    State(state): State<AppState>,
+    Path((account_id, deposit_id)): Path<(Uuid, Uuid)>,
+) -> Response {
+    match state.deposit_service.void_deposit(account_id, deposit_id, None).await {
+        Ok(_) => Redirect::to(&format!("/admin/accounts/{account_id}")).into_response(),
+        Err(e) => {
+            tracing::error!("Failed to void deposit: {e}");
+            Redirect::to(&format!("/admin/accounts/{account_id}")).into_response()
         }
     }
 }

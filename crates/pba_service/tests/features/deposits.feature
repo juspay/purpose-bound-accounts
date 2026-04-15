@@ -35,7 +35,6 @@ Feature: Deposits
     When I attempt to deposit 1000 from IFSC "HDFC0035353" account "3535300001"
     Then the deposit should be rejected as account not active
 
-  @api
   Scenario: Pending deposit then post moves funds to posted balance
     Given a "health" account exists for holder "a1a1a1a1-a1a1-a1a1-a1a1-a1a1a1a1a1a1" with origin IFSC "HDFC0051111" and account number "5111100001"
     When I create a pending deposit of 10000 from IFSC "HDFC0051111" account "5111100001"
@@ -45,7 +44,6 @@ Feature: Deposits
     Then the self contribution should be 10000
     And the pending self should be 0
 
-  @api
   Scenario: Pending deposit then void leaves balance unchanged
     Given a "health" account exists for holder "a2a2a2a2-a2a2-a2a2-a2a2-a2a2a2a2a2a2" with origin IFSC "HDFC0052222" and account number "5222200001"
     When I create a pending deposit of 5000 from IFSC "HDFC0052222" account "5222200001"
@@ -54,7 +52,6 @@ Feature: Deposits
     Then the self contribution should be 0
     And the pending self should be 0
 
-  @api
   Scenario: Pending deposit from other bank goes to others pending pool
     Given a "health" account exists for holder "a3a3a3a3-a3a3-a3a3-a3a3-a3a3a3a3a3a3" with origin IFSC "HDFC0053333" and account number "5333300001"
     When I create a pending deposit of 7000 from IFSC "ICIC0009999" account "9876543210"
@@ -65,7 +62,6 @@ Feature: Deposits
     Then the others contribution should be 7000
     And the pending others should be 0
 
-  @api
   Scenario: Pending deposit with gateway reference
     Given a "health" account exists for holder "a4a4a4a4-a4a4-a4a4-a4a4-a4a4a4a4a4a4" with origin IFSC "HDFC0054444" and account number "5444400001"
     When I create a pending deposit of 3000 from IFSC "HDFC0054444" account "5444400001" with gateway ref "gw-txn-12345"

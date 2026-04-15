@@ -65,6 +65,43 @@
     {% endif %}
 </article>
 
+{% if !pending_deposits.is_empty() %}
+<h2>Pending Deposits</h2>
+<table>
+    <thead>
+        <tr>
+            <th>Deposit ID</th>
+            <th>Amount (INR)</th>
+            <th>Pool</th>
+            <th>Source</th>
+            <th>Gateway Ref</th>
+            <th>Created</th>
+            <th>Actions</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for dep in &pending_deposits %}
+        <tr>
+            <td>{{ dep.id|truncate(8) }}</td>
+            <td>₹{{ dep.amount }}</td>
+            <td>{{ dep.pool }}</td>
+            <td>{{ dep.source }}</td>
+            <td>{{ dep.gateway_ref }}</td>
+            <td>{{ dep.created_at }}</td>
+            <td>
+                <form method="post" action="/admin/accounts/{{ id }}/deposits/{{ dep.id }}/post" class="inline-form">
+                    <button type="submit" class="outline" style="padding: 0.25rem 0.75rem; font-size: 0.85rem; color: #2e7d32; border-color: #2e7d32;">Post</button>
+                </form>
+                <form method="post" action="/admin/accounts/{{ id }}/deposits/{{ dep.id }}/void" class="inline-form">
+                    <button type="submit" class="outline" style="padding: 0.25rem 0.75rem; font-size: 0.85rem; color: #c62828; border-color: #c62828;">Void</button>
+                </form>
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endif %}
+
 <h2>Transaction History</h2>
 <div id="transfers" hx-get="/admin/accounts/{{ id }}/transfers" hx-trigger="load" hx-swap="innerHTML">
     <p aria-busy="true">Loading transfers...</p>

@@ -136,6 +136,27 @@ impl DepositRepo {
         Ok(row.into_domain())
     }
 
+    pub async fn list_pending_by_account(
+        &self,
+        account_id: Uuid,
+    ) -> Result<Vec<DepositRecord>, AppError> {
+        let rows = sqlx::query_as::<_, DepositRow>(
+            r#"
+            SELECT id, account_id, amount, pool, source_ifsc, source_account,
+                   status, tb_transfer_id::text as tb_transfer_id,
+                   gateway_ref, timeout_seconds, created_at, updated_at
+            FROM deposits
+            WHERE account_id = $1 AND status = 'pending'
+            ORDER BY created_at DESC
+            "#,
+        )
+        .bind(account_id)
+        .fetch_all(&self.pool)
+        .await?;
+
+        Ok(rows.into_iter().map(|r| r.into_domain()).collect())
+    }
+
     pub async fn find_timed_out_pending(&self) -> Result<Vec<DepositRecord>, AppError> {
         let rows = sqlx::query_as::<_, DepositRow>(
             r#"

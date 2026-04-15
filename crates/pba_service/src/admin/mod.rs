@@ -13,27 +13,35 @@ pub fn create_router() -> Router<AppState> {
             get(handlers::accounts_list).post(handlers::create_account),
         )
         .route(
-            "/admin/accounts/{accountId}",
+            "/admin/accounts/{account_id}",
             get(handlers::account_detail),
         )
         .route(
-            "/admin/accounts/{accountId}/status",
+            "/admin/accounts/{account_id}/status",
             axum::routing::post(handlers::update_account_status),
         )
         .route(
-            "/admin/accounts/{accountId}/transfers",
+            "/admin/accounts/{account_id}/transfers",
             get(handlers::account_transfers_fragment),
         )
         .route(
-            "/admin/accounts/{accountId}/deposit",
+            "/admin/accounts/{account_id}/deposit",
             get(handlers::deposit_form).post(handlers::process_deposit),
         )
         .route(
-            "/admin/accounts/{accountId}/payment",
+            "/admin/accounts/{account_id}/deposits/{deposit_id}/post",
+            axum::routing::post(handlers::post_deposit),
+        )
+        .route(
+            "/admin/accounts/{account_id}/deposits/{deposit_id}/void",
+            axum::routing::post(handlers::void_deposit),
+        )
+        .route(
+            "/admin/accounts/{account_id}/payment",
             get(handlers::payment_form).post(handlers::process_payment),
         )
         .route(
-            "/admin/accounts/{accountId}/withdrawal",
+            "/admin/accounts/{account_id}/withdrawal",
             get(handlers::withdrawal_form).post(handlers::process_withdrawal),
         )
         .route("/admin/purpose-types", get(handlers::purpose_types_page))

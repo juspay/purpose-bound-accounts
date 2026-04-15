@@ -29,6 +29,14 @@
                 <input type="text" name="source_account_number" required>
             </label>
         </div>
+        <label>
+            <input type="checkbox" name="pending" value="true">
+            Pending (two-phase deposit — must be posted or voided later)
+        </label>
+        <label>
+            Gateway Reference (optional)
+            <input type="text" name="gateway_ref" placeholder="e.g. gw-txn-12345">
+        </label>
         <button type="submit">Deposit</button>
     </form>
 </article>
