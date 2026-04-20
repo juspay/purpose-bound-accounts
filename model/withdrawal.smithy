@@ -12,6 +12,8 @@ operation Withdraw {
 
         @required
         amount: Money
+
+        idempotency_key: String
     }
     output := {
         @required

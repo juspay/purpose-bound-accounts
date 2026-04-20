@@ -424,6 +424,58 @@
                 }
             }
         },
+        "/accounts/{account_id}/transactions": {
+            "get": {
+                "description": "List transactions for an account with offset/limit pagination.",
+                "operationId": "ListTransactions",
+                "parameters": [
+                    {
+                        "name": "account_id",
+                        "in": "path",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "required": true
+                    },
+                    {
+                        "name": "offset",
+                        "in": "query",
+                        "schema": {
+                            "type": "number"
+                        }
+                    },
+                    {
+                        "name": "limit",
+                        "in": "query",
+                        "schema": {
+                            "type": "number"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "ListTransactions 200 response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ListTransactionsResponseContent"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "AccountNotFoundError 404 response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/AccountNotFoundErrorResponseContent"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
         "/accounts/{account_id}/withdrawals": {
             "post": {
                 "description": "Withdraw funds from the self-contribution pool only.\nCannot withdraw from the others-contribution pool.",
@@ -639,10 +691,14 @@
                         "type": "string"
                     },
                     "created_at": {
-                        "type": "string"
+                        "type": "string",
+                        "description": "ISO 8601 date-time.",
+                        "format": "date-time"
                     },
                     "updated_at": {
-                        "type": "string"
+                        "type": "string",
+                        "description": "ISO 8601 date-time.",
+                        "format": "date-time"
                     }
                 },
                 "required": [
@@ -708,6 +764,9 @@
                     },
                     "timeout_seconds": {
                         "type": "number"
+                    },
+                    "idempotency_key": {
+                        "type": "string"
                     }
                 },
                 "required": [
@@ -800,10 +859,14 @@
                         "type": "string"
                     },
                     "created_at": {
-                        "type": "string"
+                        "type": "string",
+                        "description": "ISO 8601 date-time.",
+                        "format": "date-time"
                     },
                     "updated_at": {
-                        "type": "string"
+                        "type": "string",
+                        "description": "ISO 8601 date-time.",
+                        "format": "date-time"
                     }
                 },
                 "required": [
@@ -901,6 +964,32 @@
                     "purpose_types"
                 ]
             },
+            "ListTransactionsResponseContent": {
+                "type": "object",
+                "properties": {
+                    "transactions": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/TransactionSummary"
+                        }
+                    },
+                    "total": {
+                        "type": "number"
+                    },
+                    "offset": {
+                        "type": "number"
+                    },
+                    "limit": {
+                        "type": "number"
+                    }
+                },
+                "required": [
+                    "limit",
+                    "offset",
+                    "total",
+                    "transactions"
+                ]
+            },
             "MakePaymentRequestContent": {
                 "type": "object",
                 "properties": {
@@ -915,6 +1004,9 @@
                         "type": "string"
                     },
                     "description": {
+                        "type": "string"
+                    },
+                    "idempotency_key": {
                         "type": "string"
                     }
                 },
@@ -971,6 +1063,14 @@
                 },
                 "required": [
                     "mcc"
+                ]
+            },
+            "PoolType": {
+                "type": "string",
+                "description": "Pool type indicating the source of funds.",
+                "enum": [
+                    "self",
+                    "others"
                 ]
             },
             "PostDepositResponseContent": {
@@ -1049,6 +1149,89 @@
                     "CLOSED"
                 ]
             },
+            "TransactionDirection": {
+                "type": "string",
+                "description": "Transaction direction.",
+                "enum": [
+                    "inbound",
+                    "outbound"
+                ]
+            },
+            "TransactionStatus": {
+                "type": "string",
+                "description": "Transaction status.",
+                "enum": [
+                    "pending",
+                    "posted",
+                    "voided",
+                    "settled"
+                ]
+            },
+            "TransactionSummary": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "string"
+                    },
+                    "type": {
+                        "$ref": "#/components/schemas/TransactionType"
+                    },
+                    "status": {
+                        "$ref": "#/components/schemas/TransactionStatus"
+                    },
+                    "amount": {
+                        "type": "number",
+                        "description": "Monetary amount in the smallest currency unit (e.g., paise for INR)."
+                    },
+                    "pool": {
+                        "$ref": "#/components/schemas/PoolType"
+                    },
+                    "direction": {
+                        "$ref": "#/components/schemas/TransactionDirection"
+                    },
+                    "description": {
+                        "type": "string"
+                    },
+                    "merchant_id": {
+                        "type": "string"
+                    },
+                    "merchant_mcc": {
+                        "type": "string"
+                    },
+                    "source_ifsc": {
+                        "type": "string"
+                    },
+                    "source_account": {
+                        "type": "string"
+                    },
+                    "gateway_ref": {
+                        "type": "string"
+                    },
+                    "created_at": {
+                        "type": "string",
+                        "description": "ISO 8601 date-time.",
+                        "format": "date-time"
+                    }
+                },
+                "required": [
+                    "amount",
+                    "created_at",
+                    "direction",
+                    "id",
+                    "pool",
+                    "status",
+                    "type"
+                ]
+            },
+            "TransactionType": {
+                "type": "string",
+                "description": "Transaction type.",
+                "enum": [
+                    "deposit",
+                    "payment",
+                    "withdrawal"
+                ]
+            },
             "UpdateAccountStatusRequestContent": {
                 "type": "object",
                 "properties": {
@@ -1095,10 +1278,14 @@
                         "type": "string"
                     },
                     "created_at": {
-                        "type": "string"
+                        "type": "string",
+                        "description": "ISO 8601 date-time.",
+                        "format": "date-time"
                     },
                     "updated_at": {
-                        "type": "string"
+                        "type": "string",
+                        "description": "ISO 8601 date-time.",
+                        "format": "date-time"
                     }
                 },
                 "required": [
@@ -1161,6 +1348,9 @@
                     "amount": {
                         "type": "number",
                         "description": "Monetary amount in the smallest currency unit (e.g., paise for INR)."
+                    },
+                    "idempotency_key": {
+                        "type": "string"
                     }
                 },
                 "required": [

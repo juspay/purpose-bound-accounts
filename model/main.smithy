@@ -18,5 +18,6 @@ service PurposeBoundAccountService {
         UpdateAccountStatus
         ListPurposeTypes
         GetPurposeType
+        ListTransactions
     ]
 }

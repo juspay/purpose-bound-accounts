@@ -26,6 +26,8 @@ operation Deposit {
         gateway_ref: String
 
         timeout_seconds: Integer
+
+        idempotency_key: String
     }
     output := {
         @required

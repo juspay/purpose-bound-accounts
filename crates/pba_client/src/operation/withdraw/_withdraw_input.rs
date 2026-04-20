@@ -7,6 +7,8 @@ pub struct WithdrawInput  {
     pub account_id: ::std::option::Option<::std::string::String>,
     /// Monetary amount in the smallest currency unit (e.g., paise for INR).
     pub amount: ::std::option::Option<i64>,
+    #[allow(missing_docs)] // documentation missing in model
+    pub idempotency_key: ::std::option::Option<::std::string::String>,
 }
 impl  WithdrawInput  {
     #[allow(missing_docs)] // documentation missing in model
@@ -16,6 +18,10 @@ impl  WithdrawInput  {
     /// Monetary amount in the smallest currency unit (e.g., paise for INR).
     pub fn amount(&self) -> ::std::option::Option<i64> {
         self.amount
+    }
+    #[allow(missing_docs)] // documentation missing in model
+    pub fn idempotency_key(&self) -> ::std::option::Option<&str> {
+        self.idempotency_key.as_deref()
     }
 }
 impl WithdrawInput {
@@ -31,6 +37,7 @@ impl WithdrawInput {
 pub struct WithdrawInputBuilder {
     pub(crate) account_id: ::std::option::Option<::std::string::String>,
     pub(crate) amount: ::std::option::Option<i64>,
+    pub(crate) idempotency_key: ::std::option::Option<::std::string::String>,
 }
 impl WithdrawInputBuilder {
     #[allow(missing_docs)] // documentation missing in model
@@ -61,6 +68,19 @@ impl WithdrawInputBuilder {
     pub fn get_amount(&self) -> &::std::option::Option<i64> {
         &self.amount
     }
+    #[allow(missing_docs)] // documentation missing in model
+    pub fn idempotency_key(mut self, input: impl ::std::convert::Into<::std::string::String>) -> Self {
+        self.idempotency_key = ::std::option::Option::Some(input.into());
+        self
+    }
+    #[allow(missing_docs)] // documentation missing in model
+    pub fn set_idempotency_key(mut self, input: ::std::option::Option<::std::string::String>) -> Self {
+        self.idempotency_key = input; self
+    }
+    #[allow(missing_docs)] // documentation missing in model
+    pub fn get_idempotency_key(&self) -> &::std::option::Option<::std::string::String> {
+        &self.idempotency_key
+    }
     /// Consumes the builder and constructs a [`WithdrawInput`](crate::operation::withdraw::WithdrawInput).
     pub fn build(self) -> ::std::result::Result<crate::operation::withdraw::WithdrawInput, ::aws_smithy_types::error::operation::BuildError> {
         ::std::result::Result::Ok(
@@ -68,6 +88,8 @@ impl WithdrawInputBuilder {
                 account_id: self.account_id
                 ,
                 amount: self.amount
+                ,
+                idempotency_key: self.idempotency_key
                 ,
             }
         )

@@ -17,6 +17,8 @@ pub struct DepositInput  {
     pub gateway_ref: ::std::option::Option<::std::string::String>,
     #[allow(missing_docs)] // documentation missing in model
     pub timeout_seconds: ::std::option::Option<i32>,
+    #[allow(missing_docs)] // documentation missing in model
+    pub idempotency_key: ::std::option::Option<::std::string::String>,
 }
 impl  DepositInput  {
     #[allow(missing_docs)] // documentation missing in model
@@ -47,6 +49,10 @@ impl  DepositInput  {
     pub fn timeout_seconds(&self) -> ::std::option::Option<i32> {
         self.timeout_seconds
     }
+    #[allow(missing_docs)] // documentation missing in model
+    pub fn idempotency_key(&self) -> ::std::option::Option<&str> {
+        self.idempotency_key.as_deref()
+    }
 }
 impl DepositInput {
     /// Creates a new builder-style object to manufacture [`DepositInput`](crate::operation::deposit::DepositInput).
@@ -66,6 +72,7 @@ pub struct DepositInputBuilder {
     pub(crate) pending: ::std::option::Option<bool>,
     pub(crate) gateway_ref: ::std::option::Option<::std::string::String>,
     pub(crate) timeout_seconds: ::std::option::Option<i32>,
+    pub(crate) idempotency_key: ::std::option::Option<::std::string::String>,
 }
 impl DepositInputBuilder {
     #[allow(missing_docs)] // documentation missing in model
@@ -163,6 +170,19 @@ impl DepositInputBuilder {
     pub fn get_timeout_seconds(&self) -> &::std::option::Option<i32> {
         &self.timeout_seconds
     }
+    #[allow(missing_docs)] // documentation missing in model
+    pub fn idempotency_key(mut self, input: impl ::std::convert::Into<::std::string::String>) -> Self {
+        self.idempotency_key = ::std::option::Option::Some(input.into());
+        self
+    }
+    #[allow(missing_docs)] // documentation missing in model
+    pub fn set_idempotency_key(mut self, input: ::std::option::Option<::std::string::String>) -> Self {
+        self.idempotency_key = input; self
+    }
+    #[allow(missing_docs)] // documentation missing in model
+    pub fn get_idempotency_key(&self) -> &::std::option::Option<::std::string::String> {
+        &self.idempotency_key
+    }
     /// Consumes the builder and constructs a [`DepositInput`](crate::operation::deposit::DepositInput).
     pub fn build(self) -> ::std::result::Result<crate::operation::deposit::DepositInput, ::aws_smithy_types::error::operation::BuildError> {
         ::std::result::Result::Ok(
@@ -180,6 +200,8 @@ impl DepositInputBuilder {
                 gateway_ref: self.gateway_ref
                 ,
                 timeout_seconds: self.timeout_seconds
+                ,
+                idempotency_key: self.idempotency_key
                 ,
             }
         )

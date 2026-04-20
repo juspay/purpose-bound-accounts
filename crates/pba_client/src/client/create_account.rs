@@ -18,8 +18,8 @@ impl super::Client {
     ///   - [`virtual_account_number(Option<String>)`](crate::operation::create_account::CreateAccountOutput::virtual_account_number): (undocumented)
     ///   - [`kyc_tier(String)`](crate::operation::create_account::CreateAccountOutput::kyc_tier): (undocumented)
     ///   - [`status(String)`](crate::operation::create_account::CreateAccountOutput::status): (undocumented)
-    ///   - [`created_at(String)`](crate::operation::create_account::CreateAccountOutput::created_at): (undocumented)
-    ///   - [`updated_at(String)`](crate::operation::create_account::CreateAccountOutput::updated_at): (undocumented)
+    ///   - [`created_at(DateTime)`](crate::operation::create_account::CreateAccountOutput::created_at): ISO 8601 date-time.
+    ///   - [`updated_at(DateTime)`](crate::operation::create_account::CreateAccountOutput::updated_at): ISO 8601 date-time.
                             /// - On failure, responds with [`SdkError<CreateAccountError>`](crate::operation::create_account::CreateAccountError)
     pub fn create_account(&self) -> crate::operation::create_account::builders::CreateAccountFluentBuilder {
                                 crate::operation::create_account::builders::CreateAccountFluentBuilder::new(self.handle.clone())
