@@ -1,3 +1,3 @@
 pub mod account_repo;
-pub mod deposit_repo;
+pub mod transaction_repo;
 pub mod ledger_repo;
