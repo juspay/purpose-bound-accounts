@@ -5,13 +5,13 @@ Feature: Deposits
   Scenario: Deposit from origin bank goes to self-pool
     Given a "health" account exists for holder "11111111-1111-1111-1111-111111111111" with origin IFSC "HDFC0011111" and account number "1111100001"
     When I deposit 10000 from IFSC "HDFC0011111" account "1111100001"
-    Then the deposit should go to "self_contribution" pool
+    Then the deposit should go to "self" pool
     And the self contribution should be 10000
 
   Scenario: Deposit from other bank goes to others-pool
     Given a "health" account exists for holder "22222222-2222-2222-2222-222222222222" with origin IFSC "HDFC0022222" and account number "2222200001"
     When I deposit 5000 from IFSC "ICIC0009999" account "9876543210"
-    Then the deposit should go to "others_contribution" pool
+    Then the deposit should go to "others" pool
     And the others contribution should be 5000
 
   Scenario: Multiple deposits accumulate correctly
@@ -55,7 +55,7 @@ Feature: Deposits
   Scenario: Pending deposit from other bank goes to others pending pool
     Given a "health" account exists for holder "a3a3a3a3-a3a3-a3a3-a3a3-a3a3a3a3a3a3" with origin IFSC "HDFC0053333" and account number "5333300001"
     When I create a pending deposit of 7000 from IFSC "ICIC0009999" account "9876543210"
-    Then the deposit should go to "others_contribution" pool
+    Then the deposit should go to "others" pool
     And the others contribution should be 0
     And the pending others should be 7000
     When I post the pending deposit
