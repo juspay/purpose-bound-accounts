@@ -1,6 +1,7 @@
 mod handlers;
+mod tb;
 
-use axum::routing::get;
+use axum::routing::{get, post};
 use axum::Router;
 
 use crate::AppState;
@@ -45,4 +46,14 @@ pub fn create_router() -> Router<AppState> {
             get(handlers::withdrawal_form).post(handlers::process_withdrawal),
         )
         .route("/admin/purpose-types", get(handlers::purpose_types_page))
+        // TigerBeetle explorer
+        .route("/admin/tb", get(tb::overview))
+        .route("/admin/tb/accounts", get(tb::accounts_page))
+        .route("/admin/tb/accounts/{id}", get(tb::account_detail))
+        .route("/admin/tb/transfers", get(tb::transfers_page))
+        .route("/admin/tb/transfers/{id}", get(tb::transfer_detail))
+        .route("/admin/tb/pending", get(tb::pending_page))
+        .route("/admin/tb/pending/{id}/post", post(tb::pending_post))
+        .route("/admin/tb/pending/{id}/void", post(tb::pending_void))
+        .route("/admin/tb/decoder", get(tb::decoder))
 }

@@ -25,6 +25,8 @@ pub struct AppState {
     pub withdrawal_service: Arc<WithdrawalService>,
     pub account_repo: Arc<AccountRepo>,
     pub ledger_repo: Arc<LedgerRepo>,
+    pub tb_cluster_id: u128,
+    pub tb_addresses: Vec<String>,
 }
 
 #[tokio::main]
@@ -56,7 +58,7 @@ async fn main() {
     let deposit_repo = Arc::new(DepositRepo::new(pg_pool.clone()));
     let ledger_repo = Arc::new(LedgerRepo::new(
         config.tigerbeetle_cluster_id,
-        config.tigerbeetle_addresses,
+        config.tigerbeetle_addresses.clone(),
     ));
 
     // Create sentinel TB accounts (funding source, merchant settlement, withdrawal settlement)
@@ -92,6 +94,8 @@ async fn main() {
         withdrawal_service,
         account_repo,
         ledger_repo,
+        tb_cluster_id: config.tigerbeetle_cluster_id,
+        tb_addresses: config.tigerbeetle_addresses.clone(),
     };
 
     // Spawn background deposit timeout poller

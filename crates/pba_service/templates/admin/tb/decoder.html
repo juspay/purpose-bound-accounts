@@ -1,0 +1,50 @@
+{% extends "base.html" %}
+
+{% block title %}TB Decoder — PBA Ledger{% endblock %}
+{% block breadcrumb %}<a href="/admin">PBA Ledger</a> <span class="sep">/</span> <a href="/admin/tb">TigerBeetle</a> <span class="sep">/</span> <span class="current">Decoder</span>{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div>
+        <h1 class="page-title">ID &amp; amount decoder</h1>
+        <p class="page-subtitle">Paste any u128, UUID or hex value. Amounts are interpreted as paisa and shown in INR.</p>
+    </div>
+</div>
+
+{% include "admin/tb/_subnav.html" %}
+
+{% if let Some(err) = error %}
+<div class="error-box">{{ err }}</div>
+{% endif %}
+
+<article>
+    <header>Input</header>
+    <form method="get" action="/admin/tb/decoder">
+        <label>Value to decode
+            <input type="text" name="input" value="{{ input }}" placeholder="UUID, decimal u128, or 0x-prefixed hex" autofocus>
+        </label>
+        <button type="submit">Decode</button>
+    </form>
+</article>
+
+{% if as_u128 != "" %}
+<article>
+    <header>Decoded representations</header>
+    <div class="kv">
+        <div>As u128 (decimal)</div><div class="mono">{{ as_u128 }}</div>
+        <div>As UUID</div><div class="mono">{{ as_uuid }}</div>
+        <div>As hex</div><div class="mono">{{ as_hex }}</div>
+        <div>As INR (paisa)</div><div class="mono">₹{{ as_inr }}</div>
+        {% if let Some(s) = sentinel %}
+        <div>Sentinel match</div><div><span class="badge pill-sentinel">{{ s }}</span></div>
+        {% endif %}
+    </div>
+    <footer>
+        <div class="flex-gap">
+            <a href="/admin/tb/accounts/{{ as_u128 }}" class="btn outline btn-sm">Open as account</a>
+            <a href="/admin/tb/transfers/{{ as_u128 }}" class="btn outline btn-sm">Open as transfer</a>
+        </div>
+    </footer>
+</article>
+{% endif %}
+{% endblock %}

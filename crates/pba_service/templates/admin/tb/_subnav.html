@@ -1,0 +1,21 @@
+<nav class="subnav">
+    <a href="/admin/tb" data-href="/admin/tb">Overview</a>
+    <a href="/admin/tb/accounts" data-href="/admin/tb/accounts">Accounts</a>
+    <a href="/admin/tb/transfers" data-href="/admin/tb/transfers">Transfers</a>
+    <a href="/admin/tb/pending" data-href="/admin/tb/pending">Pending</a>
+    <a href="/admin/tb/decoder" data-href="/admin/tb/decoder">Decoder</a>
+</nav>
+<script>
+(function () {
+    var path = window.location.pathname;
+    var links = Array.prototype.slice.call(document.querySelectorAll('.subnav a[data-href]'));
+    links.sort(function (a, b) { return b.dataset.href.length - a.dataset.href.length; });
+    for (var i = 0; i < links.length; i++) {
+        var href = links[i].dataset.href;
+        if (path === href || path.indexOf(href + '/') === 0) {
+            links[i].classList.add('active');
+            break;
+        }
+    }
+})();
+</script>

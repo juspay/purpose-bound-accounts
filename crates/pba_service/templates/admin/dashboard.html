@@ -1,46 +1,64 @@
 {% extends "base.html" %}
 
-{% block title %}Dashboard - PBA Admin{% endblock %}
+{% block title %}Dashboard — PBA Ledger{% endblock %}
+{% block breadcrumb %}<a href="/admin">PBA Ledger</a> <span class="sep">/</span> <span class="current">Dashboard</span>{% endblock %}
 
 {% block content %}
-<h1>Dashboard</h1>
+<div class="page-header">
+    <div>
+        <h1 class="page-title">Dashboard</h1>
+        <p class="page-subtitle">Overview of purpose-bound accounts across the ledger.</p>
+    </div>
+    <div class="page-actions">
+        <a href="/admin/accounts" role="button" class="outline">View all accounts</a>
+        <a href="/admin/accounts" role="button">+ New account</a>
+    </div>
+</div>
 
 <div class="grid">
-    <article class="stat-card">
-        <h2>{{ total_accounts }}</h2>
-        <p>Total Accounts</p>
+    <article class="stat-card stat-primary">
+        <p class="stat-label">Total accounts</p>
+        <p class="stat-value">{{ total_accounts }}</p>
+        <p class="stat-hint">Across all statuses and purposes</p>
     </article>
-    <article class="stat-card">
-        <h2 class="status-active">{{ active_accounts }}</h2>
-        <p>Active</p>
+    <article class="stat-card stat-success">
+        <p class="stat-label">Active</p>
+        <p class="stat-value">{{ active_accounts }}</p>
+        <p class="stat-hint">Available for deposits & payments</p>
     </article>
-    <article class="stat-card">
-        <h2 class="status-frozen">{{ frozen_accounts }}</h2>
-        <p>Frozen</p>
+    <article class="stat-card stat-warn">
+        <p class="stat-label">Frozen</p>
+        <p class="stat-value">{{ frozen_accounts }}</p>
+        <p class="stat-hint">Temporarily suspended</p>
     </article>
-    <article class="stat-card">
-        <h2 class="status-closed">{{ closed_accounts }}</h2>
-        <p>Closed</p>
+    <article class="stat-card stat-danger">
+        <p class="stat-label">Closed</p>
+        <p class="stat-value">{{ closed_accounts }}</p>
+        <p class="stat-hint">Terminal state — no further activity</p>
     </article>
 </div>
 
 {% if !purpose_counts.is_empty() %}
-<h2>Accounts by Purpose</h2>
-<table>
-    <thead>
-        <tr>
-            <th>Purpose</th>
-            <th>Count</th>
-        </tr>
-    </thead>
-    <tbody>
-        {% for (purpose, count) in &purpose_counts %}
-        <tr>
-            <td>{{ purpose }}</td>
-            <td>{{ count }}</td>
-        </tr>
-        {% endfor %}
-    </tbody>
-</table>
+<article>
+    <header>Accounts by purpose</header>
+    <figure>
+    <table>
+        <thead>
+            <tr>
+                <th>Purpose</th>
+                <th style="text-align: right; width: 120px;">Count</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for (purpose, count) in &purpose_counts %}
+            <tr>
+                <td><strong>{{ purpose }}</strong></td>
+                <td style="text-align: right;" class="mono">{{ count }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    </figure>
+</article>
 {% endif %}
 {% endblock %}

@@ -1,6 +1,13 @@
 {% if transfers.is_empty() %}
-<p>No transactions yet.</p>
+<article>
+    <div style="text-align: center; padding: 2rem 1rem; color: var(--text-muted);">
+        <div style="font-size: 2rem; opacity: 0.25; margin-bottom: 0.5rem;">📭</div>
+        <p class="mb-0"><strong>No transactions yet.</strong></p>
+        <p class="text-small mt-1 mb-0">Deposits, payments and withdrawals will appear here.</p>
+    </div>
+</article>
 {% else %}
+<figure>
 <table>
     <thead>
         <tr>
@@ -8,19 +15,20 @@
             <th>Type</th>
             <th>Pool</th>
             <th>Direction</th>
-            <th>Amount (INR)</th>
+            <th style="text-align: right;">Amount (INR)</th>
         </tr>
     </thead>
     <tbody>
         {% for t in &transfers %}
         <tr>
-            <td>{{ t.timestamp }}</td>
+            <td class="text-small muted">{{ t.timestamp }}</td>
             <td>{{ t.transfer_type }}</td>
             <td>{{ t.pool }}</td>
             <td class="{{ t.direction_class }}">{{ t.direction }}</td>
-            <td>{{ t.amount }}</td>
+            <td class="mono" style="text-align: right;">₹{{ t.amount }}</td>
         </tr>
         {% endfor %}
     </tbody>
 </table>
+</figure>
 {% endif %}

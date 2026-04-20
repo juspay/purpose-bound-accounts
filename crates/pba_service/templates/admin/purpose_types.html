@@ -1,31 +1,41 @@
 {% extends "base.html" %}
 
-{% block title %}Purpose Types - PBA Admin{% endblock %}
+{% block title %}Purpose Types — PBA Ledger{% endblock %}
+{% block breadcrumb %}<a href="/admin">PBA Ledger</a> <span class="sep">/</span> <span class="current">Purpose Types</span>{% endblock %}
 
 {% block content %}
-<h1>Purpose Types</h1>
-
-<p id="purpose-count">{{ purpose_types.len() }} purpose types available.</p>
+<div class="page-header">
+    <div>
+        <h1 class="page-title">Purpose types</h1>
+        <p class="page-subtitle" id="purpose-count">{{ purpose_types.len() }} purpose types configured. Each purpose defines the MCCs its payments can target.</p>
+    </div>
+</div>
 
 {% for pt in &purpose_types %}
 <article>
-    <h3 id="purpose-{{ pt.purpose_code }}">{{ pt.purpose_code }}</h3>
-    <table>
+    <header>
+        <span style="font-size: 1rem;">{{ pt.purpose_code }}</span>
+        <span class="badge pill-muted" style="margin-left: 0.5rem;">{{ pt.allowed_mccs.len() }} MCCs</span>
+    </header>
+    <h3 id="purpose-{{ pt.purpose_code }}" class="hidden">{{ pt.purpose_code }}</h3>
+    <figure style="margin: 0;">
+    <table class="compact">
         <thead>
             <tr>
-                <th>MCC</th>
+                <th style="width: 100px;">MCC</th>
                 <th>Description</th>
             </tr>
         </thead>
         <tbody>
             {% for mcc in &pt.allowed_mccs %}
             <tr>
-                <td>{{ mcc.mcc }}</td>
+                <td class="mono">{{ mcc.mcc }}</td>
                 <td>{{ mcc.description.as_deref().unwrap_or("—") }}</td>
             </tr>
             {% endfor %}
         </tbody>
     </table>
+    </figure>
 </article>
 {% endfor %}
 {% endblock %}
