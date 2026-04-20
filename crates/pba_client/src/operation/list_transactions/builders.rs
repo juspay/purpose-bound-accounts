@@ -138,5 +138,33 @@ impl ListTransactionsFluentBuilder {
     pub fn get_limit(&self) -> &::std::option::Option<i64> {
                     self.inner.get_limit()
                 }
+    /// ISO 8601 date-time.
+    pub fn from_date(mut self, input: ::aws_smithy_types::DateTime) -> Self {
+                    self.inner = self.inner.from_date(input);
+                    self
+                }
+    /// ISO 8601 date-time.
+    pub fn set_from_date(mut self, input: ::std::option::Option<::aws_smithy_types::DateTime>) -> Self {
+                    self.inner = self.inner.set_from_date(input);
+                    self
+                }
+    /// ISO 8601 date-time.
+    pub fn get_from_date(&self) -> &::std::option::Option<::aws_smithy_types::DateTime> {
+                    self.inner.get_from_date()
+                }
+    /// ISO 8601 date-time.
+    pub fn to_date(mut self, input: ::aws_smithy_types::DateTime) -> Self {
+                    self.inner = self.inner.to_date(input);
+                    self
+                }
+    /// ISO 8601 date-time.
+    pub fn set_to_date(mut self, input: ::std::option::Option<::aws_smithy_types::DateTime>) -> Self {
+                    self.inner = self.inner.set_to_date(input);
+                    self
+                }
+    /// ISO 8601 date-time.
+    pub fn get_to_date(&self) -> &::std::option::Option<::aws_smithy_types::DateTime> {
+                    self.inner.get_to_date()
+                }
 }
 

@@ -212,8 +212,14 @@ pub async fn list_transactions(
     let offset = query.offset.unwrap_or(0).max(0);
     let limit = query.limit.unwrap_or(20).clamp(1, 100);
 
-    let transactions = state.transaction_repo.list_by_account(account_id, offset, limit).await?;
-    let total = state.transaction_repo.count_by_account(account_id).await?;
+    let transactions = state
+        .transaction_repo
+        .list_by_account(account_id, offset, limit, query.from_date, query.to_date)
+        .await?;
+    let total = state
+        .transaction_repo
+        .count_by_account(account_id, query.from_date, query.to_date)
+        .await?;
 
     Ok(Json(ListTransactionsResponse {
         transactions: transactions.into_iter().map(|t| t.into()).collect(),

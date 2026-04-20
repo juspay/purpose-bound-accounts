@@ -9,6 +9,10 @@ pub struct ListTransactionsInput  {
     pub offset: ::std::option::Option<i64>,
     #[allow(missing_docs)] // documentation missing in model
     pub limit: ::std::option::Option<i64>,
+    /// ISO 8601 date-time.
+    pub from_date: ::std::option::Option<::aws_smithy_types::DateTime>,
+    /// ISO 8601 date-time.
+    pub to_date: ::std::option::Option<::aws_smithy_types::DateTime>,
 }
 impl  ListTransactionsInput  {
     #[allow(missing_docs)] // documentation missing in model
@@ -22,6 +26,14 @@ impl  ListTransactionsInput  {
     #[allow(missing_docs)] // documentation missing in model
     pub fn limit(&self) -> ::std::option::Option<i64> {
         self.limit
+    }
+    /// ISO 8601 date-time.
+    pub fn from_date(&self) -> ::std::option::Option<&::aws_smithy_types::DateTime> {
+        self.from_date.as_ref()
+    }
+    /// ISO 8601 date-time.
+    pub fn to_date(&self) -> ::std::option::Option<&::aws_smithy_types::DateTime> {
+        self.to_date.as_ref()
     }
 }
 impl ListTransactionsInput {
@@ -38,6 +50,8 @@ pub struct ListTransactionsInputBuilder {
     pub(crate) account_id: ::std::option::Option<::std::string::String>,
     pub(crate) offset: ::std::option::Option<i64>,
     pub(crate) limit: ::std::option::Option<i64>,
+    pub(crate) from_date: ::std::option::Option<::aws_smithy_types::DateTime>,
+    pub(crate) to_date: ::std::option::Option<::aws_smithy_types::DateTime>,
 }
 impl ListTransactionsInputBuilder {
     #[allow(missing_docs)] // documentation missing in model
@@ -80,6 +94,32 @@ impl ListTransactionsInputBuilder {
     pub fn get_limit(&self) -> &::std::option::Option<i64> {
         &self.limit
     }
+    /// ISO 8601 date-time.
+    pub fn from_date(mut self, input: ::aws_smithy_types::DateTime) -> Self {
+        self.from_date = ::std::option::Option::Some(input);
+        self
+    }
+    /// ISO 8601 date-time.
+    pub fn set_from_date(mut self, input: ::std::option::Option<::aws_smithy_types::DateTime>) -> Self {
+        self.from_date = input; self
+    }
+    /// ISO 8601 date-time.
+    pub fn get_from_date(&self) -> &::std::option::Option<::aws_smithy_types::DateTime> {
+        &self.from_date
+    }
+    /// ISO 8601 date-time.
+    pub fn to_date(mut self, input: ::aws_smithy_types::DateTime) -> Self {
+        self.to_date = ::std::option::Option::Some(input);
+        self
+    }
+    /// ISO 8601 date-time.
+    pub fn set_to_date(mut self, input: ::std::option::Option<::aws_smithy_types::DateTime>) -> Self {
+        self.to_date = input; self
+    }
+    /// ISO 8601 date-time.
+    pub fn get_to_date(&self) -> &::std::option::Option<::aws_smithy_types::DateTime> {
+        &self.to_date
+    }
     /// Consumes the builder and constructs a [`ListTransactionsInput`](crate::operation::list_transactions::ListTransactionsInput).
     pub fn build(self) -> ::std::result::Result<crate::operation::list_transactions::ListTransactionsInput, ::aws_smithy_types::error::operation::BuildError> {
         ::std::result::Result::Ok(
@@ -89,6 +129,10 @@ impl ListTransactionsInputBuilder {
                 offset: self.offset
                 ,
                 limit: self.limit
+                ,
+                from_date: self.from_date
+                ,
+                to_date: self.to_date
                 ,
             }
         )

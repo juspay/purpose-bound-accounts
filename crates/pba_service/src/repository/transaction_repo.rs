@@ -226,6 +226,8 @@ impl TransactionRepo {
         account_id: Uuid,
         offset: i64,
         limit: i64,
+        from_date: Option<DateTime<Utc>>,
+        to_date: Option<DateTime<Utc>>,
     ) -> Result<Vec<TransactionRecord>, AppError> {
         let rows = sqlx::query_as::<_, TransactionRow>(
             r#"
@@ -236,6 +238,8 @@ impl TransactionRepo {
                    created_at, updated_at
             FROM transactions
             WHERE account_id = $1
+              AND ($4::timestamptz IS NULL OR created_at >= $4)
+              AND ($5::timestamptz IS NULL OR created_at <= $5)
             ORDER BY created_at DESC, id DESC
             LIMIT $2 OFFSET $3
             "#,
@@ -243,17 +247,31 @@ impl TransactionRepo {
         .bind(account_id)
         .bind(limit)
         .bind(offset)
+        .bind(from_date)
+        .bind(to_date)
         .fetch_all(&self.pool)
         .await?;
 
         Ok(rows.into_iter().map(|r| r.into_domain()).collect())
     }
 
-    pub async fn count_by_account(&self, account_id: Uuid) -> Result<i64, AppError> {
+    pub async fn count_by_account(
+        &self,
+        account_id: Uuid,
+        from_date: Option<DateTime<Utc>>,
+        to_date: Option<DateTime<Utc>>,
+    ) -> Result<i64, AppError> {
         let row: (i64,) = sqlx::query_as(
-            "SELECT COUNT(*) FROM transactions WHERE account_id = $1",
+            r#"
+            SELECT COUNT(*) FROM transactions
+            WHERE account_id = $1
+              AND ($2::timestamptz IS NULL OR created_at >= $2)
+              AND ($3::timestamptz IS NULL OR created_at <= $3)
+            "#,
         )
         .bind(account_id)
+        .bind(from_date)
+        .bind(to_date)
         .fetch_one(&self.pool)
         .await?;
 

@@ -151,6 +151,16 @@ fn uri_query(_input: &crate::operation::list_transactions::ListTransactionsInput
             query.push_kv("limit", ::aws_smithy_types::primitive::Encoder::from(*inner_3).encode());
         }
     }
+    if let ::std::option::Option::Some(inner_4) = &_input.from_date {
+         {
+            query.push_kv("from_date", &::aws_smithy_http::query::fmt_timestamp(inner_4, ::aws_smithy_types::date_time::Format::DateTime)?);
+        }
+    }
+    if let ::std::option::Option::Some(inner_5) = &_input.to_date {
+         {
+            query.push_kv("to_date", &::aws_smithy_http::query::fmt_timestamp(inner_5, ::aws_smithy_types::date_time::Format::DateTime)?);
+        }
+    }
     ::std::result::Result::Ok(())
 }
 #[allow(clippy::unnecessary_wraps)]

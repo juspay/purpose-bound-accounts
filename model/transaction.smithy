@@ -15,6 +15,12 @@ operation ListTransactions {
 
         @httpQuery("limit")
         limit: Long
+
+        @httpQuery("from_date")
+        from_date: DateTime
+
+        @httpQuery("to_date")
+        to_date: DateTime
     }
     output := {
         @required

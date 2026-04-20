@@ -339,7 +339,7 @@ pub async fn account_transfers_fragment(
 ) -> Response {
     let transactions: Vec<TransactionRecord> = match state
         .transaction_repo
-        .list_by_account(account_id, 0, 100)
+        .list_by_account(account_id, 0, 100, None, None)
         .await
     {
         Ok(t) => t,
