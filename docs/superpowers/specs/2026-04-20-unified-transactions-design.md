@@ -217,9 +217,19 @@ structure TransactionSummary {
     gateway_ref: String,
 
     @required
-    created_at: String,
+    created_at: Timestamp,
 }
 ```
+
+### Timestamp Migration
+
+All `String` timestamp fields across existing Smithy models are changed to the built-in `Timestamp` type. This affects:
+
+- `AccountDetail`: `created_at`, `updated_at`
+- `DepositOutput`: `created_at` (if present)
+- `TransactionSummary`: `created_at`
+
+Smithy `Timestamp` serializes as ISO 8601 in JSON (`2026-04-20T14:30:00Z`) and generates `date-time` format in OpenAPI spec.
 
 ### Idempotency Key
 
