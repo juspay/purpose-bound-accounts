@@ -6,6 +6,7 @@ use serde::Deserialize;
 use uuid::Uuid;
 
 use crate::domain::purpose::PurposeType;
+use crate::domain::transaction::TransactionRecord;
 use crate::AppState;
 
 fn render<T: Template>(tmpl: T) -> Response {
@@ -268,8 +269,7 @@ pub async fn account_detail(
     .to_string();
 
     let pending_deposits = match state
-        .deposit_service
-        .deposit_repo
+        .transaction_repo
         .list_pending_by_account(account_id)
         .await
     {
@@ -277,13 +277,17 @@ pub async fn account_detail(
             .into_iter()
             .map(|d| PendingDepositRow {
                 id: d.id.to_string(),
-                amount: fmt(d.amount),
+                amount: d.amount_display(),
                 pool: if d.pool == "self" {
                     "Self".to_string()
                 } else {
                     "Others".to_string()
                 },
-                source: format!("{} / {}", d.source_ifsc, d.source_account),
+                source: format!(
+                    "{} / {}",
+                    d.source_ifsc.as_deref().unwrap_or("—"),
+                    d.source_account.as_deref().unwrap_or("—")
+                ),
                 gateway_ref: d.gateway_ref.unwrap_or_else(|| "—".to_string()),
                 created_at: d.created_at.format("%Y-%m-%d %H:%M:%S").to_string(),
             })
@@ -333,50 +337,25 @@ pub async fn account_transfers_fragment(
     State(state): State<AppState>,
     Path(account_id): Path<Uuid>,
 ) -> Response {
-    let account = match state.account_repo.get_account(account_id).await {
-        Ok(a) => a,
-        Err(e) => {
-            tracing::error!("Account not found: {e}");
-            return (StatusCode::NOT_FOUND, "Account not found").into_response();
-        }
-    };
-
-    let transfers = match state
-        .ledger_repo
-        .get_account_transfers(
-            account.tb_self_account_id,
-            account.tb_others_account_id,
-            100,
-        )
+    let transactions: Vec<TransactionRecord> = match state
+        .transaction_repo
+        .list_by_account(account_id, 0, 100)
         .await
     {
         Ok(t) => t,
         Err(e) => {
-            tracing::error!("Failed to get transfers: {e}");
-            return (StatusCode::INTERNAL_SERVER_ERROR, "Ledger error").into_response();
+            tracing::error!("Failed to get transactions: {e}");
+            return (StatusCode::INTERNAL_SERVER_ERROR, "Database error").into_response();
         }
     };
 
-    let self_tb_id = account.tb_self_account_id;
-    let others_tb_id = account.tb_others_account_id;
-
-    let rows: Vec<TransferRow> = transfers
+    let rows: Vec<TransferRow> = transactions
         .into_iter()
         .map(|t| {
-            let pool = if t.credit_account_id == self_tb_id
-                || t.debit_account_id == self_tb_id
-            {
-                "Self"
-            } else if t.credit_account_id == others_tb_id
-                || t.debit_account_id == others_tb_id
-            {
-                "Others"
-            } else {
-                "—"
-            };
+            let pool = if t.pool == "self" { "Self" } else { "Others" };
             TransferRow {
-                timestamp: t.timestamp.format("%Y-%m-%d %H:%M:%S").to_string(),
-                transfer_type: t.transfer_type.label().to_string(),
+                timestamp: t.created_at.format("%Y-%m-%d %H:%M:%S").to_string(),
+                transfer_type: t.type_label().to_string(),
                 direction: t.direction.label().to_string(),
                 direction_class: t.direction.css_class().to_string(),
                 pool: pool.to_string(),
@@ -430,7 +409,7 @@ pub async fn process_deposit(
     let gateway_ref = form.gateway_ref.as_deref().filter(|s| !s.is_empty());
     match state
         .deposit_service
-        .deposit(account_id, &form.source_ifsc, &form.source_account_number, form.amount, is_pending, gateway_ref, None)
+        .deposit(account_id, &form.source_ifsc, &form.source_account_number, form.amount, is_pending, gateway_ref, None, None)
         .await
     {
         Ok(_) => Redirect::to(&format!("/admin/accounts/{account_id}")).into_response(),
@@ -520,6 +499,7 @@ pub async fn process_payment(
             &form.merchant_mcc,
             &form.merchant_id,
             &form.description,
+            None,
         )
         .await
     {
@@ -573,7 +553,7 @@ pub async fn process_withdrawal(
     Path(account_id): Path<Uuid>,
     axum::extract::Form(form): axum::extract::Form<WithdrawalForm>,
 ) -> Response {
-    match state.withdrawal_service.withdraw(account_id, form.amount).await {
+    match state.withdrawal_service.withdraw(account_id, form.amount, None).await {
         Ok(_) => Redirect::to(&format!("/admin/accounts/{account_id}")).into_response(),
         Err(e) => {
             let purpose_code = state
