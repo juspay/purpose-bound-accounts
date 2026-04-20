@@ -34,9 +34,11 @@ All transaction types follow PG-first ordering to prevent orphaned TigerBeetle t
 4. Commit PG transaction (on TB success) or rollback (on TB failure)
 
 **Deposits (pending — two-phase):**
-1. Insert PG row (`status=created`, `tb_transfer_id=0`) — standalone, no PG transaction
-2. Create TB pending transfer
-3. Update PG row (`status=pending`, set `tb_transfer_id`)
+1. Begin PG transaction
+2. Insert row (`status=pending`, `tb_transfer_id=0`)
+3. Create TB pending transfer → get `tb_transfer_id`
+4. Update row with real `tb_transfer_id`
+5. Commit PG transaction (on TB success) or rollback (on TB failure)
 
 Post/void lifecycle unchanged — TB operation first, then PG status update.
 
@@ -56,10 +58,9 @@ Post/void lifecycle unchanged — TB operation first, then PG status update.
 
 | Failure | PG state | TB state | Resolution |
 |---------|----------|----------|------------|
-| Crash before TB call | Row rolled back (payments/withdrawals) or `created` (pending deposits) | Nothing | Clean — no orphan. Stale `created` records detectable. |
-| TB rejects (insufficient funds, etc.) | Row rolled back (payments/withdrawals) | Nothing | Clean — error returned to client |
-| Crash after TB, before PG commit | Row rolled back | Transfer exists | TB transfer is orphaned. Reconciliation can detect via TB transfer with no matching PG record. Acceptable at current scale. |
-| Crash after TB, before PG update (pending deposits) | `created` status | Pending transfer exists | Stale `created` record — detectable, reconcilable |
+| Crash before TB call | Row rolled back | Nothing | Clean — no orphan |
+| TB rejects (insufficient funds, etc.) | Row rolled back | Nothing | Clean — error returned to client |
+| Crash after TB, before PG commit | Row rolled back | Transfer exists | TB transfer is orphaned. Reconciliation job detects via TB transfer with no matching PG record. For pending deposits, TB auto-expires the transfer via timeout. See Future Work. |
 
 ## Schema
 
@@ -74,7 +75,7 @@ CREATE TABLE transactions (
     id                UUID PRIMARY KEY,
     account_id        UUID NOT NULL REFERENCES accounts(id),
     type              TEXT NOT NULL,       -- 'deposit', 'payment', 'withdrawal'
-    status            TEXT NOT NULL,       -- 'created', 'pending', 'posted', 'voided', 'settled'
+    status            TEXT NOT NULL,       -- 'pending', 'posted', 'voided', 'settled'
     amount            BIGINT NOT NULL,
     pool              TEXT NOT NULL,       -- 'self', 'others'
     direction         TEXT NOT NULL,       -- 'inbound', 'outbound'
@@ -107,7 +108,7 @@ CREATE UNIQUE INDEX idx_transactions_idempotency ON transactions(account_id, ide
 | Type | Statuses |
 |------|----------|
 | Deposit (immediate) | `posted` |
-| Deposit (pending) | `created` → `pending` → `posted` or `voided` |
+| Deposit (pending) | `pending` → `posted` or `voided` |
 | Payment | `settled` |
 | Withdrawal | `settled` |
 
@@ -128,7 +129,6 @@ Payments that draw from both pools produce **two rows** — one per pool, each w
 string TransactionType
 
 @enum([
-    { value: "created", name: "CREATED" },
     { value: "pending", name: "PENDING" },
     { value: "posted", name: "POSTED" },
     { value: "voided", name: "VOIDED" },
@@ -237,14 +237,13 @@ When provided and a duplicate `(account_id, idempotency_key)` is found, the exis
 
 | Method | Purpose |
 |--------|---------|
-| `insert_in_tx(&mut PgTransaction, ...)` | Insert within a PG transaction (payments, withdrawals, immediate deposits) |
-| `insert_standalone(...)` | Insert without external transaction (pending deposit `created` step) |
-| `activate_pending(id, tb_transfer_id)` | Update `created` → `pending` with TB transfer ID |
+| `insert_in_tx(&mut PgTransaction, ...)` | Insert within a PG transaction (all types) |
+| `update_tb_transfer_id_in_tx(&mut PgTransaction, id, tb_transfer_id)` | Set real TB transfer ID after TB call (within same PG transaction) |
 | `update_status(id, new_status)` | For pending deposit post/void lifecycle |
 | `get_by_id(id, account_id)` | Look up single transaction |
 | `find_by_idempotency_key(account_id, key)` | Check for existing transaction before insert |
-| `list_by_account(account_id, offset, limit)` | Paginated list, excludes `status=created`, ordered by `created_at DESC` |
-| `count_by_account(account_id)` | Total count for pagination (excludes `status=created`) |
+| `list_by_account(account_id, offset, limit)` | Paginated list, ordered by `created_at DESC` |
+| `count_by_account(account_id)` | Total count for pagination |
 | `list_pending_by_account(account_id)` | For admin UI pending deposits section |
 
 ## Service Layer Changes
@@ -253,7 +252,7 @@ When provided and a duplicate `(account_id, idempotency_key)` is found, the exis
 
 - Replace `DepositRepo` dependency with `TransactionRepo`
 - Immediate deposits: wrap PG insert + TB call in a PG transaction
-- Pending deposits: keep two-step approach (standalone insert → TB → activate)
+- Pending deposits: wrap PG insert + TB call + `tb_transfer_id` update in a PG transaction; rollback if TB fails
 - Post/void: unchanged pattern, references `TransactionRepo` instead of `DepositRepo`
 
 ### PaymentService
@@ -289,6 +288,7 @@ Services that use PG transactions need access to the `PgPool` directly (to call 
 | `domain/transfer.rs` (`TransferRecord`, `TransferType`, etc.) | No longer needed — history comes from PG |
 | `ledger_repo.get_account_transfers()` | Can be kept for internal debugging but no longer used for display |
 | `deposits` migration | Replaced by `transactions` migration |
+| `DepositStatus::Created` variant | No longer needed — PG transaction rollback handles failures |
 
 ## Testing
 
@@ -317,3 +317,17 @@ New scenarios to add:
 - User-facing UI (admin only for now)
 - Reconciliation job for detecting PG/TB drift
 - Archiving or TTL on old transactions
+
+## Future Work
+
+### Reconciliation Job
+
+A periodic background job to detect PG/TB drift caused by the rare "crash after TB succeeds, before PG commit" scenario:
+
+1. Query TB for transfers in a recent time window (e.g., last hour)
+2. For each TB transfer, check if a matching PG row exists (by `tb_transfer_id`)
+3. Orphaned TB transfers (no PG match) are flagged for review or auto-reconciled
+4. For pending deposits, orphaned TB transfers self-heal via timeout expiry — no manual intervention needed
+5. For immediate deposits/payments/withdrawals, orphaned transfers may need manual review to determine if the client should be notified
+
+Build this when handling real money or when SLA requirements demand it. At current scale, the risk window (microseconds between TB response and PG commit) makes this extremely rare.
