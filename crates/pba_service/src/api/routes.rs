@@ -35,6 +35,11 @@ pub fn create_router() -> Router<AppState> {
             "/accounts/{account_id}/withdrawals",
             post(handlers::withdraw),
         )
+        // Transactions
+        .route(
+            "/accounts/{account_id}/transactions",
+            get(handlers::list_transactions),
+        )
         // Purpose types
         .route("/purpose-types", get(handlers::list_purpose_types))
         .route(

@@ -26,8 +26,8 @@ pub struct AccountResponse {
     pub virtual_account_number: Option<String>,
     pub kyc_tier: String,
     pub status: String,
-    pub created_at: String,
-    pub updated_at: String,
+    pub created_at: chrono::DateTime<chrono::Utc>,
+    pub updated_at: chrono::DateTime<chrono::Utc>,
 }
 
 impl From<crate::domain::account::PurposeBoundAccount> for AccountResponse {
@@ -43,8 +43,8 @@ impl From<crate::domain::account::PurposeBoundAccount> for AccountResponse {
             virtual_account_number: a.virtual_account_number,
             kyc_tier: a.kyc_tier,
             status: a.status.as_str().to_string(),
-            created_at: a.created_at.to_rfc3339(),
-            updated_at: a.updated_at.to_rfc3339(),
+            created_at: a.created_at,
+            updated_at: a.updated_at,
         }
     }
 }
@@ -72,6 +72,7 @@ pub struct DepositRequest {
     pub pending: bool,
     pub gateway_ref: Option<String>,
     pub timeout_seconds: Option<u32>,
+    pub idempotency_key: Option<String>,
 }
 
 #[derive(Debug, Serialize)]
@@ -100,6 +101,7 @@ pub struct PaymentRequest {
     pub merchant_mcc: String,
     pub merchant_id: String,
     pub description: String,
+    pub idempotency_key: Option<String>,
 }
 
 #[derive(Debug, Serialize)]
@@ -117,6 +119,7 @@ pub struct PaymentResponse {
 #[derive(Debug, Deserialize)]
 pub struct WithdrawalRequest {
     pub amount: u64,
+    pub idempotency_key: Option<String>,
 }
 
 #[derive(Debug, Serialize)]
@@ -164,6 +167,66 @@ impl From<crate::domain::purpose::PurposeType> for PurposeTypeResponse {
                     description: m.description,
                 })
                 .collect(),
+        }
+    }
+}
+
+// ── Transactions ──
+
+#[derive(Debug, Deserialize)]
+pub struct ListTransactionsQuery {
+    pub offset: Option<i64>,
+    pub limit: Option<i64>,
+}
+
+#[derive(Debug, Serialize)]
+pub struct ListTransactionsResponse {
+    pub transactions: Vec<TransactionSummaryDto>,
+    pub total: i64,
+    pub offset: i64,
+    pub limit: i64,
+}
+
+#[derive(Debug, Serialize)]
+pub struct TransactionSummaryDto {
+    pub id: Uuid,
+    #[serde(rename = "type")]
+    pub transaction_type: String,
+    pub status: String,
+    pub amount: u64,
+    pub pool: String,
+    pub direction: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub description: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub merchant_id: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub merchant_mcc: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub source_ifsc: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub source_account: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub gateway_ref: Option<String>,
+    pub created_at: chrono::DateTime<chrono::Utc>,
+}
+
+impl From<crate::domain::transaction::TransactionRecord> for TransactionSummaryDto {
+    fn from(t: crate::domain::transaction::TransactionRecord) -> Self {
+        Self {
+            id: t.id,
+            transaction_type: t.transaction_type.as_str().to_string(),
+            status: t.status.as_str().to_string(),
+            amount: t.amount,
+            pool: t.pool,
+            direction: t.direction.as_str().to_string(),
+            description: t.description,
+            merchant_id: t.merchant_id,
+            merchant_mcc: t.merchant_mcc,
+            source_ifsc: t.source_ifsc,
+            source_account: t.source_account,
+            gateway_ref: t.gateway_ref,
+            created_at: t.created_at,
         }
     }
 }
