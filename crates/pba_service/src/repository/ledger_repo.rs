@@ -1,5 +1,4 @@
 use crate::domain::pool::PoolBalance;
-use crate::domain::transfer::TransferRecord;
 use crate::error::AppError;
 use tb::account::Flags as AccountFlags;
 use tb::error::CreateTransferErrorKind;
@@ -146,68 +145,6 @@ impl LedgerRepo {
 
         tracing::info!(debit = %debit_account_id, credit = %credit_account_id, amount, code = transfer_code, "Created TB transfer");
         Ok(())
-    }
-
-    pub async fn get_account_transfers(
-        &self,
-        self_tb_id: u128,
-        others_tb_id: u128,
-        limit: u32,
-    ) -> Result<Vec<TransferRecord>, AppError> {
-        let filter = Box::new(
-            tb::account::Filter::new(self_tb_id, limit)
-                .with_flags(
-                tb::account::FilterFlags::DEBITS
-                    | tb::account::FilterFlags::CREDITS
-                    | tb::account::FilterFlags::REVERSED,
-            ),
-        );
-
-        let self_transfers = self
-            .client
-            .get_account_transfers(filter)
-            .await
-            .map_err(|e| {
-                AppError::TigerBeetleError(format!("get_account_transfers failed: {e:?}"))
-            })?;
-
-        let others_filter = Box::new(
-            tb::account::Filter::new(others_tb_id, limit)
-                .with_flags(
-                tb::account::FilterFlags::DEBITS
-                    | tb::account::FilterFlags::CREDITS
-                    | tb::account::FilterFlags::REVERSED,
-            ),
-        );
-
-        let others_transfers = self
-            .client
-            .get_account_transfers(others_filter)
-            .await
-            .map_err(|e| {
-                AppError::TigerBeetleError(format!("get_account_transfers failed: {e:?}"))
-            })?;
-
-        // Merge and deduplicate (linked transfers share same ID pattern but are separate)
-        let mut all_transfers: Vec<TransferRecord> = Vec::new();
-        let mut seen_ids = std::collections::HashSet::new();
-
-        for t in self_transfers.iter().chain(others_transfers.iter()) {
-            // Skip raw pending transfers (timed-out or still in-flight).
-            // Posted/voided resolutions appear as separate transfers.
-            if t.flags().contains(TransferFlags::PENDING) {
-                continue;
-            }
-            if seen_ids.insert(t.id()) {
-                all_transfers.push(TransferRecord::from_tb_transfer(t, self_tb_id, others_tb_id));
-            }
-        }
-
-        // Sort by timestamp descending (most recent first)
-        all_transfers.sort_by(|a, b| b.timestamp.cmp(&a.timestamp));
-        all_transfers.truncate(limit as usize);
-
-        Ok(all_transfers)
     }
 
     #[allow(clippy::too_many_arguments)]

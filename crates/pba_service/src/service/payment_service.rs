@@ -2,7 +2,7 @@ use std::sync::Arc;
 use uuid::Uuid;
 
 use crate::domain::pool::PaymentSplit;
-use crate::domain::transaction::{TransactionDirection, TransactionRecord, TransactionStatus, TransactionType};
+use crate::domain::transaction::{TransactionDirection, TransactionStatus, TransactionType};
 use crate::error::AppError;
 use crate::repository::account_repo::AccountRepo;
 use crate::repository::ledger_repo::{LedgerRepo, MERCHANT_SETTLEMENT_TB_ID};
