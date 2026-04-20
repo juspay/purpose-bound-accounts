@@ -10,8 +10,8 @@ mod service;
 
 use config::AppConfig;
 use repository::account_repo::AccountRepo;
-use repository::deposit_repo::DepositRepo;
 use repository::ledger_repo::LedgerRepo;
+use repository::transaction_repo::TransactionRepo;
 use service::account_service::AccountService;
 use service::deposit_service::DepositService;
 use service::payment_service::PaymentService;
@@ -25,6 +25,7 @@ pub struct AppState {
     pub withdrawal_service: Arc<WithdrawalService>,
     pub account_repo: Arc<AccountRepo>,
     pub ledger_repo: Arc<LedgerRepo>,
+    pub transaction_repo: Arc<TransactionRepo>,
 }
 
 #[tokio::main]
@@ -53,7 +54,7 @@ async fn main() {
 
     // Initialize repositories
     let account_repo = Arc::new(AccountRepo::new(pg_pool.clone()));
-    let deposit_repo = Arc::new(DepositRepo::new(pg_pool.clone()));
+    let transaction_repo = Arc::new(TransactionRepo::new(pg_pool.clone()));
     let ledger_repo = Arc::new(LedgerRepo::new(
         config.tigerbeetle_cluster_id,
         config.tigerbeetle_addresses,
@@ -73,16 +74,18 @@ async fn main() {
     let deposit_service = Arc::new(DepositService::new(
         Arc::clone(&account_repo),
         Arc::clone(&ledger_repo),
-        Arc::clone(&deposit_repo),
+        Arc::clone(&transaction_repo),
         config.deposit_timeout_seconds,
     ));
     let payment_service = Arc::new(PaymentService::new(
         Arc::clone(&account_repo),
         Arc::clone(&ledger_repo),
+        Arc::clone(&transaction_repo),
     ));
     let withdrawal_service = Arc::new(WithdrawalService::new(
         Arc::clone(&account_repo),
         Arc::clone(&ledger_repo),
+        Arc::clone(&transaction_repo),
     ));
 
     let state = AppState {
@@ -92,11 +95,12 @@ async fn main() {
         withdrawal_service,
         account_repo,
         ledger_repo,
+        transaction_repo: Arc::clone(&transaction_repo),
     };
 
     // Spawn background deposit timeout poller
     tokio::spawn(service::deposit_timeout::run_deposit_timeout_poller(
-        Arc::clone(&deposit_repo),
+        Arc::clone(&transaction_repo),
         config.deposit_poller_interval_seconds,
     ));
 
