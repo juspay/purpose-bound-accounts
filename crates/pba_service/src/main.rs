@@ -6,6 +6,9 @@ mod config;
 mod domain;
 mod error;
 mod repository;
+pub mod secrets;
+#[cfg(feature = "aws-kms")]
+mod secrets_kms;
 mod service;
 
 use config::AppConfig;
@@ -37,7 +40,8 @@ async fn main() {
         )
         .init();
 
-    let config = AppConfig::from_env();
+    let secrets = secrets::create_provider().await;
+    let config = AppConfig::from_env(&*secrets).await;
 
     // Initialize Postgres connection pool
     let pg_pool = sqlx::postgres::PgPoolOptions::new()
