@@ -1,0 +1,184 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+env:
+  CARGO_TERM_COLOR: always
+  RUST_LOG: pba_service=debug
+  ZIG_PATH: zig
+  CI_DB_URL: postgresql://postgres:postgres@localhost:5432/pba_service_test
+  CI_TB_PORT: "3001"
+  CI_APP_PORT: "3031"
+
+jobs:
+  check:
+    name: Build & Lint
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Rust stable
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          components: clippy, rustfmt
+
+      - name: Install just
+        uses: extractions/setup-just@v2
+
+      - name: Cache cargo
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            target
+          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: ${{ runner.os }}-cargo-
+
+      - name: Install Zig 0.14
+        uses: mlugg/setup-zig@v2
+        with:
+          version: 0.14.1
+
+      - name: Format check
+        run: just fmt-check
+
+      - name: Clippy
+        run: just lint
+
+      - name: Build
+        run: just build
+
+  api-e2e:
+    name: API E2E Tests
+    runs-on: ubuntu-latest
+    needs: check
+
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: pba_service_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd="pg_isready -U postgres"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=5
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Rust stable
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Install just
+        uses: extractions/setup-just@v2
+
+      - name: Cache cargo
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            target
+          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: ${{ runner.os }}-cargo-
+
+      - name: Install Zig 0.14
+        uses: mlugg/setup-zig@v2
+        with:
+          version: 0.14.1
+
+      - name: Install TigerBeetle
+        run: |
+          curl -sL https://global.tigerbeetle.com/install.sh | bash
+          echo "$HOME/.tigerbeetle" >> $GITHUB_PATH
+
+      - name: Start TigerBeetle
+        run: just tb-start $CI_TB_PORT .tb_data/test
+
+      - name: Start service
+        run: just service-start $CI_APP_PORT $CI_DB_URL $CI_TB_PORT
+
+      - name: Run API E2E tests
+        run: just api-e2e-run
+
+      - name: Stop service
+        if: always()
+        run: just service-stop $CI_APP_PORT
+
+  ui-e2e:
+    name: UI E2E Tests
+    runs-on: ubuntu-latest
+    needs: check
+
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: pba_service_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd="pg_isready -U postgres"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=5
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Rust stable
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Install just
+        uses: extractions/setup-just@v2
+
+      - name: Cache cargo
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            target
+          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: ${{ runner.os }}-cargo-
+
+      - name: Install Zig 0.14
+        uses: mlugg/setup-zig@v2
+        with:
+          version: 0.14.1
+
+      - name: Install Chromium
+        uses: browser-actions/setup-chrome@v1
+        with:
+          chrome-version: stable
+
+      - name: Install TigerBeetle
+        run: |
+          curl -sL https://global.tigerbeetle.com/install.sh | bash
+          echo "$HOME/.tigerbeetle" >> $GITHUB_PATH
+
+      - name: Start TigerBeetle
+        run: just tb-start $CI_TB_PORT .tb_data/test
+
+      - name: Start service
+        run: just service-start $CI_APP_PORT $CI_DB_URL $CI_TB_PORT
+
+      - name: Run UI E2E tests
+        run: just ui-e2e-run
+
+      - name: Stop service
+        if: always()
+        run: just service-stop $CI_APP_PORT

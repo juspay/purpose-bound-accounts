@@ -144,30 +144,30 @@ e2e-start: pg-start (reset-db TEST_DB) (tb-start TEST_TB_PORT TEST_TB_DATA)
 # Stop test service and test TigerBeetle
 e2e-stop: (service-stop TEST_APP_PORT) (tb-stop TEST_TB_PORT)
 
-# Run API E2E tests (service must be running)
-e2e-run:
+# Run API E2E tests only (service must be running)
+api-e2e-run:
     PBA_SERVICE_URL="http://127.0.0.1:{{TEST_APP_PORT}}" cargo test -p pba-service --test e2e
 
-# Full E2E cycle: start, run tests, stop
-e2e: e2e-start e2e-run e2e-stop
-    @echo "E2E tests complete"
+# Full API E2E cycle: start, run tests, stop
+api-e2e: e2e-start api-e2e-run e2e-stop
+    @echo "API E2E tests complete"
 
-# Run browser UI tests (full cycle: start, run tests, stop)
-ui-e2e: e2e-start ui-e2e-run e2e-stop
-    @echo "UI E2E tests complete"
-
-# Run browser UI tests only (service must be running)
+# Run UI E2E tests only (service must be running)
 ui-e2e-run:
     PBA_SERVICE_URL="http://127.0.0.1:{{TEST_APP_PORT}}" cargo test -p pba-service --test ui_e2e
 
-# Run browser UI tests with visible Chrome (service must be running)
+# Full UI E2E cycle: start, run tests, stop
+ui-e2e: e2e-start ui-e2e-run e2e-stop
+    @echo "UI E2E tests complete"
+
+# Run UI E2E tests with visible Chrome (service must be running)
 ui-e2e-watch:
     UI_HEAD=1 PBA_SERVICE_URL="http://127.0.0.1:{{TEST_APP_PORT}}" cargo test -p pba-service --test ui_e2e
 
-# Run all E2E tests: API + browser (resets DB between suites)
+# Run all E2E tests: API + UI (resets DB between suites)
 e2e-all:
     just e2e-start
-    just e2e-run
+    just api-e2e-run
     @echo "Resetting DB for UI tests..."
     just service-stop {{TEST_APP_PORT}}
     @sleep 1
