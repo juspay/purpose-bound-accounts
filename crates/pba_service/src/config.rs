@@ -18,8 +18,7 @@ impl AppConfig {
         let db_port = std::env::var("DB_PORT").unwrap_or_else(|_| "5432".to_string());
         let db_name = std::env::var("DB_NAME").unwrap_or_else(|_| "pba_service".to_string());
         let db_user = std::env::var("DB_USER").unwrap_or_else(|_| "postgres".to_string());
-        let raw_db_password =
-            std::env::var("DB_PASSWORD").unwrap_or_default();
+        let raw_db_password = std::env::var("DB_PASSWORD").unwrap_or_default();
         let db_password = if raw_db_password.is_empty() {
             raw_db_password
         } else {
@@ -51,11 +50,10 @@ impl AppConfig {
             .unwrap_or_else(|_| "1800".to_string())
             .parse()
             .expect("DEPOSIT_TIMEOUT_SECONDS must be a valid u32");
-        let deposit_poller_interval_seconds: u64 =
-            std::env::var("DEPOSIT_POLLER_INTERVAL_SECONDS")
-                .unwrap_or_else(|_| "60".to_string())
-                .parse()
-                .expect("DEPOSIT_POLLER_INTERVAL_SECONDS must be a valid u64");
+        let deposit_poller_interval_seconds: u64 = std::env::var("DEPOSIT_POLLER_INTERVAL_SECONDS")
+            .unwrap_or_else(|_| "60".to_string())
+            .parse()
+            .expect("DEPOSIT_POLLER_INTERVAL_SECONDS must be a valid u64");
 
         Self {
             database_url,
