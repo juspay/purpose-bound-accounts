@@ -115,6 +115,21 @@ run-all: infra-start
     @echo "Admin dashboard will be at http://localhost:{{DEV_APP_PORT}}/admin"
     @trap 'echo ""; just stop-all' EXIT; cargo run -p pba-service
 
+# ── Conventional Commits ──────────────────────────────────────
+
+# Verify a commit message follows conventional commit standards
+cog-verify message:
+    cog verify "{{message}}"
+
+# Check all commits on the current branch against conventional commit standards
+cog-check:
+    cog check
+
+# Install cocogitto git hooks (commit-msg hook for local enforcement)
+cog-install-hook:
+    cog install-hook commit-msg
+    @echo "Conventional commit hook installed — commits will be validated automatically"
+
 # ── Testing & CI ─────────────────────────────────────────────
 
 # Run unit tests
@@ -133,8 +148,8 @@ fmt-check:
 fmt:
     cargo fmt -p pba-service
 
-# Local CI: format check + lint + build + test
-local-ci: fmt-check lint build test
+# Local CI: format check + lint + build + test + commit convention check
+local-ci: fmt-check lint build test cog-check
     @echo "local-ci passed"
 
 # ── E2E Tests (Cucumber + Smithy SDK) ───────────────────────
@@ -231,6 +246,7 @@ install-deps:
     rustup-init -y --default-toolchain stable
     cargo install sqlx-cli --no-default-features --features postgres
     cargo install cargo-watch
+    cargo install cocogitto
     rustup component add clippy rustfmt
     @echo ""
     @echo "Dependencies installed. Run 'just infra-start' to start Postgres + TigerBeetle."

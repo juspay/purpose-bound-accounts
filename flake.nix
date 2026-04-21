@@ -43,6 +43,7 @@
             pkgs.just
             pkgs.sqlx-cli
             pkgs.cargo-watch
+            pkgs.cocogitto
 
             # Smithy CLI
             smithy-cli
