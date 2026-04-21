@@ -47,6 +47,7 @@ jobs:
       - uses: ./.github/actions/setup-toolchain
         with:
           with-tigerbeetle: "true"
+      - run: just build
       - run: just tb-start $CI_TB_PORT .tb_data/test
       - run: just service-start $CI_APP_PORT $CI_DB_URL $CI_TB_PORT
       - run: just api-e2e-run
@@ -77,6 +78,7 @@ jobs:
         with:
           with-tigerbeetle: "true"
           with-chromium: "true"
+      - run: just build
       - run: just tb-start $CI_TB_PORT .tb_data/test
       - run: just service-start $CI_APP_PORT $CI_DB_URL $CI_TB_PORT
       - run: just ui-e2e-run
