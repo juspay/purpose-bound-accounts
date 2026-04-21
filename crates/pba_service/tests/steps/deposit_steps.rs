@@ -228,7 +228,11 @@ async fn post_pending_deposit(world: &mut PbaWorld) {
         .await;
     match result {
         Ok(output) => {
-            assert_eq!(output.status(), "posted", "Expected status 'posted' after posting");
+            assert_eq!(
+                output.status(),
+                "posted",
+                "Expected status 'posted' after posting"
+            );
             world.last_error = None;
         }
         Err(e) => panic!("Post deposit failed: {e:?}"),
@@ -252,7 +256,11 @@ async fn void_pending_deposit(world: &mut PbaWorld) {
         .await;
     match result {
         Ok(output) => {
-            assert_eq!(output.status(), "voided", "Expected status 'voided' after voiding");
+            assert_eq!(
+                output.status(),
+                "voided",
+                "Expected status 'voided' after voiding"
+            );
             world.last_error = None;
         }
         Err(e) => panic!("Void deposit failed: {e:?}"),

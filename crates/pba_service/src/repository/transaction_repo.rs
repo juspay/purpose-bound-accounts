@@ -41,8 +41,7 @@ impl TransactionRow {
             account_id: self.account_id,
             transaction_type: TransactionType::from_str(&self.transaction_type)
                 .unwrap_or(TransactionType::Deposit),
-            status: TransactionStatus::from_str(&self.status)
-                .unwrap_or(TransactionStatus::Pending),
+            status: TransactionStatus::from_str(&self.status).unwrap_or(TransactionStatus::Pending),
             amount: self.amount as u64,
             pool: self.pool,
             direction: TransactionDirection::from_str(&self.direction)

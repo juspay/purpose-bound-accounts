@@ -52,15 +52,16 @@ async fn attempt_withdraw(world: &mut PbaWorld, amount: i64) {
 
 #[then(regex = r"^the withdrawal should succeed with amount (\d+)$")]
 async fn withdrawal_succeed(world: &mut PbaWorld, expected: i64) {
-    let amount = world
-        .last_withdrawal_amount
-        .expect("No withdrawal result");
+    let amount = world.last_withdrawal_amount.expect("No withdrawal result");
     assert_eq!(amount, expected, "Withdrawal amount mismatch");
 }
 
 #[then("the withdrawal should be rejected as insufficient funds")]
 async fn withdrawal_rejected(world: &mut PbaWorld) {
-    let err = world.last_error.as_ref().expect("Expected withdrawal to be rejected");
+    let err = world
+        .last_error
+        .as_ref()
+        .expect("Expected withdrawal to be rejected");
     assert_eq!(err.kind, "insufficient_funds");
 }
 

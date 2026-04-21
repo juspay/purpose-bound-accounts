@@ -121,13 +121,13 @@ test:
 lint:
     cargo clippy -- -D warnings
 
-# Format check
+# Format check (excludes generated SDK)
 fmt-check:
-    cargo fmt -- --check
+    cargo fmt -p pba-service -- --check
 
-# Format code
+# Format code (excludes generated SDK)
 fmt:
-    cargo fmt
+    cargo fmt -p pba-service
 
 # Local CI: format check + lint + build + test
 local-ci: fmt-check lint build test

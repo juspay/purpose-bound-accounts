@@ -172,9 +172,7 @@ pub async fn create_account(
         .await
     {
         Ok(account) => Redirect::to(&format!("/admin/accounts/{}", account.id)).into_response(),
-        Err(e) => {
-            render_accounts_list(&state, Some(format!("{e}")), None).await
-        }
+        Err(e) => render_accounts_list(&state, Some(format!("{e}")), None).await,
     }
 }
 
@@ -195,7 +193,11 @@ pub async fn update_account_status(
         }
     };
 
-    match state.account_service.update_status(account_id, status).await {
+    match state
+        .account_service
+        .update_status(account_id, status)
+        .await
+    {
         Ok(_) => Redirect::to(&format!("/admin/accounts/{account_id}")).into_response(),
         Err(e) => {
             tracing::error!("Failed to update status: {e}");
@@ -375,10 +377,7 @@ struct DepositTemplate {
     error: Option<String>,
 }
 
-pub async fn deposit_form(
-    State(state): State<AppState>,
-    Path(account_id): Path<Uuid>,
-) -> Response {
+pub async fn deposit_form(State(state): State<AppState>, Path(account_id): Path<Uuid>) -> Response {
     let account = match state.account_repo.get_account(account_id).await {
         Ok(a) => a,
         Err(_) => return (StatusCode::NOT_FOUND, "Account not found").into_response(),
@@ -409,7 +408,16 @@ pub async fn process_deposit(
     let gateway_ref = form.gateway_ref.as_deref().filter(|s| !s.is_empty());
     match state
         .deposit_service
-        .deposit(account_id, &form.source_ifsc, &form.source_account_number, form.amount, is_pending, gateway_ref, None, None)
+        .deposit(
+            account_id,
+            &form.source_ifsc,
+            &form.source_account_number,
+            form.amount,
+            is_pending,
+            gateway_ref,
+            None,
+            None,
+        )
         .await
     {
         Ok(_) => Redirect::to(&format!("/admin/accounts/{account_id}")).into_response(),
@@ -433,7 +441,11 @@ pub async fn post_deposit(
     State(state): State<AppState>,
     Path((account_id, deposit_id)): Path<(Uuid, Uuid)>,
 ) -> Response {
-    match state.deposit_service.post_deposit(account_id, deposit_id).await {
+    match state
+        .deposit_service
+        .post_deposit(account_id, deposit_id)
+        .await
+    {
         Ok(_) => Redirect::to(&format!("/admin/accounts/{account_id}")).into_response(),
         Err(e) => {
             tracing::error!("Failed to post deposit: {e}");
@@ -446,7 +458,11 @@ pub async fn void_deposit(
     State(state): State<AppState>,
     Path((account_id, deposit_id)): Path<(Uuid, Uuid)>,
 ) -> Response {
-    match state.deposit_service.void_deposit(account_id, deposit_id, None).await {
+    match state
+        .deposit_service
+        .void_deposit(account_id, deposit_id, None)
+        .await
+    {
         Ok(_) => Redirect::to(&format!("/admin/accounts/{account_id}")).into_response(),
         Err(e) => {
             tracing::error!("Failed to void deposit: {e}");
@@ -463,10 +479,7 @@ struct PaymentTemplate {
     error: Option<String>,
 }
 
-pub async fn payment_form(
-    State(state): State<AppState>,
-    Path(account_id): Path<Uuid>,
-) -> Response {
+pub async fn payment_form(State(state): State<AppState>, Path(account_id): Path<Uuid>) -> Response {
     let account = match state.account_repo.get_account(account_id).await {
         Ok(a) => a,
         Err(_) => return (StatusCode::NOT_FOUND, "Account not found").into_response(),
@@ -553,7 +566,11 @@ pub async fn process_withdrawal(
     Path(account_id): Path<Uuid>,
     axum::extract::Form(form): axum::extract::Form<WithdrawalForm>,
 ) -> Response {
-    match state.withdrawal_service.withdraw(account_id, form.amount, None).await {
+    match state
+        .withdrawal_service
+        .withdraw(account_id, form.amount, None)
+        .await
+    {
         Ok(_) => Redirect::to(&format!("/admin/accounts/{account_id}")).into_response(),
         Err(e) => {
             let purpose_code = state

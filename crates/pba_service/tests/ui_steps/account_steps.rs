@@ -473,7 +473,10 @@ async fn dashboard_total(world: &mut UiWorld, min: i64) {
     let re = regex::Regex::new(r"<h2>(\d+)</h2>").unwrap();
     if let Some(cap) = re.captures(&content) {
         let total: i64 = cap[1].parse().unwrap_or(0);
-        assert!(total >= min, "Expected at least {min} total accounts, got {total}");
+        assert!(
+            total >= min,
+            "Expected at least {min} total accounts, got {total}"
+        );
     } else {
         panic!("Could not find total accounts on dashboard");
     }
@@ -492,24 +495,30 @@ async fn view_detail(world: &mut UiWorld) {
 async fn page_self_pool(world: &mut UiWorld, expected: String) {
     let page = world.ensure_page().await;
     let content = page.content().await.unwrap();
-    assert!(content.contains(&format!("₹{expected}")),
-        "Expected self pool '₹{expected}' on page");
+    assert!(
+        content.contains(&format!("₹{expected}")),
+        "Expected self pool '₹{expected}' on page"
+    );
 }
 
 #[then(regex = r#"^the page should show others pool as "([^"]*)"$"#)]
 async fn page_others_pool(world: &mut UiWorld, expected: String) {
     let page = world.ensure_page().await;
     let content = page.content().await.unwrap();
-    assert!(content.contains(&format!("₹{expected}")),
-        "Expected others pool '₹{expected}' on page");
+    assert!(
+        content.contains(&format!("₹{expected}")),
+        "Expected others pool '₹{expected}' on page"
+    );
 }
 
 #[then(regex = r#"^the page should show total balance as "([^"]*)"$"#)]
 async fn page_total_balance(world: &mut UiWorld, expected: String) {
     let page = world.ensure_page().await;
     let content = page.content().await.unwrap();
-    assert!(content.contains(&format!("₹{expected}")),
-        "Expected total '₹{expected}' on page");
+    assert!(
+        content.contains(&format!("₹{expected}")),
+        "Expected total '₹{expected}' on page"
+    );
 }
 
 #[then(regex = r#"^the transaction history should load$"#)]
@@ -518,8 +527,10 @@ async fn tx_history_loads(world: &mut UiWorld) {
     // Wait for HTMX to load the transfers fragment
     tokio::time::sleep(std::time::Duration::from_secs(2)).await;
     let content = page.content().await.unwrap();
-    assert!(!content.contains("Loading transfers..."),
-        "Transaction history should have finished loading");
+    assert!(
+        !content.contains("Loading transfers..."),
+        "Transaction history should have finished loading"
+    );
 }
 
 #[then(regex = r#"^the transaction history should show at least (\d+) entry$"#)]
@@ -529,7 +540,10 @@ async fn tx_history_count(world: &mut UiWorld, min: usize) {
     if let Some(pos) = content.find("id=\"transfers\"") {
         let section = &content[pos..];
         let rows = section.matches("<tr>").count().saturating_sub(1);
-        assert!(rows >= min, "Expected at least {min} transfer entries, got {rows}");
+        assert!(
+            rows >= min,
+            "Expected at least {min} transfer entries, got {rows}"
+        );
     } else {
         panic!("Transfers section not found");
     }
@@ -539,24 +553,30 @@ async fn tx_history_count(world: &mut UiWorld, min: usize) {
 async fn no_deposit_link(world: &mut UiWorld) {
     let page = world.ensure_page().await;
     let content = page.content().await.unwrap();
-    assert!(!content.contains("/deposit\" role=\"button\""),
-        "Deposit link should not be visible on frozen/closed account");
+    assert!(
+        !content.contains("/deposit\" role=\"button\""),
+        "Deposit link should not be visible on frozen/closed account"
+    );
 }
 
 #[then(regex = r#"^the payment link should not be visible$"#)]
 async fn no_payment_link(world: &mut UiWorld) {
     let page = world.ensure_page().await;
     let content = page.content().await.unwrap();
-    assert!(!content.contains("/payment\" role=\"button\""),
-        "Payment link should not be visible on frozen/closed account");
+    assert!(
+        !content.contains("/payment\" role=\"button\""),
+        "Payment link should not be visible on frozen/closed account"
+    );
 }
 
 #[then(regex = r#"^the withdrawal link should not be visible$"#)]
 async fn no_withdrawal_link(world: &mut UiWorld) {
     let page = world.ensure_page().await;
     let content = page.content().await.unwrap();
-    assert!(!content.contains("/withdrawal\" role=\"button\""),
-        "Withdrawal link should not be visible on frozen/closed account");
+    assert!(
+        !content.contains("/withdrawal\" role=\"button\""),
+        "Withdrawal link should not be visible on frozen/closed account"
+    );
 }
 
 #[when(regex = r#"^I visit the purpose types page$"#)]
@@ -572,5 +592,8 @@ async fn purpose_types_listed(world: &mut UiWorld, min: usize) {
     let page = world.ensure_page().await;
     let content = page.content().await.unwrap();
     let count = content.matches("id=\"purpose-").count();
-    assert!(count >= min, "Expected at least {min} purpose types listed, got {count}");
+    assert!(
+        count >= min,
+        "Expected at least {min} purpose types listed, got {count}"
+    );
 }

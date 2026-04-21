@@ -13,8 +13,14 @@ pub enum AppError {
     AccountNotFound(String),
     AccountNotActive(String),
     PurposeTypeNotFound(String),
-    InsufficientFunds { requested: u64, available: u64 },
-    InvalidMcc { mcc: String, purpose_code: String },
+    InsufficientFunds {
+        requested: u64,
+        available: u64,
+    },
+    InvalidMcc {
+        mcc: String,
+        purpose_code: String,
+    },
     DuplicateAccount(String),
     TransactionNotFound(String),
     TransactionNotPending(String),
@@ -45,7 +51,9 @@ impl std::fmt::Display for AppError {
             }
             Self::DuplicateAccount(msg) => write!(f, "Duplicate account: {msg}"),
             Self::TransactionNotFound(id) => write!(f, "Transaction not found: {id}"),
-            Self::TransactionNotPending(id) => write!(f, "Transaction is not in pending state: {id}"),
+            Self::TransactionNotPending(id) => {
+                write!(f, "Transaction is not in pending state: {id}")
+            }
             Self::ExceedsBalance => write!(f, "Transfer exceeds available balance"),
             Self::TigerBeetleError(msg) => write!(f, "TigerBeetle error: {msg}"),
             Self::DatabaseError(msg) => write!(f, "Database error: {msg}"),
@@ -66,9 +74,7 @@ impl IntoResponse for AppError {
             AppError::DuplicateAccount(_) => (StatusCode::CONFLICT, "DuplicateAccount"),
             AppError::TransactionNotFound(_) => (StatusCode::NOT_FOUND, "TransactionNotFound"),
             AppError::TransactionNotPending(_) => (StatusCode::CONFLICT, "TransactionNotPending"),
-            AppError::ExceedsBalance => {
-                (StatusCode::UNPROCESSABLE_ENTITY, "InsufficientFunds")
-            }
+            AppError::ExceedsBalance => (StatusCode::UNPROCESSABLE_ENTITY, "InsufficientFunds"),
             AppError::TigerBeetleError(_) => {
                 (StatusCode::INTERNAL_SERVER_ERROR, "TigerBeetleError")
             }

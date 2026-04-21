@@ -252,7 +252,11 @@ pub async fn get_purpose_type(
 
 const OPENAPI_SPEC: &str = include_str!("openapi.json");
 
-pub async fn openapi_json() -> (axum::http::StatusCode, [(&'static str, &'static str); 1], &'static str) {
+pub async fn openapi_json() -> (
+    axum::http::StatusCode,
+    [(&'static str, &'static str); 1],
+    &'static str,
+) {
     (
         axum::http::StatusCode::OK,
         [("content-type", "application/json")],

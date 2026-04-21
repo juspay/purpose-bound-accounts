@@ -169,9 +169,7 @@ impl AccountRepo {
         Ok(rows.into_iter().map(|r| r.into_domain()).collect())
     }
 
-    pub async fn count_accounts_by_status(
-        &self,
-    ) -> Result<Vec<(String, i64)>, AppError> {
+    pub async fn count_accounts_by_status(&self) -> Result<Vec<(String, i64)>, AppError> {
         let rows: Vec<(String, i64)> = sqlx::query_as(
             r#"
             SELECT status, COUNT(*) as count
@@ -185,9 +183,7 @@ impl AccountRepo {
         Ok(rows)
     }
 
-    pub async fn count_accounts_by_purpose(
-        &self,
-    ) -> Result<Vec<(String, i64)>, AppError> {
+    pub async fn count_accounts_by_purpose(&self) -> Result<Vec<(String, i64)>, AppError> {
         let rows: Vec<(String, i64)> = sqlx::query_as(
             r#"
             SELECT purpose_code, COUNT(*) as count
