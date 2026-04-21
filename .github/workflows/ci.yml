@@ -10,7 +10,11 @@ on:
 env:
   CARGO_TERM_COLOR: always
   RUST_LOG: pba_service=debug
-  CI_DB_URL: postgresql://postgres:postgres@localhost:5432/pba_service_test
+  DB_HOST: localhost
+  DB_PORT: "5432"
+  DB_USER: postgres
+  DB_PASSWORD: postgres
+  DB_NAME: pba_service_test
   CI_TB_PORT: "3001"
   CI_APP_PORT: "3031"
 
@@ -82,7 +86,7 @@ jobs:
           with-tigerbeetle: "true"
       - run: just build
       - run: just tb-start $CI_TB_PORT .tb_data/test
-      - run: just service-start $CI_APP_PORT $CI_DB_URL $CI_TB_PORT
+      - run: just service-start $CI_APP_PORT $DB_NAME $CI_TB_PORT
       - run: just api-e2e-run
       - if: always()
         run: just service-stop $CI_APP_PORT
@@ -113,7 +117,7 @@ jobs:
           with-chromium: "true"
       - run: just build
       - run: just tb-start $CI_TB_PORT .tb_data/test
-      - run: just service-start $CI_APP_PORT $CI_DB_URL $CI_TB_PORT
+      - run: just service-start $CI_APP_PORT $DB_NAME $CI_TB_PORT
       - run: just ui-e2e-run
       - if: always()
         run: just service-stop $CI_APP_PORT

@@ -47,9 +47,9 @@ tb-stop port:
 service-start port db_name tb_port:
     @echo "Starting pba-service on port {{port}}..."
     @if [ -n "$CI" ]; then \
-        DB_HOST=/tmp DB_NAME="{{db_name}}" TIGERBEETLE_ADDRESSES={{tb_port}} PORT={{port}} target/debug/pba-service & \
+        DB_NAME="{{db_name}}" TIGERBEETLE_ADDRESSES={{tb_port}} PORT={{port}} target/debug/pba-service & \
     else \
-        DB_HOST=/tmp DB_NAME="{{db_name}}" TIGERBEETLE_ADDRESSES={{tb_port}} PORT={{port}} cargo run -p pba-service & \
+        DB_NAME="{{db_name}}" TIGERBEETLE_ADDRESSES={{tb_port}} PORT={{port}} cargo run -p pba-service & \
     fi
     @echo "Waiting for service to be ready..."
     @for i in $(seq 1 30); do \
