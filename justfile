@@ -48,7 +48,7 @@ tb-stop port:
 [private]
 service-start port db_url tb_port:
     @echo "Starting pba-service on port {{port}}..."
-    @if [ -x target/debug/pba-service ]; then \
+    @if [ -n "$CI" ]; then \
         DATABASE_URL="{{db_url}}" TIGERBEETLE_ADDRESSES={{tb_port}} PORT={{port}} target/debug/pba-service & \
     else \
         DATABASE_URL="{{db_url}}" TIGERBEETLE_ADDRESSES={{tb_port}} PORT={{port}} cargo run -p pba-service & \
