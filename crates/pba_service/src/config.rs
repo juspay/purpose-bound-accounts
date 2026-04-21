@@ -14,20 +14,30 @@ pub struct AppConfig {
 
 impl AppConfig {
     pub async fn from_env(secrets: &dyn SecretsProvider) -> Self {
-        let raw_database_url =
-            std::env::var("DATABASE_URL").expect("DATABASE_URL must be set");
-        let database_url = secrets
-            .decrypt(&raw_database_url)
-            .await
-            .expect("Failed to decrypt DATABASE_URL");
+        let db_host = std::env::var("DB_HOST").unwrap_or_else(|_| "localhost".to_string());
+        let db_port = std::env::var("DB_PORT").unwrap_or_else(|_| "5432".to_string());
+        let db_name = std::env::var("DB_NAME").unwrap_or_else(|_| "pba_service".to_string());
+        let db_user = std::env::var("DB_USER").unwrap_or_else(|_| "postgres".to_string());
+        let raw_db_password =
+            std::env::var("DB_PASSWORD").unwrap_or_default();
+        let db_password = if raw_db_password.is_empty() {
+            raw_db_password
+        } else {
+            secrets
+                .decrypt(&raw_db_password)
+                .await
+                .expect("Failed to decrypt DB_PASSWORD")
+        };
 
-        let raw_tb_addresses =
+        // Unix socket paths start with '/'; use ?host= query param for sqlx
+        let database_url = if db_host.starts_with('/') {
+            format!("postgres://{db_user}:{db_password}@/{db_name}?host={db_host}")
+        } else {
+            format!("postgres://{db_user}:{db_password}@{db_host}:{db_port}/{db_name}")
+        };
+
+        let tb_addresses =
             std::env::var("TIGERBEETLE_ADDRESSES").unwrap_or_else(|_| "3000".to_string());
-        let tb_addresses = secrets
-            .decrypt(&raw_tb_addresses)
-            .await
-            .expect("Failed to decrypt TIGERBEETLE_ADDRESSES");
-
         let tb_cluster_id: u128 = std::env::var("TIGERBEETLE_CLUSTER_ID")
             .unwrap_or_else(|_| "0".to_string())
             .parse()

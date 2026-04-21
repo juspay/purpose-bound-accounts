@@ -7,8 +7,8 @@ mod domain;
 mod error;
 mod repository;
 pub mod secrets;
-#[cfg(feature = "aws-kms")]
 mod secrets_kms;
+mod secrets_plaintext;
 mod service;
 
 use config::AppConfig;

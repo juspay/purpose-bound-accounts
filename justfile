@@ -13,14 +13,12 @@ DEV_TB_PORT := "3000"
 DEV_TB_DATA := ".tb_data/dev"
 DEV_APP_PORT := "3030"
 DEV_DB := "pba_service"
-DEV_DATABASE_URL := "postgresql://localhost:5432/" + DEV_DB + "?host=/tmp"
 
 # Test environment
 TEST_TB_PORT := "3001"
 TEST_TB_DATA := ".tb_data/test"
 TEST_APP_PORT := "3031"
 TEST_DB := "pba_service_test"
-TEST_DATABASE_URL := "postgresql://localhost:5432/" + TEST_DB + "?host=/tmp"
 
 # ── Parameterized Primitives ───────────────────────────────
 
@@ -46,12 +44,12 @@ tb-stop port:
 
 # Start pba-service in the background with given config, wait for health check
 [private]
-service-start port db_url tb_port:
+service-start port db_name tb_port:
     @echo "Starting pba-service on port {{port}}..."
     @if [ -n "$CI" ]; then \
-        DATABASE_URL="{{db_url}}" TIGERBEETLE_ADDRESSES={{tb_port}} PORT={{port}} target/debug/pba-service & \
+        DB_HOST=/tmp DB_NAME="{{db_name}}" TIGERBEETLE_ADDRESSES={{tb_port}} PORT={{port}} target/debug/pba-service & \
     else \
-        DATABASE_URL="{{db_url}}" TIGERBEETLE_ADDRESSES={{tb_port}} PORT={{port}} cargo run -p pba-service & \
+        DB_HOST=/tmp DB_NAME="{{db_name}}" TIGERBEETLE_ADDRESSES={{tb_port}} PORT={{port}} cargo run -p pba-service & \
     fi
     @echo "Waiting for service to be ready..."
     @for i in $(seq 1 30); do \
@@ -158,7 +156,7 @@ local-ci: fmt-check lint build test cog-check
 e2e-start: pg-start (reset-db TEST_DB) (tb-start TEST_TB_PORT TEST_TB_DATA)
     just service-stop {{TEST_APP_PORT}}
     @sleep 1
-    just service-start {{TEST_APP_PORT}} {{TEST_DATABASE_URL}} {{TEST_TB_PORT}}
+    just service-start {{TEST_APP_PORT}} {{TEST_DB}} {{TEST_TB_PORT}}
 
 # Stop test service and test TigerBeetle
 e2e-stop: (service-stop TEST_APP_PORT) (tb-stop TEST_TB_PORT)
@@ -191,7 +189,7 @@ e2e-all:
     just service-stop {{TEST_APP_PORT}}
     @sleep 1
     just reset-db {{TEST_DB}}
-    just service-start {{TEST_APP_PORT}} {{TEST_DATABASE_URL}} {{TEST_TB_PORT}}
+    just service-start {{TEST_APP_PORT}} {{TEST_DB}} {{TEST_TB_PORT}}
     just ui-e2e-run
     just e2e-stop
     @echo "All E2E tests complete"
