@@ -117,9 +117,9 @@ run-all: infra-start
 test:
     cargo test
 
-# Run clippy lints
+# Run clippy lints (excludes generated SDK)
 lint:
-    cargo clippy -- -D warnings
+    cargo clippy -p pba-service -- -D warnings
 
 # Format check (excludes generated SDK)
 fmt-check:

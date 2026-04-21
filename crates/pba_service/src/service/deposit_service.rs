@@ -34,6 +34,7 @@ impl DepositService {
         }
     }
 
+    #[allow(clippy::too_many_arguments)]
     pub async fn deposit(
         &self,
         account_id: Uuid,
