@@ -2,10 +2,6 @@ name: Setup Toolchain
 description: Install Rust, Zig, just, and configure cargo cache
 
 inputs:
-  rust-components:
-    description: Additional Rust components (comma-separated)
-    required: false
-    default: ""
   with-tigerbeetle:
     description: Install TigerBeetle
     required: false
@@ -18,10 +14,8 @@ inputs:
 runs:
   using: composite
   steps:
-    - name: Install Rust stable
+    - name: Install Rust (from rust-toolchain.toml)
       uses: dtolnay/rust-toolchain@stable
-      with:
-        components: ${{ inputs.rust-components }}
 
     - name: Install just
       uses: extractions/setup-just@v2
@@ -42,7 +36,10 @@ runs:
       if: inputs.with-tigerbeetle == 'true'
       shell: bash
       run: |
-        curl -sL https://global.tigerbeetle.com/install.sh | bash
+        TB_VERSION=0.16.78
+        curl -sLO "https://github.com/tigerbeetle/tigerbeetle/releases/download/${TB_VERSION}/tigerbeetle-x86_64-linux.zip"
+        unzip -q tigerbeetle-x86_64-linux.zip -d "$HOME/.tigerbeetle"
+        rm tigerbeetle-x86_64-linux.zip
         echo "$HOME/.tigerbeetle" >> $GITHUB_PATH
 
     - name: Install Chromium

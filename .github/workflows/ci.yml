@@ -20,8 +20,6 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: ./.github/actions/setup-toolchain
-        with:
-          rust-components: clippy, rustfmt
       - run: just fmt-check
       - run: just lint
       - run: just build
