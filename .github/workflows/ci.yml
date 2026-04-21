@@ -13,6 +13,10 @@ env:
   CI_TB_PORT: "3001"
   CI_APP_PORT: "3031"
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   check:
     name: Build & Lint
