@@ -8,8 +8,7 @@ use uuid::Uuid;
 
 use crate::domain::tb_explorer::{TbAccountView, TbBalanceView, TbTransferView};
 use crate::repository::ledger_repo::{
-    FUNDING_SOURCE_TB_ID, LEDGER_INR_PAISA, MERCHANT_SETTLEMENT_TB_ID,
-    WITHDRAWAL_SETTLEMENT_TB_ID,
+    FUNDING_SOURCE_TB_ID, LEDGER_INR_PAISA, MERCHANT_SETTLEMENT_TB_ID, WITHDRAWAL_SETTLEMENT_TB_ID,
 };
 use crate::AppState;
 
@@ -36,7 +35,10 @@ fn parse_u128_or_uuid(s: &str) -> Option<u128> {
         return Some(u128::from_be_bytes(*uuid.as_bytes()));
     }
     // Hex form (0x...)
-    if let Some(hex) = trimmed.strip_prefix("0x").or_else(|| trimmed.strip_prefix("0X")) {
+    if let Some(hex) = trimmed
+        .strip_prefix("0x")
+        .or_else(|| trimmed.strip_prefix("0X"))
+    {
         if let Ok(v) = u128::from_str_radix(hex, 16) {
             return Some(v);
         }
@@ -74,18 +76,6 @@ fn parse_local_dt(s: &str) -> Option<DateTime<Utc>> {
         return Some(dt.with_timezone(&Utc));
     }
     None
-}
-
-fn parse_optional_u128(s: &str) -> u128 {
-    parse_u128_or_uuid(s).unwrap_or(0)
-}
-
-fn parse_optional_u64(s: &str) -> u64 {
-    s.trim().parse::<u64>().unwrap_or(0)
-}
-
-fn parse_optional_u32(s: &str) -> u32 {
-    s.trim().parse::<u32>().unwrap_or(0)
 }
 
 fn parse_optional_u16(s: &str) -> u16 {
@@ -208,12 +198,6 @@ pub struct AccountsQuery {
     #[serde(default)]
     code: Option<String>,
     #[serde(default)]
-    user_data_128: Option<String>,
-    #[serde(default)]
-    user_data_64: Option<String>,
-    #[serde(default)]
-    user_data_32: Option<String>,
-    #[serde(default)]
     timestamp_min: Option<String>,
     #[serde(default)]
     timestamp_max: Option<String>,
@@ -238,9 +222,6 @@ struct AccountsFormEcho {
     ids: String,
     ledger: String,
     code: String,
-    user_data_128: String,
-    user_data_64: String,
-    user_data_32: String,
     timestamp_min: String,
     timestamp_max: String,
     limit: String,
@@ -290,9 +271,6 @@ pub async fn accounts_page(
         ids: q.ids.clone().unwrap_or_default(),
         ledger: q.ledger.clone().unwrap_or_default(),
         code: q.code.clone().unwrap_or_default(),
-        user_data_128: q.user_data_128.clone().unwrap_or_default(),
-        user_data_64: q.user_data_64.clone().unwrap_or_default(),
-        user_data_32: q.user_data_32.clone().unwrap_or_default(),
         timestamp_min: q.timestamp_min.clone().unwrap_or_default(),
         timestamp_max: q.timestamp_max.clone().unwrap_or_default(),
         limit: q.limit.clone().unwrap_or_else(|| "100".to_string()),
@@ -318,27 +296,18 @@ pub async fn accounts_page(
             }
         }
         Some("query") => {
-            let ledger = form.ledger.trim().parse::<u32>().unwrap_or(LEDGER_INR_PAISA);
+            let ledger = form
+                .ledger
+                .trim()
+                .parse::<u32>()
+                .unwrap_or(LEDGER_INR_PAISA);
             let code = parse_optional_u16(&form.code);
-            let ud128 = parse_optional_u128(&form.user_data_128);
-            let ud64 = parse_optional_u64(&form.user_data_64);
-            let ud32 = parse_optional_u32(&form.user_data_32);
             let tmin = parse_local_dt(&form.timestamp_min);
             let tmax = parse_local_dt(&form.timestamp_max);
             let limit = form.limit.trim().parse::<u32>().unwrap_or(100);
             match state
                 .ledger_repo
-                .explorer_query_accounts(
-                    ledger,
-                    code,
-                    ud128,
-                    ud64,
-                    ud32,
-                    tmin,
-                    tmax,
-                    limit,
-                    form.reversed,
-                )
+                .explorer_query_accounts(ledger, code, tmin, tmax, limit, form.reversed)
                 .await
             {
                 Ok(rows) => {
@@ -381,10 +350,6 @@ struct AccountFullRow {
     code_label: &'static str,
     flags_bits: u16,
     flags: String,
-    user_data_128: String,
-    user_data_128_uuid: String,
-    user_data_64: u64,
-    user_data_32: u32,
     credits_posted: String,
     debits_posted: String,
     credits_pending: String,
@@ -447,10 +412,7 @@ fn balance_to_row(b: &TbBalanceView) -> BalanceRow {
     }
 }
 
-pub async fn account_detail(
-    State(state): State<AppState>,
-    Path(id_str): Path<String>,
-) -> Response {
+pub async fn account_detail(State(state): State<AppState>, Path(id_str): Path<String>) -> Response {
     let id = match parse_u128_or_uuid(&id_str) {
         Some(v) => v,
         None => return (StatusCode::BAD_REQUEST, "Invalid account id").into_response(),
@@ -501,10 +463,6 @@ pub async fn account_detail(
             code_label: account.code_label,
             flags_bits: account.flags_bits,
             flags: account.flags_labels.join(", "),
-            user_data_128: account.user_data_128.to_string(),
-            user_data_128_uuid: account.user_data_128_uuid.clone(),
-            user_data_64: account.user_data_64,
-            user_data_32: account.user_data_32,
             credits_posted: TbAccountView::amount_display(account.credits_posted),
             debits_posted: TbAccountView::amount_display(account.debits_posted),
             credits_pending: TbAccountView::amount_display(account.credits_pending),
@@ -542,12 +500,6 @@ pub struct TransfersQuery {
     #[serde(default)]
     code: Option<String>,
     #[serde(default)]
-    user_data_128: Option<String>,
-    #[serde(default)]
-    user_data_64: Option<String>,
-    #[serde(default)]
-    user_data_32: Option<String>,
-    #[serde(default)]
     timestamp_min: Option<String>,
     #[serde(default)]
     timestamp_max: Option<String>,
@@ -575,9 +527,6 @@ struct TransfersFormEcho {
     include_credits: bool,
     ledger: String,
     code: String,
-    user_data_128: String,
-    user_data_64: String,
-    user_data_32: String,
     timestamp_min: String,
     timestamp_max: String,
     limit: String,
@@ -604,9 +553,6 @@ pub async fn transfers_page(
             .unwrap_or(true),
         ledger: q.ledger.clone().unwrap_or_default(),
         code: q.code.clone().unwrap_or_default(),
-        user_data_128: q.user_data_128.clone().unwrap_or_default(),
-        user_data_64: q.user_data_64.clone().unwrap_or_default(),
-        user_data_32: q.user_data_32.clone().unwrap_or_default(),
         timestamp_min: q.timestamp_min.clone().unwrap_or_default(),
         timestamp_max: q.timestamp_max.clone().unwrap_or_default(),
         limit: q.limit.clone().unwrap_or_else(|| "100".to_string()),
@@ -661,27 +607,18 @@ pub async fn transfers_page(
             }
         }
         Some("query") => {
-            let ledger = form.ledger.trim().parse::<u32>().unwrap_or(LEDGER_INR_PAISA);
+            let ledger = form
+                .ledger
+                .trim()
+                .parse::<u32>()
+                .unwrap_or(LEDGER_INR_PAISA);
             let code = parse_optional_u16(&form.code);
-            let ud128 = parse_optional_u128(&form.user_data_128);
-            let ud64 = parse_optional_u64(&form.user_data_64);
-            let ud32 = parse_optional_u32(&form.user_data_32);
             let tmin = parse_local_dt(&form.timestamp_min);
             let tmax = parse_local_dt(&form.timestamp_max);
             let limit = form.limit.trim().parse::<u32>().unwrap_or(100);
             match state
                 .ledger_repo
-                .explorer_query_transfers(
-                    ledger,
-                    code,
-                    ud128,
-                    ud64,
-                    ud32,
-                    tmin,
-                    tmax,
-                    limit,
-                    form.reversed,
-                )
+                .explorer_query_transfers(ledger, code, tmin, tmax, limit, form.reversed)
                 .await
             {
                 Ok(rows) => {
@@ -728,9 +665,6 @@ struct TransferFullRow {
     flags: String,
     pending_id: String,
     timeout: u32,
-    user_data_128: String,
-    user_data_64: u64,
-    user_data_32: u32,
     is_pending: bool,
 }
 
@@ -773,9 +707,6 @@ pub async fn transfer_detail(
             flags: t.flags_labels.join(", "),
             pending_id: t.pending_id_str.clone(),
             timeout: t.timeout,
-            user_data_128: t.user_data_128.to_string(),
-            user_data_64: t.user_data_64,
-            user_data_32: t.user_data_32,
             is_pending: t.is_pending,
         },
     })
@@ -839,10 +770,14 @@ pub async fn pending_page(
                 None => Err("Invalid account id".to_string()),
             }
         } else {
-            let ledger = form.ledger.trim().parse::<u32>().unwrap_or(LEDGER_INR_PAISA);
+            let ledger = form
+                .ledger
+                .trim()
+                .parse::<u32>()
+                .unwrap_or(LEDGER_INR_PAISA);
             state
                 .ledger_repo
-                .explorer_query_transfers(ledger, 0, 0, 0, 0, None, None, limit, true)
+                .explorer_query_transfers(ledger, 0, None, None, limit, true)
                 .await
                 .map_err(|e| format!("{e}"))
         };
@@ -867,10 +802,7 @@ pub async fn pending_page(
     })
 }
 
-pub async fn pending_post(
-    State(state): State<AppState>,
-    Path(id_str): Path<String>,
-) -> Response {
+pub async fn pending_post(State(state): State<AppState>, Path(id_str): Path<String>) -> Response {
     let id = match parse_u128_or_uuid(&id_str) {
         Some(v) => v,
         None => return (StatusCode::BAD_REQUEST, "Invalid pending id").into_response(),
@@ -884,10 +816,7 @@ pub async fn pending_post(
     }
 }
 
-pub async fn pending_void(
-    State(state): State<AppState>,
-    Path(id_str): Path<String>,
-) -> Response {
+pub async fn pending_void(State(state): State<AppState>, Path(id_str): Path<String>) -> Response {
     let id = match parse_u128_or_uuid(&id_str) {
         Some(v) => v,
         None => return (StatusCode::BAD_REQUEST, "Invalid pending id").into_response(),
@@ -947,7 +876,10 @@ pub async fn decoder(Query(q): Query<DecoderQuery>) -> Response {
             String::new(),
             String::new(),
             None,
-            Some("Could not parse input — provide a UUID, decimal u128, or 0x-prefixed hex.".to_string()),
+            Some(
+                "Could not parse input — provide a UUID, decimal u128, or 0x-prefixed hex."
+                    .to_string(),
+            ),
         )
     };
     render(DecoderTemplate {

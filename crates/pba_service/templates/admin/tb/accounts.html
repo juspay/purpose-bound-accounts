@@ -28,11 +28,6 @@
                 <label>Limit <input type="number" name="limit" value="{{ form.limit }}"></label>
             </div>
             <div class="grid">
-                <label>user_data_128 (UUID or u128) <input type="text" name="user_data_128" value="{{ form.user_data_128 }}" placeholder="0 = any"></label>
-                <label>user_data_64 <input type="number" name="user_data_64" value="{{ form.user_data_64 }}" placeholder="0 = any"></label>
-                <label>user_data_32 <input type="number" name="user_data_32" value="{{ form.user_data_32 }}" placeholder="0 = any"></label>
-            </div>
-            <div class="grid">
                 <label>Timestamp min (UTC) <input type="datetime-local" name="timestamp_min" value="{{ form.timestamp_min }}"></label>
                 <label>Timestamp max (UTC) <input type="datetime-local" name="timestamp_max" value="{{ form.timestamp_max }}"></label>
                 <label><input type="checkbox" name="reversed" {% if form.reversed %}checked{% endif %}><span>Reversed (newest first)</span></label>
@@ -63,7 +58,7 @@
 <article>
     <div style="text-align: center; padding: 2rem 1rem; color: var(--text-muted);">
         <p class="mb-0"><strong>No accounts matched.</strong></p>
-        <p class="text-small mt-1 mb-0">Try widening the filters or clearing user_data fields.</p>
+        <p class="text-small mt-1 mb-0">Try widening the filters or adjusting the timestamp range.</p>
     </div>
 </article>
 {% else %}

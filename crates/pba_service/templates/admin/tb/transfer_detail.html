@@ -70,8 +70,6 @@
             </div>
             <div>Pending ID</div><div class="mono">{% if t.pending_id != "" %}<a href="/admin/tb/transfers/{{ t.pending_id }}">{{ t.pending_id }}</a>{% else %}<span class="muted">—</span>{% endif %}</div>
             <div>Timeout</div><div class="mono">{{ t.timeout }} seconds</div>
-            <div>user_data_128</div><div class="mono">{{ t.user_data_128 }}</div>
-            <div>user_data_64 / 32</div><div class="mono">{{ t.user_data_64 }} / {{ t.user_data_32 }}</div>
         </div>
     </div>
 </article>

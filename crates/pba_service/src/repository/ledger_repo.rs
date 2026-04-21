@@ -304,9 +304,6 @@ impl LedgerRepo {
         &self,
         ledger: u32,
         code: u16,
-        user_data_128: u128,
-        user_data_64: u64,
-        user_data_32: u32,
         timestamp_min: Option<DateTime<Utc>>,
         timestamp_max: Option<DateTime<Utc>>,
         limit: u32,
@@ -315,10 +312,7 @@ impl LedgerRepo {
         let limit = limit.clamp(1, 8190);
         let mut filter = tb::core::query_filter::QueryFilter::new(limit)
             .with_ledger(ledger)
-            .with_code(code)
-            .with_user_data_128(user_data_128)
-            .with_user_data_64(user_data_64)
-            .with_user_data_32(user_data_32);
+            .with_code(code);
         if let Some(ts) = timestamp_min.and_then(datetime_to_system_time) {
             filter = filter.with_timestamp_min(ts);
         }
@@ -341,9 +335,6 @@ impl LedgerRepo {
         &self,
         ledger: u32,
         code: u16,
-        user_data_128: u128,
-        user_data_64: u64,
-        user_data_32: u32,
         timestamp_min: Option<DateTime<Utc>>,
         timestamp_max: Option<DateTime<Utc>>,
         limit: u32,
@@ -352,10 +343,7 @@ impl LedgerRepo {
         let limit = limit.clamp(1, 8190);
         let mut filter = tb::core::query_filter::QueryFilter::new(limit)
             .with_ledger(ledger)
-            .with_code(code)
-            .with_user_data_128(user_data_128)
-            .with_user_data_64(user_data_64)
-            .with_user_data_32(user_data_32);
+            .with_code(code);
         if let Some(ts) = timestamp_min.and_then(datetime_to_system_time) {
             filter = filter.with_timestamp_min(ts);
         }
