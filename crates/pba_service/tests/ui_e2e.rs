@@ -1,8 +1,8 @@
-use std::sync::Arc;
 use chromiumoxide::browser::{Browser, BrowserConfig};
 use chromiumoxide::page::Page;
 use cucumber::World as _;
 use futures::StreamExt;
+use std::sync::Arc;
 
 mod ui_steps;
 
@@ -97,7 +97,7 @@ impl UiWorld {
                     }
                     builder.build()
                 }
-                    .expect("Failed to build browser config"),
+                .expect("Failed to build browser config"),
             )
             .await
             .expect("Failed to launch browser");

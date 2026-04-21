@@ -41,12 +41,24 @@ impl PaymentService {
     ) -> Result<PaymentResult, AppError> {
         // Idempotency check
         if let Some(key) = idempotency_key {
-            if let Some(existing) = self.transaction_repo.find_by_idempotency_key(account_id, key).await? {
+            if let Some(existing) = self
+                .transaction_repo
+                .find_by_idempotency_key(account_id, key)
+                .await?
+            {
                 return Ok(PaymentResult {
                     account_id: existing.account_id,
                     amount: existing.amount,
-                    from_others: if existing.pool == "others" { existing.amount } else { 0 },
-                    from_self: if existing.pool == "self" { existing.amount } else { 0 },
+                    from_others: if existing.pool == "others" {
+                        existing.amount
+                    } else {
+                        0
+                    },
+                    from_self: if existing.pool == "self" {
+                        existing.amount
+                    } else {
+                        0
+                    },
                     merchant_id: existing.merchant_id.unwrap_or_default(),
                     merchant_mcc: existing.merchant_mcc.unwrap_or_default(),
                 });
@@ -60,7 +72,10 @@ impl PaymentService {
         }
 
         // Validate MCC
-        let mcc_allowed = self.account_repo.is_mcc_allowed(&account.purpose_code, merchant_mcc).await?;
+        let mcc_allowed = self
+            .account_repo
+            .is_mcc_allowed(&account.purpose_code, merchant_mcc)
+            .await?;
         if !mcc_allowed {
             return Err(AppError::InvalidMcc {
                 mcc: merchant_mcc.to_string(),
@@ -75,7 +90,8 @@ impl PaymentService {
                 tracing::info!(account_id = %account_id, attempt, "Retrying payment with fresh balance");
             }
 
-            let balance = self.ledger_repo
+            let balance = self
+                .ledger_repo
                 .get_balance(account.tb_self_account_id, account.tb_others_account_id)
                 .await?;
 
@@ -94,26 +110,56 @@ impl PaymentService {
 
             // Insert transaction row(s)
             if split.from_others > 0 {
-                self.transaction_repo.insert_in_tx(
-                    &mut tx, Uuid::new_v4(), account_id,
-                    TransactionType::Payment, TransactionStatus::Settled,
-                    split.from_others, "others", TransactionDirection::Outbound,
-                    None, None, None, None,
-                    Some(merchant_id), Some(merchant_mcc), Some(description),
-                    0, idempotency_key,
-                ).await?;
+                self.transaction_repo
+                    .insert_in_tx(
+                        &mut tx,
+                        Uuid::new_v4(),
+                        account_id,
+                        TransactionType::Payment,
+                        TransactionStatus::Settled,
+                        split.from_others,
+                        "others",
+                        TransactionDirection::Outbound,
+                        None,
+                        None,
+                        None,
+                        None,
+                        Some(merchant_id),
+                        Some(merchant_mcc),
+                        Some(description),
+                        0,
+                        idempotency_key,
+                    )
+                    .await?;
             }
             if split.from_self > 0 {
                 // For split payments, only first row gets the idempotency key (unique constraint)
-                let idem_key = if split.from_others > 0 { None } else { idempotency_key };
-                self.transaction_repo.insert_in_tx(
-                    &mut tx, Uuid::new_v4(), account_id,
-                    TransactionType::Payment, TransactionStatus::Settled,
-                    split.from_self, "self", TransactionDirection::Outbound,
-                    None, None, None, None,
-                    Some(merchant_id), Some(merchant_mcc), Some(description),
-                    0, idem_key,
-                ).await?;
+                let idem_key = if split.from_others > 0 {
+                    None
+                } else {
+                    idempotency_key
+                };
+                self.transaction_repo
+                    .insert_in_tx(
+                        &mut tx,
+                        Uuid::new_v4(),
+                        account_id,
+                        TransactionType::Payment,
+                        TransactionStatus::Settled,
+                        split.from_self,
+                        "self",
+                        TransactionDirection::Outbound,
+                        None,
+                        None,
+                        None,
+                        None,
+                        Some(merchant_id),
+                        Some(merchant_mcc),
+                        Some(description),
+                        0,
+                        idem_key,
+                    )
+                    .await?;
             }
 
             // Execute TB transfer(s)
@@ -144,7 +190,8 @@ impl PaymentService {
             }
         }
 
-        let balance = self.ledger_repo
+        let balance = self
+            .ledger_repo
             .get_balance(account.tb_self_account_id, account.tb_others_account_id)
             .await?;
 
@@ -160,21 +207,34 @@ impl PaymentService {
         split: &PaymentSplit,
     ) -> Result<(), AppError> {
         if split.from_others > 0 && split.from_self > 0 {
-            self.ledger_repo.create_linked_transfers(
-                account.tb_others_account_id, account.tb_self_account_id,
-                MERCHANT_SETTLEMENT_TB_ID,
-                split.from_others, split.from_self, PAYMENT_TRANSFER_CODE,
-            ).await
+            self.ledger_repo
+                .create_linked_transfers(
+                    account.tb_others_account_id,
+                    account.tb_self_account_id,
+                    MERCHANT_SETTLEMENT_TB_ID,
+                    split.from_others,
+                    split.from_self,
+                    PAYMENT_TRANSFER_CODE,
+                )
+                .await
         } else if split.from_others > 0 {
-            self.ledger_repo.create_transfer(
-                account.tb_others_account_id, MERCHANT_SETTLEMENT_TB_ID,
-                split.from_others, PAYMENT_TRANSFER_CODE,
-            ).await
+            self.ledger_repo
+                .create_transfer(
+                    account.tb_others_account_id,
+                    MERCHANT_SETTLEMENT_TB_ID,
+                    split.from_others,
+                    PAYMENT_TRANSFER_CODE,
+                )
+                .await
         } else {
-            self.ledger_repo.create_transfer(
-                account.tb_self_account_id, MERCHANT_SETTLEMENT_TB_ID,
-                split.from_self, PAYMENT_TRANSFER_CODE,
-            ).await
+            self.ledger_repo
+                .create_transfer(
+                    account.tb_self_account_id,
+                    MERCHANT_SETTLEMENT_TB_ID,
+                    split.from_self,
+                    PAYMENT_TRANSFER_CODE,
+                )
+                .await
         }
     }
 }

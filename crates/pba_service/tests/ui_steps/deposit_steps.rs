@@ -11,16 +11,8 @@ use crate::UiWorld;
 
 /// Navigate to the deposit form, fill it, and submit.
 /// Returns true if the deposit succeeded (redirected to detail page), false on error.
-async fn do_deposit(
-    world: &mut UiWorld,
-    amount: i64,
-    ifsc: &str,
-    account_number: &str,
-) -> bool {
-    let account_id = world
-        .account_id
-        .clone()
-        .expect("No account ID for deposit");
+async fn do_deposit(world: &mut UiWorld, amount: i64, ifsc: &str, account_number: &str) -> bool {
+    let account_id = world.account_id.clone().expect("No account ID for deposit");
     let deposit_url = world.url(&format!("/admin/accounts/{}/deposit", account_id));
 
     let page = world.ensure_page().await;
@@ -47,7 +39,10 @@ async fn do_deposit(
         .find_element("input[name='source_ifsc']")
         .await
         .expect("Could not find source_ifsc input");
-    ifsc_input.click().await.expect("Failed to click source_ifsc");
+    ifsc_input
+        .click()
+        .await
+        .expect("Failed to click source_ifsc");
     ifsc_input
         .type_str(ifsc)
         .await
@@ -93,10 +88,7 @@ async fn do_deposit(
 
 #[given(regex = r"^the account has (\d+) in self-pool and (\d+) in others-pool$")]
 async fn given_account_has_balances(world: &mut UiWorld, self_amount: i64, others_amount: i64) {
-    let origin_ifsc = world
-        .origin_ifsc
-        .clone()
-        .expect("No origin IFSC recorded");
+    let origin_ifsc = world.origin_ifsc.clone().expect("No origin IFSC recorded");
     let origin_acct = world
         .origin_account_number
         .clone()
@@ -120,15 +112,13 @@ async fn given_account_has_balances(world: &mut UiWorld, self_amount: i64, other
 // ---------------------------------------------------------------------------
 
 #[when(regex = r#"^I deposit (\d+) from IFSC "([^"]*)" account "([^"]*)"$"#)]
-async fn when_deposit(
-    world: &mut UiWorld,
-    amount: i64,
-    ifsc: String,
-    account_number: String,
-) {
+async fn when_deposit(world: &mut UiWorld, amount: i64, ifsc: String, account_number: String) {
     let origin_ifsc = world.origin_ifsc.clone().unwrap_or_default();
     let ok = do_deposit(world, amount, &ifsc, &account_number).await;
-    assert!(ok, "Expected deposit to succeed but it stayed on the form page");
+    assert!(
+        ok,
+        "Expected deposit to succeed but it stayed on the form page"
+    );
 
     // Determine which pool based on whether IFSC matches origin
     let pool = if ifsc == origin_ifsc {
@@ -305,7 +295,10 @@ async fn do_pending_deposit(
         .find_element("input[name='source_ifsc']")
         .await
         .expect("Could not find source_ifsc input");
-    ifsc_input.click().await.expect("Failed to click source_ifsc");
+    ifsc_input
+        .click()
+        .await
+        .expect("Failed to click source_ifsc");
     ifsc_input
         .type_str(ifsc)
         .await
@@ -432,7 +425,10 @@ async fn when_create_pending_deposit(
 ) {
     let origin_ifsc = world.origin_ifsc.clone().unwrap_or_default();
     let ok = do_pending_deposit(world, amount, &ifsc, &account_number, None).await;
-    assert!(ok, "Expected pending deposit to succeed but it stayed on the form page");
+    assert!(
+        ok,
+        "Expected pending deposit to succeed but it stayed on the form page"
+    );
 
     let pool = if ifsc == origin_ifsc {
         "self"
@@ -443,7 +439,9 @@ async fn when_create_pending_deposit(
     world.last_error = None;
 }
 
-#[when(regex = r#"^I create a pending deposit of (\d+) from IFSC "([^"]*)" account "([^"]*)" with gateway ref "([^"]*)"$"#)]
+#[when(
+    regex = r#"^I create a pending deposit of (\d+) from IFSC "([^"]*)" account "([^"]*)" with gateway ref "([^"]*)"$"#
+)]
 async fn when_create_pending_deposit_with_ref(
     world: &mut UiWorld,
     amount: i64,
@@ -453,7 +451,10 @@ async fn when_create_pending_deposit_with_ref(
 ) {
     let origin_ifsc = world.origin_ifsc.clone().unwrap_or_default();
     let ok = do_pending_deposit(world, amount, &ifsc, &account_number, Some(&gateway_ref)).await;
-    assert!(ok, "Expected pending deposit to succeed but it stayed on the form page");
+    assert!(
+        ok,
+        "Expected pending deposit to succeed but it stayed on the form page"
+    );
 
     let pool = if ifsc == origin_ifsc {
         "self"
@@ -490,9 +491,7 @@ async fn when_post_pending_deposit(world: &mut UiWorld) {
         r#"document.querySelector("form[action*='/deposits/{}/post']").submit();"#,
         deposit_id
     );
-    page.evaluate(js)
-        .await
-        .expect("Failed to submit post form");
+    page.evaluate(js).await.expect("Failed to submit post form");
     sleep(Duration::from_millis(500)).await;
 }
 
@@ -520,9 +519,7 @@ async fn when_void_pending_deposit(world: &mut UiWorld) {
         r#"document.querySelector("form[action*='/deposits/{}/void']").submit();"#,
         deposit_id
     );
-    page.evaluate(js)
-        .await
-        .expect("Failed to submit void form");
+    page.evaluate(js).await.expect("Failed to submit void form");
     sleep(Duration::from_millis(500)).await;
 }
 
@@ -579,4 +576,3 @@ async fn then_pending_others(world: &mut UiWorld, expected: i64) {
         expected, pending
     );
 }
-

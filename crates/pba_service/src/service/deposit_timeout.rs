@@ -9,10 +9,7 @@ pub async fn run_deposit_timeout_poller(
     poll_interval_seconds: u64,
 ) {
     let interval = Duration::from_secs(poll_interval_seconds);
-    tracing::info!(
-        poll_interval_seconds,
-        "Starting deposit timeout poller"
-    );
+    tracing::info!(poll_interval_seconds, "Starting deposit timeout poller");
 
     loop {
         tokio::time::sleep(interval).await;

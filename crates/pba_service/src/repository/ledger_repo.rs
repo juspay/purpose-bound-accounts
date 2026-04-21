@@ -41,7 +41,8 @@ impl LedgerRepo {
             .with_flags(AccountFlags::LINKED);
         let merchant = tb::Account::new(MERCHANT_SETTLEMENT_TB_ID, LEDGER_INR_PAISA, CODE_SENTINEL)
             .with_flags(AccountFlags::LINKED);
-        let withdrawal = tb::Account::new(WITHDRAWAL_SETTLEMENT_TB_ID, LEDGER_INR_PAISA, CODE_SENTINEL);
+        let withdrawal =
+            tb::Account::new(WITHDRAWAL_SETTLEMENT_TB_ID, LEDGER_INR_PAISA, CODE_SENTINEL);
 
         // Best-effort: ignore errors (accounts may already exist)
         match self
@@ -65,8 +66,11 @@ impl LedgerRepo {
         self_id: u128,
         others_id: u128,
     ) -> Result<(), AppError> {
-        let self_account = tb::Account::new(self_id, LEDGER_INR_PAISA, CODE_SELF_POOL)
-            .with_flags(AccountFlags::DEBITS_MUST_NOT_EXCEED_CREDITS | AccountFlags::HISTORY | AccountFlags::LINKED);
+        let self_account = tb::Account::new(self_id, LEDGER_INR_PAISA, CODE_SELF_POOL).with_flags(
+            AccountFlags::DEBITS_MUST_NOT_EXCEED_CREDITS
+                | AccountFlags::HISTORY
+                | AccountFlags::LINKED,
+        );
 
         let others_account = tb::Account::new(others_id, LEDGER_INR_PAISA, CODE_OTHERS_POOL)
             .with_flags(AccountFlags::DEBITS_MUST_NOT_EXCEED_CREDITS | AccountFlags::HISTORY);
@@ -74,9 +78,7 @@ impl LedgerRepo {
         self.client
             .create_accounts(vec![self_account, others_account])
             .await
-            .map_err(|e| {
-                AppError::TigerBeetleError(format!("create_accounts failed: {e:?}"))
-            })?;
+            .map_err(|e| AppError::TigerBeetleError(format!("create_accounts failed: {e:?}")))?;
 
         tracing::info!(self_id = %self_id, others_id = %others_id, "Created linked TB account pair");
         Ok(())
@@ -91,9 +93,7 @@ impl LedgerRepo {
             .client
             .lookup_accounts(vec![self_id, others_id])
             .await
-            .map_err(|e| {
-                AppError::TigerBeetleError(format!("lookup_accounts failed: {e:?}"))
-            })?;
+            .map_err(|e| AppError::TigerBeetleError(format!("lookup_accounts failed: {e:?}")))?;
 
         let mut self_balance: u64 = 0;
         let mut others_balance: u64 = 0;
@@ -221,10 +221,7 @@ impl LedgerRepo {
     }
 
     /// Post (confirm) a pending transfer.
-    pub async fn post_pending_transfer(
-        &self,
-        pending_id: u128,
-    ) -> Result<(), AppError> {
+    pub async fn post_pending_transfer(&self, pending_id: u128) -> Result<(), AppError> {
         let transfer = tb::Transfer::new(generate_transfer_id())
             .with_pending_id(pending_id)
             .with_amount(u128::MAX)
@@ -242,10 +239,7 @@ impl LedgerRepo {
     }
 
     /// Void (cancel) a pending transfer.
-    pub async fn void_pending_transfer(
-        &self,
-        pending_id: u128,
-    ) -> Result<(), AppError> {
+    pub async fn void_pending_transfer(&self, pending_id: u128) -> Result<(), AppError> {
         let transfer = tb::Transfer::new(generate_transfer_id())
             .with_pending_id(pending_id)
             .with_flags(TransferFlags::VOID_PENDING_TRANSFER);

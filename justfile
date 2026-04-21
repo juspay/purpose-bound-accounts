@@ -48,7 +48,11 @@ tb-stop port:
 [private]
 service-start port db_url tb_port:
     @echo "Starting pba-service on port {{port}}..."
-    @DATABASE_URL="{{db_url}}" TIGERBEETLE_ADDRESSES={{tb_port}} PORT={{port}} cargo run -p pba-service &
+    @if [ -n "$CI" ]; then \
+        DATABASE_URL="{{db_url}}" TIGERBEETLE_ADDRESSES={{tb_port}} PORT={{port}} target/debug/pba-service & \
+    else \
+        DATABASE_URL="{{db_url}}" TIGERBEETLE_ADDRESSES={{tb_port}} PORT={{port}} cargo run -p pba-service & \
+    fi
     @echo "Waiting for service to be ready..."
     @for i in $(seq 1 30); do \
         if curl -sf http://127.0.0.1:{{port}}/purpose-types > /dev/null 2>&1; then \
@@ -111,26 +115,41 @@ run-all: infra-start
     @echo "Admin dashboard will be at http://localhost:{{DEV_APP_PORT}}/admin"
     @trap 'echo ""; just stop-all' EXIT; cargo run -p pba-service
 
+# ── Conventional Commits ──────────────────────────────────────
+
+# Verify a commit message follows conventional commit standards
+cog-verify message:
+    cog verify "{{message}}"
+
+# Check all commits on the current branch against conventional commit standards
+cog-check:
+    cog check
+
+# Install cocogitto git hooks (commit-msg hook for local enforcement)
+cog-install-hook:
+    cog install-hook commit-msg
+    @echo "Conventional commit hook installed — commits will be validated automatically"
+
 # ── Testing & CI ─────────────────────────────────────────────
 
 # Run unit tests
 test:
     cargo test
 
-# Run clippy lints
+# Run clippy lints (excludes generated SDK)
 lint:
-    cargo clippy -- -D warnings
+    cargo clippy -p pba-service -- -D warnings
 
-# Format check
+# Format check (excludes generated SDK)
 fmt-check:
-    cargo fmt -- --check
+    cargo fmt -p pba-service -- --check
 
-# Format code
+# Format code (excludes generated SDK)
 fmt:
-    cargo fmt
+    cargo fmt -p pba-service
 
-# Local CI: format check + lint + build + test
-local-ci: fmt-check lint build test
+# Local CI: format check + lint + build + test + commit convention check
+local-ci: fmt-check lint build test cog-check
     @echo "local-ci passed"
 
 # ── E2E Tests (Cucumber + Smithy SDK) ───────────────────────
@@ -144,30 +163,30 @@ e2e-start: pg-start (reset-db TEST_DB) (tb-start TEST_TB_PORT TEST_TB_DATA)
 # Stop test service and test TigerBeetle
 e2e-stop: (service-stop TEST_APP_PORT) (tb-stop TEST_TB_PORT)
 
-# Run API E2E tests (service must be running)
-e2e-run:
+# Run API E2E tests only (service must be running)
+api-e2e-run:
     PBA_SERVICE_URL="http://127.0.0.1:{{TEST_APP_PORT}}" cargo test -p pba-service --test e2e
 
-# Full E2E cycle: start, run tests, stop
-e2e: e2e-start e2e-run e2e-stop
-    @echo "E2E tests complete"
+# Full API E2E cycle: start, run tests, stop
+api-e2e: e2e-start api-e2e-run e2e-stop
+    @echo "API E2E tests complete"
 
-# Run browser UI tests (full cycle: start, run tests, stop)
-ui-e2e: e2e-start ui-e2e-run e2e-stop
-    @echo "UI E2E tests complete"
-
-# Run browser UI tests only (service must be running)
+# Run UI E2E tests only (service must be running)
 ui-e2e-run:
     PBA_SERVICE_URL="http://127.0.0.1:{{TEST_APP_PORT}}" cargo test -p pba-service --test ui_e2e
 
-# Run browser UI tests with visible Chrome (service must be running)
+# Full UI E2E cycle: start, run tests, stop
+ui-e2e: e2e-start ui-e2e-run e2e-stop
+    @echo "UI E2E tests complete"
+
+# Run UI E2E tests with visible Chrome (service must be running)
 ui-e2e-watch:
     UI_HEAD=1 PBA_SERVICE_URL="http://127.0.0.1:{{TEST_APP_PORT}}" cargo test -p pba-service --test ui_e2e
 
-# Run all E2E tests: API + browser (resets DB between suites)
+# Run all E2E tests: API + UI (resets DB between suites)
 e2e-all:
     just e2e-start
-    just e2e-run
+    just api-e2e-run
     @echo "Resetting DB for UI tests..."
     just service-stop {{TEST_APP_PORT}}
     @sleep 1
@@ -227,6 +246,7 @@ install-deps:
     rustup-init -y --default-toolchain stable
     cargo install sqlx-cli --no-default-features --features postgres
     cargo install cargo-watch
+    cargo install cocogitto
     rustup component add clippy rustfmt
     @echo ""
     @echo "Dependencies installed. Run 'just infra-start' to start Postgres + TigerBeetle."

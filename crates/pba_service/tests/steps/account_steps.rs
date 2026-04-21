@@ -3,7 +3,9 @@ use pba_client::types::Status;
 
 use crate::PbaWorld;
 
-#[given(regex = r#"^a "([^"]*)" account exists for holder "([^"]*)" with origin IFSC "([^"]*)" and account number "([^"]*)"$"#)]
+#[given(
+    regex = r#"^a "([^"]*)" account exists for holder "([^"]*)" with origin IFSC "([^"]*)" and account number "([^"]*)"$"#
+)]
 async fn create_account_given(
     world: &mut PbaWorld,
     purpose: String,
@@ -42,7 +44,9 @@ async fn create_account_given(
     }
 }
 
-#[when(regex = r#"^I create a "([^"]*)" account for holder "([^"]*)" with origin IFSC "([^"]*)" and account number "([^"]*)"$"#)]
+#[when(
+    regex = r#"^I create a "([^"]*)" account for holder "([^"]*)" with origin IFSC "([^"]*)" and account number "([^"]*)"$"#
+)]
 async fn create_account_when(
     world: &mut PbaWorld,
     purpose: String,
@@ -69,7 +73,9 @@ async fn create_account_when(
     }
 }
 
-#[when(regex = r#"^I create a duplicate "([^"]*)" account for holder "([^"]*)" with origin IFSC "([^"]*)" and account number "([^"]*)"$"#)]
+#[when(
+    regex = r#"^I create a duplicate "([^"]*)" account for holder "([^"]*)" with origin IFSC "([^"]*)" and account number "([^"]*)"$"#
+)]
 async fn create_duplicate_account(
     world: &mut PbaWorld,
     purpose: String,

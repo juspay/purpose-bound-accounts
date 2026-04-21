@@ -103,7 +103,7 @@ just test
 **E2E tests (Cucumber BDD):**
 
 ```bash
-just e2e           # API tests only (via Smithy SDK client)
+just api-e2e       # API tests only (via Smithy SDK client)
 just ui-e2e        # Browser UI tests only (headless Chrome)
 just e2e-all       # Both API + browser tests
 ```
@@ -164,7 +164,7 @@ just stop             # Stop pba-service only (infra keeps running)
 just stop-all         # Stop app + all infrastructure
 just build            # Build the project
 just test             # Unit tests
-just e2e              # API E2E tests (isolated infra)
+just api-e2e          # API E2E tests (isolated infra)
 just ui-e2e           # Browser UI E2E tests (headless Chrome)
 just ui-e2e-watch     # Browser UI tests with visible Chrome
 just e2e-all          # All E2E tests (API + browser)
