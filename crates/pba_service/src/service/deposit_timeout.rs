@@ -1,11 +1,11 @@
 use std::sync::Arc;
 use std::time::Duration;
 
-use crate::domain::deposit::DepositStatus;
-use crate::repository::deposit_repo::DepositRepo;
+use crate::domain::transaction::TransactionStatus;
+use crate::repository::transaction_repo::TransactionRepo;
 
 pub async fn run_deposit_timeout_poller(
-    deposit_repo: Arc<DepositRepo>,
+    transaction_repo: Arc<TransactionRepo>,
     poll_interval_seconds: u64,
 ) {
     let interval = Duration::from_secs(poll_interval_seconds);
@@ -17,26 +17,26 @@ pub async fn run_deposit_timeout_poller(
     loop {
         tokio::time::sleep(interval).await;
 
-        match deposit_repo.find_timed_out_pending().await {
+        match transaction_repo.find_timed_out_pending().await {
             Ok(timed_out) => {
-                for deposit in timed_out {
+                for txn in timed_out {
                     // TigerBeetle has already auto-voided. Just update PG.
-                    match deposit_repo
-                        .update_status(deposit.id, DepositStatus::Voided)
+                    match transaction_repo
+                        .update_status(txn.id, TransactionStatus::Voided)
                         .await
                     {
                         Ok(_) => {
                             tracing::warn!(
-                                deposit_id = %deposit.id,
-                                account_id = %deposit.account_id,
-                                gateway_ref = deposit.gateway_ref.as_deref().unwrap_or("none"),
-                                amount = deposit.amount,
+                                transaction_id = %txn.id,
+                                account_id = %txn.account_id,
+                                gateway_ref = txn.gateway_ref.as_deref().unwrap_or("none"),
+                                amount = txn.amount,
                                 "Pending deposit timed out and voided"
                             );
                         }
                         Err(e) => {
                             tracing::error!(
-                                deposit_id = %deposit.id,
+                                transaction_id = %txn.id,
                                 error = %e,
                                 "Failed to update timed-out deposit status"
                             );

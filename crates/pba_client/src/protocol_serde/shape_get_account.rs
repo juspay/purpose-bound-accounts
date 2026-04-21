@@ -49,11 +49,7 @@ pub(crate) fn de_get_account(value: &[u8], mut builder: crate::operation::get_ac
                 match key.to_unescaped()?.as_ref() {
                     "created_at" => {
                         builder = builder.set_created_at(
-                            ::aws_smithy_json::deserialize::token::expect_string_or_null(tokens.next())?.map(|s|
-                                s.to_unescaped().map(|u|
-                                    u.into_owned()
-                                )
-                            ).transpose()?
+                            ::aws_smithy_json::deserialize::token::expect_timestamp_or_null(tokens.next(), ::aws_smithy_types::date_time::Format::DateTimeWithOffset)?
                         );
                     }
                     "holder_id" => {
@@ -121,11 +117,7 @@ pub(crate) fn de_get_account(value: &[u8], mut builder: crate::operation::get_ac
                     }
                     "updated_at" => {
                         builder = builder.set_updated_at(
-                            ::aws_smithy_json::deserialize::token::expect_string_or_null(tokens.next())?.map(|s|
-                                s.to_unescaped().map(|u|
-                                    u.into_owned()
-                                )
-                            ).transpose()?
+                            ::aws_smithy_json::deserialize::token::expect_timestamp_or_null(tokens.next(), ::aws_smithy_types::date_time::Format::DateTimeWithOffset)?
                         );
                     }
                     "virtual_account_number" => {

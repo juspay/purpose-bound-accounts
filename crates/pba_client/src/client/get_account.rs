@@ -15,8 +15,8 @@ impl super::Client {
     ///   - [`virtual_account_number(Option<String>)`](crate::operation::get_account::GetAccountOutput::virtual_account_number): (undocumented)
     ///   - [`kyc_tier(String)`](crate::operation::get_account::GetAccountOutput::kyc_tier): (undocumented)
     ///   - [`status(String)`](crate::operation::get_account::GetAccountOutput::status): (undocumented)
-    ///   - [`created_at(String)`](crate::operation::get_account::GetAccountOutput::created_at): (undocumented)
-    ///   - [`updated_at(String)`](crate::operation::get_account::GetAccountOutput::updated_at): (undocumented)
+    ///   - [`created_at(DateTime)`](crate::operation::get_account::GetAccountOutput::created_at): ISO 8601 date-time.
+    ///   - [`updated_at(DateTime)`](crate::operation::get_account::GetAccountOutput::updated_at): ISO 8601 date-time.
                             /// - On failure, responds with [`SdkError<GetAccountError>`](crate::operation::get_account::GetAccountError)
     pub fn get_account(&self) -> crate::operation::get_account::builders::GetAccountFluentBuilder {
                                 crate::operation::get_account::builders::GetAccountFluentBuilder::new(self.handle.clone())

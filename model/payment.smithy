@@ -22,6 +22,8 @@ operation MakePayment {
 
         @required
         description: String
+
+        idempotency_key: String
     }
     output := {
         @required

@@ -13,6 +13,8 @@ pub struct MakePaymentInput  {
     pub merchant_id: ::std::option::Option<::std::string::String>,
     #[allow(missing_docs)] // documentation missing in model
     pub description: ::std::option::Option<::std::string::String>,
+    #[allow(missing_docs)] // documentation missing in model
+    pub idempotency_key: ::std::option::Option<::std::string::String>,
 }
 impl  MakePaymentInput  {
     #[allow(missing_docs)] // documentation missing in model
@@ -35,6 +37,10 @@ impl  MakePaymentInput  {
     pub fn description(&self) -> ::std::option::Option<&str> {
         self.description.as_deref()
     }
+    #[allow(missing_docs)] // documentation missing in model
+    pub fn idempotency_key(&self) -> ::std::option::Option<&str> {
+        self.idempotency_key.as_deref()
+    }
 }
 impl MakePaymentInput {
     /// Creates a new builder-style object to manufacture [`MakePaymentInput`](crate::operation::make_payment::MakePaymentInput).
@@ -52,6 +58,7 @@ pub struct MakePaymentInputBuilder {
     pub(crate) merchant_mcc: ::std::option::Option<::std::string::String>,
     pub(crate) merchant_id: ::std::option::Option<::std::string::String>,
     pub(crate) description: ::std::option::Option<::std::string::String>,
+    pub(crate) idempotency_key: ::std::option::Option<::std::string::String>,
 }
 impl MakePaymentInputBuilder {
     #[allow(missing_docs)] // documentation missing in model
@@ -124,6 +131,19 @@ impl MakePaymentInputBuilder {
     pub fn get_description(&self) -> &::std::option::Option<::std::string::String> {
         &self.description
     }
+    #[allow(missing_docs)] // documentation missing in model
+    pub fn idempotency_key(mut self, input: impl ::std::convert::Into<::std::string::String>) -> Self {
+        self.idempotency_key = ::std::option::Option::Some(input.into());
+        self
+    }
+    #[allow(missing_docs)] // documentation missing in model
+    pub fn set_idempotency_key(mut self, input: ::std::option::Option<::std::string::String>) -> Self {
+        self.idempotency_key = input; self
+    }
+    #[allow(missing_docs)] // documentation missing in model
+    pub fn get_idempotency_key(&self) -> &::std::option::Option<::std::string::String> {
+        &self.idempotency_key
+    }
     /// Consumes the builder and constructs a [`MakePaymentInput`](crate::operation::make_payment::MakePaymentInput).
     pub fn build(self) -> ::std::result::Result<crate::operation::make_payment::MakePaymentInput, ::aws_smithy_types::error::operation::BuildError> {
         ::std::result::Result::Ok(
@@ -137,6 +157,8 @@ impl MakePaymentInputBuilder {
                 merchant_id: self.merchant_id
                 ,
                 description: self.description
+                ,
+                idempotency_key: self.idempotency_key
                 ,
             }
         )

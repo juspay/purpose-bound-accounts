@@ -132,9 +132,9 @@ async fn when_deposit(
 
     // Determine which pool based on whether IFSC matches origin
     let pool = if ifsc == origin_ifsc {
-        "self_contribution"
+        "self"
     } else {
-        "others_contribution"
+        "others"
     };
     world.last_deposit_pool = Some(pool.to_string());
     world.last_error = None;
@@ -151,9 +151,9 @@ async fn when_attempt_deposit(
     let ok = do_deposit(world, amount, &ifsc, &account_number).await;
     if ok {
         let pool = if ifsc == origin_ifsc {
-            "self_contribution"
+            "self"
         } else {
-            "others_contribution"
+            "others"
         };
         world.last_deposit_pool = Some(pool.to_string());
         world.last_error = None;
@@ -435,9 +435,9 @@ async fn when_create_pending_deposit(
     assert!(ok, "Expected pending deposit to succeed but it stayed on the form page");
 
     let pool = if ifsc == origin_ifsc {
-        "self_contribution"
+        "self"
     } else {
-        "others_contribution"
+        "others"
     };
     world.last_deposit_pool = Some(pool.to_string());
     world.last_error = None;
@@ -456,9 +456,9 @@ async fn when_create_pending_deposit_with_ref(
     assert!(ok, "Expected pending deposit to succeed but it stayed on the form page");
 
     let pool = if ifsc == origin_ifsc {
-        "self_contribution"
+        "self"
     } else {
-        "others_contribution"
+        "others"
     };
     world.last_deposit_pool = Some(pool.to_string());
     world.last_error = None;

@@ -1,11 +1,11 @@
 use std::sync::Arc;
 use uuid::Uuid;
 
-use crate::domain::deposit::DepositStatus;
+use crate::domain::transaction::{TransactionDirection, TransactionRecord, TransactionStatus, TransactionType};
 use crate::error::AppError;
 use crate::repository::account_repo::AccountRepo;
-use crate::repository::deposit_repo::DepositRepo;
 use crate::repository::ledger_repo::{LedgerRepo, FUNDING_SOURCE_TB_ID};
+use crate::repository::transaction_repo::TransactionRepo;
 
 const DEPOSIT_TRANSFER_CODE: u16 = 100;
 const PENDING_DEPOSIT_TRANSFER_CODE: u16 = 101;
@@ -13,7 +13,7 @@ const PENDING_DEPOSIT_TRANSFER_CODE: u16 = 101;
 pub struct DepositService {
     pub account_repo: Arc<AccountRepo>,
     pub ledger_repo: Arc<LedgerRepo>,
-    pub deposit_repo: Arc<DepositRepo>,
+    pub transaction_repo: Arc<TransactionRepo>,
     pub default_timeout_seconds: u32,
 }
 
@@ -21,13 +21,13 @@ impl DepositService {
     pub fn new(
         account_repo: Arc<AccountRepo>,
         ledger_repo: Arc<LedgerRepo>,
-        deposit_repo: Arc<DepositRepo>,
+        transaction_repo: Arc<TransactionRepo>,
         default_timeout_seconds: u32,
     ) -> Self {
         Self {
             account_repo,
             ledger_repo,
-            deposit_repo,
+            transaction_repo,
             default_timeout_seconds,
         }
     }
@@ -41,111 +41,81 @@ impl DepositService {
         pending: bool,
         gateway_ref: Option<&str>,
         timeout_seconds: Option<u32>,
-    ) -> Result<DepositResult, AppError> {
+        idempotency_key: Option<&str>,
+    ) -> Result<TransactionRecord, AppError> {
+        // Idempotency check
+        if let Some(key) = idempotency_key {
+            if let Some(existing) = self.transaction_repo.find_by_idempotency_key(account_id, key).await? {
+                return Ok(existing);
+            }
+        }
+
         let account = self.account_repo.get_account(account_id).await?;
 
         if !account.status.is_active() {
             return Err(AppError::AccountNotActive(account_id.to_string()));
         }
 
-        // Route deposit based on origin match
         let is_self = account.is_origin_source(source_ifsc, source_account_number);
         let credit_tb_id = if is_self {
             account.tb_self_account_id
         } else {
             account.tb_others_account_id
         };
-        let pool = if is_self {
-            "self"
-        } else {
-            "others"
-        };
-
+        let pool = if is_self { "self" } else { "others" };
         let deposit_id = Uuid::new_v4();
+
+        let mut tx = self.transaction_repo.pool().begin().await?;
 
         if pending {
             let timeout = timeout_seconds.unwrap_or(self.default_timeout_seconds);
 
-            // 1. Record in PostgreSQL first (status = created, tb_transfer_id = 0)
-            self.deposit_repo
-                .insert(
-                    deposit_id,
-                    account_id,
-                    amount,
-                    pool,
-                    source_ifsc,
-                    source_account_number,
-                    DepositStatus::Created,
-                    0_u128,
-                    gateway_ref,
-                    Some(timeout),
-                )
-                .await?;
+            // Insert PG row (status=pending, tb_transfer_id=0)
+            let record = self.transaction_repo.insert_in_tx(
+                &mut tx, deposit_id, account_id,
+                TransactionType::Deposit, TransactionStatus::Pending,
+                amount, pool, TransactionDirection::Inbound,
+                Some(source_ifsc), Some(source_account_number),
+                gateway_ref, Some(timeout),
+                None, None, None, 0, idempotency_key,
+            ).await?;
 
-            // 2. Create pending transfer in TigerBeetle
-            let tb_transfer_id = self
-                .ledger_repo
-                .create_pending_transfer(
-                    FUNDING_SOURCE_TB_ID,
-                    credit_tb_id,
-                    amount,
-                    PENDING_DEPOSIT_TRANSFER_CODE,
-                    timeout,
-                )
-                .await?;
+            // Create pending transfer in TigerBeetle
+            let tb_transfer_id = self.ledger_repo.create_pending_transfer(
+                FUNDING_SOURCE_TB_ID, credit_tb_id, amount,
+                PENDING_DEPOSIT_TRANSFER_CODE, timeout,
+            ).await.map_err(|e| {
+                tracing::error!("TB pending transfer failed, rolling back: {e}");
+                e
+            })?;
 
-            // 3. Activate: update PG with real tb_transfer_id and status = pending
-            let record = self
-                .deposit_repo
-                .activate_pending(deposit_id, tb_transfer_id)
-                .await?;
+            // Update with real TB transfer ID
+            self.transaction_repo.update_tb_transfer_id_in_tx(&mut tx, deposit_id, tb_transfer_id).await?;
 
-            Ok(DepositResult {
-                deposit_id: record.id,
-                account_id,
-                amount,
-                pool: if is_self { "self_contribution" } else { "others_contribution" },
-                status: DepositStatus::Pending,
-                gateway_ref: record.gateway_ref,
-                timeout_seconds: record.timeout_seconds,
-            })
+            tx.commit().await?;
+            // Return record with updated tb_transfer_id
+            Ok(TransactionRecord { tb_transfer_id, ..record })
         } else {
-            // Immediate deposit — same as before, but now also recorded in PG
-            self.ledger_repo
-                .create_transfer(
-                    FUNDING_SOURCE_TB_ID,
-                    credit_tb_id,
-                    amount,
-                    DEPOSIT_TRANSFER_CODE,
-                )
-                .await?;
+            // Insert PG row (status=posted)
+            let record = self.transaction_repo.insert_in_tx(
+                &mut tx, deposit_id, account_id,
+                TransactionType::Deposit, TransactionStatus::Posted,
+                amount, pool, TransactionDirection::Inbound,
+                Some(source_ifsc), Some(source_account_number),
+                gateway_ref, None,
+                None, None, None, 0, idempotency_key,
+            ).await?;
 
-            let tb_transfer_id = 0_u128; // Immediate deposits don't need TB ID tracking
-            let record = self
-                .deposit_repo
-                .insert(
-                    deposit_id,
-                    account_id,
-                    amount,
-                    pool,
-                    source_ifsc,
-                    source_account_number,
-                    DepositStatus::Posted,
-                    tb_transfer_id,
-                    gateway_ref,
-                    None,
-                )
-                .await?;
+            // Execute TB transfer
+            self.ledger_repo.create_transfer(
+                FUNDING_SOURCE_TB_ID, credit_tb_id, amount, DEPOSIT_TRANSFER_CODE,
+            ).await.map_err(|e| {
+                tracing::error!("TB transfer failed, rolling back: {e}");
+                e
+            })?;
 
-            Ok(DepositResult {
-                deposit_id: record.id,
-                account_id,
-                amount,
-                pool: if is_self { "self_contribution" } else { "others_contribution" },
-                status: DepositStatus::Posted,
-                gateway_ref: record.gateway_ref,
-                timeout_seconds: None,
-            })
+            tx.commit().await?;
+            Ok(record)
         }
     }
 
@@ -153,99 +123,42 @@ impl DepositService {
         &self,
         account_id: Uuid,
         deposit_id: Uuid,
-    ) -> Result<DepositResult, AppError> {
-        let deposit = self.deposit_repo.get_by_id(deposit_id, account_id).await?;
+    ) -> Result<TransactionRecord, AppError> {
+        let txn = self.transaction_repo.get_by_id(deposit_id, account_id).await?;
 
-        if deposit.status != DepositStatus::Pending {
-            return Err(AppError::DepositNotPending(deposit_id.to_string()));
+        if txn.status != TransactionStatus::Pending {
+            return Err(AppError::TransactionNotPending(deposit_id.to_string()));
         }
 
-        // Post the pending transfer in TigerBeetle
-        self.ledger_repo
-            .post_pending_transfer(deposit.tb_transfer_id)
-            .await?;
+        // Post in TigerBeetle
+        self.ledger_repo.post_pending_transfer(txn.tb_transfer_id).await?;
 
-        // Update PG status
-        let updated = self
-            .deposit_repo
-            .update_status(deposit_id, DepositStatus::Posted)
-            .await?;
+        // Update PG
+        let updated = self.transaction_repo.update_status(deposit_id, TransactionStatus::Posted).await?;
 
-        tracing::info!(
-            deposit_id = %deposit_id,
-            account_id = %account_id,
-            amount = deposit.amount,
-            "Pending deposit posted"
-        );
-
-        Ok(DepositResult {
-            deposit_id: updated.id,
-            account_id: updated.account_id,
-            amount: updated.amount,
-            pool: pool_display(&updated.pool),
-            status: DepositStatus::Posted,
-            gateway_ref: updated.gateway_ref,
-            timeout_seconds: updated.timeout_seconds,
-        })
+        tracing::info!(deposit_id = %deposit_id, account_id = %account_id, amount = txn.amount, "Pending deposit posted");
+        Ok(updated)
     }
 
     pub async fn void_deposit(
         &self,
         account_id: Uuid,
         deposit_id: Uuid,
-        reason: Option<&str>,
-    ) -> Result<DepositResult, AppError> {
-        let deposit = self.deposit_repo.get_by_id(deposit_id, account_id).await?;
+        _reason: Option<&str>,
+    ) -> Result<TransactionRecord, AppError> {
+        let txn = self.transaction_repo.get_by_id(deposit_id, account_id).await?;
 
-        if deposit.status != DepositStatus::Pending {
-            return Err(AppError::DepositNotPending(deposit_id.to_string()));
+        if txn.status != TransactionStatus::Pending {
+            return Err(AppError::TransactionNotPending(deposit_id.to_string()));
         }
 
-        // Void the pending transfer in TigerBeetle
-        self.ledger_repo
-            .void_pending_transfer(deposit.tb_transfer_id)
-            .await?;
+        // Void in TigerBeetle
+        self.ledger_repo.void_pending_transfer(txn.tb_transfer_id).await?;
 
-        // Update PG status
-        let updated = self
-            .deposit_repo
-            .update_status(deposit_id, DepositStatus::Voided)
-            .await?;
+        // Update PG
+        let updated = self.transaction_repo.update_status(deposit_id, TransactionStatus::Voided).await?;
 
-        tracing::info!(
-            deposit_id = %deposit_id,
-            account_id = %account_id,
-            amount = deposit.amount,
-            reason = reason.unwrap_or("none"),
-            "Pending deposit voided"
-        );
-
-        Ok(DepositResult {
-            deposit_id: updated.id,
-            account_id: updated.account_id,
-            amount: updated.amount,
-            pool: pool_display(&updated.pool),
-            status: DepositStatus::Voided,
-            gateway_ref: updated.gateway_ref,
-            timeout_seconds: updated.timeout_seconds,
-        })
+        tracing::info!(deposit_id = %deposit_id, account_id = %account_id, amount = txn.amount, "Pending deposit voided");
+        Ok(updated)
     }
-}
-
-fn pool_display(pool: &str) -> &'static str {
-    match pool {
-        "self" => "self_contribution",
-        "others" => "others_contribution",
-        _ => "unknown",
-    }
-}
-
-pub struct DepositResult {
-    pub deposit_id: Uuid,
-    pub account_id: Uuid,
-    pub amount: u64,
-    pub pool: &'static str,
-    pub status: DepositStatus,
-    pub gateway_ref: Option<String>,
-    pub timeout_seconds: Option<u32>,
 }

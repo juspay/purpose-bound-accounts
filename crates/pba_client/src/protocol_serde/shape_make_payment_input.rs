@@ -9,11 +9,14 @@ pub fn ser_make_payment_input_input(
     if let Some(var_2) = &input.description {
         object.key("description").string(var_2.as_str());
     }
-    if let Some(var_3) = &input.merchant_id {
-        object.key("merchant_id").string(var_3.as_str());
+    if let Some(var_3) = &input.idempotency_key {
+        object.key("idempotency_key").string(var_3.as_str());
     }
-    if let Some(var_4) = &input.merchant_mcc {
-        object.key("merchant_mcc").string(var_4.as_str());
+    if let Some(var_4) = &input.merchant_id {
+        object.key("merchant_id").string(var_4.as_str());
+    }
+    if let Some(var_5) = &input.merchant_mcc {
+        object.key("merchant_mcc").string(var_5.as_str());
     }
     Ok(())
 }

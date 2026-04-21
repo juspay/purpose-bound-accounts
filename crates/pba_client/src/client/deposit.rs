@@ -10,6 +10,7 @@ impl super::Client {
     ///   - [`pending(bool)`](crate::operation::deposit::builders::DepositFluentBuilder::pending) / [`set_pending(Option<bool>)`](crate::operation::deposit::builders::DepositFluentBuilder::set_pending):<br>required: **false**<br>(undocumented)<br>
     ///   - [`gateway_ref(impl Into<String>)`](crate::operation::deposit::builders::DepositFluentBuilder::gateway_ref) / [`set_gateway_ref(Option<String>)`](crate::operation::deposit::builders::DepositFluentBuilder::set_gateway_ref):<br>required: **false**<br>(undocumented)<br>
     ///   - [`timeout_seconds(i32)`](crate::operation::deposit::builders::DepositFluentBuilder::timeout_seconds) / [`set_timeout_seconds(Option<i32>)`](crate::operation::deposit::builders::DepositFluentBuilder::set_timeout_seconds):<br>required: **false**<br>(undocumented)<br>
+    ///   - [`idempotency_key(impl Into<String>)`](crate::operation::deposit::builders::DepositFluentBuilder::idempotency_key) / [`set_idempotency_key(Option<String>)`](crate::operation::deposit::builders::DepositFluentBuilder::set_idempotency_key):<br>required: **false**<br>(undocumented)<br>
                             /// - On success, responds with [`DepositOutput`](crate::operation::deposit::DepositOutput) with field(s):
     ///   - [`deposit_id(String)`](crate::operation::deposit::DepositOutput::deposit_id): (undocumented)
     ///   - [`account_id(String)`](crate::operation::deposit::DepositOutput::account_id): (undocumented)

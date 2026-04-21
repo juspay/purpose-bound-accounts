@@ -25,6 +25,8 @@ pub(crate) mod shape_get_purpose_type;
 
 pub(crate) mod shape_list_purpose_types;
 
+pub(crate) mod shape_list_transactions;
+
 pub(crate) mod shape_make_payment;
 
 pub(crate) mod shape_post_deposit;
@@ -75,7 +77,11 @@ pub(crate) mod shape_mcc_entry_list;
 
 pub(crate) mod shape_purpose_type_list;
 
+pub(crate) mod shape_transaction_list;
+
 pub(crate) mod shape_mcc_entry;
 
 pub(crate) mod shape_purpose_type_summary;
+
+pub(crate) mod shape_transaction_summary;
 
