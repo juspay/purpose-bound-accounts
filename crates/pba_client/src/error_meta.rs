@@ -194,6 +194,27 @@ impl From<crate::operation::list_purpose_types::ListPurposeTypesError> for Error
         }
     }
 }
+impl<R> From<::aws_smithy_runtime_api::client::result::SdkError<crate::operation::list_transactions::ListTransactionsError, R>> for Error where R: Send + Sync + std::fmt::Debug + 'static {
+    fn from(err: ::aws_smithy_runtime_api::client::result::SdkError<crate::operation::list_transactions::ListTransactionsError, R>) -> Self {
+        match err {
+            ::aws_smithy_runtime_api::client::result::SdkError::ServiceError(context) => Self::from(context.into_err()),
+            _ => Error::Unhandled(
+                                        crate::error::sealed_unhandled::Unhandled {
+                                            meta: ::aws_smithy_types::error::metadata::ProvideErrorMetadata::meta(&err).clone(),
+                                            source: err.into(),
+                                        }
+                                    ),
+        }
+    }
+}
+impl From<crate::operation::list_transactions::ListTransactionsError> for Error {
+    fn from(err: crate::operation::list_transactions::ListTransactionsError) -> Self {
+        match err {
+            crate::operation::list_transactions::ListTransactionsError::AccountNotFoundError(inner) => Error::AccountNotFoundError(inner),
+            crate::operation::list_transactions::ListTransactionsError::Unhandled(inner) => Error::Unhandled(inner),
+        }
+    }
+}
 impl<R> From<::aws_smithy_runtime_api::client::result::SdkError<crate::operation::make_payment::MakePaymentError, R>> for Error where R: Send + Sync + std::fmt::Debug + 'static {
     fn from(err: ::aws_smithy_runtime_api::client::result::SdkError<crate::operation::make_payment::MakePaymentError, R>) -> Self {
         match err {

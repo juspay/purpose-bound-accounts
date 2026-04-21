@@ -124,5 +124,19 @@ impl WithdrawFluentBuilder {
     pub fn get_amount(&self) -> &::std::option::Option<i64> {
                     self.inner.get_amount()
                 }
+    #[allow(missing_docs)] // documentation missing in model
+    pub fn idempotency_key(mut self, input: impl ::std::convert::Into<::std::string::String>) -> Self {
+                    self.inner = self.inner.idempotency_key(input.into());
+                    self
+                }
+    #[allow(missing_docs)] // documentation missing in model
+    pub fn set_idempotency_key(mut self, input: ::std::option::Option<::std::string::String>) -> Self {
+                    self.inner = self.inner.set_idempotency_key(input);
+                    self
+                }
+    #[allow(missing_docs)] // documentation missing in model
+    pub fn get_idempotency_key(&self) -> &::std::option::Option<::std::string::String> {
+                    self.inner.get_idempotency_key()
+                }
 }
 

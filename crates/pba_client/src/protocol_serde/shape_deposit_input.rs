@@ -9,17 +9,20 @@ pub fn ser_deposit_input_input(
     if let Some(var_2) = &input.gateway_ref {
         object.key("gateway_ref").string(var_2.as_str());
     }
-    if let Some(var_3) = &input.pending {
-        object.key("pending").boolean(*var_3);
+    if let Some(var_3) = &input.idempotency_key {
+        object.key("idempotency_key").string(var_3.as_str());
     }
-    if let Some(var_4) = &input.source_account_number {
-        object.key("source_account_number").string(var_4.as_str());
+    if let Some(var_4) = &input.pending {
+        object.key("pending").boolean(*var_4);
     }
-    if let Some(var_5) = &input.source_ifsc {
-        object.key("source_ifsc").string(var_5.as_str());
+    if let Some(var_5) = &input.source_account_number {
+        object.key("source_account_number").string(var_5.as_str());
     }
-    if let Some(var_6) = &input.timeout_seconds {
-        object.key("timeout_seconds").number(#[allow(clippy::useless_conversion)]::aws_smithy_types::Number::NegInt((*var_6).into()));
+    if let Some(var_6) = &input.source_ifsc {
+        object.key("source_ifsc").string(var_6.as_str());
+    }
+    if let Some(var_7) = &input.timeout_seconds {
+        object.key("timeout_seconds").number(#[allow(clippy::useless_conversion)]::aws_smithy_types::Number::NegInt((*var_7).into()));
     }
     Ok(())
 }

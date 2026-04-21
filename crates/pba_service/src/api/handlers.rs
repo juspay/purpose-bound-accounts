@@ -87,16 +87,17 @@ pub async fn deposit(
             req.pending,
             req.gateway_ref.as_deref(),
             req.timeout_seconds,
+            req.idempotency_key.as_deref(),
         )
         .await?;
 
     Ok((
         axum::http::StatusCode::CREATED,
         Json(DepositResponse {
-            deposit_id: result.deposit_id,
+            deposit_id: result.id,
             account_id: result.account_id,
             amount: result.amount,
-            pool: result.pool.to_string(),
+            pool: result.pool,
             status: result.status.as_str().to_string(),
             gateway_ref: result.gateway_ref,
             timeout_seconds: result.timeout_seconds,
@@ -114,10 +115,10 @@ pub async fn post_deposit(
         .await?;
 
     Ok(Json(DepositResponse {
-        deposit_id: result.deposit_id,
+        deposit_id: result.id,
         account_id: result.account_id,
         amount: result.amount,
-        pool: result.pool.to_string(),
+        pool: result.pool,
         status: result.status.as_str().to_string(),
         gateway_ref: result.gateway_ref,
         timeout_seconds: result.timeout_seconds,
@@ -135,10 +136,10 @@ pub async fn void_deposit(
         .await?;
 
     Ok(Json(DepositResponse {
-        deposit_id: result.deposit_id,
+        deposit_id: result.id,
         account_id: result.account_id,
         amount: result.amount,
-        pool: result.pool.to_string(),
+        pool: result.pool,
         status: result.status.as_str().to_string(),
         gateway_ref: result.gateway_ref,
         timeout_seconds: result.timeout_seconds,
@@ -160,6 +161,7 @@ pub async fn make_payment(
             &req.merchant_mcc,
             &req.merchant_id,
             &req.description,
+            req.idempotency_key.as_deref(),
         )
         .await?;
 
@@ -185,7 +187,7 @@ pub async fn withdraw(
 ) -> Result<(axum::http::StatusCode, Json<WithdrawalResponse>), AppError> {
     let result = state
         .withdrawal_service
-        .withdraw(account_id, req.amount)
+        .withdraw(account_id, req.amount, req.idempotency_key.as_deref())
         .await?;
 
     Ok((
@@ -195,6 +197,36 @@ pub async fn withdraw(
             amount: result.amount,
         }),
     ))
+}
+
+// ── Transactions ──
+
+pub async fn list_transactions(
+    State(state): State<AppState>,
+    Path(account_id): Path<Uuid>,
+    axum::extract::Query(query): axum::extract::Query<ListTransactionsQuery>,
+) -> Result<Json<ListTransactionsResponse>, AppError> {
+    // Verify account exists
+    let _ = state.account_service.get_account(account_id).await?;
+
+    let offset = query.offset.unwrap_or(0).max(0);
+    let limit = query.limit.unwrap_or(20).clamp(1, 100);
+
+    let transactions = state
+        .transaction_repo
+        .list_by_account(account_id, offset, limit, query.from_date, query.to_date)
+        .await?;
+    let total = state
+        .transaction_repo
+        .count_by_account(account_id, query.from_date, query.to_date)
+        .await?;
+
+    Ok(Json(ListTransactionsResponse {
+        transactions: transactions.into_iter().map(|t| t.into()).collect(),
+        total,
+        offset,
+        limit,
+    }))
 }
 
 // ── Purpose Types ──

@@ -109,10 +109,10 @@ structure AccountMixin {
     status: String
 
     @required
-    created_at: String
+    created_at: DateTime
 
     @required
-    updated_at: String
+    updated_at: DateTime
 }
 
 @error("client")

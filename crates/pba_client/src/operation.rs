@@ -18,6 +18,9 @@ pub mod get_purpose_type;
 /// Types for the `ListPurposeTypes` operation.
 pub mod list_purpose_types;
 
+/// Types for the `ListTransactions` operation.
+pub mod list_transactions;
+
 /// Types for the `MakePayment` operation.
 pub mod make_payment;
 

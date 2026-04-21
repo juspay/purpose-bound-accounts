@@ -24,10 +24,10 @@ pub struct GetAccountOutput  {
     pub kyc_tier: ::std::string::String,
     #[allow(missing_docs)] // documentation missing in model
     pub status: ::std::string::String,
-    #[allow(missing_docs)] // documentation missing in model
-    pub created_at: ::std::string::String,
-    #[allow(missing_docs)] // documentation missing in model
-    pub updated_at: ::std::string::String,
+    /// ISO 8601 date-time.
+    pub created_at: ::aws_smithy_types::DateTime,
+    /// ISO 8601 date-time.
+    pub updated_at: ::aws_smithy_types::DateTime,
 }
 impl  GetAccountOutput  {
     #[allow(missing_docs)] // documentation missing in model
@@ -70,13 +70,13 @@ impl  GetAccountOutput  {
     pub fn status(&self) -> &str {
         use std::ops::Deref; self.status.deref()
     }
-    #[allow(missing_docs)] // documentation missing in model
-    pub fn created_at(&self) -> &str {
-        use std::ops::Deref; self.created_at.deref()
+    /// ISO 8601 date-time.
+    pub fn created_at(&self) -> &::aws_smithy_types::DateTime {
+        &self.created_at
     }
-    #[allow(missing_docs)] // documentation missing in model
-    pub fn updated_at(&self) -> &str {
-        use std::ops::Deref; self.updated_at.deref()
+    /// ISO 8601 date-time.
+    pub fn updated_at(&self) -> &::aws_smithy_types::DateTime {
+        &self.updated_at
     }
 }
 impl GetAccountOutput {
@@ -100,8 +100,8 @@ pub struct GetAccountOutputBuilder {
     pub(crate) virtual_account_number: ::std::option::Option<::std::string::String>,
     pub(crate) kyc_tier: ::std::option::Option<::std::string::String>,
     pub(crate) status: ::std::option::Option<::std::string::String>,
-    pub(crate) created_at: ::std::option::Option<::std::string::String>,
-    pub(crate) updated_at: ::std::option::Option<::std::string::String>,
+    pub(crate) created_at: ::std::option::Option<::aws_smithy_types::DateTime>,
+    pub(crate) updated_at: ::std::option::Option<::aws_smithy_types::DateTime>,
 }
 impl GetAccountOutputBuilder {
     #[allow(missing_docs)] // documentation missing in model
@@ -241,32 +241,32 @@ impl GetAccountOutputBuilder {
     pub fn get_status(&self) -> &::std::option::Option<::std::string::String> {
         &self.status
     }
-    #[allow(missing_docs)] // documentation missing in model
+    /// ISO 8601 date-time.
     /// This field is required.
-    pub fn created_at(mut self, input: impl ::std::convert::Into<::std::string::String>) -> Self {
-        self.created_at = ::std::option::Option::Some(input.into());
+    pub fn created_at(mut self, input: ::aws_smithy_types::DateTime) -> Self {
+        self.created_at = ::std::option::Option::Some(input);
         self
     }
-    #[allow(missing_docs)] // documentation missing in model
-    pub fn set_created_at(mut self, input: ::std::option::Option<::std::string::String>) -> Self {
+    /// ISO 8601 date-time.
+    pub fn set_created_at(mut self, input: ::std::option::Option<::aws_smithy_types::DateTime>) -> Self {
         self.created_at = input; self
     }
-    #[allow(missing_docs)] // documentation missing in model
-    pub fn get_created_at(&self) -> &::std::option::Option<::std::string::String> {
+    /// ISO 8601 date-time.
+    pub fn get_created_at(&self) -> &::std::option::Option<::aws_smithy_types::DateTime> {
         &self.created_at
     }
-    #[allow(missing_docs)] // documentation missing in model
+    /// ISO 8601 date-time.
     /// This field is required.
-    pub fn updated_at(mut self, input: impl ::std::convert::Into<::std::string::String>) -> Self {
-        self.updated_at = ::std::option::Option::Some(input.into());
+    pub fn updated_at(mut self, input: ::aws_smithy_types::DateTime) -> Self {
+        self.updated_at = ::std::option::Option::Some(input);
         self
     }
-    #[allow(missing_docs)] // documentation missing in model
-    pub fn set_updated_at(mut self, input: ::std::option::Option<::std::string::String>) -> Self {
+    /// ISO 8601 date-time.
+    pub fn set_updated_at(mut self, input: ::std::option::Option<::aws_smithy_types::DateTime>) -> Self {
         self.updated_at = input; self
     }
-    #[allow(missing_docs)] // documentation missing in model
-    pub fn get_updated_at(&self) -> &::std::option::Option<::std::string::String> {
+    /// ISO 8601 date-time.
+    pub fn get_updated_at(&self) -> &::std::option::Option<::aws_smithy_types::DateTime> {
         &self.updated_at
     }
     /// Consumes the builder and constructs a [`GetAccountOutput`](crate::operation::get_account::GetAccountOutput).

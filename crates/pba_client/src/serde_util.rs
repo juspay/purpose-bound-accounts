@@ -19,8 +19,8 @@ if builder.origin_ifsc.is_none() { builder.origin_ifsc = Some(Default::default()
 if builder.origin_account_number.is_none() { builder.origin_account_number = Some(Default::default()) }
 if builder.kyc_tier.is_none() { builder.kyc_tier = Some(Default::default()) }
 if builder.status.is_none() { builder.status = Some(Default::default()) }
-if builder.created_at.is_none() { builder.created_at = Some(Default::default()) }
-if builder.updated_at.is_none() { builder.updated_at = Some(Default::default()) }
+if builder.created_at.is_none() { builder.created_at = Some(::aws_smithy_types::DateTime::from_fractional_secs(0, 0_f64)) }
+if builder.updated_at.is_none() { builder.updated_at = Some(::aws_smithy_types::DateTime::from_fractional_secs(0, 0_f64)) }
                 builder
             }
 
@@ -53,8 +53,8 @@ if builder.origin_ifsc.is_none() { builder.origin_ifsc = Some(Default::default()
 if builder.origin_account_number.is_none() { builder.origin_account_number = Some(Default::default()) }
 if builder.kyc_tier.is_none() { builder.kyc_tier = Some(Default::default()) }
 if builder.status.is_none() { builder.status = Some(Default::default()) }
-if builder.created_at.is_none() { builder.created_at = Some(Default::default()) }
-if builder.updated_at.is_none() { builder.updated_at = Some(Default::default()) }
+if builder.created_at.is_none() { builder.created_at = Some(::aws_smithy_types::DateTime::from_fractional_secs(0, 0_f64)) }
+if builder.updated_at.is_none() { builder.updated_at = Some(::aws_smithy_types::DateTime::from_fractional_secs(0, 0_f64)) }
                 builder
             }
 
@@ -76,6 +76,14 @@ if builder.allowed_mccs.is_none() { builder.allowed_mccs = Some(Default::default
 
 pub(crate) fn list_purpose_types_output_output_correct_errors(mut builder: crate::operation::list_purpose_types::builders::ListPurposeTypesOutputBuilder) -> crate::operation::list_purpose_types::builders::ListPurposeTypesOutputBuilder {
                 if builder.purpose_types.is_none() { builder.purpose_types = Some(Default::default()) }
+                builder
+            }
+
+pub(crate) fn list_transactions_output_output_correct_errors(mut builder: crate::operation::list_transactions::builders::ListTransactionsOutputBuilder) -> crate::operation::list_transactions::builders::ListTransactionsOutputBuilder {
+                if builder.transactions.is_none() { builder.transactions = Some(Default::default()) }
+if builder.total.is_none() { builder.total = Some(Default::default()) }
+if builder.offset.is_none() { builder.offset = Some(Default::default()) }
+if builder.limit.is_none() { builder.limit = Some(Default::default()) }
                 builder
             }
 
@@ -130,8 +138,8 @@ if builder.origin_ifsc.is_none() { builder.origin_ifsc = Some(Default::default()
 if builder.origin_account_number.is_none() { builder.origin_account_number = Some(Default::default()) }
 if builder.kyc_tier.is_none() { builder.kyc_tier = Some(Default::default()) }
 if builder.status.is_none() { builder.status = Some(Default::default()) }
-if builder.created_at.is_none() { builder.created_at = Some(Default::default()) }
-if builder.updated_at.is_none() { builder.updated_at = Some(Default::default()) }
+if builder.created_at.is_none() { builder.created_at = Some(::aws_smithy_types::DateTime::from_fractional_secs(0, 0_f64)) }
+if builder.updated_at.is_none() { builder.updated_at = Some(::aws_smithy_types::DateTime::from_fractional_secs(0, 0_f64)) }
                 builder
             }
 
@@ -158,6 +166,17 @@ pub(crate) fn mcc_entry_correct_errors(mut builder: crate::types::builders::MccE
 pub(crate) fn purpose_type_summary_correct_errors(mut builder: crate::types::builders::PurposeTypeSummaryBuilder) -> crate::types::builders::PurposeTypeSummaryBuilder {
                 if builder.purpose_code.is_none() { builder.purpose_code = Some(Default::default()) }
 if builder.allowed_mccs.is_none() { builder.allowed_mccs = Some(Default::default()) }
+                builder
+            }
+
+pub(crate) fn transaction_summary_correct_errors(mut builder: crate::types::builders::TransactionSummaryBuilder) -> crate::types::builders::TransactionSummaryBuilder {
+                if builder.id.is_none() { builder.id = Some(Default::default()) }
+if builder.r#type.is_none() { builder.r#type = "no value was set".parse::<crate::types::TransactionType>().ok() }
+if builder.status.is_none() { builder.status = "no value was set".parse::<crate::types::TransactionStatus>().ok() }
+if builder.amount.is_none() { builder.amount = Some(Default::default()) }
+if builder.pool.is_none() { builder.pool = "no value was set".parse::<crate::types::PoolType>().ok() }
+if builder.direction.is_none() { builder.direction = "no value was set".parse::<crate::types::TransactionDirection>().ok() }
+if builder.created_at.is_none() { builder.created_at = Some(::aws_smithy_types::DateTime::from_fractional_secs(0, 0_f64)) }
                 builder
             }
 

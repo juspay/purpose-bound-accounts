@@ -143,6 +143,8 @@ mod get_purpose_type;
 
 mod list_purpose_types;
 
+mod list_transactions;
+
 mod make_payment;
 
 mod post_deposit;
