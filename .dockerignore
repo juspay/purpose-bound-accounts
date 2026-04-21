@@ -1,0 +1,9 @@
+target/
+.tb_data/
+.pg_data/
+.pg.log
+.worktrees/
+sdk/output/
+.git/
+*.md
+docs/
