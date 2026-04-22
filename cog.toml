@@ -4,9 +4,6 @@
 [changelog]
 path = "CHANGELOG.md"
 
-[git_hooks]
-pre-push = [] # add "cog check" here if you want enforcement on push
-
 # Allowed commit types (conventional commit standard + extras)
 [commit_types]
 feat = { changelog_title = "Features" }

@@ -29,6 +29,13 @@ Feature: Admin UI
     And the payment link should not be visible
     And the withdrawal link should not be visible
 
+  Scenario: All transactions page shows transactions after deposit
+    Given a "health" account exists for holder "d5555555-5555-5555-5555-555555555555" with origin IFSC "HDFC0005555" and account number "5555500001"
+    And the account has 5000 in self-pool and 3000 in others-pool
+    When I visit the all transactions page
+    Then the all transactions page should show at least 2 transactions
+    And the all transactions page should show pool balance summary
+
   Scenario: Purpose types page lists all purposes
     When I visit the purpose types page
     Then I should see at least 4 purpose types listed

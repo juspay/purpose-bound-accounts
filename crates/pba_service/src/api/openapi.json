@@ -619,6 +619,60 @@
                     }
                 }
             }
+        },
+        "/transactions": {
+            "get": {
+                "description": "List all transactions across all accounts with offset/limit pagination.",
+                "operationId": "ListAllTransactions",
+                "parameters": [
+                    {
+                        "name": "offset",
+                        "in": "query",
+                        "schema": {
+                            "type": "number"
+                        }
+                    },
+                    {
+                        "name": "limit",
+                        "in": "query",
+                        "schema": {
+                            "type": "number"
+                        }
+                    },
+                    {
+                        "name": "from_date",
+                        "in": "query",
+                        "description": "ISO 8601 date-time.",
+                        "schema": {
+                            "type": "string",
+                            "description": "ISO 8601 date-time.",
+                            "format": "date-time"
+                        }
+                    },
+                    {
+                        "name": "to_date",
+                        "in": "query",
+                        "description": "ISO 8601 date-time.",
+                        "schema": {
+                            "type": "string",
+                            "description": "ISO 8601 date-time.",
+                            "format": "date-time"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "ListAllTransactions 200 response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ListAllTransactionsResponseContent"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
         }
     },
     "components": {
@@ -970,6 +1024,32 @@
                     "message"
                 ]
             },
+            "ListAllTransactionsResponseContent": {
+                "type": "object",
+                "properties": {
+                    "transactions": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/TransactionSummary"
+                        }
+                    },
+                    "total": {
+                        "type": "number"
+                    },
+                    "offset": {
+                        "type": "number"
+                    },
+                    "limit": {
+                        "type": "number"
+                    }
+                },
+                "required": [
+                    "limit",
+                    "offset",
+                    "total",
+                    "transactions"
+                ]
+            },
             "ListPurposeTypesResponseContent": {
                 "type": "object",
                 "properties": {
@@ -1193,6 +1273,9 @@
                     "id": {
                         "type": "string"
                     },
+                    "account_id": {
+                        "type": "string"
+                    },
                     "type": {
                         "$ref": "#/components/schemas/TransactionType"
                     },
@@ -1234,6 +1317,7 @@
                     }
                 },
                 "required": [
+                    "account_id",
                     "amount",
                     "created_at",
                     "direction",

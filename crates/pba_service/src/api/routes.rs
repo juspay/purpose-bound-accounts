@@ -36,6 +36,7 @@ pub fn create_router() -> Router<AppState> {
             post(handlers::withdraw),
         )
         // Transactions
+        .route("/transactions", get(handlers::list_all_transactions))
         .route(
             "/accounts/{account_id}/transactions",
             get(handlers::list_transactions),

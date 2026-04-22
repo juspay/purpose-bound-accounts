@@ -34,6 +34,11 @@ pub struct PbaWorld {
     /// Results from concurrent payment tests
     concurrent_successes: Option<usize>,
     concurrent_failures: Option<usize>,
+    /// All-transactions results
+    all_transactions_total: Option<i64>,
+    all_transactions_count: Option<usize>,
+    all_transactions_types: Option<Vec<String>>,
+    all_transactions_account_ids: Option<Vec<String>>,
 }
 
 #[derive(Debug, Clone)]
@@ -82,14 +87,35 @@ impl Default for PbaWorld {
             last_withdrawal_amount: None,
             concurrent_successes: None,
             concurrent_failures: None,
+            all_transactions_total: None,
+            all_transactions_count: None,
+            all_transactions_types: None,
+            all_transactions_account_ids: None,
         }
     }
 }
 
 #[tokio::main]
 async fn main() {
-    PbaWorld::cucumber()
+    use cucumber::StatsWriter as _;
+
+    // Phase 1: Run @empty-db scenarios first (clean DB, nothing else has run)
+    let w1 = PbaWorld::cucumber()
         .max_concurrent_scenarios(1)
-        .run("tests/features")
+        .filter_run("tests/features", |_feature, _rule, scenario| {
+            scenario.tags.iter().any(|t| t == "empty-db")
+        })
         .await;
+
+    // Phase 2: Run everything else
+    let w2 = PbaWorld::cucumber()
+        .max_concurrent_scenarios(1)
+        .filter_run("tests/features", |_feature, _rule, scenario| {
+            !scenario.tags.iter().any(|t| t == "empty-db")
+        })
+        .await;
+
+    if w1.execution_has_failed() || w2.execution_has_failed() {
+        std::process::exit(1);
+    }
 }

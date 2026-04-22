@@ -19,5 +19,6 @@ service PurposeBoundAccountService {
         ListPurposeTypes
         GetPurposeType
         ListTransactions
+        ListAllTransactions
     ]
 }

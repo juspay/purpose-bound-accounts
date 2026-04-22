@@ -1,0 +1,73 @@
+{% extends "base.html" %}
+
+{% block title %}All Transactions - PBA Admin{% endblock %}
+
+{% block content %}
+<h1>All Transactions</h1>
+
+<div class="grid">
+    <article class="stat-card">
+        <h2>{{ total_balance }}</h2>
+        <p>Total Pool Balance</p>
+    </article>
+    <article class="stat-card">
+        <h2>{{ self_balance }}</h2>
+        <p>Self Pool</p>
+    </article>
+    <article class="stat-card">
+        <h2>{{ others_balance }}</h2>
+        <p>Others Pool</p>
+    </article>
+    <article class="stat-card">
+        <h2 class="status-frozen">{{ pending_self }}</h2>
+        <p>Pending Self</p>
+    </article>
+    <article class="stat-card">
+        <h2 class="status-frozen">{{ pending_others }}</h2>
+        <p>Pending Others</p>
+    </article>
+</div>
+
+{% if transactions.is_empty() %}
+<p>No transactions found.</p>
+{% else %}
+<table>
+    <thead>
+        <tr>
+            <th>Timestamp</th>
+            <th>Account</th>
+            <th>Type</th>
+            <th>Status</th>
+            <th>Pool</th>
+            <th>Direction</th>
+            <th>Amount (INR)</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for t in &transactions %}
+        <tr>
+            <td>{{ t.timestamp }}</td>
+            <td><a href="/admin/accounts/{{ t.account_id }}">{{ t.account_id_short }}</a></td>
+            <td>{{ t.transfer_type }}</td>
+            <td class="{{ t.status_class }}">{{ t.status }}</td>
+            <td>{{ t.pool }}</td>
+            <td class="{{ t.direction_class }}">{{ t.direction }}</td>
+            <td>{{ t.amount }}</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+<nav>
+    <ul>
+        {% if offset > 0 %}
+        <li><a href="/admin/transactions?offset={{ prev_offset }}&limit={{ limit }}" role="button" class="outline">&larr; Previous</a></li>
+        {% endif %}
+        {% if has_next %}
+        <li><a href="/admin/transactions?offset={{ next_offset }}&limit={{ limit }}" role="button" class="outline">Next &rarr;</a></li>
+        {% endif %}
+    </ul>
+</nav>
+<p><small>Showing {{ offset + 1 }}–{{ offset + count }} of {{ total }} transactions</small></p>
+{% endif %}
+{% endblock %}

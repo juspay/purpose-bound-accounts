@@ -23,6 +23,8 @@ pub(crate) mod shape_get_balance;
 
 pub(crate) mod shape_get_purpose_type;
 
+pub(crate) mod shape_list_all_transactions;
+
 pub(crate) mod shape_list_purpose_types;
 
 pub(crate) mod shape_list_transactions;

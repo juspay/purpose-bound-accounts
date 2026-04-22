@@ -192,6 +192,7 @@ pub struct ListTransactionsResponse {
 #[derive(Debug, Serialize)]
 pub struct TransactionSummaryDto {
     pub id: Uuid,
+    pub account_id: Uuid,
     #[serde(rename = "type")]
     pub transaction_type: String,
     pub status: String,
@@ -217,6 +218,7 @@ impl From<crate::domain::transaction::TransactionRecord> for TransactionSummaryD
     fn from(t: crate::domain::transaction::TransactionRecord) -> Self {
         Self {
             id: t.id,
+            account_id: t.account_id,
             transaction_type: t.transaction_type.as_str().to_string(),
             status: t.status.as_str().to_string(),
             amount: t.amount,

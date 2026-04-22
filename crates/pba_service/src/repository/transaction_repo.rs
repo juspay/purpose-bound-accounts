@@ -7,6 +7,30 @@ use crate::domain::transaction::{
 };
 use crate::error::AppError;
 
+#[derive(Debug, Default)]
+pub struct PoolSummary {
+    pub self_inbound: u64,
+    pub self_outbound: u64,
+    pub others_inbound: u64,
+    pub others_outbound: u64,
+    pub pending_self: u64,
+    pub pending_others: u64,
+}
+
+impl PoolSummary {
+    pub fn self_balance(&self) -> u64 {
+        self.self_inbound.saturating_sub(self.self_outbound)
+    }
+
+    pub fn others_balance(&self) -> u64 {
+        self.others_inbound.saturating_sub(self.others_outbound)
+    }
+
+    pub fn total_balance(&self) -> u64 {
+        self.self_balance() + self.others_balance()
+    }
+}
+
 pub struct TransactionRepo {
     pool: PgPool,
 }
@@ -275,6 +299,85 @@ impl TransactionRepo {
         .await?;
 
         Ok(row.0)
+    }
+
+    pub async fn list_all(
+        &self,
+        offset: i64,
+        limit: i64,
+        from_date: Option<DateTime<Utc>>,
+        to_date: Option<DateTime<Utc>>,
+    ) -> Result<Vec<TransactionRecord>, AppError> {
+        let rows = sqlx::query_as::<_, TransactionRow>(
+            r#"
+            SELECT id, account_id, type, status, amount, pool, direction,
+                   source_ifsc, source_account, gateway_ref, timeout_seconds,
+                   merchant_id, merchant_mcc, description,
+                   tb_transfer_id::text as tb_transfer_id, idempotency_key,
+                   created_at, updated_at
+            FROM transactions
+            WHERE ($3::timestamptz IS NULL OR created_at >= $3)
+              AND ($4::timestamptz IS NULL OR created_at <= $4)
+            ORDER BY created_at DESC, id DESC
+            LIMIT $1 OFFSET $2
+            "#,
+        )
+        .bind(limit)
+        .bind(offset)
+        .bind(from_date)
+        .bind(to_date)
+        .fetch_all(&self.pool)
+        .await?;
+
+        Ok(rows.into_iter().map(|r| r.into_domain()).collect())
+    }
+
+    pub async fn count_all(
+        &self,
+        from_date: Option<DateTime<Utc>>,
+        to_date: Option<DateTime<Utc>>,
+    ) -> Result<i64, AppError> {
+        let row: (i64,) = sqlx::query_as(
+            r#"
+            SELECT COUNT(*) FROM transactions
+            WHERE ($1::timestamptz IS NULL OR created_at >= $1)
+              AND ($2::timestamptz IS NULL OR created_at <= $2)
+            "#,
+        )
+        .bind(from_date)
+        .bind(to_date)
+        .fetch_one(&self.pool)
+        .await?;
+
+        Ok(row.0)
+    }
+
+    pub async fn pool_summary(&self) -> Result<PoolSummary, AppError> {
+        let rows: Vec<(String, String, String, i64)> = sqlx::query_as(
+            r#"
+            SELECT pool, direction, status, COALESCE(SUM(amount), 0)::bigint AS total
+            FROM transactions
+            WHERE status IN ('posted', 'settled', 'pending')
+            GROUP BY pool, direction, status
+            "#,
+        )
+        .fetch_all(&self.pool)
+        .await?;
+
+        let mut summary = PoolSummary::default();
+        for (pool, direction, status, total) in rows {
+            let amt = total as u64;
+            match (pool.as_str(), direction.as_str(), status.as_str()) {
+                ("self", "inbound", "posted" | "settled") => summary.self_inbound += amt,
+                ("self", "outbound", "posted" | "settled") => summary.self_outbound += amt,
+                ("others", "inbound", "posted" | "settled") => summary.others_inbound += amt,
+                ("others", "outbound", "posted" | "settled") => summary.others_outbound += amt,
+                ("self", "inbound", "pending") => summary.pending_self += amt,
+                ("others", "inbound", "pending") => summary.pending_others += amt,
+                _ => {}
+            }
+        }
+        Ok(summary)
     }
 
     pub async fn list_pending_by_account(
