@@ -10,7 +10,7 @@ Feature: Deposits
 
   Scenario: Deposit from other bank goes to others-pool
     Given a "health" account exists for holder "22222222-2222-2222-2222-222222222222" with origin IFSC "HDFC0022222" and account number "2222200001"
-    When I deposit 5000 from IFSC "ICIC0009999" account "9876543210"
+    When I deposit 5000 from IFSC "ICIC0009999" account "9876543210" with funding type "third_party"
     Then the deposit should go to "others" pool
     And the others contribution should be 5000
 
@@ -18,7 +18,7 @@ Feature: Deposits
     Given a "health" account exists for holder "34343434-3434-3434-3434-343434343434" with origin IFSC "HDFC0034343" and account number "3434300001"
     When I deposit 5000 from IFSC "HDFC0034343" account "3434300001"
     And I deposit 3000 from IFSC "HDFC0034343" account "3434300001"
-    And I deposit 2000 from IFSC "ICIC0009999" account "9876543210"
+    And I deposit 2000 from IFSC "ICIC0009999" account "9876543210" with funding type "third_party"
     Then the self contribution should be 8000
     And the others contribution should be 2000
     And the total balance should be 10000
@@ -54,7 +54,7 @@ Feature: Deposits
 
   Scenario: Pending deposit from other bank goes to others pending pool
     Given a "health" account exists for holder "a3a3a3a3-a3a3-a3a3-a3a3-a3a3a3a3a3a3" with origin IFSC "HDFC0053333" and account number "5333300001"
-    When I create a pending deposit of 7000 from IFSC "ICIC0009999" account "9876543210"
+    When I create a pending deposit of 7000 from IFSC "ICIC0009999" account "9876543210" with funding type "third_party"
     Then the deposit should go to "others" pool
     And the others contribution should be 0
     And the pending others should be 7000

@@ -13,6 +13,7 @@ use crate::UiWorld;
 /// Returns true if the deposit succeeded (redirected to detail page), false on error.
 async fn do_deposit(world: &mut UiWorld, amount: i64, ifsc: &str, account_number: &str) -> bool {
     let account_id = world.account_id.clone().expect("No account ID for deposit");
+    let origin_ifsc = world.origin_ifsc.clone().unwrap_or_default();
     let deposit_url = world.url(&format!("/admin/accounts/{}/deposit", account_id));
 
     let page = world.ensure_page().await;
@@ -61,6 +62,14 @@ async fn do_deposit(world: &mut UiWorld, amount: i64, ifsc: &str, account_number
         .type_str(account_number)
         .await
         .expect("Failed to type source_account_number");
+
+    // Set funding_type to "third_party" for non-origin deposits
+    if ifsc != origin_ifsc {
+        let js = r#"document.querySelector("select[name='funding_type']").value = "third_party";"#;
+        page.evaluate(js)
+            .await
+            .expect("Failed to set funding_type select");
+    }
 
     // Submit
     let submit = page
@@ -269,6 +278,7 @@ async fn do_pending_deposit(
         .account_id
         .clone()
         .expect("No account ID for pending deposit");
+    let origin_ifsc = world.origin_ifsc.clone().unwrap_or_default();
     let deposit_url = world.url(&format!("/admin/accounts/{}/deposit", account_id));
 
     let page = world.ensure_page().await;
@@ -317,6 +327,14 @@ async fn do_pending_deposit(
         .type_str(account_number)
         .await
         .expect("Failed to type source_account_number");
+
+    // Set funding_type to "third_party" for non-origin deposits
+    if ifsc != origin_ifsc {
+        let js = r#"document.querySelector("select[name='funding_type']").value = "third_party";"#;
+        page.evaluate(js)
+            .await
+            .expect("Failed to set funding_type select");
+    }
 
     // Check the pending checkbox
     let pending_checkbox = page

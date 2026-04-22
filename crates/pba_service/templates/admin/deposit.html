@@ -30,6 +30,14 @@
             </label>
         </div>
         <label>
+            Funding Type (required for non-origin deposits)
+            <select name="funding_type">
+                <option value="">Auto-detect (origin = self)</option>
+                <option value="trust">Trust</option>
+                <option value="third_party">Third Party</option>
+            </select>
+        </label>
+        <label>
             <input type="checkbox" name="pending" value="true">
             Pending (two-phase deposit — must be posted or voided later)
         </label>

@@ -182,6 +182,39 @@ async fn create_pending_deposit(
 }
 
 #[when(
+    regex = r#"^I create a pending deposit of (\d+) from IFSC "([^"]*)" account "([^"]*)" with funding type "([^"]*)"$"#
+)]
+async fn create_pending_deposit_with_funding_type(
+    world: &mut PbaWorld,
+    amount: i64,
+    ifsc: String,
+    account_number: String,
+    funding_type: String,
+) {
+    let account_id = world.account_id.as_ref().expect("No account ID");
+    let result = world
+        .client
+        .deposit()
+        .account_id(account_id)
+        .source_ifsc(&ifsc)
+        .source_account_number(&account_number)
+        .amount(amount)
+        .pending(true)
+        .funding_type(pba_client::types::FundingType::from(funding_type.as_str()))
+        .send()
+        .await;
+    match result {
+        Ok(output) => {
+            world.last_deposit_id = Some(output.deposit_id().to_string());
+            world.last_deposit_pool = Some(output.pool().to_string());
+            world.last_funding_type = Some(output.funding_type().to_string());
+            world.last_error = None;
+        }
+        Err(e) => panic!("Pending deposit with funding type failed: {e:?}"),
+    }
+}
+
+#[when(
     regex = r#"^I create a pending deposit of (\d+) from IFSC "([^"]*)" account "([^"]*)" with gateway ref "([^"]*)"$"#
 )]
 async fn create_pending_deposit_with_ref(

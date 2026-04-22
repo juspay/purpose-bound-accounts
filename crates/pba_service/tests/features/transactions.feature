@@ -11,7 +11,7 @@ Feature: All Transactions
   Scenario: Transactions appear after deposits
     Given a "health" account exists for holder "f1111111-1111-1111-1111-111111111111" with origin IFSC "HDFC0091111" and account number "9111100001"
     When I deposit 5000 from IFSC "HDFC0091111" account "9111100001"
-    And I deposit 3000 from IFSC "ICIC0009999" account "9876543210"
+    And I deposit 3000 from IFSC "ICIC0009999" account "9876543210" with funding type "third_party"
     And I list all transactions
     Then the total transaction count should be at least 2
     And the transactions list should contain the current account

@@ -394,6 +394,7 @@ pub struct DepositForm {
     amount: u64,
     source_ifsc: String,
     source_account_number: String,
+    funding_type: Option<String>,
     #[serde(default)]
     pending: Option<String>,
     gateway_ref: Option<String>,
@@ -406,13 +407,14 @@ pub async fn process_deposit(
 ) -> Response {
     let is_pending = form.pending.as_deref() == Some("true");
     let gateway_ref = form.gateway_ref.as_deref().filter(|s| !s.is_empty());
+    let funding_type = form.funding_type.as_deref().filter(|s| !s.is_empty());
     match state
         .deposit_service
         .deposit(
             account_id,
             &form.source_ifsc,
             &form.source_account_number,
-            None,
+            funding_type,
             form.amount,
             is_pending,
             gateway_ref,
