@@ -2,7 +2,7 @@ name: Docker Publish
 
 on:
   workflow_dispatch:
-    branches: [main, fix/docker-build]
+    branches: [main]
 
 env:
   REGISTRY: ghcr.io
