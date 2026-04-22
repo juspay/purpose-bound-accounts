@@ -8,6 +8,18 @@ use crate::domain::transaction::{
 use crate::error::AppError;
 
 #[derive(Debug, Default)]
+pub struct PoolSummaryExtended {
+    pub self_inbound: u64,
+    pub self_outbound: u64,
+    pub others_inbound: u64,
+    pub others_outbound: u64,
+    pub pending_self_inbound: u64,
+    pub pending_self_outbound: u64,
+    pub pending_others_inbound: u64,
+    pub pending_others_outbound: u64,
+}
+
+#[derive(Debug, Default)]
 pub struct PoolSummary {
     pub self_inbound: u64,
     pub self_outbound: u64,
@@ -378,6 +390,36 @@ impl TransactionRepo {
                 ("others", "outbound", "posted" | "settled") => summary.others_outbound += amt,
                 ("self", "inbound", "pending") => summary.pending_self += amt,
                 ("others", "inbound", "pending") => summary.pending_others += amt,
+                _ => {}
+            }
+        }
+        Ok(summary)
+    }
+
+    pub async fn pool_summary_extended(&self) -> Result<PoolSummaryExtended, AppError> {
+        let rows: Vec<(String, String, String, i64)> = sqlx::query_as(
+            r#"
+            SELECT pool, direction, status, COALESCE(SUM(amount), 0)::bigint AS total
+            FROM transactions
+            WHERE status IN ('posted', 'settled', 'pending')
+            GROUP BY pool, direction, status
+            "#,
+        )
+        .fetch_all(&self.pool)
+        .await?;
+
+        let mut summary = PoolSummaryExtended::default();
+        for (pool, direction, status, total) in rows {
+            let amt = total as u64;
+            match (pool.as_str(), direction.as_str(), status.as_str()) {
+                ("self", "inbound", "posted" | "settled") => summary.self_inbound += amt,
+                ("self", "outbound", "posted" | "settled") => summary.self_outbound += amt,
+                ("others", "inbound", "posted" | "settled") => summary.others_inbound += amt,
+                ("others", "outbound", "posted" | "settled") => summary.others_outbound += amt,
+                ("self", "inbound", "pending") => summary.pending_self_inbound += amt,
+                ("self", "outbound", "pending") => summary.pending_self_outbound += amt,
+                ("others", "inbound", "pending") => summary.pending_others_inbound += amt,
+                ("others", "outbound", "pending") => summary.pending_others_outbound += amt,
                 _ => {}
             }
         }
