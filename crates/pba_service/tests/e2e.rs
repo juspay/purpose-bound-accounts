@@ -34,6 +34,11 @@ pub struct PbaWorld {
     /// Results from concurrent payment tests
     concurrent_successes: Option<usize>,
     concurrent_failures: Option<usize>,
+    /// All-transactions results
+    all_transactions_total: Option<i64>,
+    all_transactions_count: Option<usize>,
+    all_transactions_types: Option<Vec<String>>,
+    all_transactions_account_ids: Option<Vec<String>>,
 }
 
 #[derive(Debug, Clone)]
@@ -82,6 +87,10 @@ impl Default for PbaWorld {
             last_withdrawal_amount: None,
             concurrent_successes: None,
             concurrent_failures: None,
+            all_transactions_total: None,
+            all_transactions_count: None,
+            all_transactions_types: None,
+            all_transactions_account_ids: None,
         }
     }
 }

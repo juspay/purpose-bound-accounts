@@ -74,6 +74,14 @@ if builder.allowed_mccs.is_none() { builder.allowed_mccs = Some(Default::default
                 builder
             }
 
+pub(crate) fn list_all_transactions_output_output_correct_errors(mut builder: crate::operation::list_all_transactions::builders::ListAllTransactionsOutputBuilder) -> crate::operation::list_all_transactions::builders::ListAllTransactionsOutputBuilder {
+                if builder.transactions.is_none() { builder.transactions = Some(Default::default()) }
+if builder.total.is_none() { builder.total = Some(Default::default()) }
+if builder.offset.is_none() { builder.offset = Some(Default::default()) }
+if builder.limit.is_none() { builder.limit = Some(Default::default()) }
+                builder
+            }
+
 pub(crate) fn list_purpose_types_output_output_correct_errors(mut builder: crate::operation::list_purpose_types::builders::ListPurposeTypesOutputBuilder) -> crate::operation::list_purpose_types::builders::ListPurposeTypesOutputBuilder {
                 if builder.purpose_types.is_none() { builder.purpose_types = Some(Default::default()) }
                 builder
@@ -171,6 +179,7 @@ if builder.allowed_mccs.is_none() { builder.allowed_mccs = Some(Default::default
 
 pub(crate) fn transaction_summary_correct_errors(mut builder: crate::types::builders::TransactionSummaryBuilder) -> crate::types::builders::TransactionSummaryBuilder {
                 if builder.id.is_none() { builder.id = Some(Default::default()) }
+if builder.account_id.is_none() { builder.account_id = Some(Default::default()) }
 if builder.r#type.is_none() { builder.r#type = "no value was set".parse::<crate::types::TransactionType>().ok() }
 if builder.status.is_none() { builder.status = "no value was set".parse::<crate::types::TransactionStatus>().ok() }
 if builder.amount.is_none() { builder.amount = Some(Default::default()) }

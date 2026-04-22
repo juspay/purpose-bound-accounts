@@ -38,6 +38,38 @@ operation ListTransactions {
     errors: [AccountNotFoundError]
 }
 
+/// List all transactions across all accounts with offset/limit pagination.
+@readonly
+@http(method: "GET", uri: "/transactions")
+operation ListAllTransactions {
+    input := {
+        @httpQuery("offset")
+        offset: Long
+
+        @httpQuery("limit")
+        limit: Long
+
+        @httpQuery("from_date")
+        from_date: DateTime
+
+        @httpQuery("to_date")
+        to_date: DateTime
+    }
+    output := {
+        @required
+        transactions: TransactionList
+
+        @required
+        total: Long
+
+        @required
+        offset: Long
+
+        @required
+        limit: Long
+    }
+}
+
 list TransactionList {
     member: TransactionSummary
 }
@@ -45,6 +77,9 @@ list TransactionList {
 structure TransactionSummary {
     @required
     id: String
+
+    @required
+    account_id: String
 
     @required
     type: TransactionType

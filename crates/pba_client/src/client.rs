@@ -141,6 +141,8 @@ mod get_balance;
 
 mod get_purpose_type;
 
+mod list_all_transactions;
+
 mod list_purpose_types;
 
 mod list_transactions;

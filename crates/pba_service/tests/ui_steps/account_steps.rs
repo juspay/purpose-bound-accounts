@@ -579,6 +579,44 @@ async fn no_withdrawal_link(world: &mut UiWorld) {
     );
 }
 
+#[when(regex = r#"^I visit the all transactions page$"#)]
+async fn visit_all_transactions(world: &mut UiWorld) {
+    let url = world.url("/admin/transactions");
+    let page = world.ensure_page().await;
+    page.goto(url).await.unwrap();
+    tokio::time::sleep(std::time::Duration::from_millis(400)).await;
+}
+
+#[then(regex = r#"^the all transactions page should show at least (\d+) transactions$"#)]
+async fn all_transactions_count(world: &mut UiWorld, min: usize) {
+    let page = world.ensure_page().await;
+    let content = page.content().await.unwrap();
+    // Count <tr> rows in the table body (subtract 1 for header row)
+    let rows = content.matches("<tr>").count().saturating_sub(1);
+    assert!(
+        rows >= min,
+        "Expected at least {min} transaction rows, got {rows}"
+    );
+}
+
+#[then(regex = r#"^the all transactions page should show pool balance summary$"#)]
+async fn all_transactions_pool_summary(world: &mut UiWorld) {
+    let page = world.ensure_page().await;
+    let content = page.content().await.unwrap();
+    assert!(
+        content.contains("Total Pool Balance"),
+        "Expected 'Total Pool Balance' on the page"
+    );
+    assert!(
+        content.contains("Self Pool"),
+        "Expected 'Self Pool' on the page"
+    );
+    assert!(
+        content.contains("Others Pool"),
+        "Expected 'Others Pool' on the page"
+    );
+}
+
 #[when(regex = r#"^I visit the purpose types page$"#)]
 async fn visit_purpose_types(world: &mut UiWorld) {
     let url = world.url("/admin/purpose-types");

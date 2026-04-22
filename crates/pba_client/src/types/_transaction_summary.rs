@@ -5,6 +5,8 @@
 pub struct TransactionSummary  {
     #[allow(missing_docs)] // documentation missing in model
     pub id: ::std::string::String,
+    #[allow(missing_docs)] // documentation missing in model
+    pub account_id: ::std::string::String,
     /// Transaction type.
     pub r#type: crate::types::TransactionType,
     /// Transaction status.
@@ -34,6 +36,10 @@ impl  TransactionSummary  {
     #[allow(missing_docs)] // documentation missing in model
     pub fn id(&self) -> &str {
         use std::ops::Deref; self.id.deref()
+    }
+    #[allow(missing_docs)] // documentation missing in model
+    pub fn account_id(&self) -> &str {
+        use std::ops::Deref; self.account_id.deref()
     }
     /// Transaction type.
     pub fn r#type(&self) -> &crate::types::TransactionType {
@@ -96,6 +102,7 @@ impl TransactionSummary {
 #[non_exhaustive]
 pub struct TransactionSummaryBuilder {
     pub(crate) id: ::std::option::Option<::std::string::String>,
+    pub(crate) account_id: ::std::option::Option<::std::string::String>,
     pub(crate) r#type: ::std::option::Option<crate::types::TransactionType>,
     pub(crate) status: ::std::option::Option<crate::types::TransactionStatus>,
     pub(crate) amount: ::std::option::Option<i64>,
@@ -123,6 +130,20 @@ impl TransactionSummaryBuilder {
     #[allow(missing_docs)] // documentation missing in model
     pub fn get_id(&self) -> &::std::option::Option<::std::string::String> {
         &self.id
+    }
+    #[allow(missing_docs)] // documentation missing in model
+    /// This field is required.
+    pub fn account_id(mut self, input: impl ::std::convert::Into<::std::string::String>) -> Self {
+        self.account_id = ::std::option::Option::Some(input.into());
+        self
+    }
+    #[allow(missing_docs)] // documentation missing in model
+    pub fn set_account_id(mut self, input: ::std::option::Option<::std::string::String>) -> Self {
+        self.account_id = input; self
+    }
+    #[allow(missing_docs)] // documentation missing in model
+    pub fn get_account_id(&self) -> &::std::option::Option<::std::string::String> {
+        &self.account_id
     }
     /// Transaction type.
     /// This field is required.
@@ -289,6 +310,7 @@ impl TransactionSummaryBuilder {
     /// Consumes the builder and constructs a [`TransactionSummary`](crate::types::TransactionSummary).
     /// This method will fail if any of the following fields are not set:
     /// - [`id`](crate::types::builders::TransactionSummaryBuilder::id)
+    /// - [`account_id`](crate::types::builders::TransactionSummaryBuilder::account_id)
     /// - [`r#type`](crate::types::builders::TransactionSummaryBuilder::type)
     /// - [`status`](crate::types::builders::TransactionSummaryBuilder::status)
     /// - [`amount`](crate::types::builders::TransactionSummaryBuilder::amount)
@@ -301,6 +323,11 @@ impl TransactionSummaryBuilder {
                 id: self.id
                     .ok_or_else(||
                         ::aws_smithy_types::error::operation::BuildError::missing_field("id", "id was not specified but it is required when building TransactionSummary")
+                    )?
+                ,
+                account_id: self.account_id
+                    .ok_or_else(||
+                        ::aws_smithy_types::error::operation::BuildError::missing_field("account_id", "account_id was not specified but it is required when building TransactionSummary")
                     )?
                 ,
                 r#type: self.r#type
