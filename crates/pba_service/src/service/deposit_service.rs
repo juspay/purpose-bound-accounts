@@ -171,12 +171,7 @@ impl DepositService {
 
             // Execute TB transfer
             self.ledger_repo
-                .create_transfer(
-                    debit_sentinel,
-                    credit_tb_id,
-                    amount,
-                    DEPOSIT_TRANSFER_CODE,
-                )
+                .create_transfer(debit_sentinel, credit_tb_id, amount, DEPOSIT_TRANSFER_CODE)
                 .await
                 .map_err(|e| {
                     tracing::error!("TB transfer failed, rolling back: {e}");

@@ -138,7 +138,9 @@ async fn transactions_contain_funding_type(world: &mut PbaWorld, expected_type: 
         .as_ref()
         .expect("No all-transactions result");
     assert!(
-        types.iter().any(|t| t.as_deref() == Some(expected_type.as_str())),
+        types
+            .iter()
+            .any(|t| t.as_deref() == Some(expected_type.as_str())),
         "Expected a funding type '{expected_type}', got: {types:?}"
     );
 }

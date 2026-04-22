@@ -482,5 +482,8 @@ async fn funding_type_should_be(world: &mut PbaWorld, expected: String) {
         .last_funding_type
         .as_ref()
         .expect("No funding type recorded");
-    assert_eq!(ft, &expected, "Expected funding type '{expected}', got '{ft}'");
+    assert_eq!(
+        ft, &expected,
+        "Expected funding type '{expected}', got '{ft}'"
+    );
 }

@@ -42,17 +42,18 @@ impl LedgerRepo {
         let self_funding =
             tb::Account::new(SELF_FUNDING_SOURCE_TB_ID, LEDGER_INR_PAISA, CODE_SENTINEL)
                 .with_flags(AccountFlags::LINKED);
-        let merchant =
-            tb::Account::new(MERCHANT_SETTLEMENT_TB_ID, LEDGER_INR_PAISA, CODE_SENTINEL)
-                .with_flags(AccountFlags::LINKED);
+        let merchant = tb::Account::new(MERCHANT_SETTLEMENT_TB_ID, LEDGER_INR_PAISA, CODE_SENTINEL)
+            .with_flags(AccountFlags::LINKED);
         let withdrawal =
             tb::Account::new(WITHDRAWAL_SETTLEMENT_TB_ID, LEDGER_INR_PAISA, CODE_SENTINEL)
                 .with_flags(AccountFlags::LINKED);
-        let trust =
-            tb::Account::new(TRUST_FUNDING_SOURCE_TB_ID, LEDGER_INR_PAISA, CODE_SENTINEL)
-                .with_flags(AccountFlags::LINKED);
-        let third_party =
-            tb::Account::new(THIRD_PARTY_FUNDING_SOURCE_TB_ID, LEDGER_INR_PAISA, CODE_SENTINEL);
+        let trust = tb::Account::new(TRUST_FUNDING_SOURCE_TB_ID, LEDGER_INR_PAISA, CODE_SENTINEL)
+            .with_flags(AccountFlags::LINKED);
+        let third_party = tb::Account::new(
+            THIRD_PARTY_FUNDING_SOURCE_TB_ID,
+            LEDGER_INR_PAISA,
+            CODE_SENTINEL,
+        );
 
         match self
             .client
@@ -91,16 +92,13 @@ impl LedgerRepo {
             "Withdrawal Settlement",
         ];
 
-        let accounts = self
-            .client
-            .lookup_accounts(ids)
-            .await
-            .map_err(|e| AppError::TigerBeetleError(format!("lookup_accounts failed: {e:?}")))?;
+        let accounts =
+            self.client.lookup_accounts(ids).await.map_err(|e| {
+                AppError::TigerBeetleError(format!("lookup_accounts failed: {e:?}"))
+            })?;
 
-        let mut results: Vec<(String, u64, u64, u64, u64)> = names
-            .iter()
-            .map(|n| (n.to_string(), 0, 0, 0, 0))
-            .collect();
+        let mut results: Vec<(String, u64, u64, u64, u64)> =
+            names.iter().map(|n| (n.to_string(), 0, 0, 0, 0)).collect();
 
         for account in &accounts {
             let idx = match account.id() {
