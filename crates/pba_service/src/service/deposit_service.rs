@@ -99,6 +99,7 @@ impl DepositService {
                     None,
                     None,
                     None,
+                    None, // funding_type
                     0,
                     idempotency_key,
                 )
@@ -151,6 +152,7 @@ impl DepositService {
                     None,
                     None,
                     None,
+                    None, // funding_type
                     0,
                     idempotency_key,
                 )

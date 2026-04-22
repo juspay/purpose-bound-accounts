@@ -52,6 +52,7 @@ struct TransactionRow {
     merchant_id: Option<String>,
     merchant_mcc: Option<String>,
     description: Option<String>,
+    funding_type: Option<String>,
     tb_transfer_id: String,
     idempotency_key: Option<String>,
     created_at: DateTime<Utc>,
@@ -77,6 +78,7 @@ impl TransactionRow {
             merchant_id: self.merchant_id,
             merchant_mcc: self.merchant_mcc,
             description: self.description,
+            funding_type: self.funding_type,
             tb_transfer_id: self.tb_transfer_id.parse().unwrap_or(0),
             idempotency_key: self.idempotency_key,
             created_at: self.created_at,
@@ -112,6 +114,7 @@ impl TransactionRepo {
         merchant_id: Option<&str>,
         merchant_mcc: Option<&str>,
         description: Option<&str>,
+        funding_type: Option<&str>,
         tb_transfer_id: u128,
         idempotency_key: Option<&str>,
     ) -> Result<TransactionRecord, AppError> {
@@ -120,12 +123,12 @@ impl TransactionRepo {
             r#"
             INSERT INTO transactions (id, account_id, type, status, amount, pool, direction,
                                       source_ifsc, source_account, gateway_ref, timeout_seconds,
-                                      merchant_id, merchant_mcc, description,
+                                      merchant_id, merchant_mcc, description, funding_type,
                                       tb_transfer_id, idempotency_key)
-            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15::numeric, $16)
+            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16::numeric, $17)
             RETURNING id, account_id, type, status, amount, pool, direction,
                       source_ifsc, source_account, gateway_ref, timeout_seconds,
-                      merchant_id, merchant_mcc, description,
+                      merchant_id, merchant_mcc, description, funding_type,
                       tb_transfer_id::text as tb_transfer_id, idempotency_key,
                       created_at, updated_at
             "#,
@@ -144,6 +147,7 @@ impl TransactionRepo {
         .bind(merchant_id)
         .bind(merchant_mcc)
         .bind(description)
+        .bind(funding_type)
         .bind(&tb_id_str)
         .bind(idempotency_key)
         .fetch_one(tx.as_mut())
@@ -181,7 +185,7 @@ impl TransactionRepo {
             WHERE id = $1
             RETURNING id, account_id, type, status, amount, pool, direction,
                       source_ifsc, source_account, gateway_ref, timeout_seconds,
-                      merchant_id, merchant_mcc, description,
+                      merchant_id, merchant_mcc, description, funding_type,
                       tb_transfer_id::text as tb_transfer_id, idempotency_key,
                       created_at, updated_at
             "#,
@@ -204,7 +208,7 @@ impl TransactionRepo {
             r#"
             SELECT id, account_id, type, status, amount, pool, direction,
                    source_ifsc, source_account, gateway_ref, timeout_seconds,
-                   merchant_id, merchant_mcc, description,
+                   merchant_id, merchant_mcc, description, funding_type,
                    tb_transfer_id::text as tb_transfer_id, idempotency_key,
                    created_at, updated_at
             FROM transactions
@@ -229,7 +233,7 @@ impl TransactionRepo {
             r#"
             SELECT id, account_id, type, status, amount, pool, direction,
                    source_ifsc, source_account, gateway_ref, timeout_seconds,
-                   merchant_id, merchant_mcc, description,
+                   merchant_id, merchant_mcc, description, funding_type,
                    tb_transfer_id::text as tb_transfer_id, idempotency_key,
                    created_at, updated_at
             FROM transactions
@@ -256,7 +260,7 @@ impl TransactionRepo {
             r#"
             SELECT id, account_id, type, status, amount, pool, direction,
                    source_ifsc, source_account, gateway_ref, timeout_seconds,
-                   merchant_id, merchant_mcc, description,
+                   merchant_id, merchant_mcc, description, funding_type,
                    tb_transfer_id::text as tb_transfer_id, idempotency_key,
                    created_at, updated_at
             FROM transactions
@@ -312,7 +316,7 @@ impl TransactionRepo {
             r#"
             SELECT id, account_id, type, status, amount, pool, direction,
                    source_ifsc, source_account, gateway_ref, timeout_seconds,
-                   merchant_id, merchant_mcc, description,
+                   merchant_id, merchant_mcc, description, funding_type,
                    tb_transfer_id::text as tb_transfer_id, idempotency_key,
                    created_at, updated_at
             FROM transactions
@@ -388,7 +392,7 @@ impl TransactionRepo {
             r#"
             SELECT id, account_id, type, status, amount, pool, direction,
                    source_ifsc, source_account, gateway_ref, timeout_seconds,
-                   merchant_id, merchant_mcc, description,
+                   merchant_id, merchant_mcc, description, funding_type,
                    tb_transfer_id::text as tb_transfer_id, idempotency_key,
                    created_at, updated_at
             FROM transactions
@@ -408,7 +412,7 @@ impl TransactionRepo {
             r#"
             SELECT id, account_id, type, status, amount, pool, direction,
                    source_ifsc, source_account, gateway_ref, timeout_seconds,
-                   merchant_id, merchant_mcc, description,
+                   merchant_id, merchant_mcc, description, funding_type,
                    tb_transfer_id::text as tb_transfer_id, idempotency_key,
                    created_at, updated_at
             FROM transactions
