@@ -97,8 +97,25 @@ impl Default for PbaWorld {
 
 #[tokio::main]
 async fn main() {
-    PbaWorld::cucumber()
+    use cucumber::StatsWriter as _;
+
+    // Phase 1: Run @empty-db scenarios first (clean DB, nothing else has run)
+    let w1 = PbaWorld::cucumber()
         .max_concurrent_scenarios(1)
-        .run("tests/features")
+        .filter_run("tests/features", |_feature, _rule, scenario| {
+            scenario.tags.iter().any(|t| t == "empty-db")
+        })
         .await;
+
+    // Phase 2: Run everything else
+    let w2 = PbaWorld::cucumber()
+        .max_concurrent_scenarios(1)
+        .filter_run("tests/features", |_feature, _rule, scenario| {
+            !scenario.tags.iter().any(|t| t == "empty-db")
+        })
+        .await;
+
+    if w1.execution_has_failed() || w2.execution_has_failed() {
+        std::process::exit(1);
+    }
 }

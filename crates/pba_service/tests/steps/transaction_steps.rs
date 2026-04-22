@@ -84,15 +84,16 @@ async fn transactions_list_empty(world: &mut PbaWorld) {
     assert_eq!(count, 0, "Expected empty list, got {count} entries");
 }
 
-#[then(regex = r#"^the transactions list should contain account "([^"]*)"$"#)]
-async fn transactions_contain_account(world: &mut PbaWorld, account_id_prefix: String) {
+#[then("the transactions list should contain the current account")]
+async fn transactions_contain_current_account(world: &mut PbaWorld) {
+    let account_id = world.account_id.as_ref().expect("No account ID set");
     let ids = world
         .all_transactions_account_ids
         .as_ref()
         .expect("No all-transactions result");
     assert!(
-        ids.iter().any(|id| id.starts_with(&account_id_prefix)),
-        "Expected at least one transaction with account starting with '{account_id_prefix}', got: {ids:?}"
+        ids.iter().any(|id| id == account_id),
+        "Expected transaction for account '{account_id}', got: {ids:?}"
     );
 }
 
@@ -113,8 +114,5 @@ async fn transactions_list_count(world: &mut PbaWorld, expected: usize) {
     let count = world
         .all_transactions_count
         .expect("No all-transactions result");
-    assert_eq!(
-        count, expected,
-        "Expected {expected} entries, got {count}"
-    );
+    assert_eq!(count, expected, "Expected {expected} entries, got {count}");
 }
