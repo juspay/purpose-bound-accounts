@@ -6,7 +6,10 @@ use crate::domain::transaction::{
 };
 use crate::error::AppError;
 use crate::repository::account_repo::AccountRepo;
-use crate::repository::ledger_repo::{LedgerRepo, FUNDING_SOURCE_TB_ID};
+use crate::repository::ledger_repo::{
+    LedgerRepo, SELF_FUNDING_SOURCE_TB_ID, THIRD_PARTY_FUNDING_SOURCE_TB_ID,
+    TRUST_FUNDING_SOURCE_TB_ID,
+};
 use crate::repository::transaction_repo::TransactionRepo;
 
 const DEPOSIT_TRANSFER_CODE: u16 = 100;
@@ -105,7 +108,7 @@ impl DepositService {
             let tb_transfer_id = self
                 .ledger_repo
                 .create_pending_transfer(
-                    FUNDING_SOURCE_TB_ID,
+                    SELF_FUNDING_SOURCE_TB_ID,
                     credit_tb_id,
                     amount,
                     PENDING_DEPOSIT_TRANSFER_CODE,
@@ -156,7 +159,7 @@ impl DepositService {
             // Execute TB transfer
             self.ledger_repo
                 .create_transfer(
-                    FUNDING_SOURCE_TB_ID,
+                    SELF_FUNDING_SOURCE_TB_ID,
                     credit_tb_id,
                     amount,
                     DEPOSIT_TRANSFER_CODE,
