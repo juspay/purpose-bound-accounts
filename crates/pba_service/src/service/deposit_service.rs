@@ -43,6 +43,7 @@ impl DepositService {
         account_id: Uuid,
         source_ifsc: &str,
         source_account_number: &str,
+        funding_type: Option<&str>,
         amount: u64,
         pending: bool,
         gateway_ref: Option<&str>,
@@ -67,12 +68,22 @@ impl DepositService {
         }
 
         let is_self = account.is_origin_source(source_ifsc, source_account_number);
+
+        let (pool, resolved_funding_type, debit_sentinel) = if is_self {
+            ("self", "self", SELF_FUNDING_SOURCE_TB_ID)
+        } else {
+            match funding_type {
+                Some("trust") => ("others", "trust", TRUST_FUNDING_SOURCE_TB_ID),
+                Some("third_party") => ("others", "third_party", THIRD_PARTY_FUNDING_SOURCE_TB_ID),
+                _ => return Err(AppError::FundingTypeRequired),
+            }
+        };
+
         let credit_tb_id = if is_self {
             account.tb_self_account_id
         } else {
             account.tb_others_account_id
         };
-        let pool = if is_self { "self" } else { "others" };
         let deposit_id = Uuid::new_v4();
 
         let mut tx = self.transaction_repo.pool().begin().await?;
@@ -99,7 +110,7 @@ impl DepositService {
                     None,
                     None,
                     None,
-                    None, // funding_type
+                    Some(resolved_funding_type),
                     0,
                     idempotency_key,
                 )
@@ -109,7 +120,7 @@ impl DepositService {
             let tb_transfer_id = self
                 .ledger_repo
                 .create_pending_transfer(
-                    SELF_FUNDING_SOURCE_TB_ID,
+                    debit_sentinel,
                     credit_tb_id,
                     amount,
                     PENDING_DEPOSIT_TRANSFER_CODE,
@@ -152,7 +163,7 @@ impl DepositService {
                     None,
                     None,
                     None,
-                    None, // funding_type
+                    Some(resolved_funding_type),
                     0,
                     idempotency_key,
                 )
@@ -161,7 +172,7 @@ impl DepositService {
             // Execute TB transfer
             self.ledger_repo
                 .create_transfer(
-                    SELF_FUNDING_SOURCE_TB_ID,
+                    debit_sentinel,
                     credit_tb_id,
                     amount,
                     DEPOSIT_TRANSFER_CODE,
