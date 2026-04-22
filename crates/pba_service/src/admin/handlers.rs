@@ -6,7 +6,7 @@ use serde::Deserialize;
 use uuid::Uuid;
 
 use crate::domain::purpose::PurposeType;
-use crate::domain::transaction::TransactionRecord;
+use crate::domain::transaction::{TransactionRecord, TransactionStatus};
 use crate::AppState;
 
 fn render<T: Template>(tmpl: T) -> Response {
@@ -586,6 +586,122 @@ pub async fn process_withdrawal(
             })
         }
     }
+}
+
+#[derive(Template)]
+#[template(path = "admin/transactions.html")]
+struct TransactionsPageTemplate {
+    self_balance: String,
+    others_balance: String,
+    total_balance: String,
+    pending_self: String,
+    pending_others: String,
+    transactions: Vec<AllTransactionRow>,
+    total: i64,
+    offset: i64,
+    limit: i64,
+    count: i64,
+    prev_offset: i64,
+    next_offset: i64,
+    has_next: bool,
+}
+
+struct AllTransactionRow {
+    timestamp: String,
+    account_id: String,
+    account_id_short: String,
+    transfer_type: String,
+    status: String,
+    status_class: String,
+    pool: String,
+    direction: String,
+    direction_class: String,
+    amount: String,
+}
+
+#[derive(Deserialize)]
+pub struct TransactionsPageQuery {
+    offset: Option<i64>,
+    limit: Option<i64>,
+}
+
+pub async fn transactions_page(
+    State(state): State<AppState>,
+    axum::extract::Query(query): axum::extract::Query<TransactionsPageQuery>,
+) -> Response {
+    let offset = query.offset.unwrap_or(0).max(0);
+    let limit = query.limit.unwrap_or(50).clamp(1, 100);
+
+    let pool_summary = match state.transaction_repo.pool_summary().await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("Failed to get pool summary: {e}");
+            return (StatusCode::INTERNAL_SERVER_ERROR, "Database error").into_response();
+        }
+    };
+
+    let transactions = match state
+        .transaction_repo
+        .list_all(offset, limit, None, None)
+        .await
+    {
+        Ok(t) => t,
+        Err(e) => {
+            tracing::error!("Failed to list transactions: {e}");
+            return (StatusCode::INTERNAL_SERVER_ERROR, "Database error").into_response();
+        }
+    };
+
+    let total = match state.transaction_repo.count_all(None, None).await {
+        Ok(c) => c,
+        Err(e) => {
+            tracing::error!("Failed to count transactions: {e}");
+            return (StatusCode::INTERNAL_SERVER_ERROR, "Database error").into_response();
+        }
+    };
+
+    let count = transactions.len() as i64;
+    let rows: Vec<AllTransactionRow> = transactions
+        .into_iter()
+        .map(|t| {
+            let pool = if t.pool == "self" { "Self" } else { "Others" };
+            let status_class = match t.status {
+                TransactionStatus::Pending => "status-frozen",
+                TransactionStatus::Posted | TransactionStatus::Settled => "status-active",
+                TransactionStatus::Voided => "status-closed",
+            };
+            AllTransactionRow {
+                timestamp: t.created_at.format("%Y-%m-%d %H:%M:%S").to_string(),
+                account_id: t.account_id.to_string(),
+                account_id_short: t.account_id.to_string()[..8].to_string(),
+                transfer_type: t.type_label().to_string(),
+                status: t.status.as_str().to_string(),
+                status_class: status_class.to_string(),
+                pool: pool.to_string(),
+                direction: t.direction.label().to_string(),
+                direction_class: t.direction.css_class().to_string(),
+                amount: t.amount_display(),
+            }
+        })
+        .collect();
+
+    let fmt = |amt: u64| format!("{}.{:02}", amt / 100, amt % 100);
+
+    render(TransactionsPageTemplate {
+        self_balance: fmt(pool_summary.self_balance()),
+        others_balance: fmt(pool_summary.others_balance()),
+        total_balance: fmt(pool_summary.total_balance()),
+        pending_self: fmt(pool_summary.pending_self),
+        pending_others: fmt(pool_summary.pending_others),
+        transactions: rows,
+        total,
+        offset,
+        limit,
+        count,
+        prev_offset: (offset - limit).max(0),
+        next_offset: offset + limit,
+        has_next: offset + count < total,
+    })
 }
 
 #[derive(Template)]
