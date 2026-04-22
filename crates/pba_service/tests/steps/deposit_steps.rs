@@ -38,6 +38,7 @@ async fn account_has_balances(world: &mut PbaWorld, self_amount: i64, others_amo
             .source_ifsc("OTHER0009999")
             .source_account_number("9999999999")
             .amount(others_amount)
+            .funding_type(pba_client::types::FundingType::from("third_party"))
             .send()
             .await
             .expect("Failed to deposit to others-pool");
@@ -60,6 +61,7 @@ async fn deposit(world: &mut PbaWorld, amount: i64, ifsc: String, account_number
         Ok(output) => {
             world.last_deposit_pool = Some(output.pool().to_string());
             world.last_deposit_id = Some(output.deposit_id().to_string());
+            world.last_funding_type = Some(output.funding_type().to_string());
         }
         Err(e) => panic!("Deposit failed: {e:?}"),
     }
@@ -409,4 +411,76 @@ async fn pending_others_should_be(world: &mut PbaWorld, expected: i64) {
         expected,
         balance.pending_others()
     );
+}
+
+#[when(
+    regex = r#"^I deposit (\d+) from IFSC "([^"]*)" account "([^"]*)" with funding type "([^"]*)"$"#
+)]
+async fn deposit_with_funding_type(
+    world: &mut PbaWorld,
+    amount: i64,
+    ifsc: String,
+    account_number: String,
+    funding_type: String,
+) {
+    let account_id = world.account_id.as_ref().expect("No account ID");
+    let result = world
+        .client
+        .deposit()
+        .account_id(account_id)
+        .source_ifsc(&ifsc)
+        .source_account_number(&account_number)
+        .amount(amount)
+        .funding_type(pba_client::types::FundingType::from(funding_type.as_str()))
+        .send()
+        .await;
+    match result {
+        Ok(output) => {
+            world.last_deposit_pool = Some(output.pool().to_string());
+            world.last_deposit_id = Some(output.deposit_id().to_string());
+            world.last_funding_type = Some(output.funding_type().to_string());
+        }
+        Err(e) => panic!("Deposit with funding type failed: {e:?}"),
+    }
+}
+
+#[when(
+    regex = r#"^I attempt to deposit (\d+) from IFSC "([^"]*)" account "([^"]*)" without funding type$"#
+)]
+async fn attempt_deposit_without_funding_type(
+    world: &mut PbaWorld,
+    amount: i64,
+    ifsc: String,
+    account_number: String,
+) {
+    let account_id = world.account_id.as_ref().expect("No account ID");
+    let result = world
+        .client
+        .deposit()
+        .account_id(account_id)
+        .source_ifsc(&ifsc)
+        .source_account_number(&account_number)
+        .amount(amount)
+        .send()
+        .await;
+    match result {
+        Ok(output) => {
+            world.last_deposit_pool = Some(output.pool().to_string());
+            world.last_error = None;
+        }
+        Err(_) => {
+            world.last_error = Some(crate::PbaError {
+                kind: "funding_type_required".into(),
+            });
+        }
+    }
+}
+
+#[then(regex = r#"^the funding type should be "([^"]*)"$"#)]
+async fn funding_type_should_be(world: &mut PbaWorld, expected: String) {
+    let ft = world
+        .last_funding_type
+        .as_ref()
+        .expect("No funding type recorded");
+    assert_eq!(ft, &expected, "Expected funding type '{expected}', got '{ft}'");
 }

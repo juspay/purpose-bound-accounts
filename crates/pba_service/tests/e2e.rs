@@ -39,6 +39,10 @@ pub struct PbaWorld {
     all_transactions_count: Option<usize>,
     all_transactions_types: Option<Vec<String>>,
     all_transactions_account_ids: Option<Vec<String>>,
+    /// Last deposit funding type
+    last_funding_type: Option<String>,
+    /// All-transactions funding types
+    all_transactions_funding_types: Option<Vec<Option<String>>>,
 }
 
 #[derive(Debug, Clone)]
@@ -91,6 +95,8 @@ impl Default for PbaWorld {
             all_transactions_count: None,
             all_transactions_types: None,
             all_transactions_account_ids: None,
+            last_funding_type: None,
+            all_transactions_funding_types: None,
         }
     }
 }
