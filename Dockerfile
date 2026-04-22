@@ -1,7 +1,7 @@
 # ── Stage 1: Chef — install cargo-chef ──────────────────────
 FROM rust:1.87-bookworm AS chef
 
-RUN cargo install cargo-chef
+RUN cargo install cargo-chef --locked
 
 # Install Zig + libclang (required by tigerbeetle-unofficial sys crate and bindgen)
 RUN apt-get update && apt-get install -y --no-install-recommends xz-utils libclang-dev \
