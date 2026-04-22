@@ -1,7 +1,5 @@
-# ── Stage 1: Chef — install cargo-chef ──────────────────────
-FROM rust:1.87-bookworm AS chef
-
-RUN cargo install cargo-chef --locked
+# ── Stage 1: Chef base — cargo-chef + Zig + libclang ────────
+FROM lukemathwalker/cargo-chef:latest-rust-bookworm AS chef
 
 # Install Zig + libclang (required by tigerbeetle-unofficial sys crate and bindgen)
 RUN apt-get update && apt-get install -y --no-install-recommends xz-utils libclang-dev \
@@ -26,7 +24,7 @@ COPY . .
 RUN cargo build --release -p pba-service \
     && strip target/release/pba-service
 
-# ── Stage 4: Runtime ─────────────────────────────────────────
+# ── Stage 4: Runtime ─────────────────────���───────────────────
 FROM debian:bookworm-slim
 
 RUN apt-get update && apt-get install -y --no-install-recommends ca-certificates \
