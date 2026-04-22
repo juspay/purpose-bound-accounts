@@ -1,12 +1,12 @@
 # ── Stage 1: Build ──────────────────────────────────────────
 FROM rust:1.87-bookworm AS builder
 
-# Install Zig (required by tigerbeetle-unofficial sys crate)
-RUN apt-get update && apt-get install -y --no-install-recommends xz-utils \
+# Install Zig + libclang (required by tigerbeetle-unofficial sys crate and bindgen)
+RUN apt-get update && apt-get install -y --no-install-recommends xz-utils libclang-dev \
     && curl -fSLO https://ziglang.org/download/0.14.1/zig-x86_64-linux-0.14.1.tar.xz \
     && tar xf zig-x86_64-linux-0.14.1.tar.xz -C /opt \
     && rm zig-x86_64-linux-0.14.1.tar.xz \
-    && apt-get purge -y xz-utils && apt-get autoremove -y && rm -rf /var/lib/apt/lists/*
+    && rm -rf /var/lib/apt/lists/*
 
 ENV ZIG_PATH=/opt/zig-x86_64-linux-0.14.1/zig
 
