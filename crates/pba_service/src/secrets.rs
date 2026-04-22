@@ -35,7 +35,6 @@ pub async fn create_provider() -> Box<dyn SecretsProvider> {
 
     match provider_name.as_str() {
         "plaintext" => Box::new(super::secrets_plaintext::PlaintextProvider),
-        #[cfg(feature = "aws-kms")]
         "aws-kms" => Box::new(super::secrets_kms::AwsKmsProvider::new().await),
         other => panic!("unknown SECRETS_PROVIDER: {other}"),
     }

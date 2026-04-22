@@ -1,5 +1,3 @@
-#![cfg(feature = "aws-kms")]
-
 use async_trait::async_trait;
 use aws_sdk_kms::primitives::Blob;
 use base64::Engine;
