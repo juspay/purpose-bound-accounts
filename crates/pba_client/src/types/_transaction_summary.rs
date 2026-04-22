@@ -29,6 +29,8 @@ pub struct TransactionSummary  {
     pub source_account: ::std::option::Option<::std::string::String>,
     #[allow(missing_docs)] // documentation missing in model
     pub gateway_ref: ::std::option::Option<::std::string::String>,
+    #[allow(missing_docs)] // documentation missing in model
+    pub funding_type: ::std::option::Option<::std::string::String>,
     /// ISO 8601 date-time.
     pub created_at: ::aws_smithy_types::DateTime,
 }
@@ -85,6 +87,10 @@ impl  TransactionSummary  {
     pub fn gateway_ref(&self) -> ::std::option::Option<&str> {
         self.gateway_ref.as_deref()
     }
+    #[allow(missing_docs)] // documentation missing in model
+    pub fn funding_type(&self) -> ::std::option::Option<&str> {
+        self.funding_type.as_deref()
+    }
     /// ISO 8601 date-time.
     pub fn created_at(&self) -> &::aws_smithy_types::DateTime {
         &self.created_at
@@ -114,6 +120,7 @@ pub struct TransactionSummaryBuilder {
     pub(crate) source_ifsc: ::std::option::Option<::std::string::String>,
     pub(crate) source_account: ::std::option::Option<::std::string::String>,
     pub(crate) gateway_ref: ::std::option::Option<::std::string::String>,
+    pub(crate) funding_type: ::std::option::Option<::std::string::String>,
     pub(crate) created_at: ::std::option::Option<::aws_smithy_types::DateTime>,
 }
 impl TransactionSummaryBuilder {
@@ -293,6 +300,19 @@ impl TransactionSummaryBuilder {
     pub fn get_gateway_ref(&self) -> &::std::option::Option<::std::string::String> {
         &self.gateway_ref
     }
+    #[allow(missing_docs)] // documentation missing in model
+    pub fn funding_type(mut self, input: impl ::std::convert::Into<::std::string::String>) -> Self {
+        self.funding_type = ::std::option::Option::Some(input.into());
+        self
+    }
+    #[allow(missing_docs)] // documentation missing in model
+    pub fn set_funding_type(mut self, input: ::std::option::Option<::std::string::String>) -> Self {
+        self.funding_type = input; self
+    }
+    #[allow(missing_docs)] // documentation missing in model
+    pub fn get_funding_type(&self) -> &::std::option::Option<::std::string::String> {
+        &self.funding_type
+    }
     /// ISO 8601 date-time.
     /// This field is required.
     pub fn created_at(mut self, input: ::aws_smithy_types::DateTime) -> Self {
@@ -366,6 +386,8 @@ impl TransactionSummaryBuilder {
                 source_account: self.source_account
                 ,
                 gateway_ref: self.gateway_ref
+                ,
+                funding_type: self.funding_type
                 ,
                 created_at: self.created_at
                     .ok_or_else(||

@@ -826,6 +826,9 @@
                     "source_account_number": {
                         "type": "string"
                     },
+                    "funding_type": {
+                        "$ref": "#/components/schemas/FundingType"
+                    },
                     "amount": {
                         "type": "number",
                         "description": "Monetary amount in the smallest currency unit (e.g., paise for INR)."
@@ -865,6 +868,9 @@
                     "pool": {
                         "type": "string"
                     },
+                    "funding_type": {
+                        "type": "string"
+                    },
                     "status": {
                         "type": "string"
                     },
@@ -879,6 +885,7 @@
                     "account_id",
                     "amount",
                     "deposit_id",
+                    "funding_type",
                     "pool",
                     "status"
                 ]
@@ -896,6 +903,14 @@
                 "required": [
                     "error",
                     "message"
+                ]
+            },
+            "FundingType": {
+                "type": "string",
+                "description": "Funding source type for deposits.",
+                "enum": [
+                    "trust",
+                    "third_party"
                 ]
             },
             "GetAccountResponseContent": {
@@ -1189,6 +1204,9 @@
                     "pool": {
                         "type": "string"
                     },
+                    "funding_type": {
+                        "type": "string"
+                    },
                     "status": {
                         "type": "string"
                     },
@@ -1310,6 +1328,9 @@
                     "gateway_ref": {
                         "type": "string"
                     },
+                    "funding_type": {
+                        "type": "string"
+                    },
                     "created_at": {
                         "type": "string",
                         "description": "ISO 8601 date-time.",
@@ -1426,6 +1447,9 @@
                         "description": "Monetary amount in the smallest currency unit (e.g., paise for INR)."
                     },
                     "pool": {
+                        "type": "string"
+                    },
+                    "funding_type": {
                         "type": "string"
                     },
                     "status": {

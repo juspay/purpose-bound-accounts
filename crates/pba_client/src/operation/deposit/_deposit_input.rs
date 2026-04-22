@@ -9,6 +9,8 @@ pub struct DepositInput  {
     pub source_ifsc: ::std::option::Option<::std::string::String>,
     #[allow(missing_docs)] // documentation missing in model
     pub source_account_number: ::std::option::Option<::std::string::String>,
+    /// Funding source type for deposits.
+    pub funding_type: ::std::option::Option<crate::types::FundingType>,
     /// Monetary amount in the smallest currency unit (e.g., paise for INR).
     pub amount: ::std::option::Option<i64>,
     #[allow(missing_docs)] // documentation missing in model
@@ -32,6 +34,10 @@ impl  DepositInput  {
     #[allow(missing_docs)] // documentation missing in model
     pub fn source_account_number(&self) -> ::std::option::Option<&str> {
         self.source_account_number.as_deref()
+    }
+    /// Funding source type for deposits.
+    pub fn funding_type(&self) -> ::std::option::Option<&crate::types::FundingType> {
+        self.funding_type.as_ref()
     }
     /// Monetary amount in the smallest currency unit (e.g., paise for INR).
     pub fn amount(&self) -> ::std::option::Option<i64> {
@@ -68,6 +74,7 @@ pub struct DepositInputBuilder {
     pub(crate) account_id: ::std::option::Option<::std::string::String>,
     pub(crate) source_ifsc: ::std::option::Option<::std::string::String>,
     pub(crate) source_account_number: ::std::option::Option<::std::string::String>,
+    pub(crate) funding_type: ::std::option::Option<crate::types::FundingType>,
     pub(crate) amount: ::std::option::Option<i64>,
     pub(crate) pending: ::std::option::Option<bool>,
     pub(crate) gateway_ref: ::std::option::Option<::std::string::String>,
@@ -116,6 +123,19 @@ impl DepositInputBuilder {
     #[allow(missing_docs)] // documentation missing in model
     pub fn get_source_account_number(&self) -> &::std::option::Option<::std::string::String> {
         &self.source_account_number
+    }
+    /// Funding source type for deposits.
+    pub fn funding_type(mut self, input: crate::types::FundingType) -> Self {
+        self.funding_type = ::std::option::Option::Some(input);
+        self
+    }
+    /// Funding source type for deposits.
+    pub fn set_funding_type(mut self, input: ::std::option::Option<crate::types::FundingType>) -> Self {
+        self.funding_type = input; self
+    }
+    /// Funding source type for deposits.
+    pub fn get_funding_type(&self) -> &::std::option::Option<crate::types::FundingType> {
+        &self.funding_type
     }
     /// Monetary amount in the smallest currency unit (e.g., paise for INR).
     /// This field is required.
@@ -192,6 +212,8 @@ impl DepositInputBuilder {
                 source_ifsc: self.source_ifsc
                 ,
                 source_account_number: self.source_account_number
+                ,
+                funding_type: self.funding_type
                 ,
                 amount: self.amount
                 ,

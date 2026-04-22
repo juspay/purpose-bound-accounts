@@ -98,6 +98,15 @@ pub(crate) fn de_post_deposit(value: &[u8], mut builder: crate::operation::post_
                             ).transpose()?
                         );
                     }
+                    "funding_type" => {
+                        builder = builder.set_funding_type(
+                            ::aws_smithy_json::deserialize::token::expect_string_or_null(tokens.next())?.map(|s|
+                                s.to_unescaped().map(|u|
+                                    u.into_owned()
+                                )
+                            ).transpose()?
+                        );
+                    }
                     "gateway_ref" => {
                         builder = builder.set_gateway_ref(
                             ::aws_smithy_json::deserialize::token::expect_string_or_null(tokens.next())?.map(|s|

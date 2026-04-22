@@ -10,6 +10,7 @@ impl super::Client {
     ///   - [`account_id(String)`](crate::operation::post_deposit::PostDepositOutput::account_id): (undocumented)
     ///   - [`amount(i64)`](crate::operation::post_deposit::PostDepositOutput::amount): Monetary amount in the smallest currency unit (e.g., paise for INR).
     ///   - [`pool(String)`](crate::operation::post_deposit::PostDepositOutput::pool): (undocumented)
+    ///   - [`funding_type(Option<String>)`](crate::operation::post_deposit::PostDepositOutput::funding_type): (undocumented)
     ///   - [`status(String)`](crate::operation::post_deposit::PostDepositOutput::status): (undocumented)
     ///   - [`gateway_ref(Option<String>)`](crate::operation::post_deposit::PostDepositOutput::gateway_ref): (undocumented)
     ///   - [`timeout_seconds(Option<i32>)`](crate::operation::post_deposit::PostDepositOutput::timeout_seconds): (undocumented)

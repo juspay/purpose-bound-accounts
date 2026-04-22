@@ -11,6 +11,7 @@ impl super::Client {
     ///   - [`account_id(String)`](crate::operation::void_deposit::VoidDepositOutput::account_id): (undocumented)
     ///   - [`amount(i64)`](crate::operation::void_deposit::VoidDepositOutput::amount): Monetary amount in the smallest currency unit (e.g., paise for INR).
     ///   - [`pool(String)`](crate::operation::void_deposit::VoidDepositOutput::pool): (undocumented)
+    ///   - [`funding_type(Option<String>)`](crate::operation::void_deposit::VoidDepositOutput::funding_type): (undocumented)
     ///   - [`status(String)`](crate::operation::void_deposit::VoidDepositOutput::status): (undocumented)
     ///   - [`gateway_ref(Option<String>)`](crate::operation::void_deposit::VoidDepositOutput::gateway_ref): (undocumented)
     ///   - [`timeout_seconds(Option<i32>)`](crate::operation::void_deposit::VoidDepositOutput::timeout_seconds): (undocumented)
