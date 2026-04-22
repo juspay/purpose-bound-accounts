@@ -17,7 +17,7 @@ impl AppConfig {
         let db_host = std::env::var("DB_HOST").unwrap_or_else(|_| "localhost".to_string());
         let db_port = std::env::var("DB_PORT").unwrap_or_else(|_| "5432".to_string());
         let db_name = std::env::var("DB_NAME").unwrap_or_else(|_| "pba_service".to_string());
-        let db_user = std::env::var("DB_USER").unwrap_or_else(|_| "postgres".to_string());
+        let db_user = std::env::var("DB_USER").ok();
         let raw_db_password = std::env::var("DB_PASSWORD").unwrap_or_default();
         let db_password = if raw_db_password.is_empty() {
             raw_db_password
@@ -28,11 +28,15 @@ impl AppConfig {
                 .expect("Failed to decrypt DB_PASSWORD")
         };
 
-        // Unix socket paths start with '/'; use ?host= query param for sqlx
+        // Unix socket: fall back to OS user (trust auth); TCP: require explicit DB_USER
         let database_url = if db_host.starts_with('/') {
-            format!("postgres://{db_user}:{db_password}@/{db_name}?host={db_host}")
+            let user = db_user
+                .or_else(|| std::env::var("USER").ok())
+                .expect("DB_USER or USER must be set");
+            format!("postgres://{user}:{db_password}@localhost:{db_port}/{db_name}?host={db_host}")
         } else {
-            format!("postgres://{db_user}:{db_password}@{db_host}:{db_port}/{db_name}")
+            let user = db_user.expect("DB_USER must be set for TCP connections");
+            format!("postgres://{user}:{db_password}@{db_host}:{db_port}/{db_name}")
         };
 
         let tb_addresses =
