@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PBA Service Demo</title>
+    <style>
+        :root {
+            --bg: #fdfdfd;
+            --fg: #1a1a2e;
+            --muted: #555;
+            --accent: #2563eb;
+            --border: #e2e8f0;
+            --card-bg: #fff;
+            --code-bg: #f1f5f9;
+            --table-stripe: #f8fafc;
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            color: var(--fg);
+            background: var(--bg);
+            line-height: 1.6;
+            max-width: 960px;
+            margin: 0 auto;
+            padding: 2rem 1.5rem 4rem;
+        }
+        h1 { font-size: 2rem; margin-bottom: 0.25rem; }
+        h2 { font-size: 1.4rem; margin-top: 2.5rem; margin-bottom: 0.75rem; border-bottom: 2px solid var(--border); padding-bottom: 0.25rem; }
+        h3 { font-size: 1.1rem; margin-top: 1.5rem; margin-bottom: 0.5rem; }
+        p, li { margin-bottom: 0.5rem; }
+        .subtitle { color: var(--muted); margin-bottom: 2rem; }
+        table { width: 100%; border-collapse: collapse; margin: 1rem 0; font-size: 0.9rem; }
+        th, td { padding: 0.5rem 0.75rem; text-align: left; border: 1px solid var(--border); }
+        th { background: var(--code-bg); font-weight: 600; }
+        tr:nth-child(even) { background: var(--table-stripe); }
+        code { background: var(--code-bg); padding: 0.15rem 0.4rem; border-radius: 3px; font-size: 0.85em; }
+        .card { background: var(--card-bg); border: 1px solid var(--border); border-radius: 8px; padding: 1.25rem; margin: 1rem 0; }
+        .gallery { display: grid; grid-template-columns: 1fr; gap: 1.5rem; margin: 1rem 0; }
+        .gallery figure { margin: 0; }
+        .gallery img { width: 100%; border: 1px solid var(--border); border-radius: 6px; cursor: pointer; transition: box-shadow 0.2s; }
+        .gallery img:hover { box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+        .gallery figcaption { font-size: 0.85rem; color: var(--muted); margin-top: 0.35rem; text-align: center; }
+        .file-list { list-style: none; padding: 0; }
+        .file-list li { padding: 0.4rem 0; border-bottom: 1px solid var(--border); }
+        .file-list li:last-child { border-bottom: none; }
+        .file-list a { color: var(--accent); text-decoration: none; font-weight: 500; }
+        .file-list a:hover { text-decoration: underline; }
+        .file-list .desc { color: var(--muted); font-size: 0.85rem; margin-left: 0.5rem; }
+        .badge { display: inline-block; padding: 0.15rem 0.5rem; border-radius: 4px; font-size: 0.75rem; font-weight: 600; }
+        .badge-self { background: #dbeafe; color: #1e40af; }
+        .badge-trust { background: #d1fae5; color: #065f46; }
+        .badge-tp { background: #fef3c7; color: #92400e; }
+        .badge-payment { background: #fee2e2; color: #991b1b; }
+        .recon-ok { color: #059669; font-weight: 600; }
+        ul { padding-left: 1.5rem; }
+        nav.toc { margin: 1.5rem 0; }
+        nav.toc ul { list-style: none; padding: 0; }
+        nav.toc li { padding: 0.25rem 0; }
+        nav.toc a { color: var(--accent); text-decoration: none; }
+        nav.toc a:hover { text-decoration: underline; }
+        .lightbox { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); z-index: 1000; justify-content: center; align-items: center; cursor: zoom-out; }
+        .lightbox.active { display: flex; }
+        .lightbox img { max-width: 95%; max-height: 95%; object-fit: contain; border-radius: 4px; }
+    </style>
+</head>
+<body>
+
+<h1>Purpose-Bound Accounts &mdash; Demo</h1>
+<p class="subtitle">Two parallel health accounts demonstrating funding source differentiation, pool-based payment splitting, and double-entry reconciliation.</p>
+
+<nav class="toc">
+    <strong>Contents</strong>
+    <ul>
+        <li><a href="#accounts">Accounts</a></li>
+        <li><a href="#scenario">Scenario (Chronological)</a></li>
+        <li><a href="#balances">Final Balances</a></li>
+        <li><a href="#summary">Transaction Summary</a></li>
+        <li><a href="#reconciliation">System Reconciliation</a></li>
+        <li><a href="#behaviours">Key Behaviours</a></li>
+        <li><a href="#screenshots">Screenshots</a></li>
+        <li><a href="#downloads">Downloads</a></li>
+    </ul>
+</nav>
+
+<h2 id="accounts">Accounts</h2>
+<table>
+    <tr><th>#</th><th>Account ID</th><th>Origin Bank</th><th>IFSC</th><th>Purpose</th></tr>
+    <tr><td>1</td><td><code>a56b0ddb</code></td><td>SBI</td><td><code>SBIN0001234</code></td><td>Health</td></tr>
+    <tr><td>2</td><td><code>5f96e380</code></td><td>HDFC</td><td><code>HDFC0009876</code></td><td>Health</td></tr>
+</table>
+<p>Both are <strong>health</strong> purpose accounts, restricting payments to health-related MCCs (hospitals, pharmacies, clinics, etc.).</p>
+
+<h2 id="scenario">Scenario (Chronological)</h2>
+
+<h3>Phase 1: Initial Trust Deposit + Immediate Payment</h3>
+<div class="card">
+    <p>Each account receives a lump-sum <span class="badge badge-trust">Rs 300 trust</span> deposit (simulating an employer/family contribution), immediately followed by a <span class="badge badge-payment">Rs 300 payment</span> to NHIL health insurance (MCC 8062).</p>
+    <p>Since the others pool has exactly Rs 300, the payment is <strong>fully covered from the others pool</strong> &mdash; zero self-contribution required.</p>
+    <table>
+        <tr><th>Account</th><th>Others Drained</th><th>Self Drained</th><th>Total</th></tr>
+        <tr><td>1 (SBI)</td><td>Rs 300</td><td>Rs 0</td><td>Rs 300</td></tr>
+        <tr><td>2 (HDFC)</td><td>Rs 300</td><td>Rs 0</td><td>Rs 300</td></tr>
+    </table>
+</div>
+
+<h3>Phase 2: Trust-Matched Contributions Over 30 Minutes</h3>
+<div class="card">
+    <p>For <strong>both accounts</strong>, one deposit pair per minute for 30 minutes:</p>
+    <ul>
+        <li><span class="badge badge-self">Rs 5 self</span> &mdash; from the origin bank (auto-detected)</li>
+        <li><span class="badge badge-trust">Rs 5 trust</span> &mdash; employer match</li>
+    </ul>
+    <p><strong>Account 2 additionally</strong> receives 4 sporadic <span class="badge badge-tp">Rs 5 third-party</span> deposits (~minutes 4, 11, 18, 25), simulating ad-hoc family/community contributions.</p>
+    <table>
+        <tr><th>Pool</th><th>Account 1 (SBI)</th><th>Account 2 (HDFC)</th></tr>
+        <tr><td>Self</td><td>Rs 150 (30 &times; Rs 5)</td><td>Rs 150 (30 &times; Rs 5)</td></tr>
+        <tr><td>Others</td><td>Rs 150 (30 &times; Rs 5 trust)</td><td>Rs 170 (30 trust + 4 third-party)</td></tr>
+    </table>
+</div>
+
+<h3>Phase 3: Second Payment &mdash; Rs 300 to NHIL</h3>
+<div class="card">
+    <p>A second <span class="badge badge-payment">Rs 300 payment</span> to NHIL. The split logic <strong>drains the others pool first</strong>, then falls back to self:</p>
+    <table>
+        <tr><th>Account</th><th>Others Available</th><th>Others Drained</th><th>Self Drained</th><th>Total</th></tr>
+        <tr><td>1 (SBI)</td><td>Rs 150</td><td>Rs 150</td><td>Rs 150</td><td>Rs 300</td></tr>
+        <tr><td>2 (HDFC)</td><td>Rs 170</td><td>Rs 170</td><td>Rs 130</td><td>Rs 300</td></tr>
+    </table>
+    <p>Account 2's extra Rs 20 from third-party deposits means it draws Rs 20 less from its self pool.</p>
+</div>
+
+<h2 id="balances">Final Balances</h2>
+<table>
+    <tr><th>Pool</th><th>Account 1 (SBI)</th><th>Account 2 (HDFC)</th></tr>
+    <tr><td>Self</td><td>Rs 0.00</td><td>Rs 20.00</td></tr>
+    <tr><td>Others</td><td>Rs 0.00</td><td>Rs 0.00</td></tr>
+    <tr><td><strong>Total</strong></td><td><strong>Rs 0.00</strong></td><td><strong>Rs 20.00</strong></td></tr>
+</table>
+<p>Account 2 retains Rs 20 in the self pool &mdash; exactly the amount saved by third-party contributions absorbing more of the second payment.</p>
+
+<h2 id="summary">Transaction Summary</h2>
+<table>
+    <tr><th>Metric</th><th>Account 1 (SBI)</th><th>Account 2 (HDFC)</th><th>Total</th></tr>
+    <tr><td>Total transactions</td><td>64</td><td>68</td><td>132</td></tr>
+    <tr><td><span class="badge badge-self">Self</span> deposits</td><td>30 (Rs 150)</td><td>30 (Rs 150)</td><td>60 (Rs 300)</td></tr>
+    <tr><td><span class="badge badge-trust">Trust</span> deposits</td><td>30 (Rs 450 - includes initial Rs. 300)</td><td>30 (Rs 450 - includes initial Rs. 300)</td><td>30 (Rs 900)</td></tr>
+    <tr><td><span class="badge badge-tp">Third-party</span> deposits</td><td>0</td><td>4 (Rs 20)</td><td>4 (Rs 20)</td></tr>
+    <tr><td><span class="badge badge-payment">Payments</span> (from others)</td><td>2 (Rs 450)</td><td>2 (Rs 470)</td><td>4 (Rs 920)</td></tr>
+    <tr><td><span class="badge badge-payment">Payments</span> (from self)</td><td>1 (Rs 150)</td><td>1 (Rs 130)</td><td>2 (Rs 280)</td></tr>
+</table>
+<p><em>Trust deposits include 1 &times; Rs 300 lump-sum + 30 &times; Rs 5 periodic = Rs 450 per account.</em></p>
+
+<h2 id="reconciliation">System Reconciliation</h2>
+<h3>Sentinel Accounts (TigerBeetle)</h3>
+<table>
+    <tr><th>Sentinel Account</th><th>Credits</th><th>Debits</th><th>Balance</th></tr>
+    <tr><td>Self Funding Source</td><td>0.00</td><td>300.00</td><td>-300.00</td></tr>
+    <tr><td>Trust Funding Source</td><td>0.00</td><td>900.00</td><td>-900.00</td></tr>
+    <tr><td>Third Party Funding Source</td><td>0.00</td><td>20.00</td><td>-20.00</td></tr>
+    <tr><td>Merchant Settlement</td><td>1,200.00</td><td>0.00</td><td>1,200.00</td></tr>
+    <tr><td>Withdrawal Settlement</td><td>0.00</td><td>0.00</td><td>0.00</td></tr>
+</table>
+
+<h3>PBA Pool Balances (Postgres)</h3>
+<table>
+    <tr><th>Pool</th><th>Credits</th><th>Debits</th><th>Balance</th></tr>
+    <tr><td>Self Pool</td><td>300.00</td><td>280.00</td><td>20.00</td></tr>
+    <tr><td>Others Pool</td><td>920.00</td><td>920.00</td><td>0.00</td></tr>
+</table>
+
+<div class="card">
+    <p><strong>Reconciliation:</strong></p>
+    <ul>
+        <li>Total inflows: 300 (self) + 900 (trust) + 20 (third-party) = <strong>Rs 1,220</strong></li>
+        <li>Total outflows: 1,200 (merchant) + 20 (remaining in accounts) = <strong>Rs 1,220</strong></li>
+    </ul>
+    <p class="recon-ok">The system balances to zero.</p>
+</div>
+
+<h2 id="behaviours">Key Behaviours Demonstrated</h2>
+<ol>
+    <li><strong>Funding source differentiation</strong> &mdash; Self (auto-detected from origin bank), trust, and third-party deposits are tracked separately and routed to the correct pool.</li>
+    <li><strong>Others-first payment splitting</strong> &mdash; Payments drain the others pool (trust + third-party) before touching the self pool, maximising use of contributed funds.</li>
+    <li><strong>MCC validation</strong> &mdash; All payments go to MCC 8062 (hospitals/health insurance), within the allowed set for health-purpose accounts.</li>
+    <li><strong>Double-entry integrity</strong> &mdash; Every deposit creates a transfer from a sentinel funding source to the PBA pool. Every payment transfers from the PBA pool to merchant settlement. The system always balances.</li>
+    <li><strong>Multi-source others pool</strong> &mdash; Account 2 shows trust and third-party funds co-existing in the same others pool, both consumed before self funds.</li>
+    <li><strong>Tangible benefit of contributions</strong> &mdash; Account 2's four third-party deposits (Rs 20) directly preserved Rs 20 in the holder's self pool.</li>
+</ol>
+
+<h2 id="screenshots">Screenshots</h2>
+<p>Click any image to enlarge. Transactions are displayed <strong>newest-first</strong> in the admin UI.</p>
+
+<h3>Dashboard &amp; Navigation</h3>
+<div class="gallery">
+    <figure>
+        <img src="screenshots/demo_dashboard.png" alt="Admin Dashboard" onclick="openLightbox(this)">
+        <figcaption>Admin Dashboard</figcaption>
+    </figure>
+    <figure>
+        <img src="screenshots/demo_accounts_list.png" alt="Accounts List" onclick="openLightbox(this)">
+        <figcaption>Accounts List</figcaption>
+    </figure>
+</div>
+
+<h3>Account 1 (SBI)</h3>
+<div class="gallery">
+    <figure>
+        <img src="screenshots/demo_account1_detail.png" alt="Account 1 Detail" onclick="openLightbox(this)">
+        <figcaption>Account Detail</figcaption>
+    </figure>
+    <figure>
+        <img src="screenshots/demo_account1_transactions_page1.png" alt="Account 1 Transactions Page 1" onclick="openLightbox(this)">
+        <figcaption>Transactions &mdash; Page 1 (newest)</figcaption>
+    </figure>
+    <figure>
+        <img src="screenshots/demo_account1_transactions_page2.png" alt="Account 1 Transactions Page 2" onclick="openLightbox(this)">
+        <figcaption>Transactions &mdash; Page 2 (oldest)</figcaption>
+    </figure>
+</div>
+
+<h3>Account 2 (HDFC)</h3>
+<div class="gallery">
+    <figure>
+        <img src="screenshots/demo_account2_detail.png" alt="Account 2 Detail" onclick="openLightbox(this)">
+        <figcaption>Account Detail</figcaption>
+    </figure>
+    <figure>
+        <img src="screenshots/demo_account2_transactions_page1.png" alt="Account 2 Transactions Page 1" onclick="openLightbox(this)">
+        <figcaption>Transactions &mdash; Page 1 (newest)</figcaption>
+    </figure>
+    <figure>
+        <img src="screenshots/demo_account2_transactions_page2.png" alt="Account 2 Transactions Page 2" onclick="openLightbox(this)">
+        <figcaption>Transactions &mdash; Page 2 (oldest)</figcaption>
+    </figure>
+</div>
+
+<h3>All Transactions</h3>
+<div class="gallery">
+    <figure>
+        <img src="screenshots/demo_all_transactions_page1.png" alt="All Transactions Page 1" onclick="openLightbox(this)">
+        <figcaption>All Transactions &mdash; Page 1</figcaption>
+    </figure>
+    <figure>
+        <img src="screenshots/demo_all_transactions_page2.png" alt="All Transactions Page 2" onclick="openLightbox(this)">
+        <figcaption>All Transactions &mdash; Page 2</figcaption>
+    </figure>
+    <figure>
+        <img src="screenshots/demo_all_transactions_page3.png" alt="All Transactions Page 3" onclick="openLightbox(this)">
+        <figcaption>All Transactions &mdash; Page 3</figcaption>
+    </figure>
+</div>
+
+<h3>System &amp; Reference</h3>
+<div class="gallery">
+    <figure>
+        <img src="screenshots/demo_system_accounts.png" alt="System Accounts" onclick="openLightbox(this)">
+        <figcaption>System Accounts with Balance Columns</figcaption>
+    </figure>
+    <figure>
+        <img src="screenshots/demo_purpose_types.png" alt="Purpose Types" onclick="openLightbox(this)">
+        <figcaption>Purpose Types &amp; Allowed MCCs</figcaption>
+    </figure>
+</div>
+
+<h2 id="downloads">Downloads</h2>
+<h3>CSV Statements</h3>
+<ul class="file-list">
+    <li><a href="csv/demo_account1_sbin_transactions.csv">Account 1 (SBI) Transactions</a> <span class="desc">64 transactions</span></li>
+    <li><a href="csv/demo_account2_hdfc_transactions.csv">Account 2 (HDFC) Transactions</a> <span class="desc">68 transactions</span></li>
+    <li><a href="csv/demo_all_transactions.csv">All Transactions</a> <span class="desc">132 transactions</span></li>
+    <li><a href="csv/demo_account1_sbin_balance.csv">Account 1 (SBI) Balance</a> <span class="desc">Pool balances</span></li>
+    <li><a href="csv/demo_account2_hdfc_balance.csv">Account 2 (HDFC) Balance</a> <span class="desc">Pool balances</span></li>
+</ul>
+
+<div id="lightbox" class="lightbox" onclick="closeLightbox()">
+    <img id="lightbox-img" src="" alt="">
+</div>
+
+<script>
+function openLightbox(el) {
+    document.getElementById('lightbox-img').src = el.src;
+    document.getElementById('lightbox').classList.add('active');
+}
+function closeLightbox() {
+    document.getElementById('lightbox').classList.remove('active');
+}
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') closeLightbox();
+});
+</script>
+
+</body>
+</html>

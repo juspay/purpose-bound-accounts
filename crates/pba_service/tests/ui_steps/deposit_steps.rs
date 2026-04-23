@@ -77,18 +77,21 @@ async fn do_deposit(world: &mut UiWorld, amount: i64, ifsc: &str, account_number
         .await
         .expect("Could not find submit button");
     submit.click().await.expect("Failed to click submit");
-    sleep(Duration::from_millis(500)).await;
 
-    // Check where we ended up
-    let page = world.ensure_page().await;
-    let current_url = page
-        .url()
-        .await
-        .expect("Failed to get URL")
-        .unwrap_or_default();
-
-    // Success: redirected to /admin/accounts/{id} (no /deposit suffix)
-    current_url.contains("/admin/accounts/") && !current_url.ends_with("/deposit")
+    // Poll for redirect (up to 5 seconds) instead of a fixed sleep
+    for _ in 0..10 {
+        sleep(Duration::from_millis(500)).await;
+        let page = world.ensure_page().await;
+        let current_url = page
+            .url()
+            .await
+            .expect("Failed to get URL")
+            .unwrap_or_default();
+        if current_url.contains("/admin/accounts/") && !current_url.ends_with("/deposit") {
+            return true;
+        }
+    }
+    false
 }
 
 // ---------------------------------------------------------------------------
@@ -365,20 +368,26 @@ async fn do_pending_deposit(
         .await
         .expect("Could not find submit button");
     submit.click().await.expect("Failed to click submit");
-    sleep(Duration::from_millis(500)).await;
 
-    // Check where we ended up
-    let page = world.ensure_page().await;
-    let current_url = page
-        .url()
-        .await
-        .expect("Failed to get URL")
-        .unwrap_or_default();
-
-    let success = current_url.contains("/admin/accounts/") && !current_url.ends_with("/deposit");
+    // Poll for redirect (up to 5 seconds) instead of a fixed sleep
+    let mut success = false;
+    for _ in 0..10 {
+        sleep(Duration::from_millis(500)).await;
+        let page = world.ensure_page().await;
+        let current_url = page
+            .url()
+            .await
+            .expect("Failed to get URL")
+            .unwrap_or_default();
+        if current_url.contains("/admin/accounts/") && !current_url.ends_with("/deposit") {
+            success = true;
+            break;
+        }
+    }
 
     if success {
         // Extract the deposit ID from the pending deposits table on the account detail page
+        let page = world.ensure_page().await;
         let content = page.content().await.expect("Failed to get page content");
         // Find the first deposit ID in the pending deposits table (truncated to 8 chars in display,
         // but the full ID is in the Post/Void form action URLs)

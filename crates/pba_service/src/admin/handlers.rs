@@ -323,7 +323,15 @@ pub async fn account_detail(
 #[derive(Template)]
 #[template(path = "admin/transfers_fragment.html")]
 struct TransfersFragmentTemplate {
+    account_id: String,
     transfers: Vec<TransferRow>,
+    total: i64,
+    offset: i64,
+    limit: i64,
+    count: i64,
+    prev_offset: i64,
+    next_offset: i64,
+    has_next: bool,
 }
 
 struct TransferRow {
@@ -335,13 +343,23 @@ struct TransferRow {
     amount: String,
 }
 
+#[derive(Deserialize)]
+pub struct TransfersFragmentQuery {
+    offset: Option<i64>,
+    limit: Option<i64>,
+}
+
 pub async fn account_transfers_fragment(
     State(state): State<AppState>,
     Path(account_id): Path<Uuid>,
+    axum::extract::Query(query): axum::extract::Query<TransfersFragmentQuery>,
 ) -> Response {
+    let offset = query.offset.unwrap_or(0).max(0);
+    let limit = query.limit.unwrap_or(50).clamp(1, 100);
+
     let transactions: Vec<TransactionRecord> = match state
         .transaction_repo
-        .list_by_account(account_id, 0, 100, None, None)
+        .list_by_account(account_id, offset, limit, None, None)
         .await
     {
         Ok(t) => t,
@@ -351,6 +369,19 @@ pub async fn account_transfers_fragment(
         }
     };
 
+    let total = match state
+        .transaction_repo
+        .count_by_account(account_id, None, None)
+        .await
+    {
+        Ok(c) => c,
+        Err(e) => {
+            tracing::error!("Failed to count transactions: {e}");
+            return (StatusCode::INTERNAL_SERVER_ERROR, "Database error").into_response();
+        }
+    };
+
+    let count = transactions.len() as i64;
     let rows: Vec<TransferRow> = transactions
         .into_iter()
         .map(|t| {
@@ -366,7 +397,17 @@ pub async fn account_transfers_fragment(
         })
         .collect();
 
-    render(TransfersFragmentTemplate { transfers: rows })
+    render(TransfersFragmentTemplate {
+        account_id: account_id.to_string(),
+        transfers: rows,
+        total,
+        offset,
+        limit,
+        count,
+        prev_offset: (offset - limit).max(0),
+        next_offset: offset + limit,
+        has_next: offset + count < total,
+    })
 }
 
 #[derive(Template)]
@@ -722,6 +763,8 @@ struct SentinelAccountRow {
     debits_posted: String,
     credits_pending: String,
     debits_pending: String,
+    balance_posted: String,
+    balance_pending: String,
 }
 
 struct PoolBalanceRow {
@@ -730,10 +773,21 @@ struct PoolBalanceRow {
     debits_posted: String,
     credits_pending: String,
     debits_pending: String,
+    balance_posted: String,
+    balance_pending: String,
 }
 
 pub async fn system_accounts_page(State(state): State<AppState>) -> Response {
     let fmt = |amt: u64| format!("{}.{:02}", amt / 100, amt % 100);
+    let fmt_signed = |credits: u64, debits: u64| -> String {
+        if credits >= debits {
+            let diff = credits - debits;
+            format!("{}.{:02}", diff / 100, diff % 100)
+        } else {
+            let diff = debits - credits;
+            format!("-{}.{:02}", diff / 100, diff % 100)
+        }
+    };
 
     // Sentinel accounts from TigerBeetle
     let sentinel_accounts = match state.ledger_repo.lookup_sentinel_accounts().await {
@@ -745,6 +799,8 @@ pub async fn system_accounts_page(State(state): State<AppState>) -> Response {
                 debits_posted: fmt(dp),
                 credits_pending: fmt(cpend),
                 debits_pending: fmt(dpend),
+                balance_posted: fmt_signed(cp, dp),
+                balance_pending: fmt_signed(cpend, dpend),
             })
             .collect(),
         Err(e) => {
@@ -769,6 +825,11 @@ pub async fn system_accounts_page(State(state): State<AppState>) -> Response {
             debits_posted: fmt(pool_summary.self_outbound),
             credits_pending: fmt(pool_summary.pending_self_inbound),
             debits_pending: fmt(pool_summary.pending_self_outbound),
+            balance_posted: fmt_signed(pool_summary.self_inbound, pool_summary.self_outbound),
+            balance_pending: fmt_signed(
+                pool_summary.pending_self_inbound,
+                pool_summary.pending_self_outbound,
+            ),
         },
         PoolBalanceRow {
             name: "Others Pool (all accounts)".to_string(),
@@ -776,6 +837,11 @@ pub async fn system_accounts_page(State(state): State<AppState>) -> Response {
             debits_posted: fmt(pool_summary.others_outbound),
             credits_pending: fmt(pool_summary.pending_others_inbound),
             debits_pending: fmt(pool_summary.pending_others_outbound),
+            balance_posted: fmt_signed(pool_summary.others_inbound, pool_summary.others_outbound),
+            balance_pending: fmt_signed(
+                pool_summary.pending_others_inbound,
+                pool_summary.pending_others_outbound,
+            ),
         },
     ];
 
