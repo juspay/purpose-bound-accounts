@@ -15,8 +15,10 @@
             <th>Account</th>
             <th>Credits Posted</th>
             <th>Debits Posted</th>
+            <th>Balance Posted</th>
             <th>Credits Pending</th>
             <th>Debits Pending</th>
+            <th>Balance Pending</th>
         </tr>
     </thead>
     <tbody>
@@ -25,8 +27,10 @@
             <td><strong>{{ a.name }}</strong></td>
             <td class="inbound">{{ a.credits_posted }}</td>
             <td class="outbound">{{ a.debits_posted }}</td>
+            <td><strong>{{ a.balance_posted }}</strong></td>
             <td class="status-frozen">{{ a.credits_pending }}</td>
             <td class="status-frozen">{{ a.debits_pending }}</td>
+            <td><strong>{{ a.balance_pending }}</strong></td>
         </tr>
         {% endfor %}
     </tbody>
@@ -40,8 +44,10 @@
             <th>Pool</th>
             <th>Credits Posted</th>
             <th>Debits Posted</th>
+            <th>Balance Posted</th>
             <th>Credits Pending</th>
             <th>Debits Pending</th>
+            <th>Balance Pending</th>
         </tr>
     </thead>
     <tbody>
@@ -50,8 +56,10 @@
             <td><strong>{{ p.name }}</strong></td>
             <td class="inbound">{{ p.credits_posted }}</td>
             <td class="outbound">{{ p.debits_posted }}</td>
+            <td><strong>{{ p.balance_posted }}</strong></td>
             <td class="status-frozen">{{ p.credits_pending }}</td>
             <td class="status-frozen">{{ p.debits_pending }}</td>
+            <td><strong>{{ p.balance_pending }}</strong></td>
         </tr>
         {% endfor %}
     </tbody>

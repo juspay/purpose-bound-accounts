@@ -722,6 +722,8 @@ struct SentinelAccountRow {
     debits_posted: String,
     credits_pending: String,
     debits_pending: String,
+    balance_posted: String,
+    balance_pending: String,
 }
 
 struct PoolBalanceRow {
@@ -730,10 +732,21 @@ struct PoolBalanceRow {
     debits_posted: String,
     credits_pending: String,
     debits_pending: String,
+    balance_posted: String,
+    balance_pending: String,
 }
 
 pub async fn system_accounts_page(State(state): State<AppState>) -> Response {
     let fmt = |amt: u64| format!("{}.{:02}", amt / 100, amt % 100);
+    let fmt_signed = |credits: u64, debits: u64| -> String {
+        if credits >= debits {
+            let diff = credits - debits;
+            format!("{}.{:02}", diff / 100, diff % 100)
+        } else {
+            let diff = debits - credits;
+            format!("-{}.{:02}", diff / 100, diff % 100)
+        }
+    };
 
     // Sentinel accounts from TigerBeetle
     let sentinel_accounts = match state.ledger_repo.lookup_sentinel_accounts().await {
@@ -745,6 +758,8 @@ pub async fn system_accounts_page(State(state): State<AppState>) -> Response {
                 debits_posted: fmt(dp),
                 credits_pending: fmt(cpend),
                 debits_pending: fmt(dpend),
+                balance_posted: fmt_signed(cp, dp),
+                balance_pending: fmt_signed(cpend, dpend),
             })
             .collect(),
         Err(e) => {
@@ -769,6 +784,8 @@ pub async fn system_accounts_page(State(state): State<AppState>) -> Response {
             debits_posted: fmt(pool_summary.self_outbound),
             credits_pending: fmt(pool_summary.pending_self_inbound),
             debits_pending: fmt(pool_summary.pending_self_outbound),
+            balance_posted: fmt_signed(pool_summary.self_inbound, pool_summary.self_outbound),
+            balance_pending: fmt_signed(pool_summary.pending_self_inbound, pool_summary.pending_self_outbound),
         },
         PoolBalanceRow {
             name: "Others Pool (all accounts)".to_string(),
@@ -776,6 +793,8 @@ pub async fn system_accounts_page(State(state): State<AppState>) -> Response {
             debits_posted: fmt(pool_summary.others_outbound),
             credits_pending: fmt(pool_summary.pending_others_inbound),
             debits_pending: fmt(pool_summary.pending_others_outbound),
+            balance_posted: fmt_signed(pool_summary.others_inbound, pool_summary.others_outbound),
+            balance_pending: fmt_signed(pool_summary.pending_others_inbound, pool_summary.pending_others_outbound),
         },
     ];
 
