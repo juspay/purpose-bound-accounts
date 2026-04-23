@@ -23,4 +23,16 @@
         {% endfor %}
     </tbody>
 </table>
+
+<nav>
+    <ul>
+        {% if offset > 0 %}
+        <li><a hx-get="/admin/accounts/{{ account_id }}/transfers?offset={{ prev_offset }}&limit={{ limit }}" hx-target="#transfers" hx-swap="innerHTML" role="button" class="outline">&larr; Previous</a></li>
+        {% endif %}
+        {% if has_next %}
+        <li><a hx-get="/admin/accounts/{{ account_id }}/transfers?offset={{ next_offset }}&limit={{ limit }}" hx-target="#transfers" hx-swap="innerHTML" role="button" class="outline">Next &rarr;</a></li>
+        {% endif %}
+    </ul>
+</nav>
+<p><small>Showing {{ offset + 1 }}–{{ offset + count }} of {{ total }} transactions</small></p>
 {% endif %}

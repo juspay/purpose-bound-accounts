@@ -323,7 +323,15 @@ pub async fn account_detail(
 #[derive(Template)]
 #[template(path = "admin/transfers_fragment.html")]
 struct TransfersFragmentTemplate {
+    account_id: String,
     transfers: Vec<TransferRow>,
+    total: i64,
+    offset: i64,
+    limit: i64,
+    count: i64,
+    prev_offset: i64,
+    next_offset: i64,
+    has_next: bool,
 }
 
 struct TransferRow {
@@ -335,13 +343,23 @@ struct TransferRow {
     amount: String,
 }
 
+#[derive(Deserialize)]
+pub struct TransfersFragmentQuery {
+    offset: Option<i64>,
+    limit: Option<i64>,
+}
+
 pub async fn account_transfers_fragment(
     State(state): State<AppState>,
     Path(account_id): Path<Uuid>,
+    axum::extract::Query(query): axum::extract::Query<TransfersFragmentQuery>,
 ) -> Response {
+    let offset = query.offset.unwrap_or(0).max(0);
+    let limit = query.limit.unwrap_or(50).clamp(1, 100);
+
     let transactions: Vec<TransactionRecord> = match state
         .transaction_repo
-        .list_by_account(account_id, 0, 100, None, None)
+        .list_by_account(account_id, offset, limit, None, None)
         .await
     {
         Ok(t) => t,
@@ -351,6 +369,19 @@ pub async fn account_transfers_fragment(
         }
     };
 
+    let total = match state
+        .transaction_repo
+        .count_by_account(account_id, None, None)
+        .await
+    {
+        Ok(c) => c,
+        Err(e) => {
+            tracing::error!("Failed to count transactions: {e}");
+            return (StatusCode::INTERNAL_SERVER_ERROR, "Database error").into_response();
+        }
+    };
+
+    let count = transactions.len() as i64;
     let rows: Vec<TransferRow> = transactions
         .into_iter()
         .map(|t| {
@@ -366,7 +397,17 @@ pub async fn account_transfers_fragment(
         })
         .collect();
 
-    render(TransfersFragmentTemplate { transfers: rows })
+    render(TransfersFragmentTemplate {
+        account_id: account_id.to_string(),
+        transfers: rows,
+        total,
+        offset,
+        limit,
+        count,
+        prev_offset: (offset - limit).max(0),
+        next_offset: offset + limit,
+        has_next: offset + count < total,
+    })
 }
 
 #[derive(Template)]
