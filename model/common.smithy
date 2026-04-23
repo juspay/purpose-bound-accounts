@@ -39,6 +39,13 @@ string PoolType
 ])
 string TransactionDirection
 
+/// Funding source type for deposits.
+@enum([
+    { value: "trust", name: "TRUST" },
+    { value: "third_party", name: "THIRD_PARTY" },
+])
+string FundingType
+
 /// Account status.
 enum Status {
     ACTIVE

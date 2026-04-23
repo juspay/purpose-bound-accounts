@@ -41,6 +41,7 @@ pub(crate) fn deposit_output_output_correct_errors(mut builder: crate::operation
 if builder.account_id.is_none() { builder.account_id = Some(Default::default()) }
 if builder.amount.is_none() { builder.amount = Some(Default::default()) }
 if builder.pool.is_none() { builder.pool = Some(Default::default()) }
+if builder.funding_type.is_none() { builder.funding_type = Some(Default::default()) }
 if builder.status.is_none() { builder.status = Some(Default::default()) }
                 builder
             }

@@ -8,9 +8,11 @@ use uuid::Uuid;
 
 /// Sentinel account IDs used as counterparties for deposits, payments, and withdrawals.
 /// TigerBeetle disallows 0 and u128::MAX, so we use a fixed range that won't collide with UUID-derived IDs.
-pub const FUNDING_SOURCE_TB_ID: u128 = u128::MAX - 10;
+pub const SELF_FUNDING_SOURCE_TB_ID: u128 = u128::MAX - 10;
 pub const MERCHANT_SETTLEMENT_TB_ID: u128 = u128::MAX - 11;
 pub const WITHDRAWAL_SETTLEMENT_TB_ID: u128 = u128::MAX - 12;
+pub const TRUST_FUNDING_SOURCE_TB_ID: u128 = u128::MAX - 13;
+pub const THIRD_PARTY_FUNDING_SOURCE_TB_ID: u128 = u128::MAX - 14;
 
 /// Ledger ID for Indian Rupee. All amounts are in paisa (1 INR = 100 paisa).
 const LEDGER_INR_PAISA: u32 = 1;
@@ -37,28 +39,86 @@ impl LedgerRepo {
     /// Create sentinel accounts that serve as counterparties for deposits, payments, and withdrawals.
     /// These are idempotent — TigerBeetle returns `Exists` for already-created accounts which we ignore.
     pub async fn init_sentinel_accounts(&self) -> Result<(), AppError> {
-        let funding = tb::Account::new(FUNDING_SOURCE_TB_ID, LEDGER_INR_PAISA, CODE_SENTINEL)
-            .with_flags(AccountFlags::LINKED);
+        let self_funding =
+            tb::Account::new(SELF_FUNDING_SOURCE_TB_ID, LEDGER_INR_PAISA, CODE_SENTINEL)
+                .with_flags(AccountFlags::LINKED);
         let merchant = tb::Account::new(MERCHANT_SETTLEMENT_TB_ID, LEDGER_INR_PAISA, CODE_SENTINEL)
             .with_flags(AccountFlags::LINKED);
         let withdrawal =
-            tb::Account::new(WITHDRAWAL_SETTLEMENT_TB_ID, LEDGER_INR_PAISA, CODE_SENTINEL);
+            tb::Account::new(WITHDRAWAL_SETTLEMENT_TB_ID, LEDGER_INR_PAISA, CODE_SENTINEL)
+                .with_flags(AccountFlags::LINKED);
+        let trust = tb::Account::new(TRUST_FUNDING_SOURCE_TB_ID, LEDGER_INR_PAISA, CODE_SENTINEL)
+            .with_flags(AccountFlags::LINKED);
+        let third_party = tb::Account::new(
+            THIRD_PARTY_FUNDING_SOURCE_TB_ID,
+            LEDGER_INR_PAISA,
+            CODE_SENTINEL,
+        );
 
-        // Best-effort: ignore errors (accounts may already exist)
         match self
             .client
-            .create_accounts(vec![funding, merchant, withdrawal])
+            .create_accounts(vec![self_funding, merchant, withdrawal, trust, third_party])
             .await
         {
             Ok(_) => {
-                tracing::info!("Created sentinel TB accounts (funding, merchant, withdrawal)");
+                tracing::info!(
+                    "Created sentinel TB accounts (self_funding, merchant, withdrawal, trust, third_party)"
+                );
             }
             Err(e) => {
-                // Log but don't fail — accounts likely already exist
                 tracing::warn!("Sentinel account creation returned: {e:?} (may already exist)");
             }
         }
         Ok(())
+    }
+
+    /// Look up all sentinel accounts and return their balances.
+    /// Returns a Vec of (name, credits_posted, debits_posted, credits_pending, debits_pending).
+    pub async fn lookup_sentinel_accounts(
+        &self,
+    ) -> Result<Vec<(String, u64, u64, u64, u64)>, AppError> {
+        let ids = vec![
+            SELF_FUNDING_SOURCE_TB_ID,
+            TRUST_FUNDING_SOURCE_TB_ID,
+            THIRD_PARTY_FUNDING_SOURCE_TB_ID,
+            MERCHANT_SETTLEMENT_TB_ID,
+            WITHDRAWAL_SETTLEMENT_TB_ID,
+        ];
+        let names = [
+            "Self Funding Source",
+            "Trust Funding Source",
+            "Third Party Funding Source",
+            "Merchant Settlement",
+            "Withdrawal Settlement",
+        ];
+
+        let accounts =
+            self.client.lookup_accounts(ids).await.map_err(|e| {
+                AppError::TigerBeetleError(format!("lookup_accounts failed: {e:?}"))
+            })?;
+
+        let mut results: Vec<(String, u64, u64, u64, u64)> =
+            names.iter().map(|n| (n.to_string(), 0, 0, 0, 0)).collect();
+
+        for account in &accounts {
+            let idx = match account.id() {
+                id if id == SELF_FUNDING_SOURCE_TB_ID => 0,
+                id if id == TRUST_FUNDING_SOURCE_TB_ID => 1,
+                id if id == THIRD_PARTY_FUNDING_SOURCE_TB_ID => 2,
+                id if id == MERCHANT_SETTLEMENT_TB_ID => 3,
+                id if id == WITHDRAWAL_SETTLEMENT_TB_ID => 4,
+                _ => continue,
+            };
+            results[idx] = (
+                results[idx].0.clone(),
+                u64::try_from(account.credits_posted()).unwrap_or(u64::MAX),
+                u64::try_from(account.debits_posted()).unwrap_or(u64::MAX),
+                u64::try_from(account.credits_pending()).unwrap_or(u64::MAX),
+                u64::try_from(account.debits_pending()).unwrap_or(u64::MAX),
+            );
+        }
+
+        Ok(results)
     }
 
     pub async fn create_account_pair(

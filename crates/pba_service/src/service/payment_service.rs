@@ -127,6 +127,7 @@ impl PaymentService {
                         Some(merchant_id),
                         Some(merchant_mcc),
                         Some(description),
+                        None, // funding_type
                         0,
                         idempotency_key,
                     )
@@ -156,6 +157,7 @@ impl PaymentService {
                         Some(merchant_id),
                         Some(merchant_mcc),
                         Some(description),
+                        None, // funding_type
                         0,
                         idem_key,
                     )

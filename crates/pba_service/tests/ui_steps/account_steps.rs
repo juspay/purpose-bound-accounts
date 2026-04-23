@@ -635,3 +635,22 @@ async fn purpose_types_listed(world: &mut UiWorld, min: usize) {
         "Expected at least {min} purpose types listed, got {count}"
     );
 }
+
+#[when(regex = r#"^I visit the system accounts page$"#)]
+async fn visit_system_accounts(world: &mut UiWorld) {
+    let url = world.url("/admin/system-accounts");
+    let page = world.ensure_page().await;
+    page.goto(url).await.unwrap();
+    tokio::time::sleep(std::time::Duration::from_millis(400)).await;
+}
+
+#[then(regex = r#"^I should see "([^"]*)" on the page$"#)]
+async fn should_see_text(world: &mut UiWorld, expected: String) {
+    let page = world.ensure_page().await;
+    let content = page.content().await.unwrap();
+    assert!(
+        content.contains(&expected),
+        "Expected to see '{}' on the page, but it was not found",
+        expected
+    );
+}

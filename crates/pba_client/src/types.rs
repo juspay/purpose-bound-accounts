@@ -15,6 +15,10 @@ pub use crate::types::_purpose_type_summary::PurposeTypeSummary;
 
 pub use crate::types::_status::Status;
 
+pub use crate::types::_funding_type::FundingType;
+
+mod _funding_type;
+
 mod _mcc_entry;
 
 mod _pool_type;

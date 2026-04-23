@@ -39,6 +39,7 @@
             <th>Type</th>
             <th>Status</th>
             <th>Pool</th>
+            <th>Funding Type</th>
             <th>Direction</th>
             <th>Amount (INR)</th>
         </tr>
@@ -51,6 +52,7 @@
             <td>{{ t.transfer_type }}</td>
             <td class="{{ t.status_class }}">{{ t.status }}</td>
             <td>{{ t.pool }}</td>
+            <td>{{ t.funding_type }}</td>
             <td class="{{ t.direction_class }}">{{ t.direction }}</td>
             <td>{{ t.amount }}</td>
         </tr>

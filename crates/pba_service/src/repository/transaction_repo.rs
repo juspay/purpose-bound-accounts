@@ -8,6 +8,18 @@ use crate::domain::transaction::{
 use crate::error::AppError;
 
 #[derive(Debug, Default)]
+pub struct PoolSummaryExtended {
+    pub self_inbound: u64,
+    pub self_outbound: u64,
+    pub others_inbound: u64,
+    pub others_outbound: u64,
+    pub pending_self_inbound: u64,
+    pub pending_self_outbound: u64,
+    pub pending_others_inbound: u64,
+    pub pending_others_outbound: u64,
+}
+
+#[derive(Debug, Default)]
 pub struct PoolSummary {
     pub self_inbound: u64,
     pub self_outbound: u64,
@@ -52,6 +64,7 @@ struct TransactionRow {
     merchant_id: Option<String>,
     merchant_mcc: Option<String>,
     description: Option<String>,
+    funding_type: Option<String>,
     tb_transfer_id: String,
     idempotency_key: Option<String>,
     created_at: DateTime<Utc>,
@@ -77,6 +90,7 @@ impl TransactionRow {
             merchant_id: self.merchant_id,
             merchant_mcc: self.merchant_mcc,
             description: self.description,
+            funding_type: self.funding_type,
             tb_transfer_id: self.tb_transfer_id.parse().unwrap_or(0),
             idempotency_key: self.idempotency_key,
             created_at: self.created_at,
@@ -112,6 +126,7 @@ impl TransactionRepo {
         merchant_id: Option<&str>,
         merchant_mcc: Option<&str>,
         description: Option<&str>,
+        funding_type: Option<&str>,
         tb_transfer_id: u128,
         idempotency_key: Option<&str>,
     ) -> Result<TransactionRecord, AppError> {
@@ -120,12 +135,12 @@ impl TransactionRepo {
             r#"
             INSERT INTO transactions (id, account_id, type, status, amount, pool, direction,
                                       source_ifsc, source_account, gateway_ref, timeout_seconds,
-                                      merchant_id, merchant_mcc, description,
+                                      merchant_id, merchant_mcc, description, funding_type,
                                       tb_transfer_id, idempotency_key)
-            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15::numeric, $16)
+            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16::numeric, $17)
             RETURNING id, account_id, type, status, amount, pool, direction,
                       source_ifsc, source_account, gateway_ref, timeout_seconds,
-                      merchant_id, merchant_mcc, description,
+                      merchant_id, merchant_mcc, description, funding_type,
                       tb_transfer_id::text as tb_transfer_id, idempotency_key,
                       created_at, updated_at
             "#,
@@ -144,6 +159,7 @@ impl TransactionRepo {
         .bind(merchant_id)
         .bind(merchant_mcc)
         .bind(description)
+        .bind(funding_type)
         .bind(&tb_id_str)
         .bind(idempotency_key)
         .fetch_one(tx.as_mut())
@@ -181,7 +197,7 @@ impl TransactionRepo {
             WHERE id = $1
             RETURNING id, account_id, type, status, amount, pool, direction,
                       source_ifsc, source_account, gateway_ref, timeout_seconds,
-                      merchant_id, merchant_mcc, description,
+                      merchant_id, merchant_mcc, description, funding_type,
                       tb_transfer_id::text as tb_transfer_id, idempotency_key,
                       created_at, updated_at
             "#,
@@ -204,7 +220,7 @@ impl TransactionRepo {
             r#"
             SELECT id, account_id, type, status, amount, pool, direction,
                    source_ifsc, source_account, gateway_ref, timeout_seconds,
-                   merchant_id, merchant_mcc, description,
+                   merchant_id, merchant_mcc, description, funding_type,
                    tb_transfer_id::text as tb_transfer_id, idempotency_key,
                    created_at, updated_at
             FROM transactions
@@ -229,7 +245,7 @@ impl TransactionRepo {
             r#"
             SELECT id, account_id, type, status, amount, pool, direction,
                    source_ifsc, source_account, gateway_ref, timeout_seconds,
-                   merchant_id, merchant_mcc, description,
+                   merchant_id, merchant_mcc, description, funding_type,
                    tb_transfer_id::text as tb_transfer_id, idempotency_key,
                    created_at, updated_at
             FROM transactions
@@ -256,7 +272,7 @@ impl TransactionRepo {
             r#"
             SELECT id, account_id, type, status, amount, pool, direction,
                    source_ifsc, source_account, gateway_ref, timeout_seconds,
-                   merchant_id, merchant_mcc, description,
+                   merchant_id, merchant_mcc, description, funding_type,
                    tb_transfer_id::text as tb_transfer_id, idempotency_key,
                    created_at, updated_at
             FROM transactions
@@ -312,7 +328,7 @@ impl TransactionRepo {
             r#"
             SELECT id, account_id, type, status, amount, pool, direction,
                    source_ifsc, source_account, gateway_ref, timeout_seconds,
-                   merchant_id, merchant_mcc, description,
+                   merchant_id, merchant_mcc, description, funding_type,
                    tb_transfer_id::text as tb_transfer_id, idempotency_key,
                    created_at, updated_at
             FROM transactions
@@ -380,6 +396,36 @@ impl TransactionRepo {
         Ok(summary)
     }
 
+    pub async fn pool_summary_extended(&self) -> Result<PoolSummaryExtended, AppError> {
+        let rows: Vec<(String, String, String, i64)> = sqlx::query_as(
+            r#"
+            SELECT pool, direction, status, COALESCE(SUM(amount), 0)::bigint AS total
+            FROM transactions
+            WHERE status IN ('posted', 'settled', 'pending')
+            GROUP BY pool, direction, status
+            "#,
+        )
+        .fetch_all(&self.pool)
+        .await?;
+
+        let mut summary = PoolSummaryExtended::default();
+        for (pool, direction, status, total) in rows {
+            let amt = total as u64;
+            match (pool.as_str(), direction.as_str(), status.as_str()) {
+                ("self", "inbound", "posted" | "settled") => summary.self_inbound += amt,
+                ("self", "outbound", "posted" | "settled") => summary.self_outbound += amt,
+                ("others", "inbound", "posted" | "settled") => summary.others_inbound += amt,
+                ("others", "outbound", "posted" | "settled") => summary.others_outbound += amt,
+                ("self", "inbound", "pending") => summary.pending_self_inbound += amt,
+                ("self", "outbound", "pending") => summary.pending_self_outbound += amt,
+                ("others", "inbound", "pending") => summary.pending_others_inbound += amt,
+                ("others", "outbound", "pending") => summary.pending_others_outbound += amt,
+                _ => {}
+            }
+        }
+        Ok(summary)
+    }
+
     pub async fn list_pending_by_account(
         &self,
         account_id: Uuid,
@@ -388,7 +434,7 @@ impl TransactionRepo {
             r#"
             SELECT id, account_id, type, status, amount, pool, direction,
                    source_ifsc, source_account, gateway_ref, timeout_seconds,
-                   merchant_id, merchant_mcc, description,
+                   merchant_id, merchant_mcc, description, funding_type,
                    tb_transfer_id::text as tb_transfer_id, idempotency_key,
                    created_at, updated_at
             FROM transactions
@@ -408,7 +454,7 @@ impl TransactionRepo {
             r#"
             SELECT id, account_id, type, status, amount, pool, direction,
                    source_ifsc, source_account, gateway_ref, timeout_seconds,
-                   merchant_id, merchant_mcc, description,
+                   merchant_id, merchant_mcc, description, funding_type,
                    tb_transfer_id::text as tb_transfer_id, idempotency_key,
                    created_at, updated_at
             FROM transactions

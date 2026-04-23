@@ -24,6 +24,7 @@ pub enum AppError {
     DuplicateAccount(String),
     TransactionNotFound(String),
     TransactionNotPending(String),
+    FundingTypeRequired,
     /// Transfer rejected by TigerBeetle because debit would exceed credits (overdraft).
     /// This is retryable with a fresh balance read.
     ExceedsBalance,
@@ -54,6 +55,7 @@ impl std::fmt::Display for AppError {
             Self::TransactionNotPending(id) => {
                 write!(f, "Transaction is not in pending state: {id}")
             }
+            Self::FundingTypeRequired => write!(f, "funding_type is required for non-origin deposits (must be 'trust' or 'third_party')"),
             Self::ExceedsBalance => write!(f, "Transfer exceeds available balance"),
             Self::TigerBeetleError(msg) => write!(f, "TigerBeetle error: {msg}"),
             Self::DatabaseError(msg) => write!(f, "Database error: {msg}"),
@@ -74,6 +76,7 @@ impl IntoResponse for AppError {
             AppError::DuplicateAccount(_) => (StatusCode::CONFLICT, "DuplicateAccount"),
             AppError::TransactionNotFound(_) => (StatusCode::NOT_FOUND, "TransactionNotFound"),
             AppError::TransactionNotPending(_) => (StatusCode::CONFLICT, "TransactionNotPending"),
+            AppError::FundingTypeRequired => (StatusCode::BAD_REQUEST, "FundingTypeRequired"),
             AppError::ExceedsBalance => (StatusCode::UNPROCESSABLE_ENTITY, "InsufficientFunds"),
             AppError::TigerBeetleError(_) => {
                 (StatusCode::INTERNAL_SERVER_ERROR, "TigerBeetleError")

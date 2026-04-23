@@ -39,3 +39,12 @@ Feature: Admin UI
   Scenario: Purpose types page lists all purposes
     When I visit the purpose types page
     Then I should see at least 4 purpose types listed
+
+  Scenario: System accounts page shows sentinel accounts and pool balances
+    When I visit the system accounts page
+    Then I should see "Sentinel Accounts" on the page
+    And I should see "PBA Pool Balances" on the page
+
+  Scenario: Transactions page shows funding type column
+    When I visit the all transactions page
+    Then I should see "Funding Type" on the page

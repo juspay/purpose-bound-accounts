@@ -27,6 +27,13 @@ async fn list_all_transactions(world: &mut PbaWorld) {
             .map(|t| t.account_id().to_string())
             .collect(),
     );
+    world.all_transactions_funding_types = Some(
+        result
+            .transactions()
+            .iter()
+            .map(|t| t.funding_type().map(|s| s.to_string()))
+            .collect(),
+    );
 }
 
 #[when(regex = r"^I list all transactions with limit (\d+)$")]
@@ -53,6 +60,13 @@ async fn list_all_transactions_with_limit(world: &mut PbaWorld, limit: i64) {
             .transactions()
             .iter()
             .map(|t| t.account_id().to_string())
+            .collect(),
+    );
+    world.all_transactions_funding_types = Some(
+        result
+            .transactions()
+            .iter()
+            .map(|t| t.funding_type().map(|s| s.to_string()))
             .collect(),
     );
 }
@@ -115,4 +129,18 @@ async fn transactions_list_count(world: &mut PbaWorld, expected: usize) {
         .all_transactions_count
         .expect("No all-transactions result");
     assert_eq!(count, expected, "Expected {expected} entries, got {count}");
+}
+
+#[then(regex = r#"^the transactions list should contain a funding type "([^"]*)"$"#)]
+async fn transactions_contain_funding_type(world: &mut PbaWorld, expected_type: String) {
+    let types = world
+        .all_transactions_funding_types
+        .as_ref()
+        .expect("No all-transactions result");
+    assert!(
+        types
+            .iter()
+            .any(|t| t.as_deref() == Some(expected_type.as_str())),
+        "Expected a funding type '{expected_type}', got: {types:?}"
+    );
 }

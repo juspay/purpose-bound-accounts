@@ -102,6 +102,7 @@ structure TransactionSummary {
     source_ifsc: String
     source_account: String
     gateway_ref: String
+    funding_type: String
 
     @required
     created_at: DateTime

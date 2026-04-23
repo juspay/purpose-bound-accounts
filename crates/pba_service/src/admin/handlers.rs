@@ -394,6 +394,7 @@ pub struct DepositForm {
     amount: u64,
     source_ifsc: String,
     source_account_number: String,
+    funding_type: Option<String>,
     #[serde(default)]
     pending: Option<String>,
     gateway_ref: Option<String>,
@@ -406,12 +407,14 @@ pub async fn process_deposit(
 ) -> Response {
     let is_pending = form.pending.as_deref() == Some("true");
     let gateway_ref = form.gateway_ref.as_deref().filter(|s| !s.is_empty());
+    let funding_type = form.funding_type.as_deref().filter(|s| !s.is_empty());
     match state
         .deposit_service
         .deposit(
             account_id,
             &form.source_ifsc,
             &form.source_account_number,
+            funding_type,
             form.amount,
             is_pending,
             gateway_ref,
@@ -614,6 +617,7 @@ struct AllTransactionRow {
     status: String,
     status_class: String,
     pool: String,
+    funding_type: String,
     direction: String,
     direction_class: String,
     amount: String,
@@ -678,6 +682,7 @@ pub async fn transactions_page(
                 status: t.status.as_str().to_string(),
                 status_class: status_class.to_string(),
                 pool: pool.to_string(),
+                funding_type: t.funding_type.as_deref().unwrap_or("—").to_string(),
                 direction: t.direction.label().to_string(),
                 direction_class: t.direction.css_class().to_string(),
                 amount: t.amount_display(),
@@ -701,6 +706,82 @@ pub async fn transactions_page(
         prev_offset: (offset - limit).max(0),
         next_offset: offset + limit,
         has_next: offset + count < total,
+    })
+}
+
+#[derive(Template)]
+#[template(path = "admin/system_accounts.html")]
+struct SystemAccountsTemplate {
+    sentinel_accounts: Vec<SentinelAccountRow>,
+    pool_balances: Vec<PoolBalanceRow>,
+}
+
+struct SentinelAccountRow {
+    name: String,
+    credits_posted: String,
+    debits_posted: String,
+    credits_pending: String,
+    debits_pending: String,
+}
+
+struct PoolBalanceRow {
+    name: String,
+    credits_posted: String,
+    debits_posted: String,
+    credits_pending: String,
+    debits_pending: String,
+}
+
+pub async fn system_accounts_page(State(state): State<AppState>) -> Response {
+    let fmt = |amt: u64| format!("{}.{:02}", amt / 100, amt % 100);
+
+    // Sentinel accounts from TigerBeetle
+    let sentinel_accounts = match state.ledger_repo.lookup_sentinel_accounts().await {
+        Ok(accounts) => accounts
+            .into_iter()
+            .map(|(name, cp, dp, cpend, dpend)| SentinelAccountRow {
+                name,
+                credits_posted: fmt(cp),
+                debits_posted: fmt(dp),
+                credits_pending: fmt(cpend),
+                debits_pending: fmt(dpend),
+            })
+            .collect(),
+        Err(e) => {
+            tracing::error!("Failed to lookup sentinel accounts: {e}");
+            return (StatusCode::INTERNAL_SERVER_ERROR, "TigerBeetle error").into_response();
+        }
+    };
+
+    // PBA pool balances from Postgres
+    let pool_summary = match state.transaction_repo.pool_summary_extended().await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("Failed to get pool summary: {e}");
+            return (StatusCode::INTERNAL_SERVER_ERROR, "Database error").into_response();
+        }
+    };
+
+    let pool_balances = vec![
+        PoolBalanceRow {
+            name: "Self Pool (all accounts)".to_string(),
+            credits_posted: fmt(pool_summary.self_inbound),
+            debits_posted: fmt(pool_summary.self_outbound),
+            credits_pending: fmt(pool_summary.pending_self_inbound),
+            debits_pending: fmt(pool_summary.pending_self_outbound),
+        },
+        PoolBalanceRow {
+            name: "Others Pool (all accounts)".to_string(),
+            credits_posted: fmt(pool_summary.others_inbound),
+            debits_posted: fmt(pool_summary.others_outbound),
+            credits_pending: fmt(pool_summary.pending_others_inbound),
+            debits_pending: fmt(pool_summary.pending_others_outbound),
+        },
+    ];
+
+    render(SystemAccountsTemplate {
+        sentinel_accounts,
+        pool_balances,
     })
 }
 
