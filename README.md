@@ -144,7 +144,11 @@ Environment variables (loaded from `.env`):
 
 | Variable | Default | Description |
 |----------|---------|-------------|
-| `DATABASE_URL` | `postgresql://localhost:5432/pba_service?host=/tmp` | Postgres connection |
+| `DB_HOST` | `localhost` | Postgres host (use a path like `/tmp` for Unix socket) |
+| `DB_PORT` | `5432` | Postgres port |
+| `DB_NAME` | `pba_service` | Postgres database name |
+| `DB_USER` | `$USER` (Unix socket) | Postgres user (required for TCP connections) |
+| `DB_PASSWORD` | _(empty)_ | Postgres password (supports encrypted values via `SECRETS_PROVIDER`) |
 | `TIGERBEETLE_ADDRESSES` | `3000` | TigerBeetle address(es) |
 | `TIGERBEETLE_CLUSTER_ID` | `0` | TigerBeetle cluster ID |
 | `HOST` | `0.0.0.0` | Bind address |
