@@ -111,12 +111,11 @@
         <li><span class="badge badge-self">Rs 5 self</span> &mdash; from the origin bank (auto-detected)</li>
         <li><span class="badge badge-trust">Rs 5 trust</span> &mdash; employer match</li>
     </ul>
-    <p>Each account also receives one additional Rs 5 trust deposit (31st), bringing trust total to Rs 155.</p>
     <p><strong>Account 2 additionally</strong> receives 4 sporadic <span class="badge badge-tp">Rs 5 third-party</span> deposits (~minutes 4, 11, 18, 25), simulating ad-hoc family/community contributions.</p>
     <table>
         <tr><th>Pool</th><th>Account 1 (SBI)</th><th>Account 2 (HDFC)</th></tr>
         <tr><td>Self</td><td>Rs 150 (30 &times; Rs 5)</td><td>Rs 150 (30 &times; Rs 5)</td></tr>
-        <tr><td>Others</td><td>Rs 155 (31 &times; Rs 5 trust)</td><td>Rs 175 (31 trust + 4 third-party)</td></tr>
+        <tr><td>Others</td><td>Rs 150 (30 &times; Rs 5 trust)</td><td>Rs 170 (30 trust + 4 third-party)</td></tr>
     </table>
 </div>
 
@@ -125,8 +124,8 @@
     <p>A second <span class="badge badge-payment">Rs 300 payment</span> to NHIL. The split logic <strong>drains the others pool first</strong>, then falls back to self:</p>
     <table>
         <tr><th>Account</th><th>Others Available</th><th>Others Drained</th><th>Self Drained</th><th>Total</th></tr>
-        <tr><td>1 (SBI)</td><td>Rs 155</td><td>Rs 150</td><td>Rs 150</td><td>Rs 300</td></tr>
-        <tr><td>2 (HDFC)</td><td>Rs 175</td><td>Rs 170</td><td>Rs 130</td><td>Rs 300</td></tr>
+        <tr><td>1 (SBI)</td><td>Rs 150</td><td>Rs 150</td><td>Rs 150</td><td>Rs 300</td></tr>
+        <tr><td>2 (HDFC)</td><td>Rs 170</td><td>Rs 170</td><td>Rs 130</td><td>Rs 300</td></tr>
     </table>
     <p>Account 2's extra Rs 20 from third-party deposits means it draws Rs 20 less from its self pool.</p>
 </div>
@@ -145,7 +144,7 @@
     <tr><th>Metric</th><th>Account 1 (SBI)</th><th>Account 2 (HDFC)</th><th>Total</th></tr>
     <tr><td>Total transactions</td><td>64</td><td>68</td><td>132</td></tr>
     <tr><td><span class="badge badge-self">Self</span> deposits</td><td>30 (Rs 150)</td><td>30 (Rs 150)</td><td>60 (Rs 300)</td></tr>
-    <tr><td><span class="badge badge-trust">Trust</span> deposits</td><td>31 (Rs 450)</td><td>31 (Rs 450)</td><td>62 (Rs 900)</td></tr>
+    <tr><td><span class="badge badge-trust">Trust</span> deposits</td><td>30 (Rs 450 - includes initial Rs. 300)</td><td>30 (Rs 450 - includes initial Rs. 300)</td><td>30 (Rs 900)</td></tr>
     <tr><td><span class="badge badge-tp">Third-party</span> deposits</td><td>0</td><td>4 (Rs 20)</td><td>4 (Rs 20)</td></tr>
     <tr><td><span class="badge badge-payment">Payments</span> (from others)</td><td>2 (Rs 450)</td><td>2 (Rs 470)</td><td>4 (Rs 920)</td></tr>
     <tr><td><span class="badge badge-payment">Payments</span> (from self)</td><td>1 (Rs 150)</td><td>1 (Rs 130)</td><td>2 (Rs 280)</td></tr>
