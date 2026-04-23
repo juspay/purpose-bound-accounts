@@ -826,7 +826,10 @@ pub async fn system_accounts_page(State(state): State<AppState>) -> Response {
             credits_pending: fmt(pool_summary.pending_self_inbound),
             debits_pending: fmt(pool_summary.pending_self_outbound),
             balance_posted: fmt_signed(pool_summary.self_inbound, pool_summary.self_outbound),
-            balance_pending: fmt_signed(pool_summary.pending_self_inbound, pool_summary.pending_self_outbound),
+            balance_pending: fmt_signed(
+                pool_summary.pending_self_inbound,
+                pool_summary.pending_self_outbound,
+            ),
         },
         PoolBalanceRow {
             name: "Others Pool (all accounts)".to_string(),
@@ -835,7 +838,10 @@ pub async fn system_accounts_page(State(state): State<AppState>) -> Response {
             credits_pending: fmt(pool_summary.pending_others_inbound),
             debits_pending: fmt(pool_summary.pending_others_outbound),
             balance_posted: fmt_signed(pool_summary.others_inbound, pool_summary.others_outbound),
-            balance_pending: fmt_signed(pool_summary.pending_others_inbound, pool_summary.pending_others_outbound),
+            balance_pending: fmt_signed(
+                pool_summary.pending_others_inbound,
+                pool_summary.pending_others_outbound,
+            ),
         },
     ];
 
