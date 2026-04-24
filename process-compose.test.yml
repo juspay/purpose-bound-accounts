@@ -1,0 +1,64 @@
+version: "0.5"
+
+processes:
+  postgres:
+    command: |
+      if [ -n "${CI:-}" ]; then
+        echo "Postgres provided by CI, idling..."
+        tail -f /dev/null
+      fi
+      if [ ! -d "${PG_DATA:-.pg_data}" ]; then
+        initdb -D "${PG_DATA:-.pg_data}" --auth=trust
+      fi
+      postgres -D "${PG_DATA:-.pg_data}" -p 5432 -k /tmp
+    readiness_probe:
+      exec:
+        command: pg_isready -h ${DB_HOST:-/tmp} -p 5432 -d postgres ${DB_USER:+-U $DB_USER}
+      initial_delay_seconds: 1
+      period_seconds: 1
+    shutdown:
+      signal: 2
+
+  db-reset:
+    command: |
+      PG_ARGS="-h ${DB_HOST:-/tmp} -p 5432"
+      [ -n "${DB_USER:-}" ] && PG_ARGS="$PG_ARGS -U $DB_USER"
+      export PGPASSWORD="${DB_PASSWORD:-}"
+      psql $PG_ARGS -d postgres -c "DROP DATABASE IF EXISTS pba_service_test;" > /dev/null
+      psql $PG_ARGS -d postgres -c "CREATE DATABASE pba_service_test;" > /dev/null
+      echo "Test database reset"
+    depends_on:
+      postgres:
+        condition: process_healthy
+    availability:
+      restart: "no"
+
+  tigerbeetle:
+    command: |
+      if [ ! -f .tb_data/test/0_0.tigerbeetle ]; then
+        mkdir -p .tb_data/test
+        tigerbeetle format --cluster=0 --replica=0 --replica-count=1 .tb_data/test/0_0.tigerbeetle
+      fi
+      exec tigerbeetle start --addresses=3001 .tb_data/test/0_0.tigerbeetle
+    readiness_probe:
+      exec:
+        command: nc -z 127.0.0.1 3001
+      initial_delay_seconds: 5
+      period_seconds: 2
+      failure_threshold: 10
+
+  pba-service:
+    command: |
+      DB_NAME=pba_service_test TIGERBEETLE_ADDRESSES=3001 PORT=3031 cargo run -p pba-service
+    depends_on:
+      db-reset:
+        condition: process_completed_successfully
+      tigerbeetle:
+        condition: process_healthy
+    readiness_probe:
+      http_get:
+        host: 127.0.0.1
+        port: 3031
+        path: /purpose-types
+      initial_delay_seconds: 3
+      period_seconds: 2

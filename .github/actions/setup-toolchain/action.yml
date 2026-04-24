@@ -32,6 +32,14 @@ runs:
       shell: bash
       run: echo "ZIG_PATH=$(which zig)" >> $GITHUB_ENV
 
+    - name: Install process-compose
+      if: inputs.with-tigerbeetle == 'true'
+      shell: bash
+      run: |
+        PC_VERSION=v1.103.0
+        curl -sL "https://github.com/F1bonacc1/process-compose/releases/download/${PC_VERSION}/process-compose_linux-amd64.tar.gz" | tar xz -C "$HOME/.local/bin" process-compose
+        echo "$HOME/.local/bin" >> $GITHUB_PATH
+
     - name: Install TigerBeetle
       if: inputs.with-tigerbeetle == 'true'
       shell: bash

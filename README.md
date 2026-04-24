@@ -59,16 +59,10 @@ just install-deps
 
 ### Development workflow
 
-**Start services (once, leave running):**
+**Start everything (Postgres + TigerBeetle + app):**
 
 ```bash
-just infra-start       # Postgres on :5432, TigerBeetle on :3000
-```
-
-**Edit, build, run (inner loop):**
-
-```bash
-just run               # or: just watch (auto-restarts on changes)
+just run               # starts all services via process-compose, Ctrl+C stops everything
 ```
 
 The service starts on `http://localhost:3030`. Open the **Admin Dashboard** at:
@@ -79,17 +73,10 @@ http://localhost:3030/admin
 
 From there you can browse accounts, create new ones, make deposits/payments/withdrawals, and view purpose types with their allowed MCCs.
 
-**Stop everything:**
+**Start in background:**
 
 ```bash
-just stop              # stop pba-service only (infra keeps running)
-just stop-all          # stop the app + all infrastructure
-```
-
-**All-in-one (starts services, runs app, cleans up on Ctrl+C):**
-
-```bash
-just run-all
+just run-bg            # starts detached; use 'just logs' to attach, 'just stop-all' to stop
 ```
 
 ### Running tests
@@ -160,12 +147,11 @@ Environment variables (loaded from `.env`):
 Run `just` to see all targets:
 
 ```
-just infra-start      # Start Postgres + TigerBeetle
-just infra-stop       # Stop Postgres + TigerBeetle
-just run              # Run the service (foreground)
-just run-all          # Start infra + run (auto-cleanup on exit)
-just stop             # Stop pba-service only (infra keeps running)
-just stop-all         # Stop app + all infrastructure
+just run              # Start everything via process-compose (Ctrl+C stops all)
+just run-bg           # Start everything in the background (detached)
+just logs             # Attach to running process-compose instance
+just stop             # Stop pba-service only
+just stop-all         # Stop all services
 just build            # Build the project
 just test             # Unit tests
 just api-e2e          # API E2E tests (isolated infra)
