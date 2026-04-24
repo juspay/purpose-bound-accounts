@@ -49,7 +49,11 @@ processes:
 
   pba-service:
     command: |
-      DB_NAME=pba_service_test TIGERBEETLE_ADDRESSES=3001 PORT=3031 cargo run -p pba-service
+      if [ -n "${CI:-}" ]; then
+        DB_NAME=pba_service_test TIGERBEETLE_ADDRESSES=3001 PORT=3031 target/debug/pba-service
+      else
+        DB_NAME=pba_service_test TIGERBEETLE_ADDRESSES=3001 PORT=3031 cargo run -p pba-service
+      fi
     depends_on:
       db-reset:
         condition: process_completed_successfully

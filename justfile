@@ -95,7 +95,7 @@ local-ci: fmt-check lint build test cog-check
 e2e-start:
     process-compose -f process-compose.test.yml up -D
     @echo "Waiting for test service..."
-    @for i in $(seq 1 30); do \
+    @for i in $(seq 1 60); do \
         if curl -sf http://127.0.0.1:{{TEST_APP_PORT}}/purpose-types > /dev/null 2>&1; then \
             echo "Test service ready on port {{TEST_APP_PORT}}"; \
             exit 0; \
@@ -106,7 +106,7 @@ e2e-start:
 
 # Stop test service and infrastructure
 e2e-stop:
-    process-compose -f process-compose.test.yml down
+    process-compose down
 
 # Run API E2E tests only (service must be running)
 api-e2e-run:
