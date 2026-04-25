@@ -1,4 +1,6 @@
 use std::sync::Arc;
+use dashmap::DashMap;
+use std::time::Instant;
 
 mod admin;
 mod api;
@@ -30,6 +32,23 @@ pub struct AppState {
     pub account_repo: Arc<AccountRepo>,
     pub ledger_repo: Arc<LedgerRepo>,
     pub transaction_repo: Arc<TransactionRepo>,
+    pub auth: AuthContext,
+}
+
+/// Shared auth context available to all routes.
+#[derive(Clone)]
+pub struct AuthContext {
+    pub jwks: auth::jwks::JwksCache,
+    pub token_cache: Arc<DashMap<String, CachedToken>>,
+    pub keycloak_token_url: String,
+    pub issuer: String,
+    pub auth_enabled: bool,
+}
+
+pub struct CachedToken {
+    pub access_token: String,
+    pub claims: auth::claims::Claims,
+    pub expires_at: Instant,
 }
 
 #[tokio::main]
@@ -43,6 +62,20 @@ async fn main() {
 
     let secrets = secrets::create_provider().await;
     let config = AppConfig::from_env(&*secrets).await;
+
+    let auth_ctx = AuthContext {
+        jwks: auth::jwks::JwksCache::new(&config.keycloak_url, &config.keycloak_realm),
+        token_cache: Arc::new(DashMap::new()),
+        keycloak_token_url: format!(
+            "{}/realms/{}/protocol/openid-connect/token",
+            config.keycloak_url, config.keycloak_realm
+        ),
+        issuer: format!(
+            "{}/realms/{}",
+            config.keycloak_url, config.keycloak_realm
+        ),
+        auth_enabled: config.auth_enabled,
+    };
 
     // Initialize Postgres connection pool
     let pg_pool = sqlx::postgres::PgPoolOptions::new()
@@ -101,6 +134,7 @@ async fn main() {
         account_repo,
         ledger_repo,
         transaction_repo: Arc::clone(&transaction_repo),
+        auth: auth_ctx,
     };
 
     // Spawn background deposit timeout poller
@@ -110,6 +144,10 @@ async fn main() {
     ));
 
     let app = api::routes::create_router()
+        .layer(axum::middleware::from_fn_with_state(
+            state.clone(),
+            auth::api_key::require_api_key,
+        ))
         .merge(admin::create_router())
         .with_state(state);
 
