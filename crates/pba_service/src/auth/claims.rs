@@ -43,6 +43,15 @@ impl Claims {
             .or(self.azp.as_deref())
             .unwrap_or("unknown")
     }
+
+    /// Human-readable identity for audit trails (e.g. `updated_by`).
+    /// Returns "admin@pba.local" for humans, "pba-api" for service accounts.
+    pub fn actor_name(&self) -> &str {
+        self.preferred_username
+            .as_deref()
+            .or(self.azp.as_deref())
+            .unwrap_or("unknown")
+    }
 }
 
 /// Validate a JWT string against Keycloak's JWKS.
