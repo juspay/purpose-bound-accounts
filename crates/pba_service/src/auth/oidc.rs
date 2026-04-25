@@ -3,8 +3,8 @@ use axum::response::{IntoResponse, Redirect, Response};
 use serde::Deserialize;
 use tower_cookies::Cookies;
 
-use crate::AppState;
 use super::session::{self, UserSession};
+use crate::AppState;
 
 /// GET /admin/auth/keycloak — redirect to the OIDC authorization endpoint.
 pub async fn login_redirect(State(state): State<AppState>) -> Response {
@@ -121,10 +121,7 @@ pub async fn callback(
             .unwrap_or("unknown")
             .to_string(),
         email: userinfo.email,
-        roles: userinfo
-            .realm_access
-            .map(|ra| ra.roles)
-            .unwrap_or_default(),
+        roles: userinfo.realm_access.map(|ra| ra.roles).unwrap_or_default(),
     };
 
     session::set_session(&cookies, &state.auth.cookie_key, &user_session);

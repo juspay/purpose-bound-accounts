@@ -1,5 +1,5 @@
-use std::sync::Arc;
 use dashmap::DashMap;
+use std::sync::Arc;
 use std::time::Instant;
 
 mod admin;
@@ -179,18 +179,16 @@ async fn main() {
 
     let app = api::routes::public_router()
         .merge(
-            api::routes::protected_router()
-                .layer(axum::middleware::from_fn_with_state(
-                    state.clone(),
-                    auth::api_key::require_api_key,
-                ))
+            api::routes::protected_router().layer(axum::middleware::from_fn_with_state(
+                state.clone(),
+                auth::api_key::require_api_key,
+            )),
         )
         .merge(
-            admin::create_router()
-                .layer(axum::middleware::from_fn_with_state(
-                    state.clone(),
-                    auth::admin_auth::require_admin_session,
-                ))
+            admin::create_router().layer(axum::middleware::from_fn_with_state(
+                state.clone(),
+                auth::admin_auth::require_admin_session,
+            )),
         )
         .layer(CookieManagerLayer::new())
         .with_state(state);

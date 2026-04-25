@@ -7,8 +7,8 @@ use base64::Engine;
 use serde::Deserialize;
 use std::time::{Duration, Instant};
 
-use crate::{AppState, error::AppError};
 use super::claims;
+use crate::{error::AppError, AppState};
 
 /// Axum middleware that validates the X-Api-Key header.
 pub async fn require_api_key(
@@ -52,12 +52,8 @@ async fn exchange_api_key(state: &AppState, api_key: &str) -> Result<claims::Cla
     }
 
     // Exchange client credentials at the OIDC token endpoint
-    let token_response = exchange_client_credentials(
-        &state.auth.token_endpoint,
-        client_id,
-        client_secret,
-    )
-    .await?;
+    let token_response =
+        exchange_client_credentials(&state.auth.token_endpoint, client_id, client_secret).await?;
 
     // Validate the JWT
     let validated_claims = claims::validate_jwt(

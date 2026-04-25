@@ -5,8 +5,8 @@ use axum::{
 };
 use tower_cookies::Cookies;
 
-use crate::AppState;
 use super::session;
+use crate::AppState;
 
 /// Middleware that checks for a valid session cookie on admin routes.
 /// Redirects to /admin/login if no session found.

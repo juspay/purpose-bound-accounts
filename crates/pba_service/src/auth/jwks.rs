@@ -1,5 +1,5 @@
 use dashmap::DashMap;
-use jsonwebtoken::{DecodingKey, jwk::JwkSet};
+use jsonwebtoken::{jwk::JwkSet, DecodingKey};
 use std::sync::Arc;
 use std::time::Instant;
 

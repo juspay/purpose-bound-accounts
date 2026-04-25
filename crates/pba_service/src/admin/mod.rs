@@ -3,8 +3,8 @@ mod handlers;
 use axum::routing::get;
 use axum::Router;
 
-use crate::AppState;
 use crate::auth::oidc;
+use crate::AppState;
 
 pub fn create_router() -> Router<AppState> {
     Router::new()
