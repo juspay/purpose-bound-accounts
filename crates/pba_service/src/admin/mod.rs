@@ -4,9 +4,16 @@ use axum::routing::get;
 use axum::Router;
 
 use crate::AppState;
+use crate::auth::oidc;
 
 pub fn create_router() -> Router<AppState> {
     Router::new()
+        // Auth routes
+        .route("/admin/login", get(handlers::login_page))
+        .route("/admin/auth/keycloak", get(oidc::login_redirect))
+        .route("/admin/callback", get(oidc::callback))
+        .route("/admin/logout", get(oidc::logout))
+        // Existing routes
         .route("/admin", get(handlers::dashboard))
         .route(
             "/admin/accounts",

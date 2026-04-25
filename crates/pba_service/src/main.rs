@@ -43,6 +43,12 @@ pub struct AuthContext {
     pub keycloak_token_url: String,
     pub issuer: String,
     pub auth_enabled: bool,
+    pub keycloak_url: String,
+    pub keycloak_realm: String,
+    pub oidc_client_id: String,
+    pub callback_url: String,
+    pub cookie_key: cookie::Key,
+    pub port: u16,
 }
 
 pub struct CachedToken {
@@ -75,6 +81,12 @@ async fn main() {
             config.keycloak_url, config.keycloak_realm
         ),
         auth_enabled: config.auth_enabled,
+        keycloak_url: config.keycloak_url.clone(),
+        keycloak_realm: config.keycloak_realm.clone(),
+        oidc_client_id: config.oidc_client_id.clone(),
+        callback_url: format!("http://localhost:{}/admin/callback", config.port),
+        cookie_key: cookie::Key::derive_from(config.cookie_secret.as_bytes()),
+        port: config.port,
     };
 
     // Initialize Postgres connection pool
@@ -143,12 +155,21 @@ async fn main() {
         config.deposit_poller_interval_seconds,
     ));
 
+    use tower_cookies::CookieManagerLayer;
+
     let app = api::routes::create_router()
         .layer(axum::middleware::from_fn_with_state(
             state.clone(),
             auth::api_key::require_api_key,
         ))
-        .merge(admin::create_router())
+        .merge(
+            admin::create_router()
+                .layer(axum::middleware::from_fn_with_state(
+                    state.clone(),
+                    auth::admin_auth::require_admin_session,
+                ))
+        )
+        .layer(CookieManagerLayer::new())
         .with_state(state);
 
     let addr = format!("{}:{}", config.host, config.port);

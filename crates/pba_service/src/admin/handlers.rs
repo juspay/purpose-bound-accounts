@@ -20,6 +20,14 @@ fn render<T: Template>(tmpl: T) -> Response {
 }
 
 #[derive(Template)]
+#[template(path = "admin/login.html")]
+struct LoginTemplate {}
+
+pub async fn login_page() -> impl IntoResponse {
+    render(LoginTemplate {})
+}
+
+#[derive(Template)]
 #[template(path = "admin/dashboard.html")]
 struct DashboardTemplate {
     total_accounts: i64,
