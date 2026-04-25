@@ -160,14 +160,22 @@ async fn create_account_via_ui(
         .await
         .expect("Could not find submit button");
     submit.click().await.expect("Failed to click submit button");
-    sleep(Duration::from_millis(500)).await;
 
-    // Check where we ended up
-    let page = world.ensure_page().await;
-    let current_url = page.url().await.expect("Failed to get current URL");
-    let current_url = current_url.unwrap_or_default();
+    // Poll for redirect (up to 5 seconds) instead of a fixed sleep
+    for _ in 0..10 {
+        sleep(Duration::from_millis(500)).await;
+        let page = world.ensure_page().await;
+        let current_url = page
+            .url()
+            .await
+            .expect("Failed to get URL")
+            .unwrap_or_default();
+        if let Some(id) = extract_id_from_url(&current_url) {
+            return Some(id);
+        }
+    }
 
-    extract_id_from_url(&current_url)
+    None
 }
 
 /// Submit a status change form on the account detail page.
@@ -202,12 +210,22 @@ async fn submit_status_change(world: &mut UiWorld, status_value: &str) {
         .await
         .expect("Failed to submit status form");
     drop(hidden_input);
-    sleep(Duration::from_millis(500)).await;
 
-    // Read new status from the detail page
+    // Poll for status change (up to 5 seconds) instead of a fixed sleep
+    for _ in 0..10 {
+        sleep(Duration::from_millis(500)).await;
+        let page = world.ensure_page().await;
+        let content = page.content().await.expect("Failed to get page content");
+        let status = extract_status_from_content(&content);
+        if status.as_deref() == Some(status_value) {
+            world.last_account_status = status;
+            return;
+        }
+    }
+
+    // Fallback: read whatever status is there
     let page = world.ensure_page().await;
     let content = page.content().await.expect("Failed to get page content");
-    // Extract status from page - look for the status span
     let status = extract_status_from_content(&content);
     world.last_account_status = status;
 }
