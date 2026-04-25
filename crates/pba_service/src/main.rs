@@ -74,11 +74,7 @@ async fn main() {
     let config = AppConfig::from_env(&*secrets).await;
 
     let auth_ctx = if config.auth_enabled {
-        let issuer_url = format!(
-            "{}/realms/{}",
-            config.keycloak_url, config.keycloak_realm
-        );
-        let discovery = auth::discovery::OidcDiscovery::fetch(&issuer_url)
+        let discovery = auth::discovery::OidcDiscovery::fetch(&config.oidc_issuer_url)
             .await
             .expect("Failed to fetch OIDC discovery — is Keycloak running?");
 

@@ -29,7 +29,7 @@ run:
 # Start everything in the background (detached)
 run-bg:
     process-compose up -D
-    @echo "Services started in background. Use 'just logs' to view, 'just stop-all' to stop."
+    @echo "Services started in background. Use 'just logs' to view, 'just stop' to stop."
 
 # View process-compose logs (attach to running instance)
 logs:

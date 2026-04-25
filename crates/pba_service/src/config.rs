@@ -10,8 +10,7 @@ pub struct AppConfig {
     pub port: u16,
     pub deposit_timeout_seconds: u32,
     pub deposit_poller_interval_seconds: u64,
-    pub keycloak_url: String,
-    pub keycloak_realm: String,
+    pub oidc_issuer_url: String,
     pub oidc_client_id: String,
     #[allow(dead_code)] // Used when confidential OIDC clients are added
     pub oidc_client_secret: String,
@@ -66,10 +65,8 @@ impl AppConfig {
             .parse()
             .expect("DEPOSIT_POLLER_INTERVAL_SECONDS must be a valid u64");
 
-        let keycloak_url = std::env::var("KEYCLOAK_URL")
-            .unwrap_or_else(|_| "http://localhost:8180".to_string());
-        let keycloak_realm = std::env::var("KEYCLOAK_REALM")
-            .unwrap_or_else(|_| "pba".to_string());
+        let oidc_issuer_url = std::env::var("OIDC_ISSUER_URL")
+            .unwrap_or_else(|_| "http://localhost:8180/realms/pba".to_string());
         let oidc_client_id = std::env::var("OIDC_CLIENT_ID")
             .unwrap_or_else(|_| "pba-admin".to_string());
         let oidc_client_secret = std::env::var("OIDC_CLIENT_SECRET")
@@ -92,8 +89,7 @@ impl AppConfig {
             port,
             deposit_timeout_seconds,
             deposit_poller_interval_seconds,
-            keycloak_url,
-            keycloak_realm,
+            oidc_issuer_url,
             oidc_client_id,
             oidc_client_secret,
             cookie_secret,
