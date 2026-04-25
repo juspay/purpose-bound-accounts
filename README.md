@@ -125,6 +125,22 @@ just smithy-validate    # validate the model
 just smithy-build       # regenerate the Rust client SDK
 ```
 
+## Authentication
+
+PBA uses Keycloak for authentication. `just run` starts Keycloak alongside other services.
+
+**Admin UI:** Navigate to `http://localhost:3030/admin` — you'll be redirected to Keycloak to log in.
+Default credentials: `admin@pba.local` / `admin`
+
+**API access:** Use the `X-Api-Key` header with a base64-encoded `client_id:client_secret`:
+
+```bash
+API_KEY=$(echo -n "pba-api:pba-api-secret" | base64)
+curl -H "X-Api-Key: $API_KEY" http://localhost:3030/purpose-types
+```
+
+**Disable auth (development):** Set `AUTH_ENABLED=false` in your `.env` file.
+
 ## Configuration
 
 Environment variables (loaded from `.env`):
@@ -141,6 +157,12 @@ Environment variables (loaded from `.env`):
 | `HOST` | `0.0.0.0` | Bind address |
 | `PORT` | `3030` | HTTP port |
 | `RUST_LOG` | `pba_service=debug` | Log level |
+| `KEYCLOAK_URL` | `http://localhost:8180` | Keycloak base URL |
+| `KEYCLOAK_REALM` | `pba` | Keycloak realm name |
+| `OIDC_CLIENT_ID` | `pba-admin` | OIDC client for admin UI |
+| `OIDC_CLIENT_SECRET` | `pba-api-secret` | Client secret for API key exchange |
+| `COOKIE_SECRET` | _(dev default)_ | 32+ byte secret for session cookie signing |
+| `AUTH_ENABLED` | `true` | Set to `false` to disable auth |
 
 ## Available just targets
 
