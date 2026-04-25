@@ -66,7 +66,7 @@ async fn exchange_api_key(state: &AppState, api_key: &str) -> Result<claims::Cla
         &state.auth.issuer,
     )
     .await
-    .map_err(|e| AppError::Unauthorized(e))?;
+    .map_err(AppError::Unauthorized)?;
 
     // Cache it
     let expires_at = Instant::now() + Duration::from_secs(token_response.expires_in);

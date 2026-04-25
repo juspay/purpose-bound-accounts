@@ -13,6 +13,7 @@ pub struct AppConfig {
     pub keycloak_url: String,
     pub keycloak_realm: String,
     pub oidc_client_id: String,
+    #[allow(dead_code)] // Used when confidential OIDC clients are added
     pub oidc_client_secret: String,
     pub cookie_secret: String,
     pub auth_enabled: bool,
