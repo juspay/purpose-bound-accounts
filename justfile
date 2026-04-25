@@ -102,7 +102,18 @@ e2e-start:
         fi; \
         sleep 1; \
     done; \
-    echo "ERROR: Test service did not start in time"; exit 1
+    echo "ERROR: Test service did not start in time"; \
+    echo "--- process-compose status ---"; \
+    process-compose process list 2>&1 || true; \
+    echo "--- tigerbeetle logs ---"; \
+    process-compose process logs tigerbeetle 2>&1 | tail -20 || true; \
+    echo "--- pba-service logs ---"; \
+    process-compose process logs pba-service 2>&1 | tail -20 || true; \
+    echo "--- db-reset logs ---"; \
+    process-compose process logs db-reset 2>&1 | tail -10 || true; \
+    echo "--- postgres logs ---"; \
+    process-compose process logs postgres 2>&1 | tail -10 || true; \
+    exit 1
 
 # Stop test service and infrastructure
 e2e-stop:
