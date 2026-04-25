@@ -15,8 +15,6 @@ env:
   DB_USER: postgres
   DB_PASSWORD: postgres
   DB_NAME: pba_service_test
-  CI_TB_PORT: "3001"
-  CI_APP_PORT: "3031"
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -85,11 +83,10 @@ jobs:
         with:
           with-tigerbeetle: "true"
       - run: just build
-      - run: just tb-start $CI_TB_PORT .tb_data/test
-      - run: just service-start $CI_APP_PORT $DB_NAME $CI_TB_PORT
+      - run: just e2e-start
       - run: just api-e2e-run
       - if: always()
-        run: just service-stop $CI_APP_PORT
+        run: just e2e-stop
 
   ui-e2e:
     name: UI E2E Tests
@@ -116,8 +113,7 @@ jobs:
           with-tigerbeetle: "true"
           with-chromium: "true"
       - run: just build
-      - run: just tb-start $CI_TB_PORT .tb_data/test
-      - run: just service-start $CI_APP_PORT $DB_NAME $CI_TB_PORT
+      - run: just e2e-start
       - run: just ui-e2e-run
       - if: always()
-        run: just service-stop $CI_APP_PORT
+        run: just e2e-stop

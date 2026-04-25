@@ -78,20 +78,7 @@ async fn do_deposit(world: &mut UiWorld, amount: i64, ifsc: &str, account_number
         .expect("Could not find submit button");
     submit.click().await.expect("Failed to click submit");
 
-    // Poll for redirect (up to 5 seconds) instead of a fixed sleep
-    for _ in 0..10 {
-        sleep(Duration::from_millis(500)).await;
-        let page = world.ensure_page().await;
-        let current_url = page
-            .url()
-            .await
-            .expect("Failed to get URL")
-            .unwrap_or_default();
-        if current_url.contains("/admin/accounts/") && !current_url.ends_with("/deposit") {
-            return true;
-        }
-    }
-    false
+    world.wait_for_redirect("/deposit").await
 }
 
 // ---------------------------------------------------------------------------
@@ -369,21 +356,7 @@ async fn do_pending_deposit(
         .expect("Could not find submit button");
     submit.click().await.expect("Failed to click submit");
 
-    // Poll for redirect (up to 5 seconds) instead of a fixed sleep
-    let mut success = false;
-    for _ in 0..10 {
-        sleep(Duration::from_millis(500)).await;
-        let page = world.ensure_page().await;
-        let current_url = page
-            .url()
-            .await
-            .expect("Failed to get URL")
-            .unwrap_or_default();
-        if current_url.contains("/admin/accounts/") && !current_url.ends_with("/deposit") {
-            success = true;
-            break;
-        }
-    }
+    let success = world.wait_for_redirect("/deposit").await;
 
     if success {
         // Extract the deposit ID from the pending deposits table on the account detail page
