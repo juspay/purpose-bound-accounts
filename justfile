@@ -44,12 +44,8 @@ run-service:
 watch:
     cargo watch -x 'run -p pba-service'
 
-# Stop pba-service only (leaves infrastructure running)
-stop:
-    process-compose process stop pba-service
-
 # Stop all services
-stop-all:
+stop:
     process-compose down
 
 # ── Conventional Commits ──────────────────────────────────────

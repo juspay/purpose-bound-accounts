@@ -43,7 +43,7 @@ processes:
       period_seconds: 3
       failure_threshold: 20
     shutdown:
-      command: docker stop pba-keycloak
+      command: docker rm -f pba-keycloak
 
   tigerbeetle:
     command: |

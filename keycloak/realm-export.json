@@ -28,7 +28,9 @@
       "directAccessGrantsEnabled": true,
       "redirectUris": [
         "http://localhost:3030/admin/callback",
-        "http://localhost:3031/admin/callback"
+        "http://localhost:3031/admin/callback",
+        "http://localhost:3030/admin/login",
+        "http://localhost:3031/admin/login"
       ],
       "webOrigins": ["http://localhost:3030", "http://localhost:3031"],
       "defaultClientScopes": ["openid", "profile", "email"]

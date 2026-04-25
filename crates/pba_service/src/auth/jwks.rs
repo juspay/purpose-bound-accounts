@@ -3,32 +3,28 @@ use jsonwebtoken::{DecodingKey, jwk::JwkSet};
 use std::sync::Arc;
 use std::time::Instant;
 
-/// Caches Keycloak's JWKS (public keys) with a TTL.
+/// Caches OIDC provider's JWKS (public keys) with a TTL.
 #[derive(Clone)]
 pub struct JwksCache {
     http: reqwest::Client,
-    jwks_url: String,
+    jwks_uri: String,
     /// kid -> (DecodingKey, fetched_at)
     keys: Arc<DashMap<String, (DecodingKey, Instant)>>,
     ttl_secs: u64,
 }
 
 impl JwksCache {
-    pub fn new(keycloak_url: &str, realm: &str) -> Self {
-        let jwks_url = format!(
-            "{}/realms/{}/protocol/openid-connect/certs",
-            keycloak_url.trim_end_matches('/'),
-            realm
-        );
+    /// Create a new JWKS cache from a discovered `jwks_uri`.
+    pub fn new(jwks_uri: &str) -> Self {
         Self {
             http: reqwest::Client::new(),
-            jwks_url,
+            jwks_uri: jwks_uri.to_string(),
             keys: Arc::new(DashMap::new()),
             ttl_secs: 300,
         }
     }
 
-    /// Get a decoding key by key ID, refreshing from Keycloak if expired or missing.
+    /// Get a decoding key by key ID, refreshing from the provider if expired or missing.
     pub async fn get_key(&self, kid: &str) -> Result<DecodingKey, String> {
         if let Some(entry) = self.keys.get(kid) {
             let (key, fetched_at) = entry.value();
@@ -48,7 +44,7 @@ impl JwksCache {
     async fn refresh(&self) -> Result<(), String> {
         let jwks: JwkSet = self
             .http
-            .get(&self.jwks_url)
+            .get(&self.jwks_uri)
             .send()
             .await
             .map_err(|e| format!("Failed to fetch JWKS: {e}"))?

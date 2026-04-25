@@ -51,9 +51,9 @@ async fn exchange_api_key(state: &AppState, api_key: &str) -> Result<claims::Cla
         }
     }
 
-    // Exchange with Keycloak
+    // Exchange client credentials at the OIDC token endpoint
     let token_response = exchange_client_credentials(
-        &state.auth.keycloak_token_url,
+        &state.auth.token_endpoint,
         client_id,
         client_secret,
     )

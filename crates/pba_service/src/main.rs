@@ -36,15 +36,19 @@ pub struct AppState {
 }
 
 /// Shared auth context available to all routes.
+/// All endpoint URLs are populated from OIDC Discovery at startup.
 #[derive(Clone)]
 pub struct AuthContext {
     pub jwks: auth::jwks::JwksCache,
     pub token_cache: Arc<DashMap<String, CachedToken>>,
-    pub keycloak_token_url: String,
     pub issuer: String,
     pub auth_enabled: bool,
-    pub keycloak_url: String,
-    pub keycloak_realm: String,
+    // OIDC discovered endpoints
+    pub authorization_endpoint: String,
+    pub token_endpoint: String,
+    pub userinfo_endpoint: String,
+    pub end_session_endpoint: Option<String>,
+    // App config
     pub oidc_client_id: String,
     pub callback_url: String,
     pub cookie_key: cookie::Key,
@@ -69,24 +73,44 @@ async fn main() {
     let secrets = secrets::create_provider().await;
     let config = AppConfig::from_env(&*secrets).await;
 
-    let auth_ctx = AuthContext {
-        jwks: auth::jwks::JwksCache::new(&config.keycloak_url, &config.keycloak_realm),
-        token_cache: Arc::new(DashMap::new()),
-        keycloak_token_url: format!(
-            "{}/realms/{}/protocol/openid-connect/token",
-            config.keycloak_url, config.keycloak_realm
-        ),
-        issuer: format!(
+    let auth_ctx = if config.auth_enabled {
+        let issuer_url = format!(
             "{}/realms/{}",
             config.keycloak_url, config.keycloak_realm
-        ),
-        auth_enabled: config.auth_enabled,
-        keycloak_url: config.keycloak_url.clone(),
-        keycloak_realm: config.keycloak_realm.clone(),
-        oidc_client_id: config.oidc_client_id.clone(),
-        callback_url: format!("http://localhost:{}/admin/callback", config.port),
-        cookie_key: cookie::Key::derive_from(config.cookie_secret.as_bytes()),
-        port: config.port,
+        );
+        let discovery = auth::discovery::OidcDiscovery::fetch(&issuer_url)
+            .await
+            .expect("Failed to fetch OIDC discovery — is Keycloak running?");
+
+        AuthContext {
+            jwks: auth::jwks::JwksCache::new(&discovery.jwks_uri),
+            token_cache: Arc::new(DashMap::new()),
+            issuer: discovery.issuer,
+            auth_enabled: true,
+            authorization_endpoint: discovery.authorization_endpoint,
+            token_endpoint: discovery.token_endpoint,
+            userinfo_endpoint: discovery.userinfo_endpoint,
+            end_session_endpoint: discovery.end_session_endpoint,
+            oidc_client_id: config.oidc_client_id.clone(),
+            callback_url: format!("http://localhost:{}/admin/callback", config.port),
+            cookie_key: cookie::Key::derive_from(config.cookie_secret.as_bytes()),
+            port: config.port,
+        }
+    } else {
+        AuthContext {
+            jwks: auth::jwks::JwksCache::new("http://localhost/_unused"),
+            token_cache: Arc::new(DashMap::new()),
+            issuer: String::new(),
+            auth_enabled: false,
+            authorization_endpoint: String::new(),
+            token_endpoint: String::new(),
+            userinfo_endpoint: String::new(),
+            end_session_endpoint: None,
+            oidc_client_id: String::new(),
+            callback_url: String::new(),
+            cookie_key: cookie::Key::generate(),
+            port: config.port,
+        }
     };
 
     // Initialize Postgres connection pool
