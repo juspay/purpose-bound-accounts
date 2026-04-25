@@ -90,7 +90,7 @@ pub async fn callback(
     };
 
     let user_session = UserSession {
-        sub: jwt_claims.sub.clone(),
+        sub: jwt_claims.subject().to_string(),
         display_name: jwt_claims.display_name().to_string(),
         email: jwt_claims.email.clone(),
         roles: jwt_claims

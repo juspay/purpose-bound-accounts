@@ -6,7 +6,7 @@ use super::jwks::JwksCache;
 /// JWT claims from Keycloak tokens.
 #[derive(Debug, Clone, Deserialize)]
 pub struct Claims {
-    pub sub: String,
+    pub sub: Option<String>,
     pub preferred_username: Option<String>,
     pub email: Option<String>,
     pub realm_access: Option<RealmAccess>,
@@ -31,7 +31,17 @@ impl Claims {
         self.preferred_username
             .as_deref()
             .or(self.email.as_deref())
-            .unwrap_or(&self.sub)
+            .or(self.sub.as_deref())
+            .unwrap_or("unknown")
+    }
+
+    /// The subject identifier: sub, preferred_username, or azp as fallback.
+    pub fn subject(&self) -> &str {
+        self.sub
+            .as_deref()
+            .or(self.preferred_username.as_deref())
+            .or(self.azp.as_deref())
+            .unwrap_or("unknown")
     }
 }
 
