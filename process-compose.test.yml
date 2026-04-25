@@ -88,5 +88,6 @@ processes:
         host: 127.0.0.1
         port: 3031
         path: /health
-      initial_delay_seconds: 3
-      period_seconds: 2
+      initial_delay_seconds: 10
+      period_seconds: 5
+      failure_threshold: 60
