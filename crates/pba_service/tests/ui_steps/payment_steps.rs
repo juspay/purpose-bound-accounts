@@ -116,21 +116,7 @@ async fn do_payment(
         .expect("Could not find submit button");
     submit.click().await.expect("Failed to click submit");
 
-    // Poll for redirect (up to 5 seconds) instead of a fixed sleep
-    let mut succeeded = false;
-    for _ in 0..10 {
-        sleep(Duration::from_millis(500)).await;
-        let page = world.ensure_page().await;
-        let current_url = page
-            .url()
-            .await
-            .expect("Failed to get URL")
-            .unwrap_or_default();
-        if current_url.contains("/admin/accounts/") && !current_url.ends_with("/payment") {
-            succeeded = true;
-            break;
-        }
-    }
+    let succeeded = world.wait_for_redirect("/payment").await;
 
     if succeeded {
         // Read balances after payment and compute split

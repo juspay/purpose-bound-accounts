@@ -161,21 +161,17 @@ async fn create_account_via_ui(
         .expect("Could not find submit button");
     submit.click().await.expect("Failed to click submit button");
 
-    // Poll for redirect (up to 5 seconds) instead of a fixed sleep
-    for _ in 0..10 {
-        sleep(Duration::from_millis(500)).await;
-        let page = world.ensure_page().await;
-        let current_url = page
-            .url()
-            .await
-            .expect("Failed to get URL")
-            .unwrap_or_default();
-        if let Some(id) = extract_id_from_url(&current_url) {
-            return Some(id);
-        }
+    if !world.wait_for_redirect("/accounts").await {
+        return None;
     }
 
-    None
+    let page = world.ensure_page().await;
+    let current_url = page
+        .url()
+        .await
+        .expect("Failed to get URL")
+        .unwrap_or_default();
+    extract_id_from_url(&current_url)
 }
 
 /// Submit a status change form on the account detail page.
