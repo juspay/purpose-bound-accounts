@@ -13,7 +13,7 @@ processes:
       postgres -D "${PG_DATA:-.pg_data}" -p 5432 -k /tmp
     readiness_probe:
       exec:
-        command: pg_isready -h ${DB_HOST:-/tmp} -p 5432 -d postgres ${DB_USER:+-U $DB_USER}
+        command: bash -c 'if [ -n "${CI:-}" ]; then nc -z ${DB_HOST:-localhost} 5432; else pg_isready -h /tmp -p 5432 -d postgres; fi'
       initial_delay_seconds: 1
       period_seconds: 1
     shutdown:
