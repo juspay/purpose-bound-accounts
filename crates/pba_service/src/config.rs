@@ -10,6 +10,12 @@ pub struct AppConfig {
     pub port: u16,
     pub deposit_timeout_seconds: u32,
     pub deposit_poller_interval_seconds: u64,
+    pub keycloak_url: String,
+    pub keycloak_realm: String,
+    pub oidc_client_id: String,
+    pub oidc_client_secret: String,
+    pub cookie_secret: String,
+    pub auth_enabled: bool,
 }
 
 impl AppConfig {
@@ -59,6 +65,21 @@ impl AppConfig {
             .parse()
             .expect("DEPOSIT_POLLER_INTERVAL_SECONDS must be a valid u64");
 
+        let keycloak_url = std::env::var("KEYCLOAK_URL")
+            .unwrap_or_else(|_| "http://localhost:8180".to_string());
+        let keycloak_realm = std::env::var("KEYCLOAK_REALM")
+            .unwrap_or_else(|_| "pba".to_string());
+        let oidc_client_id = std::env::var("OIDC_CLIENT_ID")
+            .unwrap_or_else(|_| "pba-admin".to_string());
+        let oidc_client_secret = std::env::var("OIDC_CLIENT_SECRET")
+            .unwrap_or_else(|_| "pba-api-secret".to_string());
+        let cookie_secret = std::env::var("COOKIE_SECRET")
+            .unwrap_or_else(|_| "change-me-in-production-32-bytes!".to_string());
+        let auth_enabled = std::env::var("AUTH_ENABLED")
+            .unwrap_or_else(|_| "true".to_string())
+            .parse::<bool>()
+            .unwrap_or(true);
+
         Self {
             database_url,
             tigerbeetle_addresses: tb_addresses
@@ -70,6 +91,12 @@ impl AppConfig {
             port,
             deposit_timeout_seconds,
             deposit_poller_interval_seconds,
+            keycloak_url,
+            keycloak_realm,
+            oidc_client_id,
+            oidc_client_secret,
+            cookie_secret,
+            auth_enabled,
         }
     }
 }
