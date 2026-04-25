@@ -2,6 +2,7 @@ use std::sync::Arc;
 
 mod admin;
 mod api;
+mod auth;
 mod config;
 mod domain;
 mod error;
