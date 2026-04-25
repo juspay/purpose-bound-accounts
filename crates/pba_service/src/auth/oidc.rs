@@ -49,7 +49,16 @@ pub async fn callback(
 
     let resp = match resp {
         Ok(r) if r.status().is_success() => r,
-        _ => return Redirect::temporary("/admin/login").into_response(),
+        Ok(r) => {
+            let status = r.status();
+            let body = r.text().await.unwrap_or_default();
+            tracing::error!("Token exchange failed: status={status}, body={body}");
+            return Redirect::temporary("/admin/login").into_response();
+        }
+        Err(e) => {
+            tracing::error!("Token exchange request error: {e}");
+            return Redirect::temporary("/admin/login").into_response();
+        }
     };
 
     #[derive(Deserialize)]
@@ -59,7 +68,10 @@ pub async fn callback(
 
     let token: TokenResp = match resp.json().await {
         Ok(t) => t,
-        Err(_) => return Redirect::temporary("/admin/login").into_response(),
+        Err(e) => {
+            tracing::error!("Failed to parse token response: {e}");
+            return Redirect::temporary("/admin/login").into_response();
+        }
     };
 
     let validated = claims::validate_jwt(
@@ -71,7 +83,10 @@ pub async fn callback(
 
     let jwt_claims = match validated {
         Ok(c) => c,
-        Err(_) => return Redirect::temporary("/admin/login").into_response(),
+        Err(e) => {
+            tracing::error!("JWT validation failed: {e}");
+            return Redirect::temporary("/admin/login").into_response();
+        }
     };
 
     let user_session = UserSession {
