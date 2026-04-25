@@ -10,7 +10,7 @@ processes:
       if [ ! -d "${PG_DATA:-.pg_data}" ]; then
         initdb -D "${PG_DATA:-.pg_data}" --auth=trust
       fi
-      postgres -D "${PG_DATA:-.pg_data}" -p 5432 -k /tmp
+      exec postgres -D "${PG_DATA:-.pg_data}" -p 5432 -k /tmp
     readiness_probe:
       exec:
         command: bash -c 'if [ -n "${CI:-}" ]; then nc -z ${DB_HOST:-localhost} 5432; else pg_isready -h /tmp -p 5432 -d postgres; fi'
