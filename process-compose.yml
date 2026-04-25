@@ -72,6 +72,6 @@ processes:
       http_get:
         host: 127.0.0.1
         port: 3030
-        path: /purpose-types
+        path: /health
       initial_delay_seconds: 3
       period_seconds: 2

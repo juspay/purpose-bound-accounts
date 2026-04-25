@@ -157,11 +157,14 @@ async fn main() {
 
     use tower_cookies::CookieManagerLayer;
 
-    let app = api::routes::create_router()
-        .layer(axum::middleware::from_fn_with_state(
-            state.clone(),
-            auth::api_key::require_api_key,
-        ))
+    let app = api::routes::public_router()
+        .merge(
+            api::routes::protected_router()
+                .layer(axum::middleware::from_fn_with_state(
+                    state.clone(),
+                    auth::api_key::require_api_key,
+                ))
+        )
         .merge(
             admin::create_router()
                 .layer(axum::middleware::from_fn_with_state(
