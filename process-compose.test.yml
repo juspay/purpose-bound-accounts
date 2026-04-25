@@ -33,6 +33,28 @@ processes:
     availability:
       restart: "no"
 
+  keycloak:
+    command: |
+      if [ -n "${CI:-}" ]; then
+        echo "Keycloak provided by CI, idling..."
+        tail -f /dev/null
+      fi
+      docker run --rm --name pba-keycloak-test \
+        -p 8181:8080 \
+        -v "$(pwd)/keycloak/realm-export.json:/opt/keycloak/data/import/realm-export.json:ro" \
+        -e KC_BOOTSTRAP_ADMIN_USERNAME=admin \
+        -e KC_BOOTSTRAP_ADMIN_PASSWORD=admin \
+        quay.io/keycloak/keycloak:26.2 \
+        start-dev --import-realm
+    readiness_probe:
+      exec:
+        command: bash -c 'if [ -n "${CI:-}" ]; then nc -z ${KEYCLOAK_HOST:-127.0.0.1} ${KEYCLOAK_PORT:-8181}; else curl -sf http://127.0.0.1:8181/realms/pba/.well-known/openid-configuration > /dev/null; fi'
+      initial_delay_seconds: 15
+      period_seconds: 3
+      failure_threshold: 20
+    shutdown:
+      command: docker stop pba-keycloak-test
+
   tigerbeetle:
     command: |
       if [ ! -f .tb_data/test/0_0.tigerbeetle ]; then
@@ -58,6 +80,8 @@ processes:
       db-reset:
         condition: process_completed_successfully
       tigerbeetle:
+        condition: process_healthy
+      keycloak:
         condition: process_healthy
     readiness_probe:
       http_get:

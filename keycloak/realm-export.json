@@ -1,0 +1,55 @@
+{
+  "realm": "pba",
+  "enabled": true,
+  "registrationAllowed": false,
+  "roles": {
+    "realm": [
+      { "name": "admin", "description": "PBA administrator" }
+    ]
+  },
+  "clients": [
+    {
+      "clientId": "pba-api",
+      "enabled": true,
+      "protocol": "openid-connect",
+      "publicClient": false,
+      "serviceAccountsEnabled": true,
+      "standardFlowEnabled": false,
+      "directAccessGrantsEnabled": false,
+      "secret": "pba-api-secret",
+      "defaultClientScopes": ["openid"]
+    },
+    {
+      "clientId": "pba-admin",
+      "enabled": true,
+      "protocol": "openid-connect",
+      "publicClient": true,
+      "standardFlowEnabled": true,
+      "directAccessGrantsEnabled": true,
+      "redirectUris": [
+        "http://localhost:3030/admin/callback",
+        "http://localhost:3031/admin/callback"
+      ],
+      "webOrigins": ["http://localhost:3030", "http://localhost:3031"],
+      "defaultClientScopes": ["openid", "profile", "email"]
+    }
+  ],
+  "users": [
+    {
+      "username": "admin@pba.local",
+      "email": "admin@pba.local",
+      "enabled": true,
+      "emailVerified": true,
+      "firstName": "PBA",
+      "lastName": "Admin",
+      "credentials": [
+        {
+          "type": "password",
+          "value": "admin",
+          "temporary": false
+        }
+      ],
+      "realmRoles": ["admin"]
+    }
+  ]
+}
