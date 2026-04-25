@@ -25,7 +25,7 @@ RUN cargo build --release -p pba-service \
     && strip target/release/pba-service
 
 # ── Stage 4: Runtime ─────────────────────���───────────────────
-FROM debian:bookworm-slim
+FROM debian:bookworm
 
 RUN apt-get update && apt-get install -y --no-install-recommends ca-certificates \
     && rm -rf /var/lib/apt/lists/*
