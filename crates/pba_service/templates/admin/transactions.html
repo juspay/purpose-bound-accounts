@@ -48,7 +48,7 @@
         {% for t in &transactions %}
         <tr>
             <td>{{ t.timestamp }}</td>
-            <td><a href="/admin/accounts/{{ t.account_id }}">{{ t.account_id_short }}</a></td>
+            <td><a href="{{ prefix }}/admin/accounts/{{ t.account_id }}">{{ t.account_id_short }}</a></td>
             <td>{{ t.transfer_type }}</td>
             <td class="{{ t.status_class }}">{{ t.status }}</td>
             <td>{{ t.pool }}</td>
@@ -63,10 +63,10 @@
 <nav>
     <ul>
         {% if offset > 0 %}
-        <li><a href="/admin/transactions?offset={{ prev_offset }}&limit={{ limit }}" role="button" class="outline">&larr; Previous</a></li>
+        <li><a href="{{ prefix }}/admin/transactions?offset={{ prev_offset }}&limit={{ limit }}" role="button" class="outline">&larr; Previous</a></li>
         {% endif %}
         {% if has_next %}
-        <li><a href="/admin/transactions?offset={{ next_offset }}&limit={{ limit }}" role="button" class="outline">Next &rarr;</a></li>
+        <li><a href="{{ prefix }}/admin/transactions?offset={{ next_offset }}&limit={{ limit }}" role="button" class="outline">Next &rarr;</a></li>
         {% endif %}
     </ul>
 </nav>

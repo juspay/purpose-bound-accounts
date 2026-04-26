@@ -27,10 +27,10 @@
 <nav>
     <ul>
         {% if offset > 0 %}
-        <li><a hx-get="/admin/accounts/{{ account_id }}/transfers?offset={{ prev_offset }}&limit={{ limit }}" hx-target="#transfers" hx-swap="innerHTML" role="button" class="outline">&larr; Previous</a></li>
+        <li><a hx-get="{{ prefix }}/admin/accounts/{{ account_id }}/transfers?offset={{ prev_offset }}&limit={{ limit }}" hx-target="#transfers" hx-swap="innerHTML" role="button" class="outline">&larr; Previous</a></li>
         {% endif %}
         {% if has_next %}
-        <li><a hx-get="/admin/accounts/{{ account_id }}/transfers?offset={{ next_offset }}&limit={{ limit }}" hx-target="#transfers" hx-swap="innerHTML" role="button" class="outline">Next &rarr;</a></li>
+        <li><a hx-get="{{ prefix }}/admin/accounts/{{ account_id }}/transfers?offset={{ next_offset }}&limit={{ limit }}" hx-target="#transfers" hx-swap="innerHTML" role="button" class="outline">Next &rarr;</a></li>
         {% endif %}
     </ul>
 </nav>

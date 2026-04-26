@@ -14,6 +14,7 @@ pub struct AppConfig {
     pub oidc_client_id: String,
     pub cookie_secret: String,
     pub auth_enabled: bool,
+    pub path_prefix: String,
 }
 
 impl AppConfig {
@@ -78,6 +79,14 @@ impl AppConfig {
             .parse::<bool>()
             .unwrap_or(true);
 
+        let path_prefix = std::env::var("PATH_PREFIX").unwrap_or_default();
+        let path_prefix = path_prefix.trim_end_matches('/').to_string();
+        let path_prefix = if !path_prefix.is_empty() && !path_prefix.starts_with('/') {
+            format!("/{path_prefix}")
+        } else {
+            path_prefix
+        };
+
         Self {
             database_url,
             tigerbeetle_addresses: tb_addresses
@@ -93,6 +102,7 @@ impl AppConfig {
             oidc_client_id,
             cookie_secret,
             auth_enabled,
+            path_prefix,
         }
     }
 }
