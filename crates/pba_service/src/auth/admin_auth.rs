@@ -32,6 +32,6 @@ pub async fn require_admin_session(
 
     match session::get_session(&cookies, &state.auth.cookie_key) {
         Some(_session) => next.run(req).await,
-        None => Redirect::temporary("/admin/login").into_response(),
+        None => Redirect::temporary(&format!("{}/admin/login", state.path_prefix)).into_response(),
     }
 }

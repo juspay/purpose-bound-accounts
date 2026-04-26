@@ -33,6 +33,7 @@ pub struct AppState {
     pub ledger_repo: Arc<LedgerRepo>,
     pub transaction_repo: Arc<TransactionRepo>,
     pub auth: AuthContext,
+    pub path_prefix: String,
 }
 
 /// Shared auth context available to all routes.
@@ -88,7 +89,10 @@ async fn main() {
             userinfo_endpoint: discovery.userinfo_endpoint,
             end_session_endpoint: discovery.end_session_endpoint,
             oidc_client_id: config.oidc_client_id.clone(),
-            callback_url: format!("http://localhost:{}/admin/callback", config.port),
+            callback_url: format!(
+                "http://localhost:{}{}/admin/callback",
+                config.port, config.path_prefix
+            ),
             cookie_key: cookie::Key::derive_from(config.cookie_secret.as_bytes()),
             port: config.port,
         }
@@ -158,6 +162,8 @@ async fn main() {
         Arc::clone(&transaction_repo),
     ));
 
+    let path_prefix = config.path_prefix.clone();
+
     let state = AppState {
         account_service,
         deposit_service,
@@ -167,6 +173,7 @@ async fn main() {
         ledger_repo,
         transaction_repo: Arc::clone(&transaction_repo),
         auth: auth_ctx,
+        path_prefix: config.path_prefix,
     };
 
     // Spawn background deposit timeout poller
@@ -175,9 +182,10 @@ async fn main() {
         config.deposit_poller_interval_seconds,
     ));
 
+    use axum::Router;
     use tower_cookies::CookieManagerLayer;
 
-    let app = api::routes::public_router()
+    let inner = api::routes::public_router()
         .merge(
             api::routes::protected_router().layer(axum::middleware::from_fn_with_state(
                 state.clone(),
@@ -192,6 +200,12 @@ async fn main() {
         )
         .layer(CookieManagerLayer::new())
         .with_state(state);
+
+    let app: Router = if path_prefix.is_empty() {
+        inner
+    } else {
+        Router::new().nest(&path_prefix, inner)
+    };
 
     let addr = format!("{}:{}", config.host, config.port);
     tracing::info!("Starting PBA service on {addr}");

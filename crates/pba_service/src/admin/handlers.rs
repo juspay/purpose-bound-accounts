@@ -19,17 +19,26 @@ fn render<T: Template>(tmpl: T) -> Response {
     }
 }
 
+fn prefixed(state: &AppState, path: &str) -> String {
+    format!("{}{path}", state.path_prefix)
+}
+
 #[derive(Template)]
 #[template(path = "admin/login.html")]
-struct LoginTemplate {}
+struct LoginTemplate {
+    prefix: String,
+}
 
-pub async fn login_page() -> impl IntoResponse {
-    render(LoginTemplate {})
+pub async fn login_page(State(state): State<AppState>) -> impl IntoResponse {
+    render(LoginTemplate {
+        prefix: state.path_prefix.clone(),
+    })
 }
 
 #[derive(Template)]
 #[template(path = "admin/dashboard.html")]
 struct DashboardTemplate {
+    prefix: String,
     total_accounts: i64,
     active_accounts: i64,
     frozen_accounts: i64,
@@ -67,6 +76,7 @@ pub async fn dashboard(State(state): State<AppState>) -> Response {
     }
 
     render(DashboardTemplate {
+        prefix: state.path_prefix.clone(),
         total_accounts: active + frozen + closed,
         active_accounts: active,
         frozen_accounts: frozen,
@@ -78,6 +88,7 @@ pub async fn dashboard(State(state): State<AppState>) -> Response {
 #[derive(Template)]
 #[template(path = "admin/accounts.html")]
 struct AccountsListTemplate {
+    prefix: String,
     accounts: Vec<AccountRow>,
     purpose_codes: Vec<String>,
     error: Option<String>,
@@ -138,6 +149,7 @@ async fn render_accounts_list(
         .collect();
 
     render(AccountsListTemplate {
+        prefix: state.path_prefix.clone(),
         accounts: rows,
         purpose_codes,
         error,
@@ -179,7 +191,11 @@ pub async fn create_account(
         )
         .await
     {
-        Ok(account) => Redirect::to(&format!("/admin/accounts/{}", account.id)).into_response(),
+        Ok(account) => Redirect::to(&prefixed(
+            &state,
+            &format!("/admin/accounts/{}", account.id),
+        ))
+        .into_response(),
         Err(e) => render_accounts_list(&state, Some(format!("{e}")), None).await,
     }
 }
@@ -206,10 +222,12 @@ pub async fn update_account_status(
         .update_status(account_id, status)
         .await
     {
-        Ok(_) => Redirect::to(&format!("/admin/accounts/{account_id}")).into_response(),
+        Ok(_) => Redirect::to(&prefixed(&state, &format!("/admin/accounts/{account_id}")))
+            .into_response(),
         Err(e) => {
             tracing::error!("Failed to update status: {e}");
-            Redirect::to(&format!("/admin/accounts/{account_id}")).into_response()
+            Redirect::to(&prefixed(&state, &format!("/admin/accounts/{account_id}")))
+                .into_response()
         }
     }
 }
@@ -226,6 +244,7 @@ struct PendingDepositRow {
 #[derive(Template)]
 #[template(path = "admin/account_detail.html")]
 struct AccountDetailTemplate {
+    prefix: String,
     id: String,
     holder_id: String,
     purpose_code: String,
@@ -309,6 +328,7 @@ pub async fn account_detail(
     };
 
     render(AccountDetailTemplate {
+        prefix: state.path_prefix.clone(),
         id: account.id.to_string(),
         holder_id: account.holder_id.to_string(),
         purpose_code: account.purpose_code,
@@ -331,6 +351,7 @@ pub async fn account_detail(
 #[derive(Template)]
 #[template(path = "admin/transfers_fragment.html")]
 struct TransfersFragmentTemplate {
+    prefix: String,
     account_id: String,
     transfers: Vec<TransferRow>,
     total: i64,
@@ -406,6 +427,7 @@ pub async fn account_transfers_fragment(
         .collect();
 
     render(TransfersFragmentTemplate {
+        prefix: state.path_prefix.clone(),
         account_id: account_id.to_string(),
         transfers: rows,
         total,
@@ -421,6 +443,7 @@ pub async fn account_transfers_fragment(
 #[derive(Template)]
 #[template(path = "admin/deposit.html")]
 struct DepositTemplate {
+    prefix: String,
     account_id: String,
     purpose_code: String,
     error: Option<String>,
@@ -432,6 +455,7 @@ pub async fn deposit_form(State(state): State<AppState>, Path(account_id): Path<
         Err(_) => return (StatusCode::NOT_FOUND, "Account not found").into_response(),
     };
     render(DepositTemplate {
+        prefix: state.path_prefix.clone(),
         account_id: account_id.to_string(),
         purpose_code: account.purpose_code,
         error: None,
@@ -472,7 +496,8 @@ pub async fn process_deposit(
         )
         .await
     {
-        Ok(_) => Redirect::to(&format!("/admin/accounts/{account_id}")).into_response(),
+        Ok(_) => Redirect::to(&prefixed(&state, &format!("/admin/accounts/{account_id}")))
+            .into_response(),
         Err(e) => {
             let purpose_code = state
                 .account_repo
@@ -481,6 +506,7 @@ pub async fn process_deposit(
                 .map(|a| a.purpose_code)
                 .unwrap_or_default();
             render(DepositTemplate {
+                prefix: state.path_prefix.clone(),
                 account_id: account_id.to_string(),
                 purpose_code,
                 error: Some(format!("{e}")),
@@ -498,10 +524,12 @@ pub async fn post_deposit(
         .post_deposit(account_id, deposit_id)
         .await
     {
-        Ok(_) => Redirect::to(&format!("/admin/accounts/{account_id}")).into_response(),
+        Ok(_) => Redirect::to(&prefixed(&state, &format!("/admin/accounts/{account_id}")))
+            .into_response(),
         Err(e) => {
             tracing::error!("Failed to post deposit: {e}");
-            Redirect::to(&format!("/admin/accounts/{account_id}")).into_response()
+            Redirect::to(&prefixed(&state, &format!("/admin/accounts/{account_id}")))
+                .into_response()
         }
     }
 }
@@ -515,10 +543,12 @@ pub async fn void_deposit(
         .void_deposit(account_id, deposit_id, None)
         .await
     {
-        Ok(_) => Redirect::to(&format!("/admin/accounts/{account_id}")).into_response(),
+        Ok(_) => Redirect::to(&prefixed(&state, &format!("/admin/accounts/{account_id}")))
+            .into_response(),
         Err(e) => {
             tracing::error!("Failed to void deposit: {e}");
-            Redirect::to(&format!("/admin/accounts/{account_id}")).into_response()
+            Redirect::to(&prefixed(&state, &format!("/admin/accounts/{account_id}")))
+                .into_response()
         }
     }
 }
@@ -526,6 +556,7 @@ pub async fn void_deposit(
 #[derive(Template)]
 #[template(path = "admin/payment.html")]
 struct PaymentTemplate {
+    prefix: String,
     account_id: String,
     purpose_code: String,
     error: Option<String>,
@@ -537,6 +568,7 @@ pub async fn payment_form(State(state): State<AppState>, Path(account_id): Path<
         Err(_) => return (StatusCode::NOT_FOUND, "Account not found").into_response(),
     };
     render(PaymentTemplate {
+        prefix: state.path_prefix.clone(),
         account_id: account_id.to_string(),
         purpose_code: account.purpose_code,
         error: None,
@@ -568,7 +600,8 @@ pub async fn process_payment(
         )
         .await
     {
-        Ok(_) => Redirect::to(&format!("/admin/accounts/{account_id}")).into_response(),
+        Ok(_) => Redirect::to(&prefixed(&state, &format!("/admin/accounts/{account_id}")))
+            .into_response(),
         Err(e) => {
             let purpose_code = state
                 .account_repo
@@ -577,6 +610,7 @@ pub async fn process_payment(
                 .map(|a| a.purpose_code)
                 .unwrap_or_default();
             render(PaymentTemplate {
+                prefix: state.path_prefix.clone(),
                 account_id: account_id.to_string(),
                 purpose_code,
                 error: Some(format!("{e}")),
@@ -588,6 +622,7 @@ pub async fn process_payment(
 #[derive(Template)]
 #[template(path = "admin/withdrawal.html")]
 struct WithdrawalTemplate {
+    prefix: String,
     account_id: String,
     purpose_code: String,
     error: Option<String>,
@@ -602,6 +637,7 @@ pub async fn withdrawal_form(
         Err(_) => return (StatusCode::NOT_FOUND, "Account not found").into_response(),
     };
     render(WithdrawalTemplate {
+        prefix: state.path_prefix.clone(),
         account_id: account_id.to_string(),
         purpose_code: account.purpose_code,
         error: None,
@@ -623,7 +659,8 @@ pub async fn process_withdrawal(
         .withdraw(account_id, form.amount, None)
         .await
     {
-        Ok(_) => Redirect::to(&format!("/admin/accounts/{account_id}")).into_response(),
+        Ok(_) => Redirect::to(&prefixed(&state, &format!("/admin/accounts/{account_id}")))
+            .into_response(),
         Err(e) => {
             let purpose_code = state
                 .account_repo
@@ -632,6 +669,7 @@ pub async fn process_withdrawal(
                 .map(|a| a.purpose_code)
                 .unwrap_or_default();
             render(WithdrawalTemplate {
+                prefix: state.path_prefix.clone(),
                 account_id: account_id.to_string(),
                 purpose_code,
                 error: Some(format!("{e}")),
@@ -643,6 +681,7 @@ pub async fn process_withdrawal(
 #[derive(Template)]
 #[template(path = "admin/transactions.html")]
 struct TransactionsPageTemplate {
+    prefix: String,
     self_balance: String,
     others_balance: String,
     total_balance: String,
@@ -742,6 +781,7 @@ pub async fn transactions_page(
     let fmt = |amt: u64| format!("{}.{:02}", amt / 100, amt % 100);
 
     render(TransactionsPageTemplate {
+        prefix: state.path_prefix.clone(),
         self_balance: fmt(pool_summary.self_balance()),
         others_balance: fmt(pool_summary.others_balance()),
         total_balance: fmt(pool_summary.total_balance()),
@@ -761,6 +801,7 @@ pub async fn transactions_page(
 #[derive(Template)]
 #[template(path = "admin/system_accounts.html")]
 struct SystemAccountsTemplate {
+    prefix: String,
     sentinel_accounts: Vec<SentinelAccountRow>,
     pool_balances: Vec<PoolBalanceRow>,
 }
@@ -854,6 +895,7 @@ pub async fn system_accounts_page(State(state): State<AppState>) -> Response {
     ];
 
     render(SystemAccountsTemplate {
+        prefix: state.path_prefix.clone(),
         sentinel_accounts,
         pool_balances,
     })
@@ -862,6 +904,7 @@ pub async fn system_accounts_page(State(state): State<AppState>) -> Response {
 #[derive(Template)]
 #[template(path = "admin/purpose_types.html")]
 struct PurposeTypesTemplate {
+    prefix: String,
     purpose_types: Vec<PurposeType>,
 }
 
@@ -873,5 +916,8 @@ pub async fn purpose_types_page(State(state): State<AppState>) -> Response {
             return (StatusCode::INTERNAL_SERVER_ERROR, "Database error").into_response();
         }
     };
-    render(PurposeTypesTemplate { purpose_types })
+    render(PurposeTypesTemplate {
+        prefix: state.path_prefix.clone(),
+        purpose_types,
+    })
 }

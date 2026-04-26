@@ -48,11 +48,13 @@ pub async fn callback(
             let status = r.status();
             let body = r.text().await.unwrap_or_default();
             tracing::error!("Token exchange failed: status={status}, body={body}");
-            return Redirect::temporary("/admin/login").into_response();
+            return Redirect::temporary(&format!("{}/admin/login", state.path_prefix))
+                .into_response();
         }
         Err(e) => {
             tracing::error!("Token exchange request error: {e}");
-            return Redirect::temporary("/admin/login").into_response();
+            return Redirect::temporary(&format!("{}/admin/login", state.path_prefix))
+                .into_response();
         }
     };
 
@@ -65,7 +67,8 @@ pub async fn callback(
         Ok(t) => t,
         Err(e) => {
             tracing::error!("Failed to parse token response: {e}");
-            return Redirect::temporary("/admin/login").into_response();
+            return Redirect::temporary(&format!("{}/admin/login", state.path_prefix))
+                .into_response();
         }
     };
 
@@ -92,23 +95,24 @@ pub async fn callback(
         roles: Vec<String>,
     }
 
+    let login_redirect = format!("{}/admin/login", state.path_prefix);
     let userinfo: UserInfoResp = match userinfo {
         Ok(r) if r.status().is_success() => match r.json().await {
             Ok(u) => u,
             Err(e) => {
                 tracing::error!("Failed to parse UserInfo response: {e}");
-                return Redirect::temporary("/admin/login").into_response();
+                return Redirect::temporary(&login_redirect).into_response();
             }
         },
         Ok(r) => {
             let status = r.status();
             let body = r.text().await.unwrap_or_default();
             tracing::error!("UserInfo request failed: status={status}, body={body}");
-            return Redirect::temporary("/admin/login").into_response();
+            return Redirect::temporary(&login_redirect).into_response();
         }
         Err(e) => {
             tracing::error!("UserInfo request error: {e}");
-            return Redirect::temporary("/admin/login").into_response();
+            return Redirect::temporary(&login_redirect).into_response();
         }
     };
 
@@ -125,14 +129,17 @@ pub async fn callback(
     };
 
     session::set_session(&cookies, &state.auth.cookie_key, &user_session);
-    Redirect::temporary("/admin").into_response()
+    Redirect::temporary(&format!("{}/admin", state.path_prefix)).into_response()
 }
 
 /// GET /admin/logout — clear session and redirect to OIDC end-session endpoint.
 pub async fn logout(State(state): State<AppState>, cookies: Cookies) -> Response {
     session::clear_session(&cookies, &state.auth.cookie_key);
 
-    let post_logout_uri = format!("http://localhost:{}/admin/login", state.auth.port);
+    let post_logout_uri = format!(
+        "http://localhost:{}{}/admin/login",
+        state.auth.port, state.path_prefix
+    );
 
     if let Some(ref end_session_url) = state.auth.end_session_endpoint {
         let logout_url = format!(

@@ -76,7 +76,7 @@ From there you can browse accounts, create new ones, make deposits/payments/with
 **Start in background:**
 
 ```bash
-just run-bg            # starts detached; use 'just logs' to attach, 'just stop-all' to stop
+just run-bg            # starts detached; use 'just logs' to attach, 'just stop' to stop
 ```
 
 ### Running tests
@@ -132,11 +132,11 @@ PBA uses Keycloak for authentication. `just run` starts Keycloak alongside other
 **Admin UI:** Navigate to `http://localhost:3030/admin` — you'll be redirected to Keycloak to log in.
 Default credentials: `admin@pba.local` / `admin`
 
-**API access:** Use the `X-Api-Key` header with a base64-encoded `client_id:client_secret`:
+**API access:** Use the `Authorization` header with a base64-encoded `client_id:client_secret`:
 
 ```bash
 API_KEY=$(echo -n "pba-api:pba-api-secret" | base64)
-curl -H "X-Api-Key: $API_KEY" http://localhost:3030/purpose-types
+curl -H "Authorization: ApiKey $API_KEY" http://localhost:3030/purpose-types
 ```
 
 **Disable auth (development):** Set `AUTH_ENABLED=false` in your `.env` file.
@@ -161,6 +161,7 @@ Environment variables (loaded from `.env`):
 | `OIDC_CLIENT_ID` | `pba-admin` | OIDC client ID for admin UI login flow |
 | `COOKIE_SECRET` | _(dev default)_ | 32+ byte secret for session cookie signing |
 | `AUTH_ENABLED` | `true` | Set to `false` to disable auth |
+| `PATH_PREFIX` | _(empty)_ | URL prefix for reverse proxy / ingress (e.g., `/pba`) |
 
 ## Available just targets
 
@@ -170,8 +171,7 @@ Run `just` to see all targets:
 just run              # Start everything via process-compose (Ctrl+C stops all)
 just run-bg           # Start everything in the background (detached)
 just logs             # Attach to running process-compose instance
-just stop             # Stop pba-service only
-just stop-all         # Stop all services
+just stop             # Stop all services
 just build            # Build the project
 just test             # Unit tests
 just api-e2e          # API E2E tests (isolated infra)

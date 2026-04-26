@@ -16,20 +16,20 @@
                 {% if status != "closed" %}
                 &nbsp;
                 {% if status == "active" %}
-                <form method="post" action="/admin/accounts/{{ id }}/status" class="inline-form">
+                <form method="post" action="{{ prefix }}/admin/accounts/{{ id }}/status" class="inline-form">
                     <input type="hidden" name="status" value="frozen">
                     <button type="submit" class="outline secondary" style="padding: 0.25rem 0.75rem; font-size: 0.85rem;">Freeze</button>
                 </form>
-                <form method="post" action="/admin/accounts/{{ id }}/status" class="inline-form">
+                <form method="post" action="{{ prefix }}/admin/accounts/{{ id }}/status" class="inline-form">
                     <input type="hidden" name="status" value="closed">
                     <button type="submit" class="outline" style="padding: 0.25rem 0.75rem; font-size: 0.85rem; color: #c62828; border-color: #c62828;">Close</button>
                 </form>
                 {% else if status == "frozen" %}
-                <form method="post" action="/admin/accounts/{{ id }}/status" class="inline-form">
+                <form method="post" action="{{ prefix }}/admin/accounts/{{ id }}/status" class="inline-form">
                     <input type="hidden" name="status" value="active">
                     <button type="submit" class="outline" style="padding: 0.25rem 0.75rem; font-size: 0.85rem; color: #2e7d32; border-color: #2e7d32;">Activate</button>
                 </form>
-                <form method="post" action="/admin/accounts/{{ id }}/status" class="inline-form">
+                <form method="post" action="{{ prefix }}/admin/accounts/{{ id }}/status" class="inline-form">
                     <input type="hidden" name="status" value="closed">
                     <button type="submit" class="outline" style="padding: 0.25rem 0.75rem; font-size: 0.85rem; color: #c62828; border-color: #c62828;">Close</button>
                 </form>
@@ -58,9 +58,9 @@
 
     {% if status == "active" %}
     <div>
-        <a href="/admin/accounts/{{ id }}/deposit" role="button" class="outline">Deposit</a>
-        <a href="/admin/accounts/{{ id }}/payment" role="button" class="outline">Make Payment</a>
-        <a href="/admin/accounts/{{ id }}/withdrawal" role="button" class="outline">Withdraw</a>
+        <a href="{{ prefix }}/admin/accounts/{{ id }}/deposit" role="button" class="outline">Deposit</a>
+        <a href="{{ prefix }}/admin/accounts/{{ id }}/payment" role="button" class="outline">Make Payment</a>
+        <a href="{{ prefix }}/admin/accounts/{{ id }}/withdrawal" role="button" class="outline">Withdraw</a>
     </div>
     {% endif %}
 </article>
@@ -89,10 +89,10 @@
             <td>{{ dep.gateway_ref }}</td>
             <td>{{ dep.created_at }}</td>
             <td>
-                <form method="post" action="/admin/accounts/{{ id }}/deposits/{{ dep.id }}/post" class="inline-form">
+                <form method="post" action="{{ prefix }}/admin/accounts/{{ id }}/deposits/{{ dep.id }}/post" class="inline-form">
                     <button type="submit" class="outline" style="padding: 0.25rem 0.75rem; font-size: 0.85rem; color: #2e7d32; border-color: #2e7d32;">Post</button>
                 </form>
-                <form method="post" action="/admin/accounts/{{ id }}/deposits/{{ dep.id }}/void" class="inline-form">
+                <form method="post" action="{{ prefix }}/admin/accounts/{{ id }}/deposits/{{ dep.id }}/void" class="inline-form">
                     <button type="submit" class="outline" style="padding: 0.25rem 0.75rem; font-size: 0.85rem; color: #c62828; border-color: #c62828;">Void</button>
                 </form>
             </td>
@@ -103,7 +103,7 @@
 {% endif %}
 
 <h2>Transaction History</h2>
-<div id="transfers" hx-get="/admin/accounts/{{ id }}/transfers" hx-trigger="load" hx-swap="innerHTML">
+<div id="transfers" hx-get="{{ prefix }}/admin/accounts/{{ id }}/transfers" hx-trigger="load" hx-swap="innerHTML">
     <p aria-busy="true">Loading transfers...</p>
 </div>
 {% endblock %}
