@@ -12,8 +12,6 @@ pub struct AppConfig {
     pub deposit_poller_interval_seconds: u64,
     pub oidc_issuer_url: String,
     pub oidc_client_id: String,
-    #[allow(dead_code)] // Used when confidential OIDC clients are added
-    pub oidc_client_secret: String,
     pub cookie_secret: String,
     pub auth_enabled: bool,
 }
@@ -69,8 +67,6 @@ impl AppConfig {
             .unwrap_or_else(|_| "http://localhost:8180/realms/pba".to_string());
         let oidc_client_id =
             std::env::var("OIDC_CLIENT_ID").unwrap_or_else(|_| "pba-admin".to_string());
-        let oidc_client_secret =
-            std::env::var("OIDC_CLIENT_SECRET").unwrap_or_else(|_| "pba-api-secret".to_string());
         let cookie_secret = std::env::var("COOKIE_SECRET")
             .unwrap_or_else(|_| "change-me-in-production-32-bytes!".to_string());
         let auth_enabled = std::env::var("AUTH_ENABLED")
@@ -91,7 +87,6 @@ impl AppConfig {
             deposit_poller_interval_seconds,
             oidc_issuer_url,
             oidc_client_id,
-            oidc_client_secret,
             cookie_secret,
             auth_enabled,
         }
