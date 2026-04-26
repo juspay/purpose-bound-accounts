@@ -29,7 +29,7 @@ run:
 # Start everything in the background (detached)
 run-bg:
     process-compose up -D
-    @echo "Services started in background. Use 'just logs' to view, 'just stop-all' to stop."
+    @echo "Services started in background. Use 'just logs' to view, 'just stop' to stop."
 
 # View process-compose logs (attach to running instance)
 logs:
@@ -44,12 +44,8 @@ run-service:
 watch:
     cargo watch -x 'run -p pba-service'
 
-# Stop pba-service only (leaves infrastructure running)
-stop:
-    process-compose process stop pba-service
-
 # Stop all services
-stop-all:
+stop:
     process-compose down
 
 # ── Conventional Commits ──────────────────────────────────────
@@ -96,7 +92,7 @@ e2e-start:
     process-compose -f process-compose.test.yml up -D
     @echo "Waiting for test service..."
     @for i in $(seq 1 60); do \
-        if curl -sf http://127.0.0.1:{{TEST_APP_PORT}}/purpose-types > /dev/null 2>&1; then \
+        if curl -sf http://127.0.0.1:{{TEST_APP_PORT}}/health > /dev/null 2>&1; then \
             echo "Test service ready on port {{TEST_APP_PORT}}"; \
             exit 0; \
         fi; \

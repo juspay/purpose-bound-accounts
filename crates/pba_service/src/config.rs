@@ -10,6 +10,10 @@ pub struct AppConfig {
     pub port: u16,
     pub deposit_timeout_seconds: u32,
     pub deposit_poller_interval_seconds: u64,
+    pub oidc_issuer_url: String,
+    pub oidc_client_id: String,
+    pub cookie_secret: String,
+    pub auth_enabled: bool,
 }
 
 impl AppConfig {
@@ -59,6 +63,21 @@ impl AppConfig {
             .parse()
             .expect("DEPOSIT_POLLER_INTERVAL_SECONDS must be a valid u64");
 
+        let oidc_issuer_url = std::env::var("OIDC_ISSUER_URL")
+            .unwrap_or_else(|_| "http://localhost:8180/realms/pba".to_string());
+        let oidc_client_id =
+            std::env::var("OIDC_CLIENT_ID").unwrap_or_else(|_| "pba-admin".to_string());
+        let raw_cookie_secret = std::env::var("COOKIE_SECRET")
+            .unwrap_or_else(|_| "change-me-in-production-32-bytes!".to_string());
+        let cookie_secret = secrets
+            .decrypt(&raw_cookie_secret)
+            .await
+            .expect("Failed to decrypt COOKIE_SECRET");
+        let auth_enabled = std::env::var("AUTH_ENABLED")
+            .unwrap_or_else(|_| "true".to_string())
+            .parse::<bool>()
+            .unwrap_or(true);
+
         Self {
             database_url,
             tigerbeetle_addresses: tb_addresses
@@ -70,6 +89,10 @@ impl AppConfig {
             port,
             deposit_timeout_seconds,
             deposit_poller_interval_seconds,
+            oidc_issuer_url,
+            oidc_client_id,
+            cookie_secret,
+            auth_enabled,
         }
     }
 }

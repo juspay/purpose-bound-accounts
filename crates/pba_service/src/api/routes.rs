@@ -4,7 +4,21 @@ use axum::Router;
 use crate::api::handlers;
 use crate::AppState;
 
-pub fn create_router() -> Router<AppState> {
+/// Public API routes — no authentication required.
+pub fn public_router() -> Router<AppState> {
+    Router::new()
+        .route("/health", get(handlers::health))
+        .route("/purpose-types", get(handlers::list_purpose_types))
+        .route(
+            "/purpose-types/{purpose_code}",
+            get(handlers::get_purpose_type),
+        )
+        .route("/docs", get(handlers::swagger_ui))
+        .route("/docs/openapi.json", get(handlers::openapi_json))
+}
+
+/// Protected API routes — require API key authentication.
+pub fn protected_router() -> Router<AppState> {
     Router::new()
         // Account operations
         .route("/accounts", post(handlers::create_account))
@@ -41,13 +55,4 @@ pub fn create_router() -> Router<AppState> {
             "/accounts/{account_id}/transactions",
             get(handlers::list_transactions),
         )
-        // Purpose types
-        .route("/purpose-types", get(handlers::list_purpose_types))
-        .route(
-            "/purpose-types/{purpose_code}",
-            get(handlers::get_purpose_type),
-        )
-        // API Docs
-        .route("/docs", get(handlers::swagger_ui))
-        .route("/docs/openapi.json", get(handlers::openapi_json))
 }

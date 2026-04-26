@@ -278,6 +278,12 @@ pub async fn get_purpose_type(
 
 // ── API Docs ──
 
+// ── Health ──
+
+pub async fn health() -> Json<serde_json::Value> {
+    Json(serde_json::json!({"status": "ok"}))
+}
+
 const OPENAPI_SPEC: &str = include_str!("openapi.json");
 
 pub async fn openapi_json() -> (

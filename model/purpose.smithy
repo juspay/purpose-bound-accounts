@@ -3,6 +3,7 @@ namespace com.ppi.pba
 
 /// List all available purpose types.
 @readonly
+@auth([])
 @http(method: "GET", uri: "/purpose-types")
 operation ListPurposeTypes {
     output := {
@@ -13,6 +14,7 @@ operation ListPurposeTypes {
 
 /// Get a specific purpose type and its allowed MCCs.
 @readonly
+@auth([])
 @http(method: "GET", uri: "/purpose-types/{purpose_code}")
 operation GetPurposeType {
     input := {

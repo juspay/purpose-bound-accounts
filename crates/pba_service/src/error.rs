@@ -30,6 +30,8 @@ pub enum AppError {
     ExceedsBalance,
     TigerBeetleError(String),
     DatabaseError(String),
+    Unauthorized(String),
+    Forbidden(String),
 }
 
 impl std::fmt::Display for AppError {
@@ -59,6 +61,8 @@ impl std::fmt::Display for AppError {
             Self::ExceedsBalance => write!(f, "Transfer exceeds available balance"),
             Self::TigerBeetleError(msg) => write!(f, "TigerBeetle error: {msg}"),
             Self::DatabaseError(msg) => write!(f, "Database error: {msg}"),
+            Self::Unauthorized(msg) => write!(f, "Unauthorized: {msg}"),
+            Self::Forbidden(msg) => write!(f, "Forbidden: {msg}"),
         }
     }
 }
@@ -82,6 +86,8 @@ impl IntoResponse for AppError {
                 (StatusCode::INTERNAL_SERVER_ERROR, "TigerBeetleError")
             }
             AppError::DatabaseError(_) => (StatusCode::INTERNAL_SERVER_ERROR, "DatabaseError"),
+            AppError::Unauthorized(_) => (StatusCode::UNAUTHORIZED, "Unauthorized"),
+            AppError::Forbidden(_) => (StatusCode::FORBIDDEN, "Forbidden"),
         };
 
         let body = ErrorBody {
