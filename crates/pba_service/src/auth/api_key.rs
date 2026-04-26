@@ -22,9 +22,9 @@ pub async fn require_api_key(
 
     let api_key = req
         .headers()
-        .get("X-Api-Key")
+        .get("Authorization")
         .and_then(|v| v.to_str().ok())
-        .ok_or_else(|| AppError::Unauthorized("Missing X-Api-Key header".into()))?;
+        .ok_or_else(|| AppError::Unauthorized("Missing Authorization header".into()))?;
 
     let validated_claims = exchange_api_key(&state, api_key).await?;
 
@@ -33,9 +33,11 @@ pub async fn require_api_key(
 }
 
 /// Decode the API key and exchange it for a validated JWT.
+/// Accepts both `ApiKey <base64>` (Smithy SDK format) and raw `<base64>` (curl).
 async fn exchange_api_key(state: &AppState, api_key: &str) -> Result<claims::Claims, AppError> {
+    let key_value = api_key.strip_prefix("ApiKey ").unwrap_or(api_key);
     let decoded = base64::engine::general_purpose::STANDARD
-        .decode(api_key)
+        .decode(key_value)
         .map_err(|_| AppError::Unauthorized("Invalid API key encoding".into()))?;
     let decoded_str =
         String::from_utf8(decoded).map_err(|_| AppError::Unauthorized("Invalid API key".into()))?;
