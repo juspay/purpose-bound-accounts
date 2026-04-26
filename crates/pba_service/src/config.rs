@@ -67,8 +67,12 @@ impl AppConfig {
             .unwrap_or_else(|_| "http://localhost:8180/realms/pba".to_string());
         let oidc_client_id =
             std::env::var("OIDC_CLIENT_ID").unwrap_or_else(|_| "pba-admin".to_string());
-        let cookie_secret = std::env::var("COOKIE_SECRET")
+        let raw_cookie_secret = std::env::var("COOKIE_SECRET")
             .unwrap_or_else(|_| "change-me-in-production-32-bytes!".to_string());
+        let cookie_secret = secrets
+            .decrypt(&raw_cookie_secret)
+            .await
+            .expect("Failed to decrypt COOKIE_SECRET");
         let auth_enabled = std::env::var("AUTH_ENABLED")
             .unwrap_or_else(|_| "true".to_string())
             .parse::<bool>()
