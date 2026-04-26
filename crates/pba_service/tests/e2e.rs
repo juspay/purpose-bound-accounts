@@ -72,6 +72,7 @@ impl Default for PbaWorld {
         let config = pba_client::Config::builder()
             .endpoint_url(&base_url)
             .behavior_version_latest()
+            .api_key(pba_client::config::Token::new("dGVzdDp0ZXN0", None))
             .build();
         let client = Client::from_conf(config);
 
