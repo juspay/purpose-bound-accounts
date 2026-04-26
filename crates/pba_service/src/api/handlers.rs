@@ -313,7 +313,7 @@ pub async fn swagger_ui() -> axum::response::Html<&'static str> {
     <script src="https://unpkg.com/swagger-ui-dist@5/swagger-ui-bundle.js"></script>
     <script>
         SwaggerUIBundle({
-            url: "/docs/openapi.json",
+            url: "./docs/openapi.json",
             dom_id: "#swagger-ui",
             deepLinking: true,
             presets: [SwaggerUIBundle.presets.apis],
