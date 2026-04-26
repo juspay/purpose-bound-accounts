@@ -33,29 +33,6 @@ processes:
     availability:
       restart: "no"
 
-  keycloak:
-    command: |
-      if [ -n "${CI:-}" ]; then
-        echo "Keycloak not needed in CI (AUTH_ENABLED=false), idling..."
-        sleep infinity
-      fi
-      docker run --rm --name pba-keycloak-test \
-        -p 8181:8080 \
-        -v "$(pwd)/keycloak/realm-export.json:/opt/keycloak/data/import/realm-export.json:ro" \
-        -e KC_BOOTSTRAP_ADMIN_USERNAME=admin \
-        -e KC_BOOTSTRAP_ADMIN_PASSWORD=admin \
-        quay.io/keycloak/keycloak:26.2 \
-        start-dev --import-realm
-    readiness_probe:
-      exec:
-        command: bash -c 'if [ -n "${CI:-}" ]; then true; else curl -sf http://127.0.0.1:8181/realms/pba/.well-known/openid-configuration > /dev/null; fi'
-      initial_delay_seconds: 1
-      period_seconds: 3
-      failure_threshold: 20
-    shutdown:
-      command: bash -c 'if [ -n "${CI:-}" ]; then true; else docker rm -f pba-keycloak-test; fi'
-      signal: 15
-
   tigerbeetle:
     command: |
       if [ ! -f .tb_data/test/0_0.tigerbeetle ]; then
@@ -81,8 +58,6 @@ processes:
       db-reset:
         condition: process_completed_successfully
       tigerbeetle:
-        condition: process_healthy
-      keycloak:
         condition: process_healthy
     readiness_probe:
       http_get:
