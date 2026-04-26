@@ -37,7 +37,7 @@ processes:
     command: |
       if [ -n "${CI:-}" ]; then
         echo "Keycloak not needed in CI (AUTH_ENABLED=false), idling..."
-        tail -f /dev/null
+        sleep infinity
       fi
       docker run --rm --name pba-keycloak-test \
         -p 8181:8080 \
@@ -53,7 +53,8 @@ processes:
       period_seconds: 3
       failure_threshold: 20
     shutdown:
-      command: docker rm -f pba-keycloak-test
+      command: bash -c 'if [ -n "${CI:-}" ]; then true; else docker rm -f pba-keycloak-test; fi'
+      signal: 15
 
   tigerbeetle:
     command: |
