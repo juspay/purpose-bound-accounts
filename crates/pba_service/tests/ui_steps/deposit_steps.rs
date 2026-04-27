@@ -389,25 +389,52 @@ fn extract_pending_deposit_id(content: &str, account_id: &str) -> Option<String>
 }
 
 /// Extract pending balance from page content.
-/// Pending amounts appear as: `+ ₹X.XX pending` inside a span after the pool label.
+/// New design system: each pool stat-card has a `<p class="stat-hint">` line containing
+/// `<span class="badge pill-pending">+ ₹X.XX pending</span>` when pending > 0.
+/// We find the stat-card with the matching label, then read the badge's amount.
 fn extract_pending_balance(content: &str, label: &str) -> i64 {
     use crate::ui_steps::account_steps::parse_display_to_paisa;
 
-    let search = format!("{}:", label);
-    if let Some(pos) = content.find(&search) {
-        let after = &content[pos + search.len()..];
-        // Look for "pending" keyword after the label
-        if let Some(pending_pos) = after.find("pending") {
-            let before_pending = &after[..pending_pos];
-            // Find the last ₹ before "pending"
-            if let Some(currency_pos) = before_pending.rfind('₹') {
-                let num_str = &before_pending[currency_pos + '₹'.len_utf8()..];
-                let trimmed = num_str.trim();
-                if !trimmed.is_empty() {
-                    return parse_display_to_paisa(trimmed);
+    // Find the stat-label first, then look forward to the next pill-pending span.
+    let label_lower = label.to_ascii_lowercase();
+    let mut start = 0;
+    while start < content.len() {
+        let chunk = &content[start..];
+        let pos = match chunk.find("class=\"stat-label\"") {
+            Some(p) => p,
+            None => return 0,
+        };
+        let after_class = &chunk[pos..];
+        let gt = match after_class.find('>') {
+            Some(g) => g,
+            None => return 0,
+        };
+        let inner = &after_class[gt + 1..];
+        let end = match inner.find("</p>") {
+            Some(e) => e,
+            None => return 0,
+        };
+        let actual = inner[..end].trim().to_ascii_lowercase();
+        if actual == label_lower {
+            // Within this card (next ~400 chars typically) find pill-pending and ₹ amount
+            let card_section = &inner[end..end.saturating_add(800).min(inner.len())];
+            if let Some(pp) = card_section.find("pill-pending") {
+                let after_pp = &card_section[pp..];
+                if let Some(rupee) = after_pp.find('₹') {
+                    let num_start = rupee + '₹'.len_utf8();
+                    let rest = &after_pp[num_start..];
+                    let stop = rest
+                        .find(|c: char| !c.is_ascii_digit() && c != '.')
+                        .unwrap_or(rest.len());
+                    let num = &rest[..stop];
+                    if !num.is_empty() {
+                        return parse_display_to_paisa(num);
+                    }
                 }
             }
+            return 0;
         }
+        start += pos + gt + 1 + end + 4;
     }
     0
 }

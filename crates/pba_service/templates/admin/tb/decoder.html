@@ -20,7 +20,9 @@
 <article>
     <header>Input</header>
     <form method="get" action="{{ prefix }}/admin/tb/decoder">
-        <label>Value to decode
+        <label>
+            Value to decode
+            <span class="info-icon" data-info="Any single value. Recognised formats: UUID (e.g. aaaa-bbbb-...), decimal u128 (e.g. 12345), or 0x-prefixed hex. The same value is shown in every other format below.">i</span>
             <input type="text" name="input" value="{{ input }}" placeholder="UUID, decimal u128, or 0x-prefixed hex" autofocus>
         </label>
         <button type="submit">Decode</button>

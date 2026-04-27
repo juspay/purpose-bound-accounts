@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 
 {% block title %}Dashboard — PBA Ledger{% endblock %}
-{% block breadcrumb %}<a href="/admin">PBA Ledger</a> <span class="sep">/</span> <span class="current">Dashboard</span>{% endblock %}
+{% block breadcrumb %}<a href="{{ prefix }}/admin">PBA Ledger</a> <span class="sep">/</span> <span class="current">Dashboard</span>{% endblock %}
 
 {% block content %}
 <div class="page-header">
@@ -10,8 +10,8 @@
         <p class="page-subtitle">Overview of purpose-bound accounts across the ledger.</p>
     </div>
     <div class="page-actions">
-        <a href="/admin/accounts" role="button" class="outline">View all accounts</a>
-        <a href="/admin/accounts" role="button">+ New account</a>
+        <a href="{{ prefix }}/admin/accounts" role="button" class="outline">View all accounts</a>
+        <a href="{{ prefix }}/admin/accounts" role="button">+ New account</a>
     </div>
 </div>
 

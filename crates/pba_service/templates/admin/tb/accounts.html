@@ -23,14 +23,38 @@
         <form method="get" action="{{ prefix }}/admin/tb/accounts">
             <input type="hidden" name="mode" value="query">
             <div class="grid">
-                <label>Ledger <input type="number" name="ledger" value="{% if form.ledger != "" %}{{ form.ledger }}{% else %}{{ default_ledger }}{% endif %}" placeholder="1"></label>
-                <label>Code <input type="number" name="code" value="{{ form.code }}" placeholder="0 = any"></label>
-                <label>Limit <input type="number" name="limit" value="{{ form.limit }}"></label>
+                <label>
+                    Ledger
+                    <span class="info-icon" data-info="TigerBeetle ledger ID. PBA uses ledger 1 (INR paisa). Cross-ledger transfers are not allowed, so this scopes the query.">i</span>
+                    <input type="number" name="ledger" value="{% if form.ledger != "" %}{{ form.ledger }}{% else %}{{ default_ledger }}{% endif %}" placeholder="1">
+                </label>
+                <label>
+                    Code
+                    <span class="info-icon" data-info="Account code (0 = any). PBA codes: 1 = self pool, 2 = others pool, 99 = sentinel (funding sources, settlement).">i</span>
+                    <input type="number" name="code" value="{{ form.code }}" placeholder="0 = any">
+                </label>
+                <label>
+                    Limit
+                    <span class="info-icon info-icon--end" data-info="Maximum number of accounts to return. TigerBeetle caps this at 8190.">i</span>
+                    <input type="number" name="limit" value="{{ form.limit }}">
+                </label>
             </div>
             <div class="grid">
-                <label>Timestamp min (UTC) <input type="datetime-local" name="timestamp_min" value="{{ form.timestamp_min }}"></label>
-                <label>Timestamp max (UTC) <input type="datetime-local" name="timestamp_max" value="{{ form.timestamp_max }}"></label>
-                <label><input type="checkbox" name="reversed" {% if form.reversed %}checked{% endif %}><span>Reversed (newest first)</span></label>
+                <label>
+                    Timestamp min (UTC)
+                    <span class="info-icon" data-info="Lower bound on account creation time. Inclusive. Leave blank for no lower bound.">i</span>
+                    <input type="datetime-local" name="timestamp_min" value="{{ form.timestamp_min }}">
+                </label>
+                <label>
+                    Timestamp max (UTC)
+                    <span class="info-icon" data-info="Upper bound on account creation time. Inclusive. Leave blank for no upper bound.">i</span>
+                    <input type="datetime-local" name="timestamp_max" value="{{ form.timestamp_max }}">
+                </label>
+                <label>
+                    <input type="checkbox" name="reversed" {% if form.reversed %}checked{% endif %}>
+                    <span>Reversed (newest first)</span>
+                    <span class="info-icon info-icon--end" data-info="When checked, results are returned in descending timestamp order — newest accounts first. Useful for recent activity audits.">i</span>
+                </label>
             </div>
             <button type="submit">Run query</button>
         </form>
@@ -42,7 +66,9 @@
     <article>
         <form method="get" action="{{ prefix }}/admin/tb/accounts">
             <input type="hidden" name="mode" value="lookup">
-            <label>IDs (comma, space or newline separated — accepts UUID, decimal u128, or 0x hex)
+            <label>
+                IDs (comma, space or newline separated)
+                <span class="info-icon" data-info="One or more TigerBeetle account IDs. Accepts UUID (e.g. aaaa-...), decimal u128 (e.g. 12345), or 0x-prefixed hex. Returns those exact accounts only.">i</span>
                 <textarea name="ids" rows="4" placeholder="aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee&#10;12345&#10;0xabc...">{{ form.ids }}</textarea>
             </label>
             <button type="submit">Lookup</button>

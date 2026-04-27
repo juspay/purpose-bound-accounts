@@ -723,6 +723,105 @@
         .subnav a.active { color: var(--primary); border-bottom-color: var(--primary); }
 
         /* =========================================================
+           Info icon with hover tooltip — used on form labels
+           ========================================================= */
+        .info-icon {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 15px; height: 15px;
+            margin-left: 0.4rem;
+            border-radius: 50%;
+            background: var(--surface-alt);
+            color: var(--text-muted);
+            font-size: 0.7rem;
+            font-weight: 600;
+            font-family: 'Inter', sans-serif;
+            font-style: italic;
+            cursor: help;
+            border: 1px solid var(--border-strong);
+            position: relative;
+            vertical-align: middle;
+            line-height: 1;
+            transition: background 0.12s, color 0.12s, border-color 0.12s;
+        }
+        .info-icon:hover {
+            background: var(--primary);
+            color: #fff;
+            border-color: var(--primary);
+        }
+
+        /* Tooltip body — flows downward & rightward from icon by default
+           so it never clips off the left edge of the viewport. */
+        .info-icon::after {
+            content: attr(data-info);
+            position: absolute;
+            top: calc(100% + 10px);
+            left: -8px;
+            background: linear-gradient(180deg, #1e293b 0%, #0f172a 100%);
+            color: #f8fafc;
+            padding: 0.7rem 0.9rem;
+            border-radius: 8px;
+            font-size: 0.75rem;
+            font-weight: 400;
+            font-style: normal;
+            font-family: 'Inter', sans-serif;
+            line-height: 1.5;
+            letter-spacing: 0.005em;
+            white-space: normal;
+            width: max-content;
+            max-width: 300px;
+            text-align: left;
+            opacity: 0;
+            visibility: hidden;
+            pointer-events: none;
+            transform: translateY(-4px);
+            transition: opacity 0.15s ease, transform 0.15s ease, visibility 0.15s;
+            z-index: 1000;
+            box-shadow: 0 10px 25px -5px rgba(15, 23, 42, 0.25),
+                        0 6px 10px -3px rgba(15, 23, 42, 0.12),
+                        0 0 0 1px rgba(255, 255, 255, 0.04) inset;
+        }
+
+        /* Arrow pointing up to icon */
+        .info-icon::before {
+            content: "";
+            position: absolute;
+            top: calc(100% + 4px);
+            left: 4px;
+            width: 10px;
+            height: 10px;
+            background: #1e293b;
+            transform: rotate(45deg);
+            opacity: 0;
+            visibility: hidden;
+            pointer-events: none;
+            transition: opacity 0.15s, visibility 0.15s;
+            z-index: 1001;
+            box-shadow: -1px -1px 1px rgba(15, 23, 42, 0.06);
+        }
+
+        .info-icon:hover::after,
+        .info-icon:focus::after,
+        .info-icon:hover::before,
+        .info-icon:focus::before {
+            opacity: 1;
+            visibility: visible;
+            transform: translateY(0);
+        }
+
+        /* Modifier: anchor tooltip to the RIGHT of the icon
+           (use for icons near the right edge of a row to keep tooltip on-screen). */
+        .info-icon.info-icon--end::after {
+            left: auto;
+            right: -8px;
+        }
+        .info-icon.info-icon--end::before {
+            left: auto;
+            right: 4px;
+        }
+
+        /* =========================================================
            Misc
            ========================================================= */
         .muted { color: var(--text-muted); }
