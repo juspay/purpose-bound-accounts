@@ -5,7 +5,7 @@ use uuid::Uuid;
 
 #[derive(Debug, Deserialize)]
 pub struct CreateAccountRequest {
-    pub holder_id: Uuid,
+    pub holder_id: String,
     pub purpose_code: String,
     pub origin_ifsc: String,
     pub origin_account_number: String,
@@ -14,7 +14,7 @@ pub struct CreateAccountRequest {
 #[derive(Debug, Serialize)]
 pub struct AccountResponse {
     pub id: Uuid,
-    pub holder_id: Uuid,
+    pub holder_id: String,
     pub purpose_code: String,
     pub origin_ifsc: String,
     pub origin_account_number: String,

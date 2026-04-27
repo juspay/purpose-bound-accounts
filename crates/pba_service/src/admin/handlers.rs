@@ -139,7 +139,7 @@ async fn render_accounts_list(
             .to_string();
             AccountRow {
                 id: a.id.to_string(),
-                holder_id: a.holder_id.to_string(),
+                holder_id: a.holder_id,
                 purpose_code: a.purpose_code,
                 status: status_str,
                 status_class,
@@ -169,17 +169,23 @@ pub async fn create_account(
     State(state): State<AppState>,
     axum::extract::Form(form): axum::extract::Form<CreateAccountForm>,
 ) -> Response {
-    let holder_id = match form.holder_id.parse::<Uuid>() {
-        Ok(id) => id,
-        Err(_) => {
-            return render_accounts_list(
-                &state,
-                Some("Invalid holder ID — must be a valid UUID".to_string()),
-                None,
-            )
-            .await;
-        }
-    };
+    let holder_id = form.holder_id.trim();
+    if holder_id.is_empty() {
+        return render_accounts_list(
+            &state,
+            Some("Holder ID is required".to_string()),
+            None,
+        )
+        .await;
+    }
+    if holder_id.len() > 255 {
+        return render_accounts_list(
+            &state,
+            Some("Holder ID must be at most 255 characters".to_string()),
+            None,
+        )
+        .await;
+    }
 
     match state
         .account_service
@@ -330,7 +336,7 @@ pub async fn account_detail(
     render(AccountDetailTemplate {
         prefix: state.path_prefix.clone(),
         id: account.id.to_string(),
-        holder_id: account.holder_id.to_string(),
+        holder_id: account.holder_id,
         purpose_code: account.purpose_code,
         status: status_str,
         status_class,

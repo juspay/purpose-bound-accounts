@@ -36,7 +36,7 @@ impl AccountStatus {
 #[derive(Debug, Clone, Serialize)]
 pub struct PurposeBoundAccount {
     pub id: Uuid,
-    pub holder_id: Uuid,
+    pub holder_id: String,
     pub purpose_code: String,
     pub origin_ifsc: String,
     pub origin_account_number: String,
@@ -91,7 +91,7 @@ mod tests {
     fn origin_source_match() {
         let account = PurposeBoundAccount {
             id: Uuid::new_v4(),
-            holder_id: Uuid::new_v4(),
+            holder_id: "test-holder".to_string(),
             purpose_code: "health".to_string(),
             origin_ifsc: "HDFC0001234".to_string(),
             origin_account_number: "1234567890".to_string(),

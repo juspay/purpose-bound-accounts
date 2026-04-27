@@ -17,8 +17,8 @@
         <form method="post" action="{{ prefix }}/admin/accounts">
             <div class="grid">
                 <label>
-                    Holder ID (UUID)
-                    <input type="text" name="holder_id" placeholder="e.g. aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee" required>
+                    Holder ID
+                    <input type="text" name="holder_id" placeholder="external IAM subject (e.g. OIDC sub)" maxlength="255" required>
                 </label>
                 <label>
                     Purpose

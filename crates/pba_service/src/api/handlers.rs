@@ -16,7 +16,7 @@ pub async fn create_account(
     let account = state
         .account_service
         .create_account(
-            req.holder_id,
+            &req.holder_id,
             &req.purpose_code,
             &req.origin_ifsc,
             &req.origin_account_number,

@@ -21,7 +21,7 @@ impl AccountService {
 
     pub async fn create_account(
         &self,
-        holder_id: Uuid,
+        holder_id: &str,
         purpose_code: &str,
         origin_ifsc: &str,
         origin_account_number: &str,

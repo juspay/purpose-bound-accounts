@@ -18,7 +18,7 @@ impl AccountRepo {
     pub async fn create_account(
         &self,
         id: Uuid,
-        holder_id: Uuid,
+        holder_id: &str,
         purpose_code: &str,
         origin_ifsc: &str,
         origin_account_number: &str,
@@ -217,7 +217,7 @@ impl AccountRepo {
 #[derive(sqlx::FromRow)]
 struct AccountRow {
     id: Uuid,
-    holder_id: Uuid,
+    holder_id: String,
     purpose_code: String,
     origin_ifsc: String,
     origin_account_number: String,
