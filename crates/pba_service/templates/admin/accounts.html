@@ -5,7 +5,7 @@
 {% block content %}
 <h1>Accounts</h1>
 
-<details>
+<details{% if error.is_some() || success.is_some() %} open{% endif %}>
     <summary role="button" class="outline">Create New Account</summary>
     <article>
         {% if let Some(err) = error %}
@@ -18,7 +18,7 @@
             <div class="grid">
                 <label>
                     Holder ID
-                    <input type="text" name="holder_id" placeholder="external IAM subject (e.g. OIDC sub)" maxlength="255" required>
+                    <input type="text" name="holder_id" placeholder="External account reference" maxlength="255" required>
                 </label>
                 <label>
                     Purpose
