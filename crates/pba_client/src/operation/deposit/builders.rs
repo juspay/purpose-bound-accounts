@@ -138,6 +138,20 @@ impl DepositFluentBuilder {
     pub fn get_source_account_number(&self) -> &::std::option::Option<::std::string::String> {
                     self.inner.get_source_account_number()
                 }
+    /// Funding source type for deposits.
+    pub fn funding_type(mut self, input: crate::types::FundingType) -> Self {
+                    self.inner = self.inner.funding_type(input);
+                    self
+                }
+    /// Funding source type for deposits.
+    pub fn set_funding_type(mut self, input: ::std::option::Option<crate::types::FundingType>) -> Self {
+                    self.inner = self.inner.set_funding_type(input);
+                    self
+                }
+    /// Funding source type for deposits.
+    pub fn get_funding_type(&self) -> &::std::option::Option<crate::types::FundingType> {
+                    self.inner.get_funding_type()
+                }
     /// Monetary amount in the smallest currency unit (e.g., paise for INR).
     pub fn amount(mut self, input: i64) -> Self {
                     self.inner = self.inner.amount(input);

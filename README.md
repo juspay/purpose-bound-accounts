@@ -59,16 +59,10 @@ just install-deps
 
 ### Development workflow
 
-**Start services (once, leave running):**
+**Start everything (Postgres + TigerBeetle + app):**
 
 ```bash
-just infra-start       # Postgres on :5432, TigerBeetle on :3000
-```
-
-**Edit, build, run (inner loop):**
-
-```bash
-just run               # or: just watch (auto-restarts on changes)
+just run               # starts all services via process-compose, Ctrl+C stops everything
 ```
 
 The service starts on `http://localhost:3030`. Open the **Admin Dashboard** at:
@@ -79,17 +73,10 @@ http://localhost:3030/admin
 
 From there you can browse accounts, create new ones, make deposits/payments/withdrawals, and view purpose types with their allowed MCCs.
 
-**Stop everything:**
+**Start in background:**
 
 ```bash
-just stop              # stop pba-service only (infra keeps running)
-just stop-all          # stop the app + all infrastructure
-```
-
-**All-in-one (starts services, runs app, cleans up on Ctrl+C):**
-
-```bash
-just run-all
+just run-bg            # starts detached; use 'just logs' to attach, 'just stop' to stop
 ```
 
 ### Running tests
@@ -103,7 +90,7 @@ just test
 **E2E tests (Cucumber BDD):**
 
 ```bash
-just e2e           # API tests only (via Smithy SDK client)
+just api-e2e       # API tests only (via Smithy SDK client)
 just ui-e2e        # Browser UI tests only (headless Chrome)
 just e2e-all       # Both API + browser tests
 ```
@@ -138,33 +125,56 @@ just smithy-validate    # validate the model
 just smithy-build       # regenerate the Rust client SDK
 ```
 
+## Authentication
+
+PBA uses Keycloak for authentication. `just run` starts Keycloak alongside other services.
+
+**Admin UI:** Navigate to `http://localhost:3030/admin` — you'll be redirected to Keycloak to log in.
+Default credentials: `admin@pba.local` / `admin`
+
+**API access:** Use the `Authorization` header with a base64-encoded `client_id:client_secret`:
+
+```bash
+API_KEY=$(echo -n "pba-api:pba-api-secret" | base64)
+curl -H "Authorization: ApiKey $API_KEY" http://localhost:3030/purpose-types
+```
+
+**Disable auth (development):** Set `AUTH_ENABLED=false` in your `.env` file.
+
 ## Configuration
 
 Environment variables (loaded from `.env`):
 
 | Variable | Default | Description |
 |----------|---------|-------------|
-| `DATABASE_URL` | `postgresql://localhost:5432/pba_service?host=/tmp` | Postgres connection |
+| `DB_HOST` | `localhost` | Postgres host (use a path like `/tmp` for Unix socket) |
+| `DB_PORT` | `5432` | Postgres port |
+| `DB_NAME` | `pba_service` | Postgres database name |
+| `DB_USER` | `$USER` (Unix socket) | Postgres user (required for TCP connections) |
+| `DB_PASSWORD` | _(empty)_ | Postgres password (supports encrypted values via `SECRETS_PROVIDER`) |
 | `TIGERBEETLE_ADDRESSES` | `3000` | TigerBeetle address(es) |
 | `TIGERBEETLE_CLUSTER_ID` | `0` | TigerBeetle cluster ID |
 | `HOST` | `0.0.0.0` | Bind address |
 | `PORT` | `3030` | HTTP port |
 | `RUST_LOG` | `pba_service=debug` | Log level |
+| `OIDC_ISSUER_URL` | `http://localhost:8180/realms/pba` | OIDC provider issuer URL (discovery via `.well-known/openid-configuration`) |
+| `OIDC_CLIENT_ID` | `pba-admin` | OIDC client ID for admin UI login flow |
+| `COOKIE_SECRET` | _(dev default)_ | 32+ byte secret for session cookie signing |
+| `AUTH_ENABLED` | `true` | Set to `false` to disable auth |
+| `PATH_PREFIX` | _(empty)_ | URL prefix for reverse proxy / ingress (e.g., `/pba`) |
 
 ## Available just targets
 
 Run `just` to see all targets:
 
 ```
-just infra-start      # Start Postgres + TigerBeetle
-just infra-stop       # Stop Postgres + TigerBeetle
-just run              # Run the service (foreground)
-just run-all          # Start infra + run (auto-cleanup on exit)
-just stop             # Stop pba-service only (infra keeps running)
-just stop-all         # Stop app + all infrastructure
+just run              # Start everything via process-compose (Ctrl+C stops all)
+just run-bg           # Start everything in the background (detached)
+just logs             # Attach to running process-compose instance
+just stop             # Stop all services
 just build            # Build the project
 just test             # Unit tests
-just e2e              # API E2E tests (isolated infra)
+just api-e2e          # API E2E tests (isolated infra)
 just ui-e2e           # Browser UI E2E tests (headless Chrome)
 just ui-e2e-watch     # Browser UI tests with visible Chrome
 just e2e-all          # All E2E tests (API + browser)

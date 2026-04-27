@@ -6,6 +6,7 @@ impl super::Client {
     ///   - [`account_id(impl Into<String>)`](crate::operation::deposit::builders::DepositFluentBuilder::account_id) / [`set_account_id(Option<String>)`](crate::operation::deposit::builders::DepositFluentBuilder::set_account_id):<br>required: **true**<br>(undocumented)<br>
     ///   - [`source_ifsc(impl Into<String>)`](crate::operation::deposit::builders::DepositFluentBuilder::source_ifsc) / [`set_source_ifsc(Option<String>)`](crate::operation::deposit::builders::DepositFluentBuilder::set_source_ifsc):<br>required: **true**<br>(undocumented)<br>
     ///   - [`source_account_number(impl Into<String>)`](crate::operation::deposit::builders::DepositFluentBuilder::source_account_number) / [`set_source_account_number(Option<String>)`](crate::operation::deposit::builders::DepositFluentBuilder::set_source_account_number):<br>required: **true**<br>(undocumented)<br>
+    ///   - [`funding_type(FundingType)`](crate::operation::deposit::builders::DepositFluentBuilder::funding_type) / [`set_funding_type(Option<FundingType>)`](crate::operation::deposit::builders::DepositFluentBuilder::set_funding_type):<br>required: **false**<br>Funding source type for deposits.<br>
     ///   - [`amount(i64)`](crate::operation::deposit::builders::DepositFluentBuilder::amount) / [`set_amount(Option<i64>)`](crate::operation::deposit::builders::DepositFluentBuilder::set_amount):<br>required: **true**<br>Monetary amount in the smallest currency unit (e.g., paise for INR).<br>
     ///   - [`pending(bool)`](crate::operation::deposit::builders::DepositFluentBuilder::pending) / [`set_pending(Option<bool>)`](crate::operation::deposit::builders::DepositFluentBuilder::set_pending):<br>required: **false**<br>(undocumented)<br>
     ///   - [`gateway_ref(impl Into<String>)`](crate::operation::deposit::builders::DepositFluentBuilder::gateway_ref) / [`set_gateway_ref(Option<String>)`](crate::operation::deposit::builders::DepositFluentBuilder::set_gateway_ref):<br>required: **false**<br>(undocumented)<br>
@@ -16,6 +17,7 @@ impl super::Client {
     ///   - [`account_id(String)`](crate::operation::deposit::DepositOutput::account_id): (undocumented)
     ///   - [`amount(i64)`](crate::operation::deposit::DepositOutput::amount): Monetary amount in the smallest currency unit (e.g., paise for INR).
     ///   - [`pool(String)`](crate::operation::deposit::DepositOutput::pool): (undocumented)
+    ///   - [`funding_type(String)`](crate::operation::deposit::DepositOutput::funding_type): (undocumented)
     ///   - [`status(String)`](crate::operation::deposit::DepositOutput::status): (undocumented)
     ///   - [`gateway_ref(Option<String>)`](crate::operation::deposit::DepositOutput::gateway_ref): (undocumented)
     ///   - [`timeout_seconds(Option<i32>)`](crate::operation::deposit::DepositOutput::timeout_seconds): (undocumented)

@@ -8,7 +8,8 @@ use uuid::Uuid;
 
 use crate::domain::tb_explorer::{TbAccountView, TbBalanceView, TbTransferView};
 use crate::repository::ledger_repo::{
-    FUNDING_SOURCE_TB_ID, LEDGER_INR_PAISA, MERCHANT_SETTLEMENT_TB_ID, WITHDRAWAL_SETTLEMENT_TB_ID,
+    LEDGER_INR_PAISA, MERCHANT_SETTLEMENT_TB_ID, SELF_FUNDING_SOURCE_TB_ID,
+    THIRD_PARTY_FUNDING_SOURCE_TB_ID, TRUST_FUNDING_SOURCE_TB_ID, WITHDRAWAL_SETTLEMENT_TB_ID,
 };
 use crate::AppState;
 
@@ -89,6 +90,7 @@ fn parse_optional_u16(s: &str) -> u16 {
 #[derive(Template)]
 #[template(path = "admin/tb/overview.html")]
 struct OverviewTemplate {
+    prefix: String,
     cluster_id: String,
     addresses: Vec<String>,
     default_ledger: u32,
@@ -108,12 +110,16 @@ struct SentinelRow {
 
 pub async fn overview(State(state): State<AppState>) -> Response {
     let sentinel_ids = vec![
-        FUNDING_SOURCE_TB_ID,
+        SELF_FUNDING_SOURCE_TB_ID,
+        TRUST_FUNDING_SOURCE_TB_ID,
+        THIRD_PARTY_FUNDING_SOURCE_TB_ID,
         MERCHANT_SETTLEMENT_TB_ID,
         WITHDRAWAL_SETTLEMENT_TB_ID,
     ];
     let labels = [
-        "Funding source",
+        "Self funding source",
+        "Trust funding source",
+        "Third-party funding source",
         "Merchant settlement",
         "Withdrawal settlement",
     ];
@@ -174,6 +180,7 @@ pub async fn overview(State(state): State<AppState>) -> Response {
         .unwrap_or(0);
 
     render(OverviewTemplate {
+        prefix: state.path_prefix.clone(),
         cluster_id: state.tb_cluster_id.to_string(),
         addresses: state.tb_addresses.clone(),
         default_ledger: LEDGER_INR_PAISA,
@@ -210,6 +217,7 @@ pub struct AccountsQuery {
 #[derive(Template)]
 #[template(path = "admin/tb/accounts.html")]
 struct AccountsTemplate {
+    prefix: String,
     default_ledger: u32,
     form: AccountsFormEcho,
     results: Vec<AccountRow>,
@@ -320,6 +328,7 @@ pub async fn accounts_page(
     }
 
     render(AccountsTemplate {
+        prefix: state.path_prefix.clone(),
         default_ledger: LEDGER_INR_PAISA,
         form,
         results,
@@ -335,6 +344,7 @@ pub async fn accounts_page(
 #[derive(Template)]
 #[template(path = "admin/tb/account_detail.html")]
 struct AccountDetailTemplate {
+    prefix: String,
     account: AccountFullRow,
     transfers: Vec<TransferRow>,
     balance_history: Vec<BalanceRow>,
@@ -454,6 +464,7 @@ pub async fn account_detail(State(state): State<AppState>, Path(id_str): Path<St
     };
 
     render(AccountDetailTemplate {
+        prefix: state.path_prefix.clone(),
         account: AccountFullRow {
             id: account.id_str.clone(),
             id_uuid: account.id_uuid.clone(),
@@ -512,6 +523,7 @@ pub struct TransfersQuery {
 #[derive(Template)]
 #[template(path = "admin/tb/transfers.html")]
 struct TransfersTemplate {
+    prefix: String,
     default_ledger: u32,
     form: TransfersFormEcho,
     results: Vec<TransferRow>,
@@ -631,6 +643,7 @@ pub async fn transfers_page(
     }
 
     render(TransfersTemplate {
+        prefix: state.path_prefix.clone(),
         default_ledger: LEDGER_INR_PAISA,
         form,
         results,
@@ -646,6 +659,7 @@ pub async fn transfers_page(
 #[derive(Template)]
 #[template(path = "admin/tb/transfer_detail.html")]
 struct TransferDetailTemplate {
+    prefix: String,
     t: TransferFullRow,
 }
 
@@ -691,6 +705,7 @@ pub async fn transfer_detail(
         None => return (StatusCode::NOT_FOUND, "Transfer not found").into_response(),
     };
     render(TransferDetailTemplate {
+        prefix: state.path_prefix.clone(),
         t: TransferFullRow {
             id: t.id_str.clone(),
             id_uuid: t.id_uuid.clone(),
@@ -729,6 +744,7 @@ pub struct PendingQuery {
 #[derive(Template)]
 #[template(path = "admin/tb/pending.html")]
 struct PendingTemplate {
+    prefix: String,
     form: PendingFormEcho,
     default_ledger: u32,
     results: Vec<TransferRow>,
@@ -794,6 +810,7 @@ pub async fn pending_page(
     }
 
     render(PendingTemplate {
+        prefix: state.path_prefix.clone(),
         form,
         default_ledger: LEDGER_INR_PAISA,
         results,
@@ -808,7 +825,7 @@ pub async fn pending_post(State(state): State<AppState>, Path(id_str): Path<Stri
         None => return (StatusCode::BAD_REQUEST, "Invalid pending id").into_response(),
     };
     match state.ledger_repo.post_pending_transfer(id).await {
-        Ok(_) => Redirect::to("/admin/tb/pending").into_response(),
+        Ok(_) => Redirect::to(&format!("{}/admin/tb/pending", state.path_prefix)).into_response(),
         Err(e) => {
             tracing::error!("Manual post_pending failed: {e}");
             (StatusCode::INTERNAL_SERVER_ERROR, format!("{e}")).into_response()
@@ -822,7 +839,7 @@ pub async fn pending_void(State(state): State<AppState>, Path(id_str): Path<Stri
         None => return (StatusCode::BAD_REQUEST, "Invalid pending id").into_response(),
     };
     match state.ledger_repo.void_pending_transfer(id).await {
-        Ok(_) => Redirect::to("/admin/tb/pending").into_response(),
+        Ok(_) => Redirect::to(&format!("{}/admin/tb/pending", state.path_prefix)).into_response(),
         Err(e) => {
             tracing::error!("Manual void_pending failed: {e}");
             (StatusCode::INTERNAL_SERVER_ERROR, format!("{e}")).into_response()
@@ -843,6 +860,7 @@ pub struct DecoderQuery {
 #[derive(Template)]
 #[template(path = "admin/tb/decoder.html")]
 struct DecoderTemplate {
+    prefix: String,
     input: String,
     as_u128: String,
     as_uuid: String,
@@ -852,7 +870,7 @@ struct DecoderTemplate {
     error: Option<String>,
 }
 
-pub async fn decoder(Query(q): Query<DecoderQuery>) -> Response {
+pub async fn decoder(State(state): State<AppState>, Query(q): Query<DecoderQuery>) -> Response {
     let input = q.input.clone().unwrap_or_default();
     let (as_u128, as_uuid, as_hex, as_inr, sentinel, error) = if input.trim().is_empty() {
         (
@@ -883,6 +901,7 @@ pub async fn decoder(Query(q): Query<DecoderQuery>) -> Response {
         )
     };
     render(DecoderTemplate {
+        prefix: state.path_prefix.clone(),
         input,
         as_u128,
         as_uuid,

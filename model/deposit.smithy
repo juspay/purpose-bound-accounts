@@ -18,6 +18,8 @@ operation Deposit {
         @required
         source_account_number: String
 
+        funding_type: FundingType
+
         @required
         amount: Money
 
@@ -41,6 +43,9 @@ operation Deposit {
 
         @required
         pool: String
+
+        @required
+        funding_type: String
 
         @required
         status: String
@@ -76,6 +81,8 @@ operation PostDeposit {
 
         @required
         pool: String
+
+        funding_type: String
 
         @required
         status: String
@@ -113,6 +120,8 @@ operation VoidDeposit {
 
         @required
         pool: String
+
+        funding_type: String
 
         @required
         status: String

@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 
 {% block title %}TB Accounts — PBA Ledger{% endblock %}
-{% block breadcrumb %}<a href="/admin">PBA Ledger</a> <span class="sep">/</span> <a href="/admin/tb">TigerBeetle</a> <span class="sep">/</span> <span class="current">Accounts</span>{% endblock %}
+{% block breadcrumb %}<a href="{{ prefix }}/admin">PBA Ledger</a> <span class="sep">/</span> <a href="{{ prefix }}/admin/tb">TigerBeetle</a> <span class="sep">/</span> <span class="current">Accounts</span>{% endblock %}
 
 {% block content %}
 <div class="page-header">
@@ -20,7 +20,7 @@
 <details {% if form.mode == "query" || form.mode == "" %}open{% endif %}>
     <summary>Query accounts</summary>
     <article>
-        <form method="get" action="/admin/tb/accounts">
+        <form method="get" action="{{ prefix }}/admin/tb/accounts">
             <input type="hidden" name="mode" value="query">
             <div class="grid">
                 <label>Ledger <input type="number" name="ledger" value="{% if form.ledger != "" %}{{ form.ledger }}{% else %}{{ default_ledger }}{% endif %}" placeholder="1"></label>
@@ -40,7 +40,7 @@
 <details {% if form.mode == "lookup" %}open{% endif %}>
     <summary>Lookup accounts by ID</summary>
     <article>
-        <form method="get" action="/admin/tb/accounts">
+        <form method="get" action="{{ prefix }}/admin/tb/accounts">
             <input type="hidden" name="mode" value="lookup">
             <label>IDs (comma, space or newline separated — accepts UUID, decimal u128, or 0x hex)
                 <textarea name="ids" rows="4" placeholder="aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee&#10;12345&#10;0xabc...">{{ form.ids }}</textarea>
@@ -81,7 +81,7 @@
         {% for r in &results %}
         <tr>
             <td class="mono">
-                <a href="/admin/tb/accounts/{{ r.id }}">{{ r.id }}</a>
+                <a href="{{ prefix }}/admin/tb/accounts/{{ r.id }}">{{ r.id }}</a>
                 {% if let Some(s) = r.sentinel %}<br><span class="badge pill-sentinel">{{ s }}</span>{% endif %}
                 <div class="text-xs muted mono">uuid: {{ r.id_uuid }}</div>
             </td>

@@ -12,6 +12,8 @@ pub struct PostDepositOutput  {
     #[allow(missing_docs)] // documentation missing in model
     pub pool: ::std::string::String,
     #[allow(missing_docs)] // documentation missing in model
+    pub funding_type: ::std::option::Option<::std::string::String>,
+    #[allow(missing_docs)] // documentation missing in model
     pub status: ::std::string::String,
     #[allow(missing_docs)] // documentation missing in model
     pub gateway_ref: ::std::option::Option<::std::string::String>,
@@ -34,6 +36,10 @@ impl  PostDepositOutput  {
     #[allow(missing_docs)] // documentation missing in model
     pub fn pool(&self) -> &str {
         use std::ops::Deref; self.pool.deref()
+    }
+    #[allow(missing_docs)] // documentation missing in model
+    pub fn funding_type(&self) -> ::std::option::Option<&str> {
+        self.funding_type.as_deref()
     }
     #[allow(missing_docs)] // documentation missing in model
     pub fn status(&self) -> &str {
@@ -63,6 +69,7 @@ pub struct PostDepositOutputBuilder {
     pub(crate) account_id: ::std::option::Option<::std::string::String>,
     pub(crate) amount: ::std::option::Option<i64>,
     pub(crate) pool: ::std::option::Option<::std::string::String>,
+    pub(crate) funding_type: ::std::option::Option<::std::string::String>,
     pub(crate) status: ::std::option::Option<::std::string::String>,
     pub(crate) gateway_ref: ::std::option::Option<::std::string::String>,
     pub(crate) timeout_seconds: ::std::option::Option<i32>,
@@ -123,6 +130,19 @@ impl PostDepositOutputBuilder {
     #[allow(missing_docs)] // documentation missing in model
     pub fn get_pool(&self) -> &::std::option::Option<::std::string::String> {
         &self.pool
+    }
+    #[allow(missing_docs)] // documentation missing in model
+    pub fn funding_type(mut self, input: impl ::std::convert::Into<::std::string::String>) -> Self {
+        self.funding_type = ::std::option::Option::Some(input.into());
+        self
+    }
+    #[allow(missing_docs)] // documentation missing in model
+    pub fn set_funding_type(mut self, input: ::std::option::Option<::std::string::String>) -> Self {
+        self.funding_type = input; self
+    }
+    #[allow(missing_docs)] // documentation missing in model
+    pub fn get_funding_type(&self) -> &::std::option::Option<::std::string::String> {
+        &self.funding_type
     }
     #[allow(missing_docs)] // documentation missing in model
     /// This field is required.
@@ -193,6 +213,8 @@ impl PostDepositOutputBuilder {
                     .ok_or_else(||
                         ::aws_smithy_types::error::operation::BuildError::missing_field("pool", "pool was not specified but it is required when building PostDepositOutput")
                     )?
+                ,
+                funding_type: self.funding_type
                 ,
                 status: self.status
                     .ok_or_else(||

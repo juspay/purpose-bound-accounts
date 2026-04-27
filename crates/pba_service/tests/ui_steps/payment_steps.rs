@@ -45,10 +45,7 @@ async fn do_payment(
     // Read balances before payment
     let (self_before, others_before, _) = get_current_balances(world).await;
 
-    let account_id = world
-        .account_id
-        .clone()
-        .expect("No account ID for payment");
+    let account_id = world.account_id.clone().expect("No account ID for payment");
     let payment_url = world.url(&format!("/admin/accounts/{}/payment", account_id));
 
     let page = world.ensure_page().await;
@@ -118,22 +115,16 @@ async fn do_payment(
         .await
         .expect("Could not find submit button");
     submit.click().await.expect("Failed to click submit");
-    sleep(Duration::from_millis(500)).await;
 
-    // Check where we ended up
-    let page = world.ensure_page().await;
-    let current_url = page
-        .url()
-        .await
-        .expect("Failed to get URL")
-        .unwrap_or_default();
-
-    let succeeded = current_url.contains("/admin/accounts/") && !current_url.ends_with("/payment");
+    let succeeded = world.wait_for_redirect("/payment").await;
 
     if succeeded {
         // Read balances after payment and compute split
         let page = world.ensure_page().await;
-        let content = page.content().await.expect("Failed to get page content after payment");
+        let content = page
+            .content()
+            .await
+            .expect("Failed to get page content after payment");
         let (self_after, others_after, _) = read_balances_from_content(&content);
 
         let from_others = (others_before - others_after).max(0);
@@ -143,7 +134,10 @@ async fn do_payment(
     } else {
         // Parse the error message from page content
         let page = world.ensure_page().await;
-        let content = page.content().await.expect("Failed to get page content for error");
+        let content = page
+            .content()
+            .await
+            .expect("Failed to get page content for error");
         let kind = classify_error(&content);
         Err(kind)
     }
@@ -182,9 +176,7 @@ fn classify_error(content: &str) -> String {
 // When
 // ---------------------------------------------------------------------------
 
-#[when(
-    regex = r#"^I pay (\d+) to merchant "([^"]*)" with MCC "([^"]*)" described as "([^"]*)"$"#
-)]
+#[when(regex = r#"^I pay (\d+) to merchant "([^"]*)" with MCC "([^"]*)" described as "([^"]*)"$"#)]
 async fn when_pay(
     world: &mut UiWorld,
     amount: i64,

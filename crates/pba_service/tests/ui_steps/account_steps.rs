@@ -160,13 +160,17 @@ async fn create_account_via_ui(
         .await
         .expect("Could not find submit button");
     submit.click().await.expect("Failed to click submit button");
-    sleep(Duration::from_millis(500)).await;
 
-    // Check where we ended up
+    if !world.wait_for_redirect("/accounts").await {
+        return None;
+    }
+
     let page = world.ensure_page().await;
-    let current_url = page.url().await.expect("Failed to get current URL");
-    let current_url = current_url.unwrap_or_default();
-
+    let current_url = page
+        .url()
+        .await
+        .expect("Failed to get URL")
+        .unwrap_or_default();
     extract_id_from_url(&current_url)
 }
 
@@ -202,12 +206,22 @@ async fn submit_status_change(world: &mut UiWorld, status_value: &str) {
         .await
         .expect("Failed to submit status form");
     drop(hidden_input);
-    sleep(Duration::from_millis(500)).await;
 
-    // Read new status from the detail page
+    // Poll for status change (up to 5 seconds) instead of a fixed sleep
+    for _ in 0..10 {
+        sleep(Duration::from_millis(500)).await;
+        let page = world.ensure_page().await;
+        let content = page.content().await.expect("Failed to get page content");
+        let status = extract_status_from_content(&content);
+        if status.as_deref() == Some(status_value) {
+            world.last_account_status = status;
+            return;
+        }
+    }
+
+    // Fallback: read whatever status is there
     let page = world.ensure_page().await;
     let content = page.content().await.expect("Failed to get page content");
-    // Extract status from page - look for the status span
     let status = extract_status_from_content(&content);
     world.last_account_status = status;
 }
@@ -473,7 +487,10 @@ async fn dashboard_total(world: &mut UiWorld, min: i64) {
     let re = regex::Regex::new(r"<h2>(\d+)</h2>").unwrap();
     if let Some(cap) = re.captures(&content) {
         let total: i64 = cap[1].parse().unwrap_or(0);
-        assert!(total >= min, "Expected at least {min} total accounts, got {total}");
+        assert!(
+            total >= min,
+            "Expected at least {min} total accounts, got {total}"
+        );
     } else {
         panic!("Could not find total accounts on dashboard");
     }
@@ -492,24 +509,30 @@ async fn view_detail(world: &mut UiWorld) {
 async fn page_self_pool(world: &mut UiWorld, expected: String) {
     let page = world.ensure_page().await;
     let content = page.content().await.unwrap();
-    assert!(content.contains(&format!("₹{expected}")),
-        "Expected self pool '₹{expected}' on page");
+    assert!(
+        content.contains(&format!("₹{expected}")),
+        "Expected self pool '₹{expected}' on page"
+    );
 }
 
 #[then(regex = r#"^the page should show others pool as "([^"]*)"$"#)]
 async fn page_others_pool(world: &mut UiWorld, expected: String) {
     let page = world.ensure_page().await;
     let content = page.content().await.unwrap();
-    assert!(content.contains(&format!("₹{expected}")),
-        "Expected others pool '₹{expected}' on page");
+    assert!(
+        content.contains(&format!("₹{expected}")),
+        "Expected others pool '₹{expected}' on page"
+    );
 }
 
 #[then(regex = r#"^the page should show total balance as "([^"]*)"$"#)]
 async fn page_total_balance(world: &mut UiWorld, expected: String) {
     let page = world.ensure_page().await;
     let content = page.content().await.unwrap();
-    assert!(content.contains(&format!("₹{expected}")),
-        "Expected total '₹{expected}' on page");
+    assert!(
+        content.contains(&format!("₹{expected}")),
+        "Expected total '₹{expected}' on page"
+    );
 }
 
 #[then(regex = r#"^the transaction history should load$"#)]
@@ -518,8 +541,10 @@ async fn tx_history_loads(world: &mut UiWorld) {
     // Wait for HTMX to load the transfers fragment
     tokio::time::sleep(std::time::Duration::from_secs(2)).await;
     let content = page.content().await.unwrap();
-    assert!(!content.contains("Loading transfers..."),
-        "Transaction history should have finished loading");
+    assert!(
+        !content.contains("Loading transfers..."),
+        "Transaction history should have finished loading"
+    );
 }
 
 #[then(regex = r#"^the transaction history should show at least (\d+) entry$"#)]
@@ -529,7 +554,10 @@ async fn tx_history_count(world: &mut UiWorld, min: usize) {
     if let Some(pos) = content.find("id=\"transfers\"") {
         let section = &content[pos..];
         let rows = section.matches("<tr>").count().saturating_sub(1);
-        assert!(rows >= min, "Expected at least {min} transfer entries, got {rows}");
+        assert!(
+            rows >= min,
+            "Expected at least {min} transfer entries, got {rows}"
+        );
     } else {
         panic!("Transfers section not found");
     }
@@ -539,24 +567,68 @@ async fn tx_history_count(world: &mut UiWorld, min: usize) {
 async fn no_deposit_link(world: &mut UiWorld) {
     let page = world.ensure_page().await;
     let content = page.content().await.unwrap();
-    assert!(!content.contains("/deposit\" role=\"button\""),
-        "Deposit link should not be visible on frozen/closed account");
+    assert!(
+        !content.contains("/deposit\" role=\"button\""),
+        "Deposit link should not be visible on frozen/closed account"
+    );
 }
 
 #[then(regex = r#"^the payment link should not be visible$"#)]
 async fn no_payment_link(world: &mut UiWorld) {
     let page = world.ensure_page().await;
     let content = page.content().await.unwrap();
-    assert!(!content.contains("/payment\" role=\"button\""),
-        "Payment link should not be visible on frozen/closed account");
+    assert!(
+        !content.contains("/payment\" role=\"button\""),
+        "Payment link should not be visible on frozen/closed account"
+    );
 }
 
 #[then(regex = r#"^the withdrawal link should not be visible$"#)]
 async fn no_withdrawal_link(world: &mut UiWorld) {
     let page = world.ensure_page().await;
     let content = page.content().await.unwrap();
-    assert!(!content.contains("/withdrawal\" role=\"button\""),
-        "Withdrawal link should not be visible on frozen/closed account");
+    assert!(
+        !content.contains("/withdrawal\" role=\"button\""),
+        "Withdrawal link should not be visible on frozen/closed account"
+    );
+}
+
+#[when(regex = r#"^I visit the all transactions page$"#)]
+async fn visit_all_transactions(world: &mut UiWorld) {
+    let url = world.url("/admin/transactions");
+    let page = world.ensure_page().await;
+    page.goto(url).await.unwrap();
+    tokio::time::sleep(std::time::Duration::from_millis(400)).await;
+}
+
+#[then(regex = r#"^the all transactions page should show at least (\d+) transactions$"#)]
+async fn all_transactions_count(world: &mut UiWorld, min: usize) {
+    let page = world.ensure_page().await;
+    let content = page.content().await.unwrap();
+    // Count <tr> rows in the table body (subtract 1 for header row)
+    let rows = content.matches("<tr>").count().saturating_sub(1);
+    assert!(
+        rows >= min,
+        "Expected at least {min} transaction rows, got {rows}"
+    );
+}
+
+#[then(regex = r#"^the all transactions page should show pool balance summary$"#)]
+async fn all_transactions_pool_summary(world: &mut UiWorld) {
+    let page = world.ensure_page().await;
+    let content = page.content().await.unwrap();
+    assert!(
+        content.contains("Total Pool Balance"),
+        "Expected 'Total Pool Balance' on the page"
+    );
+    assert!(
+        content.contains("Self Pool"),
+        "Expected 'Self Pool' on the page"
+    );
+    assert!(
+        content.contains("Others Pool"),
+        "Expected 'Others Pool' on the page"
+    );
 }
 
 #[when(regex = r#"^I visit the purpose types page$"#)]
@@ -572,5 +644,27 @@ async fn purpose_types_listed(world: &mut UiWorld, min: usize) {
     let page = world.ensure_page().await;
     let content = page.content().await.unwrap();
     let count = content.matches("id=\"purpose-").count();
-    assert!(count >= min, "Expected at least {min} purpose types listed, got {count}");
+    assert!(
+        count >= min,
+        "Expected at least {min} purpose types listed, got {count}"
+    );
+}
+
+#[when(regex = r#"^I visit the system accounts page$"#)]
+async fn visit_system_accounts(world: &mut UiWorld) {
+    let url = world.url("/admin/system-accounts");
+    let page = world.ensure_page().await;
+    page.goto(url).await.unwrap();
+    tokio::time::sleep(std::time::Duration::from_millis(400)).await;
+}
+
+#[then(regex = r#"^I should see "([^"]*)" on the page$"#)]
+async fn should_see_text(world: &mut UiWorld, expected: String) {
+    let page = world.ensure_page().await;
+    let content = page.content().await.unwrap();
+    assert!(
+        content.contains(&expected),
+        "Expected to see '{}' on the page, but it was not found",
+        expected
+    );
 }

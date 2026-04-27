@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 
 {% block title %}Payment — PBA Ledger{% endblock %}
-{% block breadcrumb %}<a href="/admin">PBA Ledger</a> <span class="sep">/</span> <a href="/admin/accounts">Accounts</a> <span class="sep">/</span> <a href="/admin/accounts/{{ account_id }}" class="mono">{{ account_id|truncate(12) }}</a> <span class="sep">/</span> <span class="current">Pay merchant</span>{% endblock %}
+{% block breadcrumb %}<a href="{{ prefix }}/admin">PBA Ledger</a> <span class="sep">/</span> <a href="{{ prefix }}/admin/accounts">Accounts</a> <span class="sep">/</span> <a href="{{ prefix }}/admin/accounts/{{ account_id }}" class="mono">{{ account_id|truncate(12) }}</a> <span class="sep">/</span> <span class="current">Pay merchant</span>{% endblock %}
 
 {% block content %}
 <div class="page-header">
@@ -10,7 +10,7 @@
         <p class="page-subtitle">Account <span class="mono">{{ account_id|truncate(12) }}…</span> · purpose <span class="badge">{{ purpose_code }}</span>. MCC must be allowed for the purpose. Others-pool is debited first.</p>
     </div>
     <div class="page-actions">
-        <a href="/admin/accounts/{{ account_id }}" role="button" class="outline">← Back to account</a>
+        <a href="{{ prefix }}/admin/accounts/{{ account_id }}" role="button" class="outline">← Back to account</a>
     </div>
 </div>
 
@@ -20,7 +20,7 @@
 
 <article>
     <header>Payment details</header>
-    <form method="post" action="/admin/accounts/{{ account_id }}/payment">
+    <form method="post" action="{{ prefix }}/admin/accounts/{{ account_id }}/payment">
         <label>Amount (paisa)
             <input type="number" name="amount" min="1" required placeholder="e.g. 5000 = ₹50.00">
         </label>
@@ -37,7 +37,7 @@
         </label>
         <div class="flex-gap">
             <button type="submit">Submit payment</button>
-            <a href="/admin/accounts/{{ account_id }}" class="btn outline">Cancel</a>
+            <a href="{{ prefix }}/admin/accounts/{{ account_id }}" class="btn outline">Cancel</a>
         </div>
     </form>
 </article>

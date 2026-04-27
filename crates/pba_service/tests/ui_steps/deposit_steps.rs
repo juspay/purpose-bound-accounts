@@ -11,16 +11,9 @@ use crate::UiWorld;
 
 /// Navigate to the deposit form, fill it, and submit.
 /// Returns true if the deposit succeeded (redirected to detail page), false on error.
-async fn do_deposit(
-    world: &mut UiWorld,
-    amount: i64,
-    ifsc: &str,
-    account_number: &str,
-) -> bool {
-    let account_id = world
-        .account_id
-        .clone()
-        .expect("No account ID for deposit");
+async fn do_deposit(world: &mut UiWorld, amount: i64, ifsc: &str, account_number: &str) -> bool {
+    let account_id = world.account_id.clone().expect("No account ID for deposit");
+    let origin_ifsc = world.origin_ifsc.clone().unwrap_or_default();
     let deposit_url = world.url(&format!("/admin/accounts/{}/deposit", account_id));
 
     let page = world.ensure_page().await;
@@ -47,7 +40,10 @@ async fn do_deposit(
         .find_element("input[name='source_ifsc']")
         .await
         .expect("Could not find source_ifsc input");
-    ifsc_input.click().await.expect("Failed to click source_ifsc");
+    ifsc_input
+        .click()
+        .await
+        .expect("Failed to click source_ifsc");
     ifsc_input
         .type_str(ifsc)
         .await
@@ -67,24 +63,22 @@ async fn do_deposit(
         .await
         .expect("Failed to type source_account_number");
 
+    // Set funding_type to "third_party" for non-origin deposits
+    if ifsc != origin_ifsc {
+        let js = r#"document.querySelector("select[name='funding_type']").value = "third_party";"#;
+        page.evaluate(js)
+            .await
+            .expect("Failed to set funding_type select");
+    }
+
     // Submit
     let submit = page
         .find_element("button[type='submit']")
         .await
         .expect("Could not find submit button");
     submit.click().await.expect("Failed to click submit");
-    sleep(Duration::from_millis(500)).await;
 
-    // Check where we ended up
-    let page = world.ensure_page().await;
-    let current_url = page
-        .url()
-        .await
-        .expect("Failed to get URL")
-        .unwrap_or_default();
-
-    // Success: redirected to /admin/accounts/{id} (no /deposit suffix)
-    current_url.contains("/admin/accounts/") && !current_url.ends_with("/deposit")
+    world.wait_for_redirect("/deposit").await
 }
 
 // ---------------------------------------------------------------------------
@@ -93,10 +87,7 @@ async fn do_deposit(
 
 #[given(regex = r"^the account has (\d+) in self-pool and (\d+) in others-pool$")]
 async fn given_account_has_balances(world: &mut UiWorld, self_amount: i64, others_amount: i64) {
-    let origin_ifsc = world
-        .origin_ifsc
-        .clone()
-        .expect("No origin IFSC recorded");
+    let origin_ifsc = world.origin_ifsc.clone().expect("No origin IFSC recorded");
     let origin_acct = world
         .origin_account_number
         .clone()
@@ -120,15 +111,13 @@ async fn given_account_has_balances(world: &mut UiWorld, self_amount: i64, other
 // ---------------------------------------------------------------------------
 
 #[when(regex = r#"^I deposit (\d+) from IFSC "([^"]*)" account "([^"]*)"$"#)]
-async fn when_deposit(
-    world: &mut UiWorld,
-    amount: i64,
-    ifsc: String,
-    account_number: String,
-) {
+async fn when_deposit(world: &mut UiWorld, amount: i64, ifsc: String, account_number: String) {
     let origin_ifsc = world.origin_ifsc.clone().unwrap_or_default();
     let ok = do_deposit(world, amount, &ifsc, &account_number).await;
-    assert!(ok, "Expected deposit to succeed but it stayed on the form page");
+    assert!(
+        ok,
+        "Expected deposit to succeed but it stayed on the form page"
+    );
 
     // Determine which pool based on whether IFSC matches origin
     let pool = if ifsc == origin_ifsc {
@@ -279,6 +268,7 @@ async fn do_pending_deposit(
         .account_id
         .clone()
         .expect("No account ID for pending deposit");
+    let origin_ifsc = world.origin_ifsc.clone().unwrap_or_default();
     let deposit_url = world.url(&format!("/admin/accounts/{}/deposit", account_id));
 
     let page = world.ensure_page().await;
@@ -305,7 +295,10 @@ async fn do_pending_deposit(
         .find_element("input[name='source_ifsc']")
         .await
         .expect("Could not find source_ifsc input");
-    ifsc_input.click().await.expect("Failed to click source_ifsc");
+    ifsc_input
+        .click()
+        .await
+        .expect("Failed to click source_ifsc");
     ifsc_input
         .type_str(ifsc)
         .await
@@ -324,6 +317,14 @@ async fn do_pending_deposit(
         .type_str(account_number)
         .await
         .expect("Failed to type source_account_number");
+
+    // Set funding_type to "third_party" for non-origin deposits
+    if ifsc != origin_ifsc {
+        let js = r#"document.querySelector("select[name='funding_type']").value = "third_party";"#;
+        page.evaluate(js)
+            .await
+            .expect("Failed to set funding_type select");
+    }
 
     // Check the pending checkbox
     let pending_checkbox = page
@@ -354,20 +355,12 @@ async fn do_pending_deposit(
         .await
         .expect("Could not find submit button");
     submit.click().await.expect("Failed to click submit");
-    sleep(Duration::from_millis(500)).await;
 
-    // Check where we ended up
-    let page = world.ensure_page().await;
-    let current_url = page
-        .url()
-        .await
-        .expect("Failed to get URL")
-        .unwrap_or_default();
-
-    let success = current_url.contains("/admin/accounts/") && !current_url.ends_with("/deposit");
+    let success = world.wait_for_redirect("/deposit").await;
 
     if success {
         // Extract the deposit ID from the pending deposits table on the account detail page
+        let page = world.ensure_page().await;
         let content = page.content().await.expect("Failed to get page content");
         // Find the first deposit ID in the pending deposits table (truncated to 8 chars in display,
         // but the full ID is in the Post/Void form action URLs)
@@ -432,7 +425,10 @@ async fn when_create_pending_deposit(
 ) {
     let origin_ifsc = world.origin_ifsc.clone().unwrap_or_default();
     let ok = do_pending_deposit(world, amount, &ifsc, &account_number, None).await;
-    assert!(ok, "Expected pending deposit to succeed but it stayed on the form page");
+    assert!(
+        ok,
+        "Expected pending deposit to succeed but it stayed on the form page"
+    );
 
     let pool = if ifsc == origin_ifsc {
         "self"
@@ -443,7 +439,9 @@ async fn when_create_pending_deposit(
     world.last_error = None;
 }
 
-#[when(regex = r#"^I create a pending deposit of (\d+) from IFSC "([^"]*)" account "([^"]*)" with gateway ref "([^"]*)"$"#)]
+#[when(
+    regex = r#"^I create a pending deposit of (\d+) from IFSC "([^"]*)" account "([^"]*)" with gateway ref "([^"]*)"$"#
+)]
 async fn when_create_pending_deposit_with_ref(
     world: &mut UiWorld,
     amount: i64,
@@ -453,7 +451,10 @@ async fn when_create_pending_deposit_with_ref(
 ) {
     let origin_ifsc = world.origin_ifsc.clone().unwrap_or_default();
     let ok = do_pending_deposit(world, amount, &ifsc, &account_number, Some(&gateway_ref)).await;
-    assert!(ok, "Expected pending deposit to succeed but it stayed on the form page");
+    assert!(
+        ok,
+        "Expected pending deposit to succeed but it stayed on the form page"
+    );
 
     let pool = if ifsc == origin_ifsc {
         "self"
@@ -490,9 +491,7 @@ async fn when_post_pending_deposit(world: &mut UiWorld) {
         r#"document.querySelector("form[action*='/deposits/{}/post']").submit();"#,
         deposit_id
     );
-    page.evaluate(js)
-        .await
-        .expect("Failed to submit post form");
+    page.evaluate(js).await.expect("Failed to submit post form");
     sleep(Duration::from_millis(500)).await;
 }
 
@@ -520,9 +519,7 @@ async fn when_void_pending_deposit(world: &mut UiWorld) {
         r#"document.querySelector("form[action*='/deposits/{}/void']").submit();"#,
         deposit_id
     );
-    page.evaluate(js)
-        .await
-        .expect("Failed to submit void form");
+    page.evaluate(js).await.expect("Failed to submit void form");
     sleep(Duration::from_millis(500)).await;
 }
 
@@ -579,4 +576,3 @@ async fn then_pending_others(world: &mut UiWorld, expected: i64) {
         expected, pending
     );
 }
-

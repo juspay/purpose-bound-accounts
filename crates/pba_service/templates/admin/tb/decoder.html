@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 
 {% block title %}TB Decoder — PBA Ledger{% endblock %}
-{% block breadcrumb %}<a href="/admin">PBA Ledger</a> <span class="sep">/</span> <a href="/admin/tb">TigerBeetle</a> <span class="sep">/</span> <span class="current">Decoder</span>{% endblock %}
+{% block breadcrumb %}<a href="{{ prefix }}/admin">PBA Ledger</a> <span class="sep">/</span> <a href="{{ prefix }}/admin/tb">TigerBeetle</a> <span class="sep">/</span> <span class="current">Decoder</span>{% endblock %}
 
 {% block content %}
 <div class="page-header">
@@ -19,7 +19,7 @@
 
 <article>
     <header>Input</header>
-    <form method="get" action="/admin/tb/decoder">
+    <form method="get" action="{{ prefix }}/admin/tb/decoder">
         <label>Value to decode
             <input type="text" name="input" value="{{ input }}" placeholder="UUID, decimal u128, or 0x-prefixed hex" autofocus>
         </label>
@@ -41,8 +41,8 @@
     </div>
     <footer>
         <div class="flex-gap">
-            <a href="/admin/tb/accounts/{{ as_u128 }}" class="btn outline btn-sm">Open as account</a>
-            <a href="/admin/tb/transfers/{{ as_u128 }}" class="btn outline btn-sm">Open as transfer</a>
+            <a href="{{ prefix }}/admin/tb/accounts/{{ as_u128 }}" class="btn outline btn-sm">Open as account</a>
+            <a href="{{ prefix }}/admin/tb/transfers/{{ as_u128 }}" class="btn outline btn-sm">Open as transfer</a>
         </div>
     </footer>
 </article>

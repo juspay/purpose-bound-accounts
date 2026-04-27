@@ -1,0 +1,67 @@
+{% extends "base.html" %}
+
+{% block title %}System Accounts - PBA Admin{% endblock %}
+
+{% block content %}
+<h1>System Accounts</h1>
+
+<h2>Sentinel Accounts (TigerBeetle)</h2>
+{% if sentinel_accounts.is_empty() %}
+<p>No sentinel accounts found.</p>
+{% else %}
+<table>
+    <thead>
+        <tr>
+            <th>Account</th>
+            <th>Credits Posted</th>
+            <th>Debits Posted</th>
+            <th>Balance Posted</th>
+            <th>Credits Pending</th>
+            <th>Debits Pending</th>
+            <th>Balance Pending</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for a in &sentinel_accounts %}
+        <tr>
+            <td><strong>{{ a.name }}</strong></td>
+            <td class="inbound">{{ a.credits_posted }}</td>
+            <td class="outbound">{{ a.debits_posted }}</td>
+            <td><strong>{{ a.balance_posted }}</strong></td>
+            <td class="status-frozen">{{ a.credits_pending }}</td>
+            <td class="status-frozen">{{ a.debits_pending }}</td>
+            <td><strong>{{ a.balance_pending }}</strong></td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endif %}
+
+<h2>PBA Pool Balances (Postgres)</h2>
+<table>
+    <thead>
+        <tr>
+            <th>Pool</th>
+            <th>Credits Posted</th>
+            <th>Debits Posted</th>
+            <th>Balance Posted</th>
+            <th>Credits Pending</th>
+            <th>Debits Pending</th>
+            <th>Balance Pending</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for p in &pool_balances %}
+        <tr>
+            <td><strong>{{ p.name }}</strong></td>
+            <td class="inbound">{{ p.credits_posted }}</td>
+            <td class="outbound">{{ p.debits_posted }}</td>
+            <td><strong>{{ p.balance_posted }}</strong></td>
+            <td class="status-frozen">{{ p.credits_pending }}</td>
+            <td class="status-frozen">{{ p.debits_pending }}</td>
+            <td><strong>{{ p.balance_pending }}</strong></td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endblock %}

@@ -5,6 +5,8 @@
 pub struct TransactionSummary  {
     #[allow(missing_docs)] // documentation missing in model
     pub id: ::std::string::String,
+    #[allow(missing_docs)] // documentation missing in model
+    pub account_id: ::std::string::String,
     /// Transaction type.
     pub r#type: crate::types::TransactionType,
     /// Transaction status.
@@ -27,6 +29,8 @@ pub struct TransactionSummary  {
     pub source_account: ::std::option::Option<::std::string::String>,
     #[allow(missing_docs)] // documentation missing in model
     pub gateway_ref: ::std::option::Option<::std::string::String>,
+    #[allow(missing_docs)] // documentation missing in model
+    pub funding_type: ::std::option::Option<::std::string::String>,
     /// ISO 8601 date-time.
     pub created_at: ::aws_smithy_types::DateTime,
 }
@@ -34,6 +38,10 @@ impl  TransactionSummary  {
     #[allow(missing_docs)] // documentation missing in model
     pub fn id(&self) -> &str {
         use std::ops::Deref; self.id.deref()
+    }
+    #[allow(missing_docs)] // documentation missing in model
+    pub fn account_id(&self) -> &str {
+        use std::ops::Deref; self.account_id.deref()
     }
     /// Transaction type.
     pub fn r#type(&self) -> &crate::types::TransactionType {
@@ -79,6 +87,10 @@ impl  TransactionSummary  {
     pub fn gateway_ref(&self) -> ::std::option::Option<&str> {
         self.gateway_ref.as_deref()
     }
+    #[allow(missing_docs)] // documentation missing in model
+    pub fn funding_type(&self) -> ::std::option::Option<&str> {
+        self.funding_type.as_deref()
+    }
     /// ISO 8601 date-time.
     pub fn created_at(&self) -> &::aws_smithy_types::DateTime {
         &self.created_at
@@ -96,6 +108,7 @@ impl TransactionSummary {
 #[non_exhaustive]
 pub struct TransactionSummaryBuilder {
     pub(crate) id: ::std::option::Option<::std::string::String>,
+    pub(crate) account_id: ::std::option::Option<::std::string::String>,
     pub(crate) r#type: ::std::option::Option<crate::types::TransactionType>,
     pub(crate) status: ::std::option::Option<crate::types::TransactionStatus>,
     pub(crate) amount: ::std::option::Option<i64>,
@@ -107,6 +120,7 @@ pub struct TransactionSummaryBuilder {
     pub(crate) source_ifsc: ::std::option::Option<::std::string::String>,
     pub(crate) source_account: ::std::option::Option<::std::string::String>,
     pub(crate) gateway_ref: ::std::option::Option<::std::string::String>,
+    pub(crate) funding_type: ::std::option::Option<::std::string::String>,
     pub(crate) created_at: ::std::option::Option<::aws_smithy_types::DateTime>,
 }
 impl TransactionSummaryBuilder {
@@ -123,6 +137,20 @@ impl TransactionSummaryBuilder {
     #[allow(missing_docs)] // documentation missing in model
     pub fn get_id(&self) -> &::std::option::Option<::std::string::String> {
         &self.id
+    }
+    #[allow(missing_docs)] // documentation missing in model
+    /// This field is required.
+    pub fn account_id(mut self, input: impl ::std::convert::Into<::std::string::String>) -> Self {
+        self.account_id = ::std::option::Option::Some(input.into());
+        self
+    }
+    #[allow(missing_docs)] // documentation missing in model
+    pub fn set_account_id(mut self, input: ::std::option::Option<::std::string::String>) -> Self {
+        self.account_id = input; self
+    }
+    #[allow(missing_docs)] // documentation missing in model
+    pub fn get_account_id(&self) -> &::std::option::Option<::std::string::String> {
+        &self.account_id
     }
     /// Transaction type.
     /// This field is required.
@@ -272,6 +300,19 @@ impl TransactionSummaryBuilder {
     pub fn get_gateway_ref(&self) -> &::std::option::Option<::std::string::String> {
         &self.gateway_ref
     }
+    #[allow(missing_docs)] // documentation missing in model
+    pub fn funding_type(mut self, input: impl ::std::convert::Into<::std::string::String>) -> Self {
+        self.funding_type = ::std::option::Option::Some(input.into());
+        self
+    }
+    #[allow(missing_docs)] // documentation missing in model
+    pub fn set_funding_type(mut self, input: ::std::option::Option<::std::string::String>) -> Self {
+        self.funding_type = input; self
+    }
+    #[allow(missing_docs)] // documentation missing in model
+    pub fn get_funding_type(&self) -> &::std::option::Option<::std::string::String> {
+        &self.funding_type
+    }
     /// ISO 8601 date-time.
     /// This field is required.
     pub fn created_at(mut self, input: ::aws_smithy_types::DateTime) -> Self {
@@ -289,6 +330,7 @@ impl TransactionSummaryBuilder {
     /// Consumes the builder and constructs a [`TransactionSummary`](crate::types::TransactionSummary).
     /// This method will fail if any of the following fields are not set:
     /// - [`id`](crate::types::builders::TransactionSummaryBuilder::id)
+    /// - [`account_id`](crate::types::builders::TransactionSummaryBuilder::account_id)
     /// - [`r#type`](crate::types::builders::TransactionSummaryBuilder::type)
     /// - [`status`](crate::types::builders::TransactionSummaryBuilder::status)
     /// - [`amount`](crate::types::builders::TransactionSummaryBuilder::amount)
@@ -301,6 +343,11 @@ impl TransactionSummaryBuilder {
                 id: self.id
                     .ok_or_else(||
                         ::aws_smithy_types::error::operation::BuildError::missing_field("id", "id was not specified but it is required when building TransactionSummary")
+                    )?
+                ,
+                account_id: self.account_id
+                    .ok_or_else(||
+                        ::aws_smithy_types::error::operation::BuildError::missing_field("account_id", "account_id was not specified but it is required when building TransactionSummary")
                     )?
                 ,
                 r#type: self.r#type
@@ -339,6 +386,8 @@ impl TransactionSummaryBuilder {
                 source_account: self.source_account
                 ,
                 gateway_ref: self.gateway_ref
+                ,
+                funding_type: self.funding_type
                 ,
                 created_at: self.created_at
                     .ok_or_else(||

@@ -42,18 +42,8 @@ async fn do_withdrawal(world: &mut UiWorld, amount: i64) -> Result<i64, String> 
         .await
         .expect("Could not find submit button");
     submit.click().await.expect("Failed to click submit");
-    sleep(Duration::from_millis(500)).await;
 
-    // Check where we ended up
-    let page = world.ensure_page().await;
-    let current_url = page
-        .url()
-        .await
-        .expect("Failed to get URL")
-        .unwrap_or_default();
-
-    let succeeded =
-        current_url.contains("/admin/accounts/") && !current_url.ends_with("/withdrawal");
+    let succeeded = world.wait_for_redirect("/withdrawal").await;
 
     if succeeded {
         Ok(amount)

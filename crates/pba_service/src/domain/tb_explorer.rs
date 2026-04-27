@@ -5,7 +5,8 @@ use tigerbeetle_unofficial::transfer::Flags as TransferFlags;
 use uuid::Uuid;
 
 use crate::repository::ledger_repo::{
-    FUNDING_SOURCE_TB_ID, MERCHANT_SETTLEMENT_TB_ID, WITHDRAWAL_SETTLEMENT_TB_ID,
+    MERCHANT_SETTLEMENT_TB_ID, SELF_FUNDING_SOURCE_TB_ID, THIRD_PARTY_FUNDING_SOURCE_TB_ID,
+    TRUST_FUNDING_SOURCE_TB_ID, WITHDRAWAL_SETTLEMENT_TB_ID,
 };
 
 /// Account code constants as defined in LedgerRepo.
@@ -102,7 +103,9 @@ pub fn u128_as_uuid(id: u128) -> String {
 /// Identify a well-known sentinel account ID.
 pub fn sentinel_label(id: u128) -> Option<&'static str> {
     match id {
-        FUNDING_SOURCE_TB_ID => Some("Funding source"),
+        SELF_FUNDING_SOURCE_TB_ID => Some("Self funding source"),
+        TRUST_FUNDING_SOURCE_TB_ID => Some("Trust funding source"),
+        THIRD_PARTY_FUNDING_SOURCE_TB_ID => Some("Third-party funding source"),
         MERCHANT_SETTLEMENT_TB_ID => Some("Merchant settlement"),
         WITHDRAWAL_SETTLEMENT_TB_ID => Some("Withdrawal settlement"),
         _ => None,

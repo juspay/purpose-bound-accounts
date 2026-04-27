@@ -1,8 +1,10 @@
-use std::sync::Arc;
 use chromiumoxide::browser::{Browser, BrowserConfig};
 use chromiumoxide::page::Page;
 use cucumber::World as _;
 use futures::StreamExt;
+use std::sync::Arc;
+use std::time::Duration;
+use tokio::time::sleep;
 
 mod ui_steps;
 
@@ -97,7 +99,7 @@ impl UiWorld {
                     }
                     builder.build()
                 }
-                    .expect("Failed to build browser config"),
+                .expect("Failed to build browser config"),
             )
             .await
             .expect("Failed to launch browser");
@@ -120,6 +122,25 @@ impl UiWorld {
 
     pub fn url(&self, path: &str) -> String {
         format!("{}{}", self.base_url, path)
+    }
+
+    /// Poll until the current URL no longer ends with `form_suffix`
+    /// (i.e. the server has redirected away from the form page).
+    /// Returns `true` if the redirect happened within ~5 seconds.
+    pub async fn wait_for_redirect(&mut self, form_suffix: &str) -> bool {
+        for _ in 0..10 {
+            sleep(Duration::from_millis(500)).await;
+            let page = self.ensure_page().await;
+            let url = page
+                .url()
+                .await
+                .expect("Failed to get URL")
+                .unwrap_or_default();
+            if url.contains("/admin/accounts/") && !url.ends_with(form_suffix) {
+                return true;
+            }
+        }
+        false
     }
 }
 

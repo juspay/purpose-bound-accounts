@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 
 {% block title %}TigerBeetle Explorer — PBA Ledger{% endblock %}
-{% block breadcrumb %}<a href="/admin">PBA Ledger</a> <span class="sep">/</span> <span class="current">TigerBeetle</span>{% endblock %}
+{% block breadcrumb %}<a href="{{ prefix }}/admin">PBA Ledger</a> <span class="sep">/</span> <span class="current">TigerBeetle</span>{% endblock %}
 
 {% block content %}
 <div class="page-header">
@@ -31,14 +31,14 @@
     <article>
         <header>Quick links</header>
         <div style="display: flex; flex-direction: column; gap: 0.375rem;">
-            <a href="/admin/tb/accounts?mode=query&ledger={{ default_ledger }}&limit=100"><span class="badge pill-muted">code: any</span> All accounts on ledger {{ default_ledger }}</a>
-            <a href="/admin/tb/accounts?mode=query&ledger={{ default_ledger }}&code=1&limit=100"><span class="badge pill-muted">code: 1</span> Self-pool accounts</a>
-            <a href="/admin/tb/accounts?mode=query&ledger={{ default_ledger }}&code=2&limit=100"><span class="badge pill-muted">code: 2</span> Others-pool accounts</a>
-            <a href="/admin/tb/transfers?mode=query&ledger={{ default_ledger }}&limit=100&reversed=on"><span class="badge pill-muted">recent</span> All transfers (newest first)</a>
-            <a href="/admin/tb/transfers?mode=query&ledger={{ default_ledger }}&code=100&limit=100&reversed=on"><span class="badge pill-muted">code: 100</span> Recent deposits</a>
-            <a href="/admin/tb/transfers?mode=query&ledger={{ default_ledger }}&code=200&limit=100&reversed=on"><span class="badge pill-muted">code: 200</span> Recent payments</a>
-            <a href="/admin/tb/transfers?mode=query&ledger={{ default_ledger }}&code=300&limit=100&reversed=on"><span class="badge pill-muted">code: 300</span> Recent withdrawals</a>
-            <a href="/admin/tb/pending?ledger={{ default_ledger }}&limit=100"><span class="badge pill-pending">pending</span> Pending transfers</a>
+            <a href="{{ prefix }}/admin/tb/accounts?mode=query&ledger={{ default_ledger }}&limit=100"><span class="badge pill-muted">code: any</span> All accounts on ledger {{ default_ledger }}</a>
+            <a href="{{ prefix }}/admin/tb/accounts?mode=query&ledger={{ default_ledger }}&code=1&limit=100"><span class="badge pill-muted">code: 1</span> Self-pool accounts</a>
+            <a href="{{ prefix }}/admin/tb/accounts?mode=query&ledger={{ default_ledger }}&code=2&limit=100"><span class="badge pill-muted">code: 2</span> Others-pool accounts</a>
+            <a href="{{ prefix }}/admin/tb/transfers?mode=query&ledger={{ default_ledger }}&limit=100&reversed=on"><span class="badge pill-muted">recent</span> All transfers (newest first)</a>
+            <a href="{{ prefix }}/admin/tb/transfers?mode=query&ledger={{ default_ledger }}&code=100&limit=100&reversed=on"><span class="badge pill-muted">code: 100</span> Recent deposits</a>
+            <a href="{{ prefix }}/admin/tb/transfers?mode=query&ledger={{ default_ledger }}&code=200&limit=100&reversed=on"><span class="badge pill-muted">code: 200</span> Recent payments</a>
+            <a href="{{ prefix }}/admin/tb/transfers?mode=query&ledger={{ default_ledger }}&code=300&limit=100&reversed=on"><span class="badge pill-muted">code: 300</span> Recent withdrawals</a>
+            <a href="{{ prefix }}/admin/tb/pending?ledger={{ default_ledger }}&limit=100"><span class="badge pill-pending">pending</span> Pending transfers</a>
         </div>
     </article>
 </div>
@@ -61,7 +61,7 @@
             {% for s in &sentinel_rows %}
             <tr>
                 <td><strong>{{ s.label }}</strong></td>
-                <td class="mono"><a href="/admin/tb/accounts/{{ s.id }}">{{ s.id }}</a></td>
+                <td class="mono"><a href="{{ prefix }}/admin/tb/accounts/{{ s.id }}">{{ s.id }}</a></td>
                 <td>{% if s.found %}<span class="badge pill-ok">found</span>{% else %}<span class="badge pill-danger">missing</span>{% endif %}</td>
                 <td class="mono" style="text-align: right;">{{ s.credits_posted }}</td>
                 <td class="mono" style="text-align: right;">{{ s.debits_posted }}</td>

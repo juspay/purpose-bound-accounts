@@ -36,7 +36,11 @@ impl WithdrawalService {
     ) -> Result<WithdrawalResult, AppError> {
         // Idempotency check
         if let Some(key) = idempotency_key {
-            if let Some(existing) = self.transaction_repo.find_by_idempotency_key(account_id, key).await? {
+            if let Some(existing) = self
+                .transaction_repo
+                .find_by_idempotency_key(account_id, key)
+                .await?
+            {
                 return Ok(WithdrawalResult {
                     account_id: existing.account_id,
                     amount: existing.amount,
@@ -50,7 +54,8 @@ impl WithdrawalService {
             return Err(AppError::AccountNotActive(account_id.to_string()));
         }
 
-        let balance = self.ledger_repo
+        let balance = self
+            .ledger_repo
             .get_balance(account.tb_self_account_id, account.tb_others_account_id)
             .await?;
 
@@ -63,21 +68,41 @@ impl WithdrawalService {
 
         let mut tx = self.transaction_repo.pool().begin().await?;
 
-        self.transaction_repo.insert_in_tx(
-            &mut tx, Uuid::new_v4(), account_id,
-            TransactionType::Withdrawal, TransactionStatus::Settled,
-            amount, "self", TransactionDirection::Outbound,
-            None, None, None, None,
-            None, None, None, 0, idempotency_key,
-        ).await?;
+        self.transaction_repo
+            .insert_in_tx(
+                &mut tx,
+                Uuid::new_v4(),
+                account_id,
+                TransactionType::Withdrawal,
+                TransactionStatus::Settled,
+                amount,
+                "self",
+                TransactionDirection::Outbound,
+                None,
+                None,
+                None,
+                None,
+                None,
+                None,
+                None,
+                None, // funding_type
+                0,
+                idempotency_key,
+            )
+            .await?;
 
-        self.ledger_repo.create_transfer(
-            account.tb_self_account_id, WITHDRAWAL_SETTLEMENT_TB_ID,
-            amount, WITHDRAWAL_TRANSFER_CODE,
-        ).await.map_err(|e| {
-            tracing::error!("TB withdrawal failed, rolling back: {e}");
-            e
-        })?;
+        self.ledger_repo
+            .create_transfer(
+                account.tb_self_account_id,
+                WITHDRAWAL_SETTLEMENT_TB_ID,
+                amount,
+                WITHDRAWAL_TRANSFER_CODE,
+            )
+            .await
+            .map_err(|e| {
+                tracing::error!("TB withdrawal failed, rolling back: {e}");
+                e
+            })?;
 
         tx.commit().await?;
 

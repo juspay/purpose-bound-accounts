@@ -41,6 +41,7 @@ pub(crate) fn deposit_output_output_correct_errors(mut builder: crate::operation
 if builder.account_id.is_none() { builder.account_id = Some(Default::default()) }
 if builder.amount.is_none() { builder.amount = Some(Default::default()) }
 if builder.pool.is_none() { builder.pool = Some(Default::default()) }
+if builder.funding_type.is_none() { builder.funding_type = Some(Default::default()) }
 if builder.status.is_none() { builder.status = Some(Default::default()) }
                 builder
             }
@@ -71,6 +72,14 @@ if builder.pending_others.is_none() { builder.pending_others = Some(Default::def
 pub(crate) fn get_purpose_type_output_output_correct_errors(mut builder: crate::operation::get_purpose_type::builders::GetPurposeTypeOutputBuilder) -> crate::operation::get_purpose_type::builders::GetPurposeTypeOutputBuilder {
                 if builder.purpose_code.is_none() { builder.purpose_code = Some(Default::default()) }
 if builder.allowed_mccs.is_none() { builder.allowed_mccs = Some(Default::default()) }
+                builder
+            }
+
+pub(crate) fn list_all_transactions_output_output_correct_errors(mut builder: crate::operation::list_all_transactions::builders::ListAllTransactionsOutputBuilder) -> crate::operation::list_all_transactions::builders::ListAllTransactionsOutputBuilder {
+                if builder.transactions.is_none() { builder.transactions = Some(Default::default()) }
+if builder.total.is_none() { builder.total = Some(Default::default()) }
+if builder.offset.is_none() { builder.offset = Some(Default::default()) }
+if builder.limit.is_none() { builder.limit = Some(Default::default()) }
                 builder
             }
 
@@ -171,6 +180,7 @@ if builder.allowed_mccs.is_none() { builder.allowed_mccs = Some(Default::default
 
 pub(crate) fn transaction_summary_correct_errors(mut builder: crate::types::builders::TransactionSummaryBuilder) -> crate::types::builders::TransactionSummaryBuilder {
                 if builder.id.is_none() { builder.id = Some(Default::default()) }
+if builder.account_id.is_none() { builder.account_id = Some(Default::default()) }
 if builder.r#type.is_none() { builder.r#type = "no value was set".parse::<crate::types::TransactionType>().ok() }
 if builder.status.is_none() { builder.status = "no value was set".parse::<crate::types::TransactionStatus>().ok() }
 if builder.amount.is_none() { builder.amount = Some(Default::default()) }

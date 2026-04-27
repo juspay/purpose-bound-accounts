@@ -1,0 +1,78 @@
+version: "0.5"
+
+processes:
+  postgres:
+    command: |
+      if [ ! -d "${PG_DATA:-.pg_data}" ]; then
+        initdb -D "${PG_DATA:-.pg_data}" --auth=trust
+      fi
+      exec postgres -D "${PG_DATA:-.pg_data}" -p 5432 -k /tmp
+    readiness_probe:
+      exec:
+        command: pg_isready -h /tmp -p 5432 -d postgres
+      initial_delay_seconds: 1
+      period_seconds: 1
+    shutdown:
+      signal: 2
+
+  postgres-init:
+    command: |
+      createdb -h /tmp -p 5432 pba_service 2>/dev/null || true
+      echo "Database ready"
+    depends_on:
+      postgres:
+        condition: process_healthy
+    availability:
+      restart: "no"
+
+  keycloak:
+    command: |
+      docker run --rm --name pba-keycloak \
+        -p 8180:8080 \
+        -v "$(pwd)/keycloak/realm-export.json:/opt/keycloak/data/import/realm-export.json:ro" \
+        -e KC_BOOTSTRAP_ADMIN_USERNAME=admin \
+        -e KC_BOOTSTRAP_ADMIN_PASSWORD=admin \
+        quay.io/keycloak/keycloak:26.2 \
+        start-dev --import-realm
+    readiness_probe:
+      http_get:
+        host: 127.0.0.1
+        port: 8180
+        path: /realms/pba/.well-known/openid-configuration
+      initial_delay_seconds: 15
+      period_seconds: 3
+      failure_threshold: 20
+    shutdown:
+      command: docker rm -f pba-keycloak
+
+  tigerbeetle:
+    command: |
+      if [ ! -f .tb_data/dev/0_0.tigerbeetle ]; then
+        mkdir -p .tb_data/dev
+        tigerbeetle format --cluster=0 --replica=0 --replica-count=1 .tb_data/dev/0_0.tigerbeetle
+      fi
+      exec tigerbeetle start --addresses=3000 .tb_data/dev/0_0.tigerbeetle
+    readiness_probe:
+      exec:
+        command: nc -z 127.0.0.1 3000
+      initial_delay_seconds: 5
+      period_seconds: 2
+      failure_threshold: 10
+
+  pba-service:
+    command: cargo run -p pba-service
+    depends_on:
+      postgres-init:
+        condition: process_completed_successfully
+      tigerbeetle:
+        condition: process_healthy
+      keycloak:
+        condition: process_healthy
+    readiness_probe:
+      http_get:
+        host: 127.0.0.1
+        port: 3030
+        path: /health
+      initial_delay_seconds: 10
+      period_seconds: 5
+      failure_threshold: 60

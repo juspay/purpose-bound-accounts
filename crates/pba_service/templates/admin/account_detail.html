@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 
 {% block title %}Account {{ id|truncate(8) }} — PBA Ledger{% endblock %}
-{% block breadcrumb %}<a href="/admin">PBA Ledger</a> <span class="sep">/</span> <a href="/admin/accounts">Accounts</a> <span class="sep">/</span> <span class="current mono">{{ id|truncate(12) }}</span>{% endblock %}
+{% block breadcrumb %}<a href="{{ prefix }}/admin">PBA Ledger</a> <span class="sep">/</span> <a href="{{ prefix }}/admin/accounts">Accounts</a> <span class="sep">/</span> <span class="current mono">{{ id|truncate(12) }}</span>{% endblock %}
 
 {% block content %}
 <div class="page-header">
@@ -11,9 +11,9 @@
     </div>
     <div class="page-actions">
         {% if status == "active" %}
-        <a href="/admin/accounts/{{ id }}/deposit" role="button" class="outline">Deposit</a>
-        <a href="/admin/accounts/{{ id }}/payment" role="button" class="outline">Pay merchant</a>
-        <a href="/admin/accounts/{{ id }}/withdrawal" role="button">Withdraw</a>
+        <a href="{{ prefix }}/admin/accounts/{{ id }}/deposit" role="button" class="outline">Deposit</a>
+        <a href="{{ prefix }}/admin/accounts/{{ id }}/payment" role="button" class="outline">Pay merchant</a>
+        <a href="{{ prefix }}/admin/accounts/{{ id }}/withdrawal" role="button">Withdraw</a>
         {% endif %}
     </div>
 </div>
@@ -48,20 +48,20 @@
         <p class="stat-hint">
             {% if status != "closed" %}
                 {% if status == "active" %}
-                <form method="post" action="/admin/accounts/{{ id }}/status" class="inline-form">
+                <form method="post" action="{{ prefix }}/admin/accounts/{{ id }}/status" class="inline-form">
                     <input type="hidden" name="status" value="frozen">
                     <button type="submit" class="btn btn-xs secondary">Freeze</button>
                 </form>
-                <form method="post" action="/admin/accounts/{{ id }}/status" class="inline-form">
+                <form method="post" action="{{ prefix }}/admin/accounts/{{ id }}/status" class="inline-form">
                     <input type="hidden" name="status" value="closed">
                     <button type="submit" class="btn btn-xs btn-danger">Close</button>
                 </form>
                 {% else if status == "frozen" %}
-                <form method="post" action="/admin/accounts/{{ id }}/status" class="inline-form">
+                <form method="post" action="{{ prefix }}/admin/accounts/{{ id }}/status" class="inline-form">
                     <input type="hidden" name="status" value="active">
                     <button type="submit" class="btn btn-xs">Activate</button>
                 </form>
-                <form method="post" action="/admin/accounts/{{ id }}/status" class="inline-form">
+                <form method="post" action="{{ prefix }}/admin/accounts/{{ id }}/status" class="inline-form">
                     <input type="hidden" name="status" value="closed">
                     <button type="submit" class="btn btn-xs btn-danger">Close</button>
                 </form>
@@ -109,15 +109,14 @@
         <tr>
             <td class="mono text-small" title="{{ dep.id }}">{{ dep.id }}</td>
             <td class="mono">₹{{ dep.amount }}</td>
-            <td>{{ dep.pool }}</td>
             <td class="text-small">{{ dep.source }}</td>
             <td class="text-small mono">{{ dep.gateway_ref }}</td>
             <td class="text-small muted">{{ dep.created_at }}</td>
             <td style="text-align: right;">
-                <form method="post" action="/admin/accounts/{{ id }}/deposits/{{ dep.id }}/post" class="inline-form">
+                <form method="post" action="{{ prefix }}/admin/accounts/{{ id }}/deposits/{{ dep.id }}/post" class="inline-form">
                     <button type="submit" class="btn btn-xs">Post</button>
                 </form>
-                <form method="post" action="/admin/accounts/{{ id }}/deposits/{{ dep.id }}/void" class="inline-form">
+                <form method="post" action="{{ prefix }}/admin/accounts/{{ id }}/deposits/{{ dep.id }}/void" class="inline-form">
                     <button type="submit" class="btn btn-xs btn-danger">Void</button>
                 </form>
             </td>
@@ -129,7 +128,7 @@
 {% endif %}
 
 <h2>Transaction history</h2>
-<div id="transfers" hx-get="/admin/accounts/{{ id }}/transfers" hx-trigger="load" hx-swap="innerHTML">
+<div id="transfers" hx-get="{{ prefix }}/admin/accounts/{{ id }}/transfers" hx-trigger="load" hx-swap="innerHTML">
     <article><p class="muted" aria-busy="true">Loading transfers…</p></article>
 </div>
 {% endblock %}

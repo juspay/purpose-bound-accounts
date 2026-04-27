@@ -205,6 +205,19 @@ impl Builder {
                                 self.runtime_components.set_http_client(http_client);
                                 self
                             }
+    /// Sets the API key that will be used for authentication.
+                                pub fn api_key(self, api_key: crate::config::Token) -> Self {
+                                    self.api_key_resolver(api_key)
+                                }
+    
+                                /// Sets an API key resolver will be used for authentication.
+                                pub fn api_key_resolver(mut self, api_key_resolver: impl crate::config::ResolveIdentity + 'static) -> Self {
+                                    self.runtime_components.set_identity_resolver(
+                                        ::aws_smithy_runtime_api::client::auth::http::HTTP_API_KEY_AUTH_SCHEME_ID,
+                                        ::aws_smithy_runtime_api::shared::IntoShared::<::aws_smithy_runtime_api::client::identity::SharedIdentityResolver>::into_shared(api_key_resolver)
+                                    );
+                                    self
+                                }
     /// Set the endpoint URL to use when making requests.
                                 ///
                                 /// Note: setting an endpoint URL will replace any endpoint resolver that has been set.
@@ -952,7 +965,12 @@ impl Builder {
                 pub fn new(_service_config: crate::config::Config) -> Self {
                     let config = { None };
                     let mut runtime_components = ::aws_smithy_runtime_api::client::runtime_components::RuntimeComponentsBuilder::new("ServiceRuntimePlugin");
-                    runtime_components.push_interceptor(::aws_smithy_runtime::client::http::connection_poisoning::ConnectionPoisoningInterceptor::new());
+                    runtime_components.push_auth_scheme(::aws_smithy_runtime_api::client::auth::SharedAuthScheme::new(::aws_smithy_runtime::client::auth::http::ApiKeyAuthScheme::new(
+                                    "ApiKey",
+                                    ::aws_smithy_runtime::client::auth::http::ApiKeyLocation::Header,
+                                    "Authorization",
+                                )));
+runtime_components.push_interceptor(::aws_smithy_runtime::client::http::connection_poisoning::ConnectionPoisoningInterceptor::new());
 runtime_components.push_retry_classifier(::aws_smithy_runtime::client::retries::classifiers::HttpStatusCodeClassifier::default());
 runtime_components.push_interceptor(crate::sdk_feature_tracker::retry_mode::RetryModeFeatureTrackerInterceptor::new());
                     Self { config, runtime_components }
@@ -1093,6 +1111,10 @@ pub use ::aws_smithy_runtime_api::client::interceptors::SharedInterceptor;
 pub use ::aws_smithy_runtime_api::client::http::HttpClient;
 
 pub use ::aws_smithy_runtime_api::shared::IntoShared;
+
+pub use ::aws_smithy_runtime_api::client::identity::http::Token;
+
+pub use ::aws_smithy_runtime_api::client::identity::ResolveIdentity;
 
 pub use ::aws_smithy_async::rt::sleep::AsyncSleep;
 

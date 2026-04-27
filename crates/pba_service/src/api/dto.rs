@@ -67,6 +67,7 @@ pub struct BalanceResponse {
 pub struct DepositRequest {
     pub source_ifsc: String,
     pub source_account_number: String,
+    pub funding_type: Option<String>,
     pub amount: u64,
     #[serde(default)]
     pub pending: bool,
@@ -81,6 +82,7 @@ pub struct DepositResponse {
     pub account_id: Uuid,
     pub amount: u64,
     pub pool: String,
+    pub funding_type: String,
     pub status: String,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub gateway_ref: Option<String>,
@@ -192,6 +194,7 @@ pub struct ListTransactionsResponse {
 #[derive(Debug, Serialize)]
 pub struct TransactionSummaryDto {
     pub id: Uuid,
+    pub account_id: Uuid,
     #[serde(rename = "type")]
     pub transaction_type: String,
     pub status: String,
@@ -210,6 +213,8 @@ pub struct TransactionSummaryDto {
     pub source_account: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub gateway_ref: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub funding_type: Option<String>,
     pub created_at: chrono::DateTime<chrono::Utc>,
 }
 
@@ -217,6 +222,7 @@ impl From<crate::domain::transaction::TransactionRecord> for TransactionSummaryD
     fn from(t: crate::domain::transaction::TransactionRecord) -> Self {
         Self {
             id: t.id,
+            account_id: t.account_id,
             transaction_type: t.transaction_type.as_str().to_string(),
             status: t.status.as_str().to_string(),
             amount: t.amount,
@@ -228,6 +234,7 @@ impl From<crate::domain::transaction::TransactionRecord> for TransactionSummaryD
             source_ifsc: t.source_ifsc,
             source_account: t.source_account,
             gateway_ref: t.gateway_ref,
+            funding_type: t.funding_type,
             created_at: t.created_at,
         }
     }

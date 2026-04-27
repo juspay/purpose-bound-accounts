@@ -1,11 +1,17 @@
+use dashmap::DashMap;
 use std::sync::Arc;
+use std::time::Instant;
 
 mod admin;
 mod api;
+mod auth;
 mod config;
 mod domain;
 mod error;
 mod repository;
+pub mod secrets;
+mod secrets_kms;
+mod secrets_plaintext;
 mod service;
 
 use config::AppConfig;
@@ -28,6 +34,34 @@ pub struct AppState {
     pub transaction_repo: Arc<TransactionRepo>,
     pub tb_cluster_id: u128,
     pub tb_addresses: Vec<String>,
+    pub auth: AuthContext,
+    pub path_prefix: String,
+}
+
+/// Shared auth context available to all routes.
+/// All endpoint URLs are populated from OIDC Discovery at startup.
+#[derive(Clone)]
+pub struct AuthContext {
+    pub jwks: auth::jwks::JwksCache,
+    pub token_cache: Arc<DashMap<String, CachedToken>>,
+    pub issuer: String,
+    pub auth_enabled: bool,
+    // OIDC discovered endpoints
+    pub authorization_endpoint: String,
+    pub token_endpoint: String,
+    pub userinfo_endpoint: String,
+    pub end_session_endpoint: Option<String>,
+    // App config
+    pub oidc_client_id: String,
+    pub callback_url: String,
+    pub cookie_key: cookie::Key,
+    pub port: u16,
+}
+
+pub struct CachedToken {
+    pub access_token: String,
+    pub claims: auth::claims::Claims,
+    pub expires_at: Instant,
 }
 
 #[tokio::main]
@@ -39,7 +73,47 @@ async fn main() {
         )
         .init();
 
-    let config = AppConfig::from_env();
+    let secrets = secrets::create_provider().await;
+    let config = AppConfig::from_env(&*secrets).await;
+
+    let auth_ctx = if config.auth_enabled {
+        let discovery = auth::discovery::OidcDiscovery::fetch(&config.oidc_issuer_url)
+            .await
+            .expect("Failed to fetch OIDC discovery — is Keycloak running?");
+
+        AuthContext {
+            jwks: auth::jwks::JwksCache::new(&discovery.jwks_uri),
+            token_cache: Arc::new(DashMap::new()),
+            issuer: discovery.issuer,
+            auth_enabled: true,
+            authorization_endpoint: discovery.authorization_endpoint,
+            token_endpoint: discovery.token_endpoint,
+            userinfo_endpoint: discovery.userinfo_endpoint,
+            end_session_endpoint: discovery.end_session_endpoint,
+            oidc_client_id: config.oidc_client_id.clone(),
+            callback_url: format!(
+                "http://localhost:{}{}/admin/callback",
+                config.port, config.path_prefix
+            ),
+            cookie_key: cookie::Key::derive_from(config.cookie_secret.as_bytes()),
+            port: config.port,
+        }
+    } else {
+        AuthContext {
+            jwks: auth::jwks::JwksCache::new("http://localhost/_unused"),
+            token_cache: Arc::new(DashMap::new()),
+            issuer: String::new(),
+            auth_enabled: false,
+            authorization_endpoint: String::new(),
+            token_endpoint: String::new(),
+            userinfo_endpoint: String::new(),
+            end_session_endpoint: None,
+            oidc_client_id: String::new(),
+            callback_url: String::new(),
+            cookie_key: cookie::Key::generate(),
+            port: config.port,
+        }
+    };
 
     // Initialize Postgres connection pool
     let pg_pool = sqlx::postgres::PgPoolOptions::new()
@@ -90,6 +164,8 @@ async fn main() {
         Arc::clone(&transaction_repo),
     ));
 
+    let path_prefix = config.path_prefix.clone();
+
     let state = AppState {
         account_service,
         deposit_service,
@@ -100,6 +176,8 @@ async fn main() {
         transaction_repo: Arc::clone(&transaction_repo),
         tb_cluster_id: config.tigerbeetle_cluster_id,
         tb_addresses: config.tigerbeetle_addresses.clone(),
+        auth: auth_ctx,
+        path_prefix: config.path_prefix,
     };
 
     // Spawn background deposit timeout poller
@@ -108,9 +186,30 @@ async fn main() {
         config.deposit_poller_interval_seconds,
     ));
 
-    let app = api::routes::create_router()
-        .merge(admin::create_router())
+    use axum::Router;
+    use tower_cookies::CookieManagerLayer;
+
+    let inner = api::routes::public_router()
+        .merge(
+            api::routes::protected_router().layer(axum::middleware::from_fn_with_state(
+                state.clone(),
+                auth::api_key::require_api_key,
+            )),
+        )
+        .merge(
+            admin::create_router().layer(axum::middleware::from_fn_with_state(
+                state.clone(),
+                auth::admin_auth::require_admin_session,
+            )),
+        )
+        .layer(CookieManagerLayer::new())
         .with_state(state);
+
+    let app: Router = if path_prefix.is_empty() {
+        inner
+    } else {
+        Router::new().nest(&path_prefix, inner)
+    };
 
     let addr = format!("{}:{}", config.host, config.port);
     tracing::info!("Starting PBA service on {addr}");

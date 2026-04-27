@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 
 {% block title %}TB Transfer {{ t.id }} — PBA Ledger{% endblock %}
-{% block breadcrumb %}<a href="/admin">PBA Ledger</a> <span class="sep">/</span> <a href="/admin/tb">TigerBeetle</a> <span class="sep">/</span> <a href="/admin/tb/transfers">Transfers</a> <span class="sep">/</span> <span class="current mono">{{ t.id }}</span>{% endblock %}
+{% block breadcrumb %}<a href="{{ prefix }}/admin">PBA Ledger</a> <span class="sep">/</span> <a href="{{ prefix }}/admin/tb">TigerBeetle</a> <span class="sep">/</span> <a href="{{ prefix }}/admin/tb/transfers">Transfers</a> <span class="sep">/</span> <span class="current mono">{{ t.id }}</span>{% endblock %}
 
 {% block content %}
 <div class="page-header">
@@ -14,10 +14,10 @@
     </div>
     {% if t.is_pending %}
     <div class="page-actions">
-        <form method="post" action="/admin/tb/pending/{{ t.id }}/post" class="inline-form" onsubmit="return confirm('Post this pending transfer? This will commit the funds.');">
+        <form method="post" action="{{ prefix }}/admin/tb/pending/{{ t.id }}/post" class="inline-form" onsubmit="return confirm('Post this pending transfer? This will commit the funds.');">
             <button type="submit">Post (commit)</button>
         </form>
-        <form method="post" action="/admin/tb/pending/{{ t.id }}/void" class="inline-form" onsubmit="return confirm('Void this pending transfer? This will release the reserved funds.');">
+        <form method="post" action="{{ prefix }}/admin/tb/pending/{{ t.id }}/void" class="inline-form" onsubmit="return confirm('Void this pending transfer? This will release the reserved funds.');">
             <button type="submit" class="btn-danger">Void</button>
         </form>
     </div>
@@ -60,15 +60,15 @@
         <div class="kv">
             <div>Debit account</div>
             <div class="mono">
-                <a href="/admin/tb/accounts/{{ t.debit_id }}">{{ t.debit_id }}</a>
+                <a href="{{ prefix }}/admin/tb/accounts/{{ t.debit_id }}">{{ t.debit_id }}</a>
                 {% if let Some(s) = t.debit_sentinel %}<span class="badge pill-sentinel">{{ s }}</span>{% endif %}
             </div>
             <div>Credit account</div>
             <div class="mono">
-                <a href="/admin/tb/accounts/{{ t.credit_id }}">{{ t.credit_id }}</a>
+                <a href="{{ prefix }}/admin/tb/accounts/{{ t.credit_id }}">{{ t.credit_id }}</a>
                 {% if let Some(s) = t.credit_sentinel %}<span class="badge pill-sentinel">{{ s }}</span>{% endif %}
             </div>
-            <div>Pending ID</div><div class="mono">{% if t.pending_id != "" %}<a href="/admin/tb/transfers/{{ t.pending_id }}">{{ t.pending_id }}</a>{% else %}<span class="muted">—</span>{% endif %}</div>
+            <div>Pending ID</div><div class="mono">{% if t.pending_id != "" %}<a href="{{ prefix }}/admin/tb/transfers/{{ t.pending_id }}">{{ t.pending_id }}</a>{% else %}<span class="muted">—</span>{% endif %}</div>
             <div>Timeout</div><div class="mono">{{ t.timeout }} seconds</div>
         </div>
     </div>

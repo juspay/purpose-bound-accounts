@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 
 {% block title %}TB Transfers — PBA Ledger{% endblock %}
-{% block breadcrumb %}<a href="/admin">PBA Ledger</a> <span class="sep">/</span> <a href="/admin/tb">TigerBeetle</a> <span class="sep">/</span> <span class="current">Transfers</span>{% endblock %}
+{% block breadcrumb %}<a href="{{ prefix }}/admin">PBA Ledger</a> <span class="sep">/</span> <a href="{{ prefix }}/admin/tb">TigerBeetle</a> <span class="sep">/</span> <span class="current">Transfers</span>{% endblock %}
 
 {% block content %}
 <div class="page-header">
@@ -20,7 +20,7 @@
 <details {% if form.mode == "query" || form.mode == "" %}open{% endif %}>
     <summary>Query transfers</summary>
     <article>
-        <form method="get" action="/admin/tb/transfers">
+        <form method="get" action="{{ prefix }}/admin/tb/transfers">
             <input type="hidden" name="mode" value="query">
             <div class="grid">
                 <label>Ledger <input type="number" name="ledger" value="{% if form.ledger != "" %}{{ form.ledger }}{% else %}{{ default_ledger }}{% endif %}" placeholder="1"></label>
@@ -40,7 +40,7 @@
 <details {% if form.mode == "for_account" %}open{% endif %}>
     <summary>Transfers for a specific account</summary>
     <article>
-        <form method="get" action="/admin/tb/transfers">
+        <form method="get" action="{{ prefix }}/admin/tb/transfers">
             <input type="hidden" name="mode" value="for_account">
             <label>Account ID (UUID or u128)
                 <input type="text" name="account_id" value="{{ form.account_id }}" required>
@@ -63,7 +63,7 @@
 <details {% if form.mode == "lookup" %}open{% endif %}>
     <summary>Lookup transfers by ID</summary>
     <article>
-        <form method="get" action="/admin/tb/transfers">
+        <form method="get" action="{{ prefix }}/admin/tb/transfers">
             <input type="hidden" name="mode" value="lookup">
             <label>IDs (comma, space or newline separated)
                 <textarea name="ids" rows="4">{{ form.ids }}</textarea>
@@ -99,15 +99,15 @@
         <tr>
             <td class="text-xs muted">{{ t.timestamp }}</td>
             <td class="mono">
-                <a href="/admin/tb/transfers/{{ t.id }}">{{ t.id }}</a>
+                <a href="{{ prefix }}/admin/tb/transfers/{{ t.id }}">{{ t.id }}</a>
                 {% if t.is_pending %} <span class="badge pill-pending">pending</span>{% endif %}
             </td>
             <td>{{ t.code }} <span class="muted text-xs">{{ t.code_label }}</span></td>
             <td class="mono" style="text-align: right;">{{ t.amount }}</td>
-            <td class="mono"><a href="/admin/tb/accounts/{{ t.debit_id }}">{{ t.debit_id }}</a></td>
-            <td class="mono"><a href="/admin/tb/accounts/{{ t.credit_id }}">{{ t.credit_id }}</a></td>
+            <td class="mono"><a href="{{ prefix }}/admin/tb/accounts/{{ t.debit_id }}">{{ t.debit_id }}</a></td>
+            <td class="mono"><a href="{{ prefix }}/admin/tb/accounts/{{ t.credit_id }}">{{ t.credit_id }}</a></td>
             <td><span class="text-xs mono">{{ t.flags }}</span></td>
-            <td class="mono text-xs">{% if t.pending_id != "" %}<a href="/admin/tb/transfers/{{ t.pending_id }}">{{ t.pending_id }}</a>{% endif %}</td>
+            <td class="mono text-xs">{% if t.pending_id != "" %}<a href="{{ prefix }}/admin/tb/transfers/{{ t.pending_id }}">{{ t.pending_id }}</a>{% endif %}</td>
         </tr>
         {% endfor %}
     </tbody>

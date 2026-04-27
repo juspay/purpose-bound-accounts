@@ -15,6 +15,9 @@ pub mod get_balance;
 /// Types for the `GetPurposeType` operation.
 pub mod get_purpose_type;
 
+/// Types for the `ListAllTransactions` operation.
+pub mod list_all_transactions;
+
 /// Types for the `ListPurposeTypes` operation.
 pub mod list_purpose_types;
 

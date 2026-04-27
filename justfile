@@ -8,68 +8,7 @@ default:
 
 # ── Variables ───────────────────────────────────────────────
 
-# Dev environment
-DEV_TB_PORT := "3000"
-DEV_TB_DATA := ".tb_data/dev"
-DEV_APP_PORT := "3030"
-DEV_DB := "pba_service"
-DEV_DATABASE_URL := "postgresql://localhost:5432/" + DEV_DB + "?host=/tmp"
-
-# Test environment
-TEST_TB_PORT := "3001"
-TEST_TB_DATA := ".tb_data/test"
 TEST_APP_PORT := "3031"
-TEST_DB := "pba_service_test"
-TEST_DATABASE_URL := "postgresql://localhost:5432/" + TEST_DB + "?host=/tmp"
-
-# ── Parameterized Primitives ───────────────────────────────
-
-# Start TigerBeetle on a given port with a given data directory
-[private]
-tb-start port data_dir:
-    @if lsof -ti :{{port}} -sTCP:LISTEN > /dev/null 2>&1; then \
-        echo "TigerBeetle already running on port {{port}}"; \
-    else \
-        if [ ! -f {{data_dir}}/0_0.tigerbeetle ]; then \
-            mkdir -p {{data_dir}}; \
-            tigerbeetle format --cluster=0 --replica=0 --replica-count=1 {{data_dir}}/0_0.tigerbeetle; \
-            echo "TigerBeetle data file created at {{data_dir}}"; \
-        fi; \
-        echo "Starting TigerBeetle on port {{port}}..."; \
-        tigerbeetle start --addresses={{port}} {{data_dir}}/0_0.tigerbeetle & \
-    fi
-
-# Stop TigerBeetle on a given port
-[private]
-tb-stop port:
-    @kill $(lsof -ti :{{port}} -sTCP:LISTEN) 2>/dev/null || echo "TigerBeetle not running on port {{port}}"
-
-# Start pba-service in the background with given config, wait for health check
-[private]
-service-start port db_url tb_port:
-    @echo "Starting pba-service on port {{port}}..."
-    @DATABASE_URL="{{db_url}}" TIGERBEETLE_ADDRESSES={{tb_port}} PORT={{port}} cargo run -p pba-service &
-    @echo "Waiting for service to be ready..."
-    @for i in $(seq 1 30); do \
-        if curl -sf http://127.0.0.1:{{port}}/purpose-types > /dev/null 2>&1; then \
-            echo "Service ready on port {{port}}"; \
-            exit 0; \
-        fi; \
-        sleep 1; \
-    done; \
-    echo "ERROR: Service did not start in time"; exit 1
-
-# Stop pba-service on a given port
-[private]
-service-stop port:
-    @kill $(lsof -ti :{{port}} -sTCP:LISTEN) 2>/dev/null || echo "pba-service not running on port {{port}}"
-
-# Reset a database (drop + recreate)
-[private]
-reset-db db:
-    @psql -h /tmp -p 5432 -d postgres -c "DROP DATABASE IF EXISTS {{db}};" > /dev/null
-    @psql -h /tmp -p 5432 -d postgres -c "CREATE DATABASE {{db}};" > /dev/null
-    @echo "Database reset ({{db}})"
 
 # ── Build ──────────────────────────────────────────────────
 
@@ -83,33 +22,46 @@ build-release:
 
 # ── Dev Lifecycle ──────────────────────────────────────────
 
-# Start infrastructure (Postgres + TigerBeetle)
-infra-start: pg-start (tb-start DEV_TB_PORT DEV_TB_DATA)
-    @echo "Infrastructure ready (Postgres on :5432, TigerBeetle on :{{DEV_TB_PORT}})"
-
-# Stop infrastructure
-infra-stop: (tb-stop DEV_TB_PORT) pg-stop
-    @echo "Infrastructure stopped"
-
-# Run the service in the foreground (requires infra running)
+# Start everything (Postgres + TigerBeetle + app) via process-compose
 run:
-    @echo "Admin dashboard will be at http://localhost:${PORT:-{{DEV_APP_PORT}}}/admin"
+    process-compose up
+
+# Start everything in the background (detached)
+run-bg:
+    process-compose up -D
+    @echo "Services started in background. Use 'just logs' to view, 'just stop' to stop."
+
+# View process-compose logs (attach to running instance)
+logs:
+    process-compose attach
+
+# Run the service in the foreground (requires infra running separately)
+run-service:
+    @echo "Admin dashboard will be at http://localhost:${PORT:-3030}/admin"
     cargo run -p pba-service
 
 # Run with file watching (restarts on changes)
 watch:
     cargo watch -x 'run -p pba-service'
 
-# Stop pba-service only (leaves infrastructure running)
-stop: (service-stop DEV_APP_PORT)
+# Stop all services
+stop:
+    process-compose down
 
-# Stop pba-service and all infrastructure
-stop-all: stop infra-stop
+# ── Conventional Commits ──────────────────────────────────────
 
-# Start infrastructure, run the service, clean up on exit/Ctrl+C
-run-all: infra-start
-    @echo "Admin dashboard will be at http://localhost:{{DEV_APP_PORT}}/admin"
-    @trap 'echo ""; just stop-all' EXIT; cargo run -p pba-service
+# Verify a commit message follows conventional commit standards
+cog-verify message:
+    cog verify "{{message}}"
+
+# Check all commits on the current branch against conventional commit standards
+cog-check:
+    cog check
+
+# Install cocogitto git hooks (commit-msg hook for local enforcement)
+cog-install-hook:
+    cog install-hook commit-msg
+    @echo "Conventional commit hook installed — commits will be validated automatically"
 
 # ── Testing & CI ─────────────────────────────────────────────
 
@@ -117,62 +69,80 @@ run-all: infra-start
 test:
     cargo test
 
-# Run clippy lints
+# Run clippy lints (excludes generated SDK)
 lint:
-    cargo clippy -- -D warnings
+    cargo clippy -p pba-service -- -D warnings
 
-# Format check
+# Format check (excludes generated SDK)
 fmt-check:
-    cargo fmt -- --check
+    cargo fmt -p pba-service -- --check
 
-# Format code
+# Format code (excludes generated SDK)
 fmt:
-    cargo fmt
+    cargo fmt -p pba-service
 
-# Local CI: format check + lint + build + test
-local-ci: fmt-check lint build test
+# Local CI: format check + lint + build + test + commit convention check
+local-ci: fmt-check lint build test cog-check
     @echo "local-ci passed"
 
 # ── E2E Tests (Cucumber + Smithy SDK) ───────────────────────
 
 # Start test infrastructure and service for E2E tests
-e2e-start: pg-start (reset-db TEST_DB) (tb-start TEST_TB_PORT TEST_TB_DATA)
-    just service-stop {{TEST_APP_PORT}}
-    @sleep 1
-    just service-start {{TEST_APP_PORT}} {{TEST_DATABASE_URL}} {{TEST_TB_PORT}}
+e2e-start:
+    process-compose -f process-compose.test.yml up -D
+    @echo "Waiting for test service..."
+    @for i in $(seq 1 60); do \
+        if curl -sf http://127.0.0.1:{{TEST_APP_PORT}}/health > /dev/null 2>&1; then \
+            echo "Test service ready on port {{TEST_APP_PORT}}"; \
+            exit 0; \
+        fi; \
+        sleep 1; \
+    done; \
+    echo "ERROR: Test service did not start in time"; \
+    echo "--- process-compose status ---"; \
+    process-compose process list 2>&1 || true; \
+    echo "--- tigerbeetle logs ---"; \
+    process-compose process logs tigerbeetle 2>&1 | tail -20 || true; \
+    echo "--- pba-service logs ---"; \
+    process-compose process logs pba-service 2>&1 | tail -20 || true; \
+    echo "--- db-reset logs ---"; \
+    process-compose process logs db-reset 2>&1 | tail -10 || true; \
+    echo "--- postgres logs ---"; \
+    process-compose process logs postgres 2>&1 | tail -10 || true; \
+    exit 1
 
-# Stop test service and test TigerBeetle
-e2e-stop: (service-stop TEST_APP_PORT) (tb-stop TEST_TB_PORT)
+# Stop test service and infrastructure
+e2e-stop:
+    process-compose down
 
-# Run API E2E tests (service must be running)
-e2e-run:
+# Run API E2E tests only (service must be running)
+api-e2e-run:
     PBA_SERVICE_URL="http://127.0.0.1:{{TEST_APP_PORT}}" cargo test -p pba-service --test e2e
 
-# Full E2E cycle: start, run tests, stop
-e2e: e2e-start e2e-run e2e-stop
-    @echo "E2E tests complete"
+# Full API E2E cycle: start, run tests, stop
+api-e2e: e2e-start api-e2e-run e2e-stop
+    @echo "API E2E tests complete"
 
-# Run browser UI tests (full cycle: start, run tests, stop)
-ui-e2e: e2e-start ui-e2e-run e2e-stop
-    @echo "UI E2E tests complete"
-
-# Run browser UI tests only (service must be running)
+# Run UI E2E tests only (service must be running)
 ui-e2e-run:
     PBA_SERVICE_URL="http://127.0.0.1:{{TEST_APP_PORT}}" cargo test -p pba-service --test ui_e2e
 
-# Run browser UI tests with visible Chrome (service must be running)
+# Full UI E2E cycle: start, run tests, stop
+ui-e2e: e2e-start ui-e2e-run e2e-stop
+    @echo "UI E2E tests complete"
+
+# Run UI E2E tests with visible Chrome (service must be running)
 ui-e2e-watch:
     UI_HEAD=1 PBA_SERVICE_URL="http://127.0.0.1:{{TEST_APP_PORT}}" cargo test -p pba-service --test ui_e2e
 
-# Run all E2E tests: API + browser (resets DB between suites)
+# Run all E2E tests: API + UI (resets DB between suites)
 e2e-all:
     just e2e-start
-    just e2e-run
+    just api-e2e-run
     @echo "Resetting DB for UI tests..."
-    just service-stop {{TEST_APP_PORT}}
+    just e2e-stop
     @sleep 1
-    just reset-db {{TEST_DB}}
-    just service-start {{TEST_APP_PORT}} {{TEST_DATABASE_URL}} {{TEST_TB_PORT}}
+    just e2e-start
     just ui-e2e-run
     just e2e-stop
     @echo "All E2E tests complete"
@@ -187,49 +157,19 @@ migrate:
 migrate-new name:
     sqlx migrate add --source crates/pba_service/src/db/migrations {{name}}
 
-# ── Postgres ─────────────────────────────────────────────────
-
-# Initialize local Postgres data directory
-[private]
-pg-init:
-    @if [ ! -d "${PG_DATA:-.pg_data}" ]; then \
-        initdb -D "${PG_DATA:-.pg_data}" --auth=trust; \
-        echo "Postgres data directory created at ${PG_DATA:-.pg_data}"; \
-    else \
-        echo "Postgres data directory already exists at ${PG_DATA:-.pg_data}"; \
-    fi
-
-# Start local Postgres, create dev database, and verify health
-pg-start: pg-init
-    @pg_ctl -D "${PG_DATA:-.pg_data}" -l .pg.log -o "-p 5432 -k /tmp" status > /dev/null 2>&1 \
-        && echo "Postgres already running" \
-        || (pg_ctl -D "${PG_DATA:-.pg_data}" -l .pg.log -o "-p 5432 -k /tmp" start \
-            && sleep 1 \
-            && echo "Postgres started on port 5432")
-    @createdb -h /tmp -p 5432 {{DEV_DB}} 2>/dev/null || true
-    @if ! psql -h /tmp -p 5432 -d {{DEV_DB}} -c "SELECT 1" > /dev/null 2>&1; then \
-        echo "Database '{{DEV_DB}}' is invalid, recreating..."; \
-        dropdb -h /tmp -p 5432 {{DEV_DB}} 2>/dev/null || true; \
-        createdb -h /tmp -p 5432 {{DEV_DB}}; \
-        echo "Database recreated"; \
-    fi
-
-# Stop local Postgres
-pg-stop:
-    @pg_ctl -D "${PG_DATA:-.pg_data}" stop 2>/dev/null || echo "Postgres not running"
-
 # ── Install ──────────────────────────────────────────────────
 
 # Install system dependencies (macOS via Homebrew, non-Nix)
 install-deps:
     @echo "Installing dependencies via Homebrew..."
-    brew install rustup postgresql@16 just
+    brew install rustup postgresql@16 just process-compose
     rustup-init -y --default-toolchain stable
     cargo install sqlx-cli --no-default-features --features postgres
     cargo install cargo-watch
+    cargo install cocogitto
     rustup component add clippy rustfmt
     @echo ""
-    @echo "Dependencies installed. Run 'just infra-start' to start Postgres + TigerBeetle."
+    @echo "Dependencies installed. Run 'just run' to start everything."
 
 # Install pba-service binary to ~/.cargo/bin
 install:

@@ -1,0 +1,121 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  merge_group:
+
+env:
+  CARGO_TERM_COLOR: always
+  RUST_LOG: pba_service=debug
+  DB_HOST: localhost
+  DB_PORT: "5432"
+  DB_USER: postgres
+  DB_PASSWORD: postgres
+  DB_NAME: pba_service_test
+  # Auth is disabled in CI; Keycloak will be added when auth-specific E2E tests are introduced
+  AUTH_ENABLED: "false"
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  commit-convention:
+    name: Conventional Commit Check
+    runs-on: ubuntu-latest
+    steps:
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@master
+        with:
+          toolchain: stable
+
+      - uses: taiki-e/install-action@v2
+        with:
+          tool: cocogitto
+          checksum: true
+
+      - name: Verify PR title follows conventional commit standards
+        if: ${{ github.event_name == 'pull_request' }}
+        shell: bash
+        env:
+          TITLE: ${{ github.event.pull_request.title }}
+        run: cog verify "$TITLE"
+
+      - name: Verify commit message follows conventional commit standards
+        if: ${{ github.event_name == 'merge_group' }}
+        shell: bash
+        env:
+          COMMIT_MESSAGE: ${{ github.event.merge_group.head_commit.message }}
+        run: cog verify "$COMMIT_MESSAGE"
+
+  check:
+    name: Build & Lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ./.github/actions/setup-toolchain
+      - run: just fmt-check
+      - run: just lint
+      - run: just build
+
+  api-e2e:
+    name: API E2E Tests
+    runs-on: ubuntu-latest
+    needs: check
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: pba_service_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd="pg_isready -U postgres"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ./.github/actions/setup-toolchain
+        with:
+          with-tigerbeetle: "true"
+      - run: just build
+      - run: just e2e-start
+      - run: just api-e2e-run
+      - if: always()
+        run: just e2e-stop
+
+  ui-e2e:
+    name: UI E2E Tests
+    runs-on: ubuntu-latest
+    needs: check
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: pba_service_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd="pg_isready -U postgres"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ./.github/actions/setup-toolchain
+        with:
+          with-tigerbeetle: "true"
+          with-chromium: "true"
+      - run: just build
+      - run: just e2e-start
+      - run: just ui-e2e-run
+      - if: always()
+        run: just e2e-stop

@@ -48,7 +48,10 @@ fn extract_mccs_count_for_purpose(content: &str, purpose_code: &str) -> usize {
     if let Some(pos) = content.find(&anchor) {
         // Count <tr> elements after this anchor until the next <article> or end
         let section = &content[pos..];
-        let end = section[1..].find("<article").map(|p| p + 1).unwrap_or(section.len());
+        let end = section[1..]
+            .find("<article")
+            .map(|p| p + 1)
+            .unwrap_or(section.len());
         let section = &section[..end];
 
         // Count <tbody rows (skip the header row)
@@ -175,10 +178,7 @@ async fn then_should_have_mccs(world: &mut UiWorld) {
     let count = world
         .last_purpose_mccs_count
         .expect("No MCC count recorded");
-    assert!(
-        count > 0,
-        "Expected at least 1 allowed MCC, but got 0"
-    );
+    assert!(count > 0, "Expected at least 1 allowed MCC, but got 0");
 }
 
 #[then("the purpose type should not be found")]

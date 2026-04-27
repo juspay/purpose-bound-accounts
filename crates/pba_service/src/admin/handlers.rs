@@ -6,7 +6,7 @@ use serde::Deserialize;
 use uuid::Uuid;
 
 use crate::domain::purpose::PurposeType;
-use crate::domain::transaction::TransactionRecord;
+use crate::domain::transaction::{TransactionRecord, TransactionStatus};
 use crate::AppState;
 
 fn render<T: Template>(tmpl: T) -> Response {
@@ -19,9 +19,26 @@ fn render<T: Template>(tmpl: T) -> Response {
     }
 }
 
+fn prefixed(state: &AppState, path: &str) -> String {
+    format!("{}{path}", state.path_prefix)
+}
+
+#[derive(Template)]
+#[template(path = "admin/login.html")]
+struct LoginTemplate {
+    prefix: String,
+}
+
+pub async fn login_page(State(state): State<AppState>) -> impl IntoResponse {
+    render(LoginTemplate {
+        prefix: state.path_prefix.clone(),
+    })
+}
+
 #[derive(Template)]
 #[template(path = "admin/dashboard.html")]
 struct DashboardTemplate {
+    prefix: String,
     total_accounts: i64,
     active_accounts: i64,
     frozen_accounts: i64,
@@ -59,6 +76,7 @@ pub async fn dashboard(State(state): State<AppState>) -> Response {
     }
 
     render(DashboardTemplate {
+        prefix: state.path_prefix.clone(),
         total_accounts: active + frozen + closed,
         active_accounts: active,
         frozen_accounts: frozen,
@@ -70,6 +88,7 @@ pub async fn dashboard(State(state): State<AppState>) -> Response {
 #[derive(Template)]
 #[template(path = "admin/accounts.html")]
 struct AccountsListTemplate {
+    prefix: String,
     accounts: Vec<AccountRow>,
     purpose_codes: Vec<String>,
     error: Option<String>,
@@ -130,6 +149,7 @@ async fn render_accounts_list(
         .collect();
 
     render(AccountsListTemplate {
+        prefix: state.path_prefix.clone(),
         accounts: rows,
         purpose_codes,
         error,
@@ -171,10 +191,12 @@ pub async fn create_account(
         )
         .await
     {
-        Ok(account) => Redirect::to(&format!("/admin/accounts/{}", account.id)).into_response(),
-        Err(e) => {
-            render_accounts_list(&state, Some(format!("{e}")), None).await
-        }
+        Ok(account) => Redirect::to(&prefixed(
+            &state,
+            &format!("/admin/accounts/{}", account.id),
+        ))
+        .into_response(),
+        Err(e) => render_accounts_list(&state, Some(format!("{e}")), None).await,
     }
 }
 
@@ -195,11 +217,17 @@ pub async fn update_account_status(
         }
     };
 
-    match state.account_service.update_status(account_id, status).await {
-        Ok(_) => Redirect::to(&format!("/admin/accounts/{account_id}")).into_response(),
+    match state
+        .account_service
+        .update_status(account_id, status)
+        .await
+    {
+        Ok(_) => Redirect::to(&prefixed(&state, &format!("/admin/accounts/{account_id}")))
+            .into_response(),
         Err(e) => {
             tracing::error!("Failed to update status: {e}");
-            Redirect::to(&format!("/admin/accounts/{account_id}")).into_response()
+            Redirect::to(&prefixed(&state, &format!("/admin/accounts/{account_id}")))
+                .into_response()
         }
     }
 }
@@ -216,6 +244,7 @@ struct PendingDepositRow {
 #[derive(Template)]
 #[template(path = "admin/account_detail.html")]
 struct AccountDetailTemplate {
+    prefix: String,
     id: String,
     holder_id: String,
     purpose_code: String,
@@ -299,6 +328,7 @@ pub async fn account_detail(
     };
 
     render(AccountDetailTemplate {
+        prefix: state.path_prefix.clone(),
         id: account.id.to_string(),
         holder_id: account.holder_id.to_string(),
         purpose_code: account.purpose_code,
@@ -321,7 +351,16 @@ pub async fn account_detail(
 #[derive(Template)]
 #[template(path = "admin/transfers_fragment.html")]
 struct TransfersFragmentTemplate {
+    prefix: String,
+    account_id: String,
     transfers: Vec<TransferRow>,
+    total: i64,
+    offset: i64,
+    limit: i64,
+    count: i64,
+    prev_offset: i64,
+    next_offset: i64,
+    has_next: bool,
 }
 
 struct TransferRow {
@@ -333,13 +372,23 @@ struct TransferRow {
     amount: String,
 }
 
+#[derive(Deserialize)]
+pub struct TransfersFragmentQuery {
+    offset: Option<i64>,
+    limit: Option<i64>,
+}
+
 pub async fn account_transfers_fragment(
     State(state): State<AppState>,
     Path(account_id): Path<Uuid>,
+    axum::extract::Query(query): axum::extract::Query<TransfersFragmentQuery>,
 ) -> Response {
+    let offset = query.offset.unwrap_or(0).max(0);
+    let limit = query.limit.unwrap_or(50).clamp(1, 100);
+
     let transactions: Vec<TransactionRecord> = match state
         .transaction_repo
-        .list_by_account(account_id, 0, 100, None, None)
+        .list_by_account(account_id, offset, limit, None, None)
         .await
     {
         Ok(t) => t,
@@ -349,6 +398,19 @@ pub async fn account_transfers_fragment(
         }
     };
 
+    let total = match state
+        .transaction_repo
+        .count_by_account(account_id, None, None)
+        .await
+    {
+        Ok(c) => c,
+        Err(e) => {
+            tracing::error!("Failed to count transactions: {e}");
+            return (StatusCode::INTERNAL_SERVER_ERROR, "Database error").into_response();
+        }
+    };
+
+    let count = transactions.len() as i64;
     let rows: Vec<TransferRow> = transactions
         .into_iter()
         .map(|t| {
@@ -364,26 +426,36 @@ pub async fn account_transfers_fragment(
         })
         .collect();
 
-    render(TransfersFragmentTemplate { transfers: rows })
+    render(TransfersFragmentTemplate {
+        prefix: state.path_prefix.clone(),
+        account_id: account_id.to_string(),
+        transfers: rows,
+        total,
+        offset,
+        limit,
+        count,
+        prev_offset: (offset - limit).max(0),
+        next_offset: offset + limit,
+        has_next: offset + count < total,
+    })
 }
 
 #[derive(Template)]
 #[template(path = "admin/deposit.html")]
 struct DepositTemplate {
+    prefix: String,
     account_id: String,
     purpose_code: String,
     error: Option<String>,
 }
 
-pub async fn deposit_form(
-    State(state): State<AppState>,
-    Path(account_id): Path<Uuid>,
-) -> Response {
+pub async fn deposit_form(State(state): State<AppState>, Path(account_id): Path<Uuid>) -> Response {
     let account = match state.account_repo.get_account(account_id).await {
         Ok(a) => a,
         Err(_) => return (StatusCode::NOT_FOUND, "Account not found").into_response(),
     };
     render(DepositTemplate {
+        prefix: state.path_prefix.clone(),
         account_id: account_id.to_string(),
         purpose_code: account.purpose_code,
         error: None,
@@ -395,6 +467,7 @@ pub struct DepositForm {
     amount: u64,
     source_ifsc: String,
     source_account_number: String,
+    funding_type: Option<String>,
     #[serde(default)]
     pending: Option<String>,
     gateway_ref: Option<String>,
@@ -407,12 +480,24 @@ pub async fn process_deposit(
 ) -> Response {
     let is_pending = form.pending.as_deref() == Some("true");
     let gateway_ref = form.gateway_ref.as_deref().filter(|s| !s.is_empty());
+    let funding_type = form.funding_type.as_deref().filter(|s| !s.is_empty());
     match state
         .deposit_service
-        .deposit(account_id, &form.source_ifsc, &form.source_account_number, form.amount, is_pending, gateway_ref, None, None)
+        .deposit(
+            account_id,
+            &form.source_ifsc,
+            &form.source_account_number,
+            funding_type,
+            form.amount,
+            is_pending,
+            gateway_ref,
+            None,
+            None,
+        )
         .await
     {
-        Ok(_) => Redirect::to(&format!("/admin/accounts/{account_id}")).into_response(),
+        Ok(_) => Redirect::to(&prefixed(&state, &format!("/admin/accounts/{account_id}")))
+            .into_response(),
         Err(e) => {
             let purpose_code = state
                 .account_repo
@@ -421,6 +506,7 @@ pub async fn process_deposit(
                 .map(|a| a.purpose_code)
                 .unwrap_or_default();
             render(DepositTemplate {
+                prefix: state.path_prefix.clone(),
                 account_id: account_id.to_string(),
                 purpose_code,
                 error: Some(format!("{e}")),
@@ -433,11 +519,17 @@ pub async fn post_deposit(
     State(state): State<AppState>,
     Path((account_id, deposit_id)): Path<(Uuid, Uuid)>,
 ) -> Response {
-    match state.deposit_service.post_deposit(account_id, deposit_id).await {
-        Ok(_) => Redirect::to(&format!("/admin/accounts/{account_id}")).into_response(),
+    match state
+        .deposit_service
+        .post_deposit(account_id, deposit_id)
+        .await
+    {
+        Ok(_) => Redirect::to(&prefixed(&state, &format!("/admin/accounts/{account_id}")))
+            .into_response(),
         Err(e) => {
             tracing::error!("Failed to post deposit: {e}");
-            Redirect::to(&format!("/admin/accounts/{account_id}")).into_response()
+            Redirect::to(&prefixed(&state, &format!("/admin/accounts/{account_id}")))
+                .into_response()
         }
     }
 }
@@ -446,11 +538,17 @@ pub async fn void_deposit(
     State(state): State<AppState>,
     Path((account_id, deposit_id)): Path<(Uuid, Uuid)>,
 ) -> Response {
-    match state.deposit_service.void_deposit(account_id, deposit_id, None).await {
-        Ok(_) => Redirect::to(&format!("/admin/accounts/{account_id}")).into_response(),
+    match state
+        .deposit_service
+        .void_deposit(account_id, deposit_id, None)
+        .await
+    {
+        Ok(_) => Redirect::to(&prefixed(&state, &format!("/admin/accounts/{account_id}")))
+            .into_response(),
         Err(e) => {
             tracing::error!("Failed to void deposit: {e}");
-            Redirect::to(&format!("/admin/accounts/{account_id}")).into_response()
+            Redirect::to(&prefixed(&state, &format!("/admin/accounts/{account_id}")))
+                .into_response()
         }
     }
 }
@@ -458,20 +556,19 @@ pub async fn void_deposit(
 #[derive(Template)]
 #[template(path = "admin/payment.html")]
 struct PaymentTemplate {
+    prefix: String,
     account_id: String,
     purpose_code: String,
     error: Option<String>,
 }
 
-pub async fn payment_form(
-    State(state): State<AppState>,
-    Path(account_id): Path<Uuid>,
-) -> Response {
+pub async fn payment_form(State(state): State<AppState>, Path(account_id): Path<Uuid>) -> Response {
     let account = match state.account_repo.get_account(account_id).await {
         Ok(a) => a,
         Err(_) => return (StatusCode::NOT_FOUND, "Account not found").into_response(),
     };
     render(PaymentTemplate {
+        prefix: state.path_prefix.clone(),
         account_id: account_id.to_string(),
         purpose_code: account.purpose_code,
         error: None,
@@ -503,7 +600,8 @@ pub async fn process_payment(
         )
         .await
     {
-        Ok(_) => Redirect::to(&format!("/admin/accounts/{account_id}")).into_response(),
+        Ok(_) => Redirect::to(&prefixed(&state, &format!("/admin/accounts/{account_id}")))
+            .into_response(),
         Err(e) => {
             let purpose_code = state
                 .account_repo
@@ -512,6 +610,7 @@ pub async fn process_payment(
                 .map(|a| a.purpose_code)
                 .unwrap_or_default();
             render(PaymentTemplate {
+                prefix: state.path_prefix.clone(),
                 account_id: account_id.to_string(),
                 purpose_code,
                 error: Some(format!("{e}")),
@@ -523,6 +622,7 @@ pub async fn process_payment(
 #[derive(Template)]
 #[template(path = "admin/withdrawal.html")]
 struct WithdrawalTemplate {
+    prefix: String,
     account_id: String,
     purpose_code: String,
     error: Option<String>,
@@ -537,6 +637,7 @@ pub async fn withdrawal_form(
         Err(_) => return (StatusCode::NOT_FOUND, "Account not found").into_response(),
     };
     render(WithdrawalTemplate {
+        prefix: state.path_prefix.clone(),
         account_id: account_id.to_string(),
         purpose_code: account.purpose_code,
         error: None,
@@ -553,8 +654,13 @@ pub async fn process_withdrawal(
     Path(account_id): Path<Uuid>,
     axum::extract::Form(form): axum::extract::Form<WithdrawalForm>,
 ) -> Response {
-    match state.withdrawal_service.withdraw(account_id, form.amount, None).await {
-        Ok(_) => Redirect::to(&format!("/admin/accounts/{account_id}")).into_response(),
+    match state
+        .withdrawal_service
+        .withdraw(account_id, form.amount, None)
+        .await
+    {
+        Ok(_) => Redirect::to(&prefixed(&state, &format!("/admin/accounts/{account_id}")))
+            .into_response(),
         Err(e) => {
             let purpose_code = state
                 .account_repo
@@ -563,6 +669,7 @@ pub async fn process_withdrawal(
                 .map(|a| a.purpose_code)
                 .unwrap_or_default();
             render(WithdrawalTemplate {
+                prefix: state.path_prefix.clone(),
                 account_id: account_id.to_string(),
                 purpose_code,
                 error: Some(format!("{e}")),
@@ -572,8 +679,232 @@ pub async fn process_withdrawal(
 }
 
 #[derive(Template)]
+#[template(path = "admin/transactions.html")]
+struct TransactionsPageTemplate {
+    prefix: String,
+    self_balance: String,
+    others_balance: String,
+    total_balance: String,
+    pending_self: String,
+    pending_others: String,
+    transactions: Vec<AllTransactionRow>,
+    total: i64,
+    offset: i64,
+    limit: i64,
+    count: i64,
+    prev_offset: i64,
+    next_offset: i64,
+    has_next: bool,
+}
+
+struct AllTransactionRow {
+    timestamp: String,
+    account_id: String,
+    account_id_short: String,
+    transfer_type: String,
+    status: String,
+    status_class: String,
+    pool: String,
+    funding_type: String,
+    direction: String,
+    direction_class: String,
+    amount: String,
+}
+
+#[derive(Deserialize)]
+pub struct TransactionsPageQuery {
+    offset: Option<i64>,
+    limit: Option<i64>,
+}
+
+pub async fn transactions_page(
+    State(state): State<AppState>,
+    axum::extract::Query(query): axum::extract::Query<TransactionsPageQuery>,
+) -> Response {
+    let offset = query.offset.unwrap_or(0).max(0);
+    let limit = query.limit.unwrap_or(50).clamp(1, 100);
+
+    let pool_summary = match state.transaction_repo.pool_summary().await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("Failed to get pool summary: {e}");
+            return (StatusCode::INTERNAL_SERVER_ERROR, "Database error").into_response();
+        }
+    };
+
+    let transactions = match state
+        .transaction_repo
+        .list_all(offset, limit, None, None)
+        .await
+    {
+        Ok(t) => t,
+        Err(e) => {
+            tracing::error!("Failed to list transactions: {e}");
+            return (StatusCode::INTERNAL_SERVER_ERROR, "Database error").into_response();
+        }
+    };
+
+    let total = match state.transaction_repo.count_all(None, None).await {
+        Ok(c) => c,
+        Err(e) => {
+            tracing::error!("Failed to count transactions: {e}");
+            return (StatusCode::INTERNAL_SERVER_ERROR, "Database error").into_response();
+        }
+    };
+
+    let count = transactions.len() as i64;
+    let rows: Vec<AllTransactionRow> = transactions
+        .into_iter()
+        .map(|t| {
+            let pool = if t.pool == "self" { "Self" } else { "Others" };
+            let status_class = match t.status {
+                TransactionStatus::Pending => "status-frozen",
+                TransactionStatus::Posted | TransactionStatus::Settled => "status-active",
+                TransactionStatus::Voided => "status-closed",
+            };
+            AllTransactionRow {
+                timestamp: t.created_at.format("%Y-%m-%d %H:%M:%S").to_string(),
+                account_id: t.account_id.to_string(),
+                account_id_short: t.account_id.to_string()[..8].to_string(),
+                transfer_type: t.type_label().to_string(),
+                status: t.status.as_str().to_string(),
+                status_class: status_class.to_string(),
+                pool: pool.to_string(),
+                funding_type: t.funding_type.as_deref().unwrap_or("—").to_string(),
+                direction: t.direction.label().to_string(),
+                direction_class: t.direction.css_class().to_string(),
+                amount: t.amount_display(),
+            }
+        })
+        .collect();
+
+    let fmt = |amt: u64| format!("{}.{:02}", amt / 100, amt % 100);
+
+    render(TransactionsPageTemplate {
+        prefix: state.path_prefix.clone(),
+        self_balance: fmt(pool_summary.self_balance()),
+        others_balance: fmt(pool_summary.others_balance()),
+        total_balance: fmt(pool_summary.total_balance()),
+        pending_self: fmt(pool_summary.pending_self),
+        pending_others: fmt(pool_summary.pending_others),
+        transactions: rows,
+        total,
+        offset,
+        limit,
+        count,
+        prev_offset: (offset - limit).max(0),
+        next_offset: offset + limit,
+        has_next: offset + count < total,
+    })
+}
+
+#[derive(Template)]
+#[template(path = "admin/system_accounts.html")]
+struct SystemAccountsTemplate {
+    prefix: String,
+    sentinel_accounts: Vec<SentinelAccountRow>,
+    pool_balances: Vec<PoolBalanceRow>,
+}
+
+struct SentinelAccountRow {
+    name: String,
+    credits_posted: String,
+    debits_posted: String,
+    credits_pending: String,
+    debits_pending: String,
+    balance_posted: String,
+    balance_pending: String,
+}
+
+struct PoolBalanceRow {
+    name: String,
+    credits_posted: String,
+    debits_posted: String,
+    credits_pending: String,
+    debits_pending: String,
+    balance_posted: String,
+    balance_pending: String,
+}
+
+pub async fn system_accounts_page(State(state): State<AppState>) -> Response {
+    let fmt = |amt: u64| format!("{}.{:02}", amt / 100, amt % 100);
+    let fmt_signed = |credits: u64, debits: u64| -> String {
+        if credits >= debits {
+            let diff = credits - debits;
+            format!("{}.{:02}", diff / 100, diff % 100)
+        } else {
+            let diff = debits - credits;
+            format!("-{}.{:02}", diff / 100, diff % 100)
+        }
+    };
+
+    // Sentinel accounts from TigerBeetle
+    let sentinel_accounts = match state.ledger_repo.lookup_sentinel_accounts().await {
+        Ok(accounts) => accounts
+            .into_iter()
+            .map(|(name, cp, dp, cpend, dpend)| SentinelAccountRow {
+                name,
+                credits_posted: fmt(cp),
+                debits_posted: fmt(dp),
+                credits_pending: fmt(cpend),
+                debits_pending: fmt(dpend),
+                balance_posted: fmt_signed(cp, dp),
+                balance_pending: fmt_signed(cpend, dpend),
+            })
+            .collect(),
+        Err(e) => {
+            tracing::error!("Failed to lookup sentinel accounts: {e}");
+            return (StatusCode::INTERNAL_SERVER_ERROR, "TigerBeetle error").into_response();
+        }
+    };
+
+    // PBA pool balances from Postgres
+    let pool_summary = match state.transaction_repo.pool_summary_extended().await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("Failed to get pool summary: {e}");
+            return (StatusCode::INTERNAL_SERVER_ERROR, "Database error").into_response();
+        }
+    };
+
+    let pool_balances = vec![
+        PoolBalanceRow {
+            name: "Self Pool (all accounts)".to_string(),
+            credits_posted: fmt(pool_summary.self_inbound),
+            debits_posted: fmt(pool_summary.self_outbound),
+            credits_pending: fmt(pool_summary.pending_self_inbound),
+            debits_pending: fmt(pool_summary.pending_self_outbound),
+            balance_posted: fmt_signed(pool_summary.self_inbound, pool_summary.self_outbound),
+            balance_pending: fmt_signed(
+                pool_summary.pending_self_inbound,
+                pool_summary.pending_self_outbound,
+            ),
+        },
+        PoolBalanceRow {
+            name: "Others Pool (all accounts)".to_string(),
+            credits_posted: fmt(pool_summary.others_inbound),
+            debits_posted: fmt(pool_summary.others_outbound),
+            credits_pending: fmt(pool_summary.pending_others_inbound),
+            debits_pending: fmt(pool_summary.pending_others_outbound),
+            balance_posted: fmt_signed(pool_summary.others_inbound, pool_summary.others_outbound),
+            balance_pending: fmt_signed(
+                pool_summary.pending_others_inbound,
+                pool_summary.pending_others_outbound,
+            ),
+        },
+    ];
+
+    render(SystemAccountsTemplate {
+        prefix: state.path_prefix.clone(),
+        sentinel_accounts,
+        pool_balances,
+    })
+}
+
+#[derive(Template)]
 #[template(path = "admin/purpose_types.html")]
 struct PurposeTypesTemplate {
+    prefix: String,
     purpose_types: Vec<PurposeType>,
 }
 
@@ -585,5 +916,8 @@ pub async fn purpose_types_page(State(state): State<AppState>) -> Response {
             return (StatusCode::INTERNAL_SERVER_ERROR, "Database error").into_response();
         }
     };
-    render(PurposeTypesTemplate { purpose_types })
+    render(PurposeTypesTemplate {
+        prefix: state.path_prefix.clone(),
+        purpose_types,
+    })
 }

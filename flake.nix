@@ -43,13 +43,16 @@
             pkgs.just
             pkgs.sqlx-cli
             pkgs.cargo-watch
+            pkgs.cocogitto
+            pkgs.process-compose
 
             # Smithy CLI
             smithy-cli
           ];
 
           env = {
-            DATABASE_URL = "postgresql://localhost:5432/pba_service?host=/tmp";
+            DB_HOST = "/tmp";
+            DB_NAME = "pba_service";
             TIGERBEETLE_ADDRESSES = "3000";
             TIGERBEETLE_CLUSTER_ID = "0";
             RUST_LOG = "pba_service=debug";

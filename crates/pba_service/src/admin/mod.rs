@@ -4,10 +4,17 @@ mod tb;
 use axum::routing::{get, post};
 use axum::Router;
 
+use crate::auth::oidc;
 use crate::AppState;
 
 pub fn create_router() -> Router<AppState> {
     Router::new()
+        // Auth routes
+        .route("/admin/login", get(handlers::login_page))
+        .route("/admin/auth/keycloak", get(oidc::login_redirect))
+        .route("/admin/callback", get(oidc::callback))
+        .route("/admin/logout", get(oidc::logout))
+        // Existing routes
         .route("/admin", get(handlers::dashboard))
         .route(
             "/admin/accounts",
@@ -44,6 +51,11 @@ pub fn create_router() -> Router<AppState> {
         .route(
             "/admin/accounts/{account_id}/withdrawal",
             get(handlers::withdrawal_form).post(handlers::process_withdrawal),
+        )
+        .route("/admin/transactions", get(handlers::transactions_page))
+        .route(
+            "/admin/system-accounts",
+            get(handlers::system_accounts_page),
         )
         .route("/admin/purpose-types", get(handlers::purpose_types_page))
         // TigerBeetle explorer

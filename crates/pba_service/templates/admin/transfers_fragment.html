@@ -31,4 +31,16 @@
     </tbody>
 </table>
 </figure>
+
+<div class="flex-gap" style="justify-content: space-between; margin-top: 0.75rem;">
+    <small class="muted">Showing {{ offset + 1 }}–{{ offset + count }} of {{ total }} transactions</small>
+    <div class="flex-gap">
+        {% if offset > 0 %}
+        <a hx-get="{{ prefix }}/admin/accounts/{{ account_id }}/transfers?offset={{ prev_offset }}&limit={{ limit }}" hx-target="#transfers" hx-swap="innerHTML" role="button" class="outline btn-sm">← Previous</a>
+        {% endif %}
+        {% if has_next %}
+        <a hx-get="{{ prefix }}/admin/accounts/{{ account_id }}/transfers?offset={{ next_offset }}&limit={{ limit }}" hx-target="#transfers" hx-swap="innerHTML" role="button" class="outline btn-sm">Next →</a>
+        {% endif %}
+    </div>
+</div>
 {% endif %}

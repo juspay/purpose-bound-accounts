@@ -109,6 +109,7 @@ pub struct TransactionRecord {
     pub merchant_id: Option<String>,
     pub merchant_mcc: Option<String>,
     pub description: Option<String>,
+    pub funding_type: Option<String>,
     pub tb_transfer_id: u128,
     pub idempotency_key: Option<String>,
     pub created_at: DateTime<Utc>,

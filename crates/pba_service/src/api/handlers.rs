@@ -83,6 +83,7 @@ pub async fn deposit(
             account_id,
             &req.source_ifsc,
             &req.source_account_number,
+            req.funding_type.as_deref(),
             req.amount,
             req.pending,
             req.gateway_ref.as_deref(),
@@ -98,6 +99,7 @@ pub async fn deposit(
             account_id: result.account_id,
             amount: result.amount,
             pool: result.pool,
+            funding_type: result.funding_type.unwrap_or_default(),
             status: result.status.as_str().to_string(),
             gateway_ref: result.gateway_ref,
             timeout_seconds: result.timeout_seconds,
@@ -119,6 +121,7 @@ pub async fn post_deposit(
         account_id: result.account_id,
         amount: result.amount,
         pool: result.pool,
+        funding_type: result.funding_type.unwrap_or_default(),
         status: result.status.as_str().to_string(),
         gateway_ref: result.gateway_ref,
         timeout_seconds: result.timeout_seconds,
@@ -140,6 +143,7 @@ pub async fn void_deposit(
         account_id: result.account_id,
         amount: result.amount,
         pool: result.pool,
+        funding_type: result.funding_type.unwrap_or_default(),
         status: result.status.as_str().to_string(),
         gateway_ref: result.gateway_ref,
         timeout_seconds: result.timeout_seconds,
@@ -229,6 +233,30 @@ pub async fn list_transactions(
     }))
 }
 
+pub async fn list_all_transactions(
+    State(state): State<AppState>,
+    axum::extract::Query(query): axum::extract::Query<ListTransactionsQuery>,
+) -> Result<Json<ListTransactionsResponse>, AppError> {
+    let offset = query.offset.unwrap_or(0).max(0);
+    let limit = query.limit.unwrap_or(20).clamp(1, 100);
+
+    let transactions = state
+        .transaction_repo
+        .list_all(offset, limit, query.from_date, query.to_date)
+        .await?;
+    let total = state
+        .transaction_repo
+        .count_all(query.from_date, query.to_date)
+        .await?;
+
+    Ok(Json(ListTransactionsResponse {
+        transactions: transactions.into_iter().map(|t| t.into()).collect(),
+        total,
+        offset,
+        limit,
+    }))
+}
+
 // ── Purpose Types ──
 
 pub async fn list_purpose_types(
@@ -250,9 +278,19 @@ pub async fn get_purpose_type(
 
 // ── API Docs ──
 
+// ── Health ──
+
+pub async fn health() -> Json<serde_json::Value> {
+    Json(serde_json::json!({"status": "ok"}))
+}
+
 const OPENAPI_SPEC: &str = include_str!("openapi.json");
 
-pub async fn openapi_json() -> (axum::http::StatusCode, [(&'static str, &'static str); 1], &'static str) {
+pub async fn openapi_json() -> (
+    axum::http::StatusCode,
+    [(&'static str, &'static str); 1],
+    &'static str,
+) {
     (
         axum::http::StatusCode::OK,
         [("content-type", "application/json")],
@@ -275,7 +313,7 @@ pub async fn swagger_ui() -> axum::response::Html<&'static str> {
     <script src="https://unpkg.com/swagger-ui-dist@5/swagger-ui-bundle.js"></script>
     <script>
         SwaggerUIBundle({
-            url: "/docs/openapi.json",
+            url: "./docs/openapi.json",
             dom_id: "#swagger-ui",
             deepLinking: true,
             presets: [SwaggerUIBundle.presets.apis],

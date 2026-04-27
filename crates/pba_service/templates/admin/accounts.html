@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 
 {% block title %}Accounts — PBA Ledger{% endblock %}
-{% block breadcrumb %}<a href="/admin">PBA Ledger</a> <span class="sep">/</span> <span class="current">Accounts</span>{% endblock %}
+{% block breadcrumb %}<a href="{{ prefix }}/admin">PBA Ledger</a> <span class="sep">/</span> <span class="current">Accounts</span>{% endblock %}
 
 {% block content %}
 <div class="page-header">
@@ -24,7 +24,7 @@
 <details id="new-account-panel">
     <summary>Create a new account</summary>
     <article>
-        <form method="post" action="/admin/accounts">
+        <form method="post" action="{{ prefix }}/admin/accounts">
             <div class="grid">
                 <label>Holder ID (UUID)
                     <input type="text" name="holder_id" placeholder="aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee" required>
@@ -75,14 +75,14 @@
         {% for account in &accounts %}
         <tr>
             <td class="mono">
-                <a href="/admin/accounts/{{ account.id }}" title="{{ account.id }}">{{ account.id }}</a>
+                <a href="{{ prefix }}/admin/accounts/{{ account.id }}" title="{{ account.id }}">{{ account.id }}</a>
             </td>
             <td class="mono" title="{{ account.holder_id }}">{{ account.holder_id }}</td>
             <td><span class="badge">{{ account.purpose_code }}</span></td>
             <td class="{{ account.status_class }}">{{ account.status }}</td>
             <td class="text-small muted">{{ account.created_at }}</td>
             <td style="text-align: right;">
-                <a href="/admin/accounts/{{ account.id }}" class="btn btn-sm outline">Open →</a>
+                <a href="{{ prefix }}/admin/accounts/{{ account.id }}" class="btn btn-sm outline">Open →</a>
             </td>
         </tr>
         {% endfor %}

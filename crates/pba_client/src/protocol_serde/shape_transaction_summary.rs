@@ -20,6 +20,15 @@ pub(crate) fn de_transaction_summary<'a, I>(tokens: &mut ::std::iter::Peekable<I
                                     ).transpose()?
                                 );
                             }
+                            "account_id" => {
+                                builder = builder.set_account_id(
+                                    ::aws_smithy_json::deserialize::token::expect_string_or_null(tokens.next())?.map(|s|
+                                        s.to_unescaped().map(|u|
+                                            u.into_owned()
+                                        )
+                                    ).transpose()?
+                                );
+                            }
                             "type" => {
                                 builder = builder.set_type(
                                     ::aws_smithy_json::deserialize::token::expect_string_or_null(tokens.next())?.map(|s|
@@ -110,6 +119,15 @@ pub(crate) fn de_transaction_summary<'a, I>(tokens: &mut ::std::iter::Peekable<I
                             }
                             "gateway_ref" => {
                                 builder = builder.set_gateway_ref(
+                                    ::aws_smithy_json::deserialize::token::expect_string_or_null(tokens.next())?.map(|s|
+                                        s.to_unescaped().map(|u|
+                                            u.into_owned()
+                                        )
+                                    ).transpose()?
+                                );
+                            }
+                            "funding_type" => {
+                                builder = builder.set_funding_type(
                                     ::aws_smithy_json::deserialize::token::expect_string_or_null(tokens.next())?.map(|s|
                                         s.to_unescaped().map(|u|
                                             u.into_owned()
