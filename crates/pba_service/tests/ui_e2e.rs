@@ -48,7 +48,6 @@ pub struct UiWorld {
     last_purpose_mccs_count: Option<usize>,
     last_balance: Option<BalanceResult>,
     last_account_status: Option<String>,
-    duplicate_rejected: bool,
 }
 
 impl std::fmt::Debug for UiWorld {
@@ -56,7 +55,6 @@ impl std::fmt::Debug for UiWorld {
         f.debug_struct("UiWorld")
             .field("base_url", &self.base_url)
             .field("account_id", &self.account_id)
-            .field("duplicate_rejected", &self.duplicate_rejected)
             .finish_non_exhaustive()
     }
 }
@@ -82,7 +80,6 @@ impl Default for UiWorld {
             last_purpose_mccs_count: None,
             last_balance: None,
             last_account_status: None,
-            duplicate_rejected: false,
         }
     }
 }

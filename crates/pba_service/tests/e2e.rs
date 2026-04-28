@@ -27,8 +27,6 @@ pub struct PbaWorld {
     last_balance: Option<BalanceResult>,
     /// Last account status
     last_account_status: Option<String>,
-    /// Whether a duplicate was rejected
-    duplicate_rejected: bool,
     /// Last withdrawal amount
     last_withdrawal_amount: Option<i64>,
     /// Results from concurrent payment tests
@@ -88,7 +86,6 @@ impl Default for PbaWorld {
             last_purpose_mccs_count: None,
             last_balance: None,
             last_account_status: None,
-            duplicate_rejected: false,
             last_withdrawal_amount: None,
             concurrent_successes: None,
             concurrent_failures: None,

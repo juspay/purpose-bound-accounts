@@ -50,16 +50,7 @@ impl AccountRepo {
         .bind(&tb_self_str)
         .bind(&tb_others_str)
         .fetch_one(&self.pool)
-        .await
-        .map_err(|e| {
-            if is_unique_violation(&e) {
-                AppError::DuplicateAccount(format!(
-                    "Account already exists for origin {origin_ifsc}/{origin_account_number} with purpose {purpose_code}"
-                ))
-            } else {
-                AppError::DatabaseError(e.to_string())
-            }
-        })?;
+        .await?;
 
         Ok(row.into_domain())
     }
@@ -282,12 +273,4 @@ fn group_by_purpose(rows: Vec<MccRow>) -> Vec<PurposeType> {
             allowed_mccs,
         })
         .collect()
-}
-
-fn is_unique_violation(err: &sqlx::Error) -> bool {
-    if let sqlx::Error::Database(db_err) = err {
-        db_err.code().as_deref() == Some("23505")
-    } else {
-        false
-    }
 }
