@@ -59,8 +59,6 @@ pub(crate) mod shape_deposit_not_found_error;
 
 pub(crate) mod shape_deposit_not_pending_error;
 
-pub(crate) mod shape_duplicate_account_error;
-
 pub(crate) mod shape_insufficient_funds_error;
 
 pub(crate) mod shape_invalid_mcc_error;

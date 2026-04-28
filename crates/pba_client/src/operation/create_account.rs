@@ -193,8 +193,6 @@ builder
 pub enum CreateAccountError {
     #[allow(missing_docs)] // documentation missing in model
     PurposeTypeNotFoundError(crate::types::error::PurposeTypeNotFoundError),
-    #[allow(missing_docs)] // documentation missing in model
-    DuplicateAccountError(crate::types::error::DuplicateAccountError),
     /// An unexpected error occurred (e.g., invalid JSON returned by the service or an unknown error code).
                     #[deprecated(note = "Matching `Unhandled` directly is not forwards compatible. Instead, match using a \
     variable wildcard pattern and check `.code()`:
@@ -221,7 +219,6 @@ impl CreateAccountError {
     pub fn meta(&self) -> &::aws_smithy_types::error::ErrorMetadata {
         match self {
             Self::PurposeTypeNotFoundError(e) => ::aws_smithy_types::error::metadata::ProvideErrorMetadata::meta(e),
-            Self::DuplicateAccountError(e) => ::aws_smithy_types::error::metadata::ProvideErrorMetadata::meta(e),
             Self::Unhandled(e) => &e.meta,
         }
     }
@@ -229,18 +226,11 @@ impl CreateAccountError {
     pub fn is_purpose_type_not_found_error(&self) -> bool {
         matches!(self, Self::PurposeTypeNotFoundError(_))
     }
-    /// Returns `true` if the error kind is `CreateAccountError::DuplicateAccountError`.
-    pub fn is_duplicate_account_error(&self) -> bool {
-        matches!(self, Self::DuplicateAccountError(_))
-    }
 }
 impl ::std::error::Error for CreateAccountError {
     fn source(&self) -> ::std::option::Option<&(dyn ::std::error::Error + 'static)> {
         match self {
             Self::PurposeTypeNotFoundError(_inner) =>
-            ::std::option::Option::Some(_inner)
-            ,
-            Self::DuplicateAccountError(_inner) =>
             ::std::option::Option::Some(_inner)
             ,
             Self::Unhandled(_inner) => {
@@ -253,9 +243,6 @@ impl ::std::fmt::Display for CreateAccountError {
     fn fmt(&self, f: &mut ::std::fmt::Formatter<'_>) -> ::std::fmt::Result {
         match self {
             Self::PurposeTypeNotFoundError(_inner) =>
-            _inner.fmt(f)
-            ,
-            Self::DuplicateAccountError(_inner) =>
             _inner.fmt(f)
             ,
             Self::Unhandled(_inner) => {
@@ -280,9 +267,6 @@ impl ::aws_smithy_types::error::metadata::ProvideErrorMetadata for CreateAccount
     fn meta(&self) -> &::aws_smithy_types::error::ErrorMetadata {
         match self {
             Self::PurposeTypeNotFoundError(_inner) =>
-            ::aws_smithy_types::error::metadata::ProvideErrorMetadata::meta(_inner)
-            ,
-            Self::DuplicateAccountError(_inner) =>
             ::aws_smithy_types::error::metadata::ProvideErrorMetadata::meta(_inner)
             ,
             Self::Unhandled(_inner) => {
