@@ -32,6 +32,7 @@ pub enum AppError {
     DatabaseError(String),
     Unauthorized(String),
     Forbidden(String),
+    Validation(String),
 }
 
 impl std::fmt::Display for AppError {
@@ -63,6 +64,7 @@ impl std::fmt::Display for AppError {
             Self::DatabaseError(msg) => write!(f, "Database error: {msg}"),
             Self::Unauthorized(msg) => write!(f, "Unauthorized: {msg}"),
             Self::Forbidden(msg) => write!(f, "Forbidden: {msg}"),
+            Self::Validation(msg) => write!(f, "{msg}"),
         }
     }
 }
@@ -88,6 +90,7 @@ impl IntoResponse for AppError {
             AppError::DatabaseError(_) => (StatusCode::INTERNAL_SERVER_ERROR, "DatabaseError"),
             AppError::Unauthorized(_) => (StatusCode::UNAUTHORIZED, "Unauthorized"),
             AppError::Forbidden(_) => (StatusCode::FORBIDDEN, "Forbidden"),
+            AppError::Validation(_) => (StatusCode::BAD_REQUEST, "ValidationError"),
         };
 
         let body = ErrorBody {
@@ -102,5 +105,11 @@ impl IntoResponse for AppError {
 impl From<sqlx::Error> for AppError {
     fn from(err: sqlx::Error) -> Self {
         AppError::DatabaseError(err.to_string())
+    }
+}
+
+impl From<crate::domain::banking::BankingValidationError> for AppError {
+    fn from(err: crate::domain::banking::BankingValidationError) -> Self {
+        AppError::Validation(err.to_string())
     }
 }

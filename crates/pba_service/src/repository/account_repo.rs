@@ -2,6 +2,7 @@ use sqlx::PgPool;
 use uuid::Uuid;
 
 use crate::domain::account::{AccountStatus, PurposeBoundAccount};
+use crate::domain::banking::{AccountNumber, Ifsc};
 use crate::domain::purpose::{MccEntry, PurposeType};
 use crate::error::AppError;
 
@@ -20,8 +21,8 @@ impl AccountRepo {
         id: Uuid,
         holder_id: &str,
         purpose_code: &str,
-        origin_ifsc: &str,
-        origin_account_number: &str,
+        origin_ifsc: &Ifsc,
+        origin_account_number: &AccountNumber,
         tb_self_account_id: u128,
         tb_others_account_id: u128,
     ) -> Result<PurposeBoundAccount, AppError> {
@@ -219,11 +220,11 @@ struct AccountRow {
     id: Uuid,
     holder_id: String,
     purpose_code: String,
-    origin_ifsc: String,
-    origin_account_number: String,
+    origin_ifsc: Ifsc,
+    origin_account_number: AccountNumber,
     vpa: Option<String>,
-    virtual_ifsc: Option<String>,
-    virtual_account_number: Option<String>,
+    virtual_ifsc: Option<Ifsc>,
+    virtual_account_number: Option<AccountNumber>,
     tb_self_account_id: String,
     tb_others_account_id: String,
     kyc_tier: String,

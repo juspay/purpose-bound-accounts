@@ -2,6 +2,8 @@ use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
+use crate::domain::banking::{AccountNumber, Ifsc};
+
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
 pub enum AccountStatus {
@@ -38,11 +40,11 @@ pub struct PurposeBoundAccount {
     pub id: Uuid,
     pub holder_id: String,
     pub purpose_code: String,
-    pub origin_ifsc: String,
-    pub origin_account_number: String,
+    pub origin_ifsc: Ifsc,
+    pub origin_account_number: AccountNumber,
     pub vpa: Option<String>,
-    pub virtual_ifsc: Option<String>,
-    pub virtual_account_number: Option<String>,
+    pub virtual_ifsc: Option<Ifsc>,
+    pub virtual_account_number: Option<AccountNumber>,
     pub tb_self_account_id: u128,
     pub tb_others_account_id: u128,
     pub kyc_tier: String,
@@ -54,7 +56,8 @@ pub struct PurposeBoundAccount {
 impl PurposeBoundAccount {
     /// Check if a deposit source matches the origin bank details.
     pub fn is_origin_source(&self, source_ifsc: &str, source_account_number: &str) -> bool {
-        self.origin_ifsc == source_ifsc && self.origin_account_number == source_account_number
+        self.origin_ifsc.as_str() == source_ifsc
+            && self.origin_account_number.as_str() == source_account_number
     }
 }
 
@@ -93,8 +96,8 @@ mod tests {
             id: Uuid::new_v4(),
             holder_id: "test-holder".to_string(),
             purpose_code: "health".to_string(),
-            origin_ifsc: "HDFC0001234".to_string(),
-            origin_account_number: "1234567890".to_string(),
+            origin_ifsc: Ifsc::parse("HDFC0001234").unwrap(),
+            origin_account_number: AccountNumber::parse("1234567890").unwrap(),
             vpa: None,
             virtual_ifsc: None,
             virtual_account_number: None,

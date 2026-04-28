@@ -5,6 +5,7 @@ use axum::response::{Html, IntoResponse, Redirect, Response};
 use serde::Deserialize;
 use uuid::Uuid;
 
+use crate::domain::banking::{AccountNumber, Ifsc};
 use crate::domain::purpose::PurposeType;
 use crate::domain::transaction::{TransactionRecord, TransactionStatus};
 use crate::AppState;
@@ -182,13 +183,22 @@ pub async fn create_account(
         .await;
     }
 
+    let origin_ifsc = match Ifsc::parse(&form.origin_ifsc) {
+        Ok(v) => v,
+        Err(e) => return render_accounts_list(&state, Some(e.to_string()), None).await,
+    };
+    let origin_account_number = match AccountNumber::parse(&form.origin_account_number) {
+        Ok(v) => v,
+        Err(e) => return render_accounts_list(&state, Some(e.to_string()), None).await,
+    };
+
     match state
         .account_service
         .create_account(
             holder_id,
             &form.purpose_code,
-            &form.origin_ifsc,
-            &form.origin_account_number,
+            &origin_ifsc,
+            &origin_account_number,
         )
         .await
     {
@@ -335,8 +345,8 @@ pub async fn account_detail(
         purpose_code: account.purpose_code,
         status: status_str,
         status_class,
-        origin_ifsc: account.origin_ifsc,
-        origin_account_number: account.origin_account_number,
+        origin_ifsc: account.origin_ifsc.to_string(),
+        origin_account_number: account.origin_account_number.to_string(),
         vpa: account.vpa.unwrap_or_else(|| "N/A".to_string()),
         self_balance: fmt(balance.self_contribution),
         others_balance: fmt(balance.others_contribution),
