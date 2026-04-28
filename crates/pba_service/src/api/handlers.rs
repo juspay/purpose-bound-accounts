@@ -4,6 +4,7 @@ use uuid::Uuid;
 
 use crate::api::dto::*;
 use crate::domain::account::AccountStatus;
+use crate::domain::banking::{AccountNumber, Ifsc};
 use crate::error::AppError;
 use crate::AppState;
 
@@ -13,13 +14,16 @@ pub async fn create_account(
     State(state): State<AppState>,
     Json(req): Json<CreateAccountRequest>,
 ) -> Result<(axum::http::StatusCode, Json<AccountResponse>), AppError> {
+    let origin_ifsc = Ifsc::parse(&req.origin_ifsc)?;
+    let origin_account_number = AccountNumber::parse(&req.origin_account_number)?;
+
     let account = state
         .account_service
         .create_account(
-            req.holder_id,
+            &req.holder_id,
             &req.purpose_code,
-            &req.origin_ifsc,
-            &req.origin_account_number,
+            &origin_ifsc,
+            &origin_account_number,
         )
         .await?;
 

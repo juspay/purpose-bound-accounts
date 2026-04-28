@@ -5,7 +5,7 @@
 {% block content %}
 <h1>Accounts</h1>
 
-<details>
+<details{% if error.is_some() || success.is_some() %} open{% endif %}>
     <summary role="button" class="outline">Create New Account</summary>
     <article>
         {% if let Some(err) = error %}
@@ -17,8 +17,8 @@
         <form method="post" action="{{ prefix }}/admin/accounts">
             <div class="grid">
                 <label>
-                    Holder ID (UUID)
-                    <input type="text" name="holder_id" placeholder="e.g. aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee" required>
+                    Holder ID
+                    <input type="text" name="holder_id" placeholder="External account reference" maxlength="255" required>
                 </label>
                 <label>
                     Purpose
