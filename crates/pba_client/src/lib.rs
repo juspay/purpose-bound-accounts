@@ -12,6 +12,8 @@
 #![allow(clippy::derive_partial_eq_without_eq)]
 #![allow(clippy::result_large_err)]
 #![allow(clippy::unnecessary_map_on_constructor)]
+#![allow(clippy::empty_line_after_doc_comments)]
+#![allow(clippy::mismatched_lifetime_syntaxes)]
 #![allow(rustdoc::bare_urls)]
 #![allow(rustdoc::redundant_explicit_links)]
 
