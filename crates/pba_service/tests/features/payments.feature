@@ -61,7 +61,7 @@ Feature: Payments
     Then the payment should be rejected as account not active
 
   Scenario: Payment that exactly drains both pools
-    Given a "health" account exists for holder "44444444-4444-4444-4444-44444444444a" with origin IFSC "HDFC004444a" and account number "444440000a"
+    Given a "health" account exists for holder "44444444-4444-4444-4444-44444444444a" with origin IFSC "HDFC0044440" and account number "4444400000"
     And the account has 3000 in self-pool and 2000 in others-pool
     When I pay 5000 to merchant "PHARMACY001" with MCC "5912" described as "exact drain"
     Then the payment should succeed
@@ -84,14 +84,14 @@ Feature: Payments
     Then the payment should succeed
 
   Scenario: Concurrent payments do not double-spend
-    Given a "health" account exists for holder "c0c0c0c0-c0c0-c0c0-c0c0-c0c0c0c0c0c0" with origin IFSC "HDFC00c0c0c" and account number "c0c0c00001"
+    Given a "health" account exists for holder "c0c0c0c0-c0c0-c0c0-c0c0-c0c0c0c0c0c0" with origin IFSC "HDFC00C0C0C" and account number "5050500001"
     And the account has 5000 in self-pool and 5000 in others-pool
     When 10 concurrent payments of 1000 each are made to MCC "5912"
     Then exactly 10 payments should succeed
     And the total balance should be 0
 
   Scenario: Concurrent payments partially succeed when funds run out
-    Given a "health" account exists for holder "c1c1c1c1-c1c1-c1c1-c1c1-c1c1c1c1c1c1" with origin IFSC "HDFC00c1c1c" and account number "c1c1c10001"
+    Given a "health" account exists for holder "c1c1c1c1-c1c1-c1c1-c1c1-c1c1c1c1c1c1" with origin IFSC "HDFC00C1C1C" and account number "5151500001"
     And the account has 3000 in self-pool and 2000 in others-pool
     When 10 concurrent payments of 1000 each are made to MCC "5912"
     Then exactly 5 payments should succeed
