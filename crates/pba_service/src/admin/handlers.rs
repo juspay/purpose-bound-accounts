@@ -171,12 +171,7 @@ pub async fn create_account(
 ) -> Response {
     let holder_id = form.holder_id.trim();
     if holder_id.is_empty() {
-        return render_accounts_list(
-            &state,
-            Some("Holder ID is required".to_string()),
-            None,
-        )
-        .await;
+        return render_accounts_list(&state, Some("Holder ID is required".to_string()), None).await;
     }
     if holder_id.len() > 255 {
         return render_accounts_list(
