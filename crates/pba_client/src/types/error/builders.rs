@@ -13,5 +13,3 @@ pub use crate::types::error::_deposit_not_pending_error::DepositNotPendingErrorB
 
 pub use crate::types::error::_deposit_not_found_error::DepositNotFoundErrorBuilder;
 
-pub use crate::types::error::_duplicate_account_error::DuplicateAccountErrorBuilder;
-

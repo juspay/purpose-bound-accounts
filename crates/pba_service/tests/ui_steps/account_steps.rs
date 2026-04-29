@@ -321,22 +321,6 @@ async fn when_create_account(
     }
 }
 
-#[when(
-    regex = r#"^I create a duplicate "([^"]*)" account for holder "([^"]*)" with origin IFSC "([^"]*)" and account number "([^"]*)"$"#
-)]
-async fn when_create_duplicate_account(
-    world: &mut UiWorld,
-    purpose: String,
-    holder_id: String,
-    ifsc: String,
-    account_number: String,
-) {
-    let id = create_account_via_ui(world, &purpose, &holder_id, &ifsc, &account_number).await;
-    // If we got redirected to a new detail page, the account was created (not rejected as duplicate)
-    // If we stayed on the accounts page (id is None), the duplicate was rejected
-    world.duplicate_rejected = id.is_none();
-}
-
 #[when("I get the account")]
 async fn when_get_account(world: &mut UiWorld) {
     let account_id = world
@@ -456,14 +440,6 @@ async fn then_account_status(world: &mut UiWorld, expected: String) {
         status, &expected,
         "Account status mismatch: expected '{}' but found '{}'",
         expected, status
-    );
-}
-
-#[then("the duplicate should be rejected")]
-async fn then_duplicate_rejected(world: &mut UiWorld) {
-    assert!(
-        world.duplicate_rejected,
-        "Expected duplicate account to be rejected, but it was created successfully"
     );
 }
 

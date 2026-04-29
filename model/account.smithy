@@ -18,7 +18,7 @@ operation CreateAccount {
         origin_account_number: String
     }
     output := with [AccountMixin] {}
-    errors: [PurposeTypeNotFoundError, DuplicateAccountError]
+    errors: [PurposeTypeNotFoundError]
 }
 
 /// Get account metadata.
@@ -133,11 +133,3 @@ structure AccountNotActiveError {
     message: String
 }
 
-@error("client")
-@httpError(409)
-structure DuplicateAccountError {
-    @required
-    error: String
-    @required
-    message: String
-}

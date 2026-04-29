@@ -21,7 +21,6 @@ pub enum AppError {
         mcc: String,
         purpose_code: String,
     },
-    DuplicateAccount(String),
     TransactionNotFound(String),
     TransactionNotPending(String),
     FundingTypeRequired,
@@ -53,7 +52,6 @@ impl std::fmt::Display for AppError {
             Self::InvalidMcc { mcc, purpose_code } => {
                 write!(f, "MCC {mcc} not allowed for purpose {purpose_code}")
             }
-            Self::DuplicateAccount(msg) => write!(f, "Duplicate account: {msg}"),
             Self::TransactionNotFound(id) => write!(f, "Transaction not found: {id}"),
             Self::TransactionNotPending(id) => {
                 write!(f, "Transaction is not in pending state: {id}")
@@ -79,7 +77,6 @@ impl IntoResponse for AppError {
                 (StatusCode::UNPROCESSABLE_ENTITY, "InsufficientFunds")
             }
             AppError::InvalidMcc { .. } => (StatusCode::UNPROCESSABLE_ENTITY, "InvalidMcc"),
-            AppError::DuplicateAccount(_) => (StatusCode::CONFLICT, "DuplicateAccount"),
             AppError::TransactionNotFound(_) => (StatusCode::NOT_FOUND, "TransactionNotFound"),
             AppError::TransactionNotPending(_) => (StatusCode::CONFLICT, "TransactionNotPending"),
             AppError::FundingTypeRequired => (StatusCode::BAD_REQUEST, "FundingTypeRequired"),

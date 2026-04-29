@@ -47,8 +47,3 @@ Feature: Account Management
     And the account is closed
     When I attempt to deposit 1000 from IFSC "HDFC0005555" account "5555555555"
     Then the deposit should be rejected as account not active
-
-  Scenario: Reject duplicate account
-    Given a "health" account exists for holder "eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee" with origin IFSC "UTIB0003333" and account number "3333333333"
-    When I create a duplicate "health" account for holder "eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee" with origin IFSC "UTIB0003333" and account number "3333333333"
-    Then the duplicate should be rejected

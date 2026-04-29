@@ -27,20 +27,7 @@ async fn create_account_given(
             world.account_id = Some(output.id().to_string());
             world.last_account_status = Some(output.status().to_string());
         }
-        Err(e) => {
-            // If duplicate, the account already exists — this is fine for a Given step.
-            // We can't easily look it up by origin, so panic on non-duplicate errors.
-            let err_str = format!("{e:?}");
-            if !err_str.contains("DuplicateAccount") && !err_str.contains("409") {
-                panic!("Failed to create account: {e:?}");
-            }
-            // For duplicate, we need to find the existing account. Since we don't have
-            // a lookup-by-origin API, we'll panic with a helpful message.
-            panic!(
-                "Account already exists (duplicate). Tests must use unique origin bank details \
-                 per scenario, or the DB must be reset between runs. Error: {e:?}"
-            );
-        }
+        Err(e) => panic!("Failed to create account: {e:?}"),
     }
 }
 
@@ -71,28 +58,6 @@ async fn create_account_when(
         }
         Err(e) => panic!("Failed to create account: {e:?}"),
     }
-}
-
-#[when(
-    regex = r#"^I create a duplicate "([^"]*)" account for holder "([^"]*)" with origin IFSC "([^"]*)" and account number "([^"]*)"$"#
-)]
-async fn create_duplicate_account(
-    world: &mut PbaWorld,
-    purpose: String,
-    holder_id: String,
-    ifsc: String,
-    account_number: String,
-) {
-    let result = world
-        .client
-        .create_account()
-        .holder_id(&holder_id)
-        .purpose_code(&purpose)
-        .origin_ifsc(&ifsc)
-        .origin_account_number(&account_number)
-        .send()
-        .await;
-    world.duplicate_rejected = result.is_err();
 }
 
 #[then("the account should be created successfully")]
@@ -205,12 +170,4 @@ async fn given_account_frozen(world: &mut PbaWorld) {
 #[given("the account is closed")]
 async fn given_account_closed(world: &mut PbaWorld) {
     close_account(world).await;
-}
-
-#[then("the duplicate should be rejected")]
-async fn duplicate_rejected(world: &mut PbaWorld) {
-    assert!(
-        world.duplicate_rejected,
-        "Expected duplicate account to be rejected"
-    );
 }

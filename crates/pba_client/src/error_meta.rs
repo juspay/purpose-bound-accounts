@@ -12,8 +12,6 @@ pub enum Error {
     #[allow(missing_docs)] // documentation missing in model
     DepositNotPendingError(crate::types::error::DepositNotPendingError),
     #[allow(missing_docs)] // documentation missing in model
-    DuplicateAccountError(crate::types::error::DuplicateAccountError),
-    #[allow(missing_docs)] // documentation missing in model
     InsufficientFundsError(crate::types::error::InsufficientFundsError),
     #[allow(missing_docs)] // documentation missing in model
     InvalidMccError(crate::types::error::InvalidMccError),
@@ -35,7 +33,6 @@ impl ::std::fmt::Display for Error {
             Error::AccountNotFoundError(inner) => inner.fmt(f),
             Error::DepositNotFoundError(inner) => inner.fmt(f),
             Error::DepositNotPendingError(inner) => inner.fmt(f),
-            Error::DuplicateAccountError(inner) => inner.fmt(f),
             Error::InsufficientFundsError(inner) => inner.fmt(f),
             Error::InvalidMccError(inner) => inner.fmt(f),
             Error::PurposeTypeNotFoundError(inner) => inner.fmt(f),
@@ -59,7 +56,6 @@ impl ::aws_smithy_types::error::metadata::ProvideErrorMetadata for Error {
 Self::AccountNotFoundError(inner) => inner.meta(),
 Self::DepositNotFoundError(inner) => inner.meta(),
 Self::DepositNotPendingError(inner) => inner.meta(),
-Self::DuplicateAccountError(inner) => inner.meta(),
 Self::InsufficientFundsError(inner) => inner.meta(),
 Self::InvalidMccError(inner) => inner.meta(),
 Self::PurposeTypeNotFoundError(inner) => inner.meta(),
@@ -84,7 +80,6 @@ impl From<crate::operation::create_account::CreateAccountError> for Error {
     fn from(err: crate::operation::create_account::CreateAccountError) -> Self {
         match err {
             crate::operation::create_account::CreateAccountError::PurposeTypeNotFoundError(inner) => Error::PurposeTypeNotFoundError(inner),
-            crate::operation::create_account::CreateAccountError::DuplicateAccountError(inner) => Error::DuplicateAccountError(inner),
             crate::operation::create_account::CreateAccountError::Unhandled(inner) => Error::Unhandled(inner),
         }
     }
@@ -356,7 +351,6 @@ impl ::std::error::Error for Error {
             Error::AccountNotFoundError(inner) => inner.source(),
             Error::DepositNotFoundError(inner) => inner.source(),
             Error::DepositNotPendingError(inner) => inner.source(),
-            Error::DuplicateAccountError(inner) => inner.source(),
             Error::InsufficientFundsError(inner) => inner.source(),
             Error::InvalidMccError(inner) => inner.source(),
             Error::PurposeTypeNotFoundError(inner) => inner.source(),
