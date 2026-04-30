@@ -372,6 +372,19 @@ async fn do_pending_deposit(
     success
 }
 
+pub async fn create_pending_deposit_for_test(
+    world: &mut UiWorld,
+    amount: i64,
+    ifsc: &str,
+    account_number: &str,
+) {
+    let ok = do_pending_deposit(world, amount, ifsc, account_number, None).await;
+    assert!(
+        ok,
+        "Expected pending deposit to succeed in test setup but it stayed on the form page"
+    );
+}
+
 /// Extract the first pending deposit ID from the account detail page content.
 /// Looks for the Post form action URL pattern: /admin/accounts/{acct_id}/deposits/{deposit_id}/post
 fn extract_pending_deposit_id(content: &str, account_id: &str) -> Option<String> {

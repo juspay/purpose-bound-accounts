@@ -57,3 +57,10 @@ Feature: Admin UI
     And the transaction detail should show the account ID
     And the transaction detail should show amount "50.00"
     And the transaction detail should show type "Deposit"
+
+  Scenario: Posting a pending deposit from the detail page
+    Given a "health" account exists for holder "d7777777-7777-7777-7777-777777777777" with origin IFSC "HDFC0007777" and account number "7777700001"
+    And the account has a pending deposit of 5000 in the self-pool
+    When I view that pending deposit's detail page
+    And I click the Post button
+    Then the transaction detail status should be "posted"

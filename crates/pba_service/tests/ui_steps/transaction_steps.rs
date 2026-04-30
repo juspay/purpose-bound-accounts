@@ -90,3 +90,72 @@ async fn then_show_type(world: &mut UiWorld, expected: String) {
         snippet
     );
 }
+
+#[cucumber::given(regex = r"^the account has a pending deposit of (\d+) in the self-pool$")]
+async fn given_pending_self_deposit(world: &mut UiWorld, amount: i64) {
+    let origin_ifsc = world.origin_ifsc.clone().expect("origin IFSC missing");
+    let origin_acct = world
+        .origin_account_number
+        .clone()
+        .expect("origin account number missing");
+    crate::ui_steps::deposit_steps::create_pending_deposit_for_test(
+        world,
+        amount,
+        &origin_ifsc,
+        &origin_acct,
+    )
+    .await;
+}
+
+#[when("I view that pending deposit's detail page")]
+async fn when_view_pending_deposit_detail(world: &mut UiWorld) {
+    let deposit_id = world
+        .last_deposit_id
+        .clone()
+        .expect("no pending deposit id on world");
+    let url = world.url(&format!("/admin/transactions/{}", deposit_id));
+    let page = world.ensure_page().await;
+    page.goto(url)
+        .await
+        .expect("Failed to navigate to transaction detail");
+    sleep(Duration::from_millis(500)).await;
+}
+
+#[when("I click the Post button")]
+async fn when_click_post_button(world: &mut UiWorld) {
+    let page = world.ensure_page().await;
+    let js = r#"
+        (() => {
+            const form = document.querySelector("form[action$='/post']");
+            if (!form) throw new Error('Post form not found on detail page');
+            form.submit();
+        })();
+    "#;
+    page.evaluate(js).await.expect("Failed to click Post");
+    sleep(Duration::from_millis(800)).await;
+}
+
+#[then(regex = r#"^the transaction detail status should be "([^"]*)"$"#)]
+async fn then_detail_status(world: &mut UiWorld, expected: String) {
+    let content = current_page_content(world).await;
+    let marker = "Status:</strong>";
+    let idx = content
+        .find(marker)
+        .unwrap_or_else(|| panic!("`Status:` label not found on detail page"));
+    let after = &content[idx + marker.len()..];
+    if let Some(span_start) = after.find("<span") {
+        let span = &after[span_start..];
+        if let Some(gt) = span.find('>') {
+            let inner = &span[gt + 1..];
+            if let Some(end) = inner.find("</span>") {
+                let actual = inner[..end].trim();
+                assert_eq!(
+                    actual, expected,
+                    "transaction status mismatch on detail page"
+                );
+                return;
+            }
+        }
+    }
+    panic!("could not parse status from detail page snippet");
+}
