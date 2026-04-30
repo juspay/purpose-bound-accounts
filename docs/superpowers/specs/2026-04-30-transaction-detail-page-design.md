@@ -20,9 +20,9 @@ Add a per-transaction detail page in the admin UI that surfaces every field on a
 | Repository | Add `TransactionRepository::get_transaction(id) -> Result<TransactionRecord, AppError>` returning `AppError::NotFound` when absent. |
 | Handlers | Add `transaction_detail` (GET), `post_transaction` (POST), `void_transaction` (POST) in `src/admin/handlers.rs`. |
 | Template | Add `templates/admin/transaction_detail.html` extending `base.html`. |
-| Router | Add three routes under `/admin/transactions/{id}` in `src/admin/mod.rs`. |
+| Router | Add three routes under `/admin/transactions/{id}` in the admin module. As part of this work, also rename `src/admin/mod.rs` → `src/admin.rs` to match the file-per-module convention used everywhere else in `src/` (api, auth, domain, repository, service, db). |
 | Existing list pages | Make the timestamp cell in `templates/admin/transactions.html` and `templates/admin/transfers_fragment.html` a link to the new detail page. |
-| Tests | Unit tests for template render shaping; UI Cucumber e2e scenarios in `admin_ui.feature`. |
+| Tests | Unit tests for template render shaping; UI Cucumber e2e scenarios in `admin_ui.feature`. As part of this work, rename `tests/ui_steps/mod.rs` → `tests/ui_steps.rs` (same file-per-module cleanup; we are touching this file to register the new step module). `tests/steps/mod.rs` is left alone — out of scope for this spec. |
 
 ## Architecture
 
@@ -144,9 +144,10 @@ New step file `tests/ui_steps/transaction_steps.rs` (registered in `tests/ui_ste
 
 - `crates/pba_service/src/repository/transaction_repo.rs` — add `get_transaction`.
 - `crates/pba_service/src/admin/handlers.rs` — add three handlers + new template struct + unit tests.
-- `crates/pba_service/src/admin/mod.rs` — register three routes.
+- `crates/pba_service/src/admin.rs` — *renamed from `src/admin/mod.rs`*; register three routes.
 - `crates/pba_service/templates/admin/transaction_detail.html` — new file.
 - `crates/pba_service/templates/admin/transactions.html` — link timestamp cell.
 - `crates/pba_service/templates/admin/transfers_fragment.html` — link timestamp cell.
 - `crates/pba_service/tests/ui_features/admin_ui.feature` — three new scenarios.
-- `crates/pba_service/tests/ui_steps/transaction_steps.rs` — new file, registered in `mod.rs`.
+- `crates/pba_service/tests/ui_steps.rs` — *renamed from `tests/ui_steps/mod.rs`*; register the new `transaction_steps` module here.
+- `crates/pba_service/tests/ui_steps/transaction_steps.rs` — new file.
