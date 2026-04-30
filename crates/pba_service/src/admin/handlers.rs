@@ -991,9 +991,7 @@ pub async fn transaction_detail(
     let (holder_id, purpose_code) = match state.account_repo.get_account(txn.account_id).await {
         Ok(a) => (a.holder_id, a.purpose_code),
         Err(e) => {
-            tracing::warn!(
-                "Failed to load parent account for transaction {transaction_id}: {e}"
-            );
+            tracing::warn!("Failed to load parent account for transaction {transaction_id}: {e}");
             (dash.clone(), dash.clone())
         }
     };
