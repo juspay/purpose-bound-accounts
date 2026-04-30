@@ -709,6 +709,7 @@ struct TransactionsPageTemplate {
 }
 
 struct AllTransactionRow {
+    id: String,
     timestamp: String,
     account_id: String,
     account_id_short: String,
@@ -774,6 +775,7 @@ pub async fn transactions_page(
                 TransactionStatus::Voided => "status-closed",
             };
             AllTransactionRow {
+                id: t.id.to_string(),
                 timestamp: t.created_at.format("%Y-%m-%d %H:%M:%S").to_string(),
                 account_id: t.account_id.to_string(),
                 account_id_short: t.account_id.to_string()[..8].to_string(),

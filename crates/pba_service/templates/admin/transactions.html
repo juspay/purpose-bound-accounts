@@ -47,7 +47,7 @@
     <tbody>
         {% for t in &transactions %}
         <tr>
-            <td>{{ t.timestamp }}</td>
+            <td><a href="{{ prefix }}/admin/transactions/{{ t.id }}">{{ t.timestamp }}</a></td>
             <td><a href="{{ prefix }}/admin/accounts/{{ t.account_id }}">{{ t.account_id_short }}</a></td>
             <td>{{ t.transfer_type }}</td>
             <td class="{{ t.status_class }}">{{ t.status }}</td>
