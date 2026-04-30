@@ -375,6 +375,7 @@ struct TransfersFragmentTemplate {
 }
 
 struct TransferRow {
+    id: String,
     timestamp: String,
     transfer_type: String,
     direction: String,
@@ -427,6 +428,7 @@ pub async fn account_transfers_fragment(
         .map(|t| {
             let pool = if t.pool == "self" { "Self" } else { "Others" };
             TransferRow {
+                id: t.id.to_string(),
                 timestamp: t.created_at.format("%Y-%m-%d %H:%M:%S").to_string(),
                 transfer_type: t.type_label().to_string(),
                 direction: t.direction.label().to_string(),
