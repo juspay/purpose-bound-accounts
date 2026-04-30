@@ -21,7 +21,6 @@ pub enum AppError {
         mcc: String,
         purpose_code: String,
     },
-    DuplicateAccount(String),
     TransactionNotFound(String),
     TransactionNotPending(String),
     FundingTypeRequired,
@@ -32,6 +31,7 @@ pub enum AppError {
     DatabaseError(String),
     Unauthorized(String),
     Forbidden(String),
+    Validation(String),
 }
 
 impl std::fmt::Display for AppError {
@@ -52,7 +52,6 @@ impl std::fmt::Display for AppError {
             Self::InvalidMcc { mcc, purpose_code } => {
                 write!(f, "MCC {mcc} not allowed for purpose {purpose_code}")
             }
-            Self::DuplicateAccount(msg) => write!(f, "Duplicate account: {msg}"),
             Self::TransactionNotFound(id) => write!(f, "Transaction not found: {id}"),
             Self::TransactionNotPending(id) => {
                 write!(f, "Transaction is not in pending state: {id}")
@@ -63,6 +62,7 @@ impl std::fmt::Display for AppError {
             Self::DatabaseError(msg) => write!(f, "Database error: {msg}"),
             Self::Unauthorized(msg) => write!(f, "Unauthorized: {msg}"),
             Self::Forbidden(msg) => write!(f, "Forbidden: {msg}"),
+            Self::Validation(msg) => write!(f, "{msg}"),
         }
     }
 }
@@ -77,7 +77,6 @@ impl IntoResponse for AppError {
                 (StatusCode::UNPROCESSABLE_ENTITY, "InsufficientFunds")
             }
             AppError::InvalidMcc { .. } => (StatusCode::UNPROCESSABLE_ENTITY, "InvalidMcc"),
-            AppError::DuplicateAccount(_) => (StatusCode::CONFLICT, "DuplicateAccount"),
             AppError::TransactionNotFound(_) => (StatusCode::NOT_FOUND, "TransactionNotFound"),
             AppError::TransactionNotPending(_) => (StatusCode::CONFLICT, "TransactionNotPending"),
             AppError::FundingTypeRequired => (StatusCode::BAD_REQUEST, "FundingTypeRequired"),
@@ -88,6 +87,7 @@ impl IntoResponse for AppError {
             AppError::DatabaseError(_) => (StatusCode::INTERNAL_SERVER_ERROR, "DatabaseError"),
             AppError::Unauthorized(_) => (StatusCode::UNAUTHORIZED, "Unauthorized"),
             AppError::Forbidden(_) => (StatusCode::FORBIDDEN, "Forbidden"),
+            AppError::Validation(_) => (StatusCode::BAD_REQUEST, "ValidationError"),
         };
 
         let body = ErrorBody {
@@ -102,5 +102,11 @@ impl IntoResponse for AppError {
 impl From<sqlx::Error> for AppError {
     fn from(err: sqlx::Error) -> Self {
         AppError::DatabaseError(err.to_string())
+    }
+}
+
+impl From<crate::domain::banking::BankingValidationError> for AppError {
+    fn from(err: crate::domain::banking::BankingValidationError) -> Self {
+        AppError::Validation(err.to_string())
     }
 }

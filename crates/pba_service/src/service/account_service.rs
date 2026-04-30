@@ -2,6 +2,7 @@ use std::sync::Arc;
 use uuid::Uuid;
 
 use crate::domain::account::{tb_others_id, tb_self_id, AccountStatus, PurposeBoundAccount};
+use crate::domain::banking::{AccountNumber, Ifsc};
 use crate::error::AppError;
 use crate::repository::account_repo::AccountRepo;
 use crate::repository::ledger_repo::LedgerRepo;
@@ -21,10 +22,10 @@ impl AccountService {
 
     pub async fn create_account(
         &self,
-        holder_id: Uuid,
+        holder_id: &str,
         purpose_code: &str,
-        origin_ifsc: &str,
-        origin_account_number: &str,
+        origin_ifsc: &Ifsc,
+        origin_account_number: &AccountNumber,
     ) -> Result<PurposeBoundAccount, AppError> {
         // Validate purpose code exists
         self.account_repo.get_purpose_type(purpose_code).await?;

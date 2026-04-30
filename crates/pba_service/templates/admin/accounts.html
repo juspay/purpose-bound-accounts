@@ -21,13 +21,13 @@
 <div class="success-box">{{ msg }}</div>
 {% endif %}
 
-<details id="new-account-panel">
+<details id="new-account-panel"{% if error.is_some() || success.is_some() %} open{% endif %}>
     <summary>Create a new account</summary>
     <article>
         <form method="post" action="{{ prefix }}/admin/accounts">
             <div class="grid">
-                <label>Holder ID (UUID)
-                    <input type="text" name="holder_id" placeholder="aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee" required>
+                <label>Holder ID
+                    <input type="text" name="holder_id" placeholder="External account reference" maxlength="255" required>
                 </label>
                 <label>Purpose
                     <select name="purpose_code" required>

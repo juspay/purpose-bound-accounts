@@ -2,6 +2,7 @@ use sqlx::PgPool;
 use uuid::Uuid;
 
 use crate::domain::account::{AccountStatus, PurposeBoundAccount};
+use crate::domain::banking::{AccountNumber, Ifsc};
 use crate::domain::purpose::{MccEntry, PurposeType};
 use crate::error::AppError;
 
@@ -18,10 +19,10 @@ impl AccountRepo {
     pub async fn create_account(
         &self,
         id: Uuid,
-        holder_id: Uuid,
+        holder_id: &str,
         purpose_code: &str,
-        origin_ifsc: &str,
-        origin_account_number: &str,
+        origin_ifsc: &Ifsc,
+        origin_account_number: &AccountNumber,
         tb_self_account_id: u128,
         tb_others_account_id: u128,
     ) -> Result<PurposeBoundAccount, AppError> {
@@ -49,16 +50,7 @@ impl AccountRepo {
         .bind(&tb_self_str)
         .bind(&tb_others_str)
         .fetch_one(&self.pool)
-        .await
-        .map_err(|e| {
-            if is_unique_violation(&e) {
-                AppError::DuplicateAccount(format!(
-                    "Account already exists for origin {origin_ifsc}/{origin_account_number} with purpose {purpose_code}"
-                ))
-            } else {
-                AppError::DatabaseError(e.to_string())
-            }
-        })?;
+        .await?;
 
         Ok(row.into_domain())
     }
@@ -217,13 +209,13 @@ impl AccountRepo {
 #[derive(sqlx::FromRow)]
 struct AccountRow {
     id: Uuid,
-    holder_id: Uuid,
+    holder_id: String,
     purpose_code: String,
-    origin_ifsc: String,
-    origin_account_number: String,
+    origin_ifsc: Ifsc,
+    origin_account_number: AccountNumber,
     vpa: Option<String>,
-    virtual_ifsc: Option<String>,
-    virtual_account_number: Option<String>,
+    virtual_ifsc: Option<Ifsc>,
+    virtual_account_number: Option<AccountNumber>,
     tb_self_account_id: String,
     tb_others_account_id: String,
     kyc_tier: String,
@@ -281,12 +273,4 @@ fn group_by_purpose(rows: Vec<MccRow>) -> Vec<PurposeType> {
             allowed_mccs,
         })
         .collect()
-}
-
-fn is_unique_violation(err: &sqlx::Error) -> bool {
-    if let sqlx::Error::Database(db_err) = err {
-        db_err.code().as_deref() == Some("23505")
-    } else {
-        false
-    }
 }

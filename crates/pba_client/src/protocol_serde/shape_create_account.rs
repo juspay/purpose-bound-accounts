@@ -24,19 +24,6 @@ pub fn de_create_account_http_error(_response_status: u16, _response_headers: &:
             ;
             tmp
         }),
-        "DuplicateAccountError" => crate::operation::create_account::CreateAccountError::DuplicateAccountError({
-            #[allow(unused_mut)]
-            let mut tmp =
-                 {
-                    #[allow(unused_mut)]
-                    let mut output = crate::types::error::builders::DuplicateAccountErrorBuilder::default();
-                    output = crate::protocol_serde::shape_duplicate_account_error::de_duplicate_account_error_json_err(_response_body, output).map_err(crate::operation::create_account::CreateAccountError::unhandled)?;
-                    let output = output.meta(generic);
-                    crate::serde_util::duplicate_account_error_correct_errors(output).build().map_err(crate::operation::create_account::CreateAccountError::unhandled)?
-                }
-            ;
-            tmp
-        }),
         _ => crate::operation::create_account::CreateAccountError::generic(generic)
     })
 }
