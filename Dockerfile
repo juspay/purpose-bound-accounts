@@ -41,7 +41,7 @@ COPY --from=builder /src/target/release/pba-service /usr/local/bin/pba-service
 
 ENV HOST=0.0.0.0
 ENV PORT=3030
-ENV RUST_LOG=pba_service=info
+ENV RUST_LOG=pba_service=info,tower_http=info
 
 EXPOSE ${PORT}
 

@@ -9,7 +9,7 @@ on:
 
 env:
   CARGO_TERM_COLOR: always
-  RUST_LOG: pba_service=debug
+  RUST_LOG: pba_service=debug,tower_http=info
   DB_HOST: localhost
   DB_PORT: "5432"
   DB_USER: postgres
