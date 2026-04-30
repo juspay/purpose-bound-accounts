@@ -182,7 +182,7 @@
 <ol>
     <li><strong>Funding source differentiation</strong> &mdash; Self (auto-detected from origin bank), trust, and third-party deposits are tracked separately and routed to the correct pool.</li>
     <li><strong>Others-first payment splitting</strong> &mdash; Payments drain the others pool (trust + third-party) before touching the self pool, maximising use of contributed funds.</li>
-    <li><strong>MCC validation</strong> &mdash; All payments go to MCC 8062 (hospitals/health insurance), within the allowed set for health-purpose accounts.</li>
+    <li><strong>MCC validation</strong> &mdash; All payments go to MCC 8062 (hospitals), within the allowed set for health-purpose accounts. The allowlist also covers doctors, pharmacies, labs, and insurance premiums (MCCs 6300, 5960).</li>
     <li><strong>Double-entry integrity</strong> &mdash; Every deposit creates a transfer from a sentinel funding source to the PBA pool. Every payment transfers from the PBA pool to merchant settlement. The system always balances.</li>
     <li><strong>Multi-source others pool</strong> &mdash; Account 2 shows trust and third-party funds co-existing in the same others pool, both consumed before self funds.</li>
     <li><strong>Tangible benefit of contributions</strong> &mdash; Account 2's four third-party deposits (Rs 20) directly preserved Rs 20 in the holder's self pool.</li>
