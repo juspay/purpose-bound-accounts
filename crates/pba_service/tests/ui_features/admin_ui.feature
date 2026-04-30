@@ -48,3 +48,12 @@ Feature: Admin UI
   Scenario: Transactions page shows funding type column
     When I visit the all transactions page
     Then I should see "Funding Type" on the page
+
+  Scenario: Transaction detail page shows all fields
+    Given a "health" account exists for holder "d6666666-6666-6666-6666-666666666666" with origin IFSC "HDFC0006666" and account number "6666600001"
+    And the account has 5000 in self-pool and 0 in others-pool
+    When I view the most recent transaction's detail page
+    Then the transaction detail should show the transaction ID
+    And the transaction detail should show the account ID
+    And the transaction detail should show amount "50.00"
+    And the transaction detail should show type "Deposit"
