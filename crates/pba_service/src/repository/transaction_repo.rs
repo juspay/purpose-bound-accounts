@@ -236,6 +236,26 @@ impl TransactionRepo {
         Ok(row.into_domain())
     }
 
+    pub async fn get_transaction(&self, id: Uuid) -> Result<TransactionRecord, AppError> {
+        let row = sqlx::query_as::<_, TransactionRow>(
+            r#"
+            SELECT id, account_id, type, status, amount, pool, direction,
+                   source_ifsc, source_account, gateway_ref, timeout_seconds,
+                   merchant_id, merchant_mcc, description, funding_type,
+                   tb_transfer_id::text as tb_transfer_id, idempotency_key,
+                   created_at, updated_at
+            FROM transactions
+            WHERE id = $1
+            "#,
+        )
+        .bind(id)
+        .fetch_optional(&self.pool)
+        .await?
+        .ok_or_else(|| AppError::TransactionNotFound(id.to_string()))?;
+
+        Ok(row.into_domain())
+    }
+
     pub async fn find_by_idempotency_key(
         &self,
         account_id: Uuid,
