@@ -964,3 +964,155 @@ struct TransactionDetailTemplate {
     is_withdrawal: bool,
     can_post_or_void: bool,
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use askama::Template;
+
+    fn deposit_pending_fixture() -> TransactionDetailTemplate {
+        TransactionDetailTemplate {
+            prefix: "".to_string(),
+            id: "11111111-1111-1111-1111-111111111111".to_string(),
+            id_short: "11111111".to_string(),
+            account_id: "22222222-2222-2222-2222-222222222222".to_string(),
+            holder_id: "holder-xyz".to_string(),
+            purpose_code: "health".to_string(),
+            tb_transfer_id: "9999999999".to_string(),
+            idempotency_key: "idem-123".to_string(),
+            transaction_type_label: "Deposit (Pending)".to_string(),
+            status: "pending".to_string(),
+            status_class: "status-frozen".to_string(),
+            direction: "Inbound".to_string(),
+            direction_class: "inbound".to_string(),
+            pool: "Self".to_string(),
+            funding_type: "origin".to_string(),
+            amount: "50.00".to_string(),
+            source_ifsc: "HDFC0001234".to_string(),
+            source_account: "1234567890".to_string(),
+            gateway_ref: "gw-ref-77".to_string(),
+            merchant_id: "—".to_string(),
+            merchant_mcc: "—".to_string(),
+            description: "—".to_string(),
+            created_at: "2026-04-30 12:00:00".to_string(),
+            updated_at: "2026-04-30 12:00:00".to_string(),
+            timeout_seconds: "—".to_string(),
+            is_deposit: true,
+            is_payment: false,
+            is_withdrawal: false,
+            can_post_or_void: true,
+        }
+    }
+
+    fn payment_posted_fixture() -> TransactionDetailTemplate {
+        TransactionDetailTemplate {
+            prefix: "".to_string(),
+            id: "33333333-3333-3333-3333-333333333333".to_string(),
+            id_short: "33333333".to_string(),
+            account_id: "22222222-2222-2222-2222-222222222222".to_string(),
+            holder_id: "holder-xyz".to_string(),
+            purpose_code: "health".to_string(),
+            tb_transfer_id: "8888888888".to_string(),
+            idempotency_key: "—".to_string(),
+            transaction_type_label: "Payment".to_string(),
+            status: "posted".to_string(),
+            status_class: "status-active".to_string(),
+            direction: "Outbound".to_string(),
+            direction_class: "outbound".to_string(),
+            pool: "Others".to_string(),
+            funding_type: "—".to_string(),
+            amount: "12.34".to_string(),
+            source_ifsc: "—".to_string(),
+            source_account: "—".to_string(),
+            gateway_ref: "—".to_string(),
+            merchant_id: "MERCH-1".to_string(),
+            merchant_mcc: "8011".to_string(),
+            description: "Doctor visit".to_string(),
+            created_at: "2026-04-30 12:00:00".to_string(),
+            updated_at: "2026-04-30 12:00:00".to_string(),
+            timeout_seconds: "—".to_string(),
+            is_deposit: false,
+            is_payment: true,
+            is_withdrawal: false,
+            can_post_or_void: false,
+        }
+    }
+
+    #[test]
+    fn renders_all_deposit_fields() {
+        let html = deposit_pending_fixture().render().expect("render");
+        for needle in [
+            "11111111-1111-1111-1111-111111111111",
+            "22222222-2222-2222-2222-222222222222",
+            "holder-xyz",
+            "health",
+            "9999999999",
+            "idem-123",
+            "Deposit (Pending)",
+            "pending",
+            "Inbound",
+            "Self",
+            "origin",
+            "50.00",
+            "HDFC0001234",
+            "1234567890",
+            "gw-ref-77",
+        ] {
+            assert!(
+                html.contains(needle),
+                "expected `{}` in rendered HTML, got:\n{}",
+                needle,
+                html
+            );
+        }
+    }
+
+    #[test]
+    fn shows_post_and_void_when_pending_deposit() {
+        let html = deposit_pending_fixture().render().expect("render");
+        assert!(
+            html.contains("/admin/transactions/11111111-1111-1111-1111-111111111111/post"),
+            "expected Post form action in HTML:\n{}",
+            html
+        );
+        assert!(
+            html.contains("/admin/transactions/11111111-1111-1111-1111-111111111111/void"),
+            "expected Void form action in HTML:\n{}",
+            html
+        );
+    }
+
+    #[test]
+    fn hides_actions_when_not_pending() {
+        let html = payment_posted_fixture().render().expect("render");
+        assert!(
+            !html.contains("/post"),
+            "did not expect Post form when can_post_or_void is false:\n{}",
+            html
+        );
+        assert!(
+            !html.contains("/void"),
+            "did not expect Void form when can_post_or_void is false:\n{}",
+            html
+        );
+    }
+
+    #[test]
+    fn renders_merchant_section_for_payment() {
+        let html = payment_posted_fixture().render().expect("render");
+        assert!(html.contains("MERCH-1"), "merchant_id missing: {}", html);
+        assert!(html.contains("8011"), "merchant_mcc missing: {}", html);
+        assert!(
+            html.contains("Doctor visit"),
+            "description missing: {}",
+            html
+        );
+        // For a payment, source IFSC value should not appear (we render "—"
+        // for the absent source fields, so check the original value isn't there).
+        assert!(
+            !html.contains("HDFC0001234"),
+            "payment should not show deposit-only source IFSC: {}",
+            html
+        );
+    }
+}
