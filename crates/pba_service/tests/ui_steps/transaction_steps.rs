@@ -159,3 +159,23 @@ async fn then_detail_status(world: &mut UiWorld, expected: String) {
     }
     panic!("could not parse status from detail page snippet");
 }
+
+#[then("the Post button should not be visible")]
+async fn then_post_not_visible(world: &mut UiWorld) {
+    let content = current_page_content(world).await;
+    assert!(
+        !content.contains("/post\""),
+        "did not expect Post form on this detail page; snippet: {}",
+        &content[..content.len().min(400)]
+    );
+}
+
+#[then("the Void button should not be visible")]
+async fn then_void_not_visible(world: &mut UiWorld) {
+    let content = current_page_content(world).await;
+    assert!(
+        !content.contains("/void\""),
+        "did not expect Void form on this detail page; snippet: {}",
+        &content[..content.len().min(400)]
+    );
+}

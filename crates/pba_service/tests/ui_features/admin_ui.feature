@@ -64,3 +64,10 @@ Feature: Admin UI
     When I view that pending deposit's detail page
     And I click the Post button
     Then the transaction detail status should be "posted"
+
+  Scenario: Detail page hides Post and Void for posted transactions
+    Given a "health" account exists for holder "d8888888-8888-8888-8888-888888888888" with origin IFSC "HDFC0008888" and account number "8888800001"
+    And the account has 5000 in self-pool and 0 in others-pool
+    When I view the most recent transaction's detail page
+    Then the Post button should not be visible
+    And the Void button should not be visible
