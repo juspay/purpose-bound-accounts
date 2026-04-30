@@ -1,0 +1,103 @@
+{% extends "base.html" %}
+
+{% block title %}Transaction {{ id_short }} - PBA Admin{% endblock %}
+
+{% block content %}
+<h1>Transaction {{ id_short }}</h1>
+
+<p><a href="{{ prefix }}/admin/transactions" role="button" class="outline">&larr; Back to all transactions</a></p>
+
+<article>
+    <header><strong>Identity</strong></header>
+    <div class="grid">
+        <div>
+            <p><strong>Transaction ID:</strong> {{ id }}</p>
+            <p><strong>Account ID:</strong> <a href="{{ prefix }}/admin/accounts/{{ account_id }}">{{ account_id }}</a></p>
+            <p><strong>Holder ID:</strong> {{ holder_id }}</p>
+            <p><strong>Purpose:</strong> {{ purpose_code }}</p>
+        </div>
+        <div>
+            <p><strong>TigerBeetle Transfer ID:</strong> {{ tb_transfer_id }}</p>
+            <p><strong>Idempotency Key:</strong> {{ idempotency_key }}</p>
+        </div>
+    </div>
+</article>
+
+<article>
+    <header><strong>Classification</strong></header>
+    <div class="grid">
+        <div>
+            <p><strong>Type:</strong> {{ transaction_type_label }}</p>
+            <p><strong>Status:</strong> <span class="{{ status_class }}">{{ status }}</span></p>
+            <p><strong>Direction:</strong> <span class="{{ direction_class }}">{{ direction }}</span></p>
+        </div>
+        <div>
+            <p><strong>Pool:</strong> {{ pool }}</p>
+            <p><strong>Funding Type:</strong> {{ funding_type }}</p>
+        </div>
+    </div>
+</article>
+
+<article>
+    <header><strong>Amount</strong></header>
+    <p style="font-size: 1.5rem;"><strong>₹{{ amount }}</strong></p>
+</article>
+
+{% if is_deposit %}
+<article>
+    <header><strong>Source</strong></header>
+    <div class="grid">
+        <div>
+            <p><strong>Source IFSC:</strong> {{ source_ifsc }}</p>
+            <p><strong>Source Account:</strong> {{ source_account }}</p>
+        </div>
+        <div>
+            <p><strong>Gateway Ref:</strong> {{ gateway_ref }}</p>
+        </div>
+    </div>
+</article>
+{% else if is_payment %}
+<article>
+    <header><strong>Merchant</strong></header>
+    <div class="grid">
+        <div>
+            <p><strong>Merchant ID:</strong> {{ merchant_id }}</p>
+            <p><strong>Merchant MCC:</strong> {{ merchant_mcc }}</p>
+        </div>
+        <div>
+            <p><strong>Description:</strong> {{ description }}</p>
+        </div>
+    </div>
+</article>
+{% else if is_withdrawal %}
+<article>
+    <header><strong>Source / Merchant</strong></header>
+    <p>Withdrawals have no external source or merchant.</p>
+</article>
+{% endif %}
+
+<article>
+    <header><strong>Timing</strong></header>
+    <div class="grid">
+        <div>
+            <p><strong>Created:</strong> {{ created_at }}</p>
+            <p><strong>Updated:</strong> {{ updated_at }}</p>
+        </div>
+        <div>
+            <p><strong>Timeout (seconds):</strong> {{ timeout_seconds }}</p>
+        </div>
+    </div>
+</article>
+
+{% if can_post_or_void %}
+<article>
+    <header><strong>Actions</strong></header>
+    <form method="post" action="{{ prefix }}/admin/transactions/{{ id }}/post" class="inline-form">
+        <button type="submit" class="outline" style="color: #2e7d32; border-color: #2e7d32;">Post</button>
+    </form>
+    <form method="post" action="{{ prefix }}/admin/transactions/{{ id }}/void" class="inline-form">
+        <button type="submit" class="outline" style="color: #c62828; border-color: #c62828;">Void</button>
+    </form>
+</article>
+{% endif %}
+{% endblock %}

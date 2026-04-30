@@ -933,6 +933,8 @@ pub async fn purpose_types_page(State(state): State<AppState>) -> Response {
     })
 }
 
+#[derive(Template)]
+#[template(path = "admin/transaction_detail.html")]
 struct TransactionDetailTemplate {
     prefix: String,
     id: String,
