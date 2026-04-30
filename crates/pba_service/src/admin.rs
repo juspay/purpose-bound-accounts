@@ -53,6 +53,10 @@ pub fn create_router() -> Router<AppState> {
         )
         .route("/admin/transactions", get(handlers::transactions_page))
         .route(
+            "/admin/transactions/{transaction_id}",
+            get(handlers::transaction_detail),
+        )
+        .route(
             "/admin/system-accounts",
             get(handlers::system_accounts_page),
         )

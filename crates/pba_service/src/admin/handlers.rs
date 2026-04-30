@@ -967,6 +967,124 @@ struct TransactionDetailTemplate {
     can_post_or_void: bool,
 }
 
+pub async fn transaction_detail(
+    State(state): State<AppState>,
+    Path(transaction_id): Path<Uuid>,
+) -> Response {
+    let txn = match state.transaction_repo.get_transaction(transaction_id).await {
+        Ok(t) => t,
+        Err(crate::error::AppError::TransactionNotFound(_)) => {
+            return (StatusCode::NOT_FOUND, "Transaction not found").into_response();
+        }
+        Err(e) => {
+            tracing::error!("Failed to get transaction: {e}");
+            return (StatusCode::INTERNAL_SERVER_ERROR, "Database error").into_response();
+        }
+    };
+
+    let dash = "—".to_string();
+
+    let (holder_id, purpose_code) = match state.account_repo.get_account(txn.account_id).await {
+        Ok(a) => (a.holder_id, a.purpose_code),
+        Err(e) => {
+            tracing::warn!(
+                "Failed to load parent account for transaction {transaction_id}: {e}"
+            );
+            (dash.clone(), dash.clone())
+        }
+    };
+
+    let id_str = txn.id.to_string();
+    let id_short = id_str.chars().take(8).collect::<String>();
+
+    let status_class = match txn.status {
+        TransactionStatus::Pending => "status-frozen",
+        TransactionStatus::Posted | TransactionStatus::Settled => "status-active",
+        TransactionStatus::Voided => "status-closed",
+    }
+    .to_string();
+
+    let pool = if txn.pool == "self" {
+        "Self".to_string()
+    } else {
+        "Others".to_string()
+    };
+
+    let can_post_or_void = matches!(
+        txn.transaction_type,
+        crate::domain::transaction::TransactionType::Deposit
+    ) && matches!(txn.status, TransactionStatus::Pending);
+
+    // Collect all non-ownership-taking fields first
+    let transaction_type_label = txn.type_label().to_string();
+    let status = txn.status.as_str().to_string();
+    let direction = txn.direction.label().to_string();
+    let direction_class = txn.direction.css_class().to_string();
+    let amount = txn.amount_display();
+    let created_at = txn.created_at.format("%Y-%m-%d %H:%M:%S").to_string();
+    let updated_at = txn.updated_at.format("%Y-%m-%d %H:%M:%S").to_string();
+    let is_deposit = matches!(
+        txn.transaction_type,
+        crate::domain::transaction::TransactionType::Deposit
+    );
+    let is_payment = matches!(
+        txn.transaction_type,
+        crate::domain::transaction::TransactionType::Payment
+    );
+    let is_withdrawal = matches!(
+        txn.transaction_type,
+        crate::domain::transaction::TransactionType::Withdrawal
+    );
+
+    // Now do the ownership-taking operations
+    let account_id = txn.account_id.to_string();
+    let tb_transfer_id = txn.tb_transfer_id.to_string();
+    let idempotency_key = txn.idempotency_key.unwrap_or_else(|| dash.clone());
+    let funding_type = txn.funding_type.unwrap_or_else(|| dash.clone());
+    let source_ifsc = txn.source_ifsc.unwrap_or_else(|| dash.clone());
+    let source_account = txn.source_account.unwrap_or_else(|| dash.clone());
+    let gateway_ref = txn.gateway_ref.unwrap_or_else(|| dash.clone());
+    let merchant_id = txn.merchant_id.unwrap_or_else(|| dash.clone());
+    let merchant_mcc = txn.merchant_mcc.unwrap_or_else(|| dash.clone());
+    let description = txn.description.unwrap_or_else(|| dash.clone());
+    let timeout_seconds = txn
+        .timeout_seconds
+        .map(|s| s.to_string())
+        .unwrap_or_else(|| dash.clone());
+
+    render(TransactionDetailTemplate {
+        prefix: state.path_prefix.clone(),
+        id: id_str,
+        id_short,
+        account_id,
+        holder_id,
+        purpose_code,
+        tb_transfer_id,
+        idempotency_key,
+        transaction_type_label,
+        status,
+        status_class,
+        direction,
+        direction_class,
+        pool,
+        funding_type,
+        amount,
+        source_ifsc,
+        source_account,
+        gateway_ref,
+        merchant_id,
+        merchant_mcc,
+        description,
+        created_at,
+        updated_at,
+        timeout_seconds,
+        is_deposit,
+        is_payment,
+        is_withdrawal,
+        can_post_or_void,
+    })
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
