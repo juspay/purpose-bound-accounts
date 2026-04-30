@@ -57,6 +57,14 @@ pub fn create_router() -> Router<AppState> {
             get(handlers::transaction_detail),
         )
         .route(
+            "/admin/transactions/{transaction_id}/post",
+            axum::routing::post(handlers::post_transaction),
+        )
+        .route(
+            "/admin/transactions/{transaction_id}/void",
+            axum::routing::post(handlers::void_transaction),
+        )
+        .route(
             "/admin/system-accounts",
             get(handlers::system_accounts_page),
         )

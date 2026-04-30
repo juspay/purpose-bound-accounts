@@ -1085,6 +1085,50 @@ pub async fn transaction_detail(
     })
 }
 
+pub async fn post_transaction(
+    State(state): State<AppState>,
+    Path(transaction_id): Path<Uuid>,
+) -> Response {
+    let txn = match state.transaction_repo.get_transaction(transaction_id).await {
+        Ok(t) => t,
+        Err(_) => return (StatusCode::NOT_FOUND, "Transaction not found").into_response(),
+    };
+    if let Err(e) = state
+        .deposit_service
+        .post_deposit(txn.account_id, transaction_id)
+        .await
+    {
+        tracing::error!("Failed to post deposit from detail page: {e}");
+    }
+    Redirect::to(&prefixed(
+        &state,
+        &format!("/admin/transactions/{transaction_id}"),
+    ))
+    .into_response()
+}
+
+pub async fn void_transaction(
+    State(state): State<AppState>,
+    Path(transaction_id): Path<Uuid>,
+) -> Response {
+    let txn = match state.transaction_repo.get_transaction(transaction_id).await {
+        Ok(t) => t,
+        Err(_) => return (StatusCode::NOT_FOUND, "Transaction not found").into_response(),
+    };
+    if let Err(e) = state
+        .deposit_service
+        .void_deposit(txn.account_id, transaction_id, None)
+        .await
+    {
+        tracing::error!("Failed to void deposit from detail page: {e}");
+    }
+    Redirect::to(&prefixed(
+        &state,
+        &format!("/admin/transactions/{transaction_id}"),
+    ))
+    .into_response()
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
