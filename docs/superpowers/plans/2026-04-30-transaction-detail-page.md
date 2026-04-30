@@ -4,7 +4,7 @@
 
 **Goal:** Add `/admin/transactions/{id}` — a per-transaction detail page that displays every field on `TransactionRecord` plus contextual account info, with Post/Void actions for pending deposits, linked from existing list pages.
 
-**Architecture:** Server-rendered askama page mirroring the `/admin/accounts/{id}` pattern. New repository method `get`, new template, three new admin handlers (detail, post, void), three new routes. Existing per-account Post/Void endpoints stay untouched. Folded in as cleanup: rename `src/admin/mod.rs` → `src/admin.rs` and `tests/ui_steps/mod.rs` → `tests/ui_steps.rs` (the file-per-module convention used everywhere else in the crate).
+**Architecture:** Server-rendered askama page mirroring the `/admin/accounts/{id}` pattern. New repository method `get`, new template, three new admin handlers (detail, post, void), three new routes. Existing per-account Post/Void endpoints stay untouched. Folded in as cleanup: rename `src/admin/mod.rs` → `src/admin.rs` (the file-per-module convention used everywhere else in `src/`). `tests/ui_steps/mod.rs` is left as-is — Cargo auto-discovers every `.rs` directly under `tests/` as its own integration-test target, so collapsing the directory would break the build.
 
 **Tech Stack:** Rust, axum 0.8, askama 0.13, sqlx (Postgres), tokio, cucumber + chromiumoxide for UI e2e.
 
@@ -23,8 +23,7 @@
 | `crates/pba_service/templates/admin/transaction_detail.html` | Create | New template. |
 | `crates/pba_service/templates/admin/transactions.html` | Modify | Wrap timestamp cell in a link to the detail page. |
 | `crates/pba_service/templates/admin/transfers_fragment.html` | Modify | Wrap timestamp cell in a link to the detail page. |
-| `crates/pba_service/tests/ui_steps.rs` | Move (was `tests/ui_steps/mod.rs`) | Re-exports step modules; gains `pub mod transaction_steps;`. |
-| `crates/pba_service/tests/ui_steps/mod.rs` | **Delete** (after move) | — |
+| `crates/pba_service/tests/ui_steps/mod.rs` | Modify | Re-exports step modules; gains `pub mod transaction_steps;`. |
 | `crates/pba_service/tests/ui_steps/transaction_steps.rs` | Create | UI cucumber steps for the new scenarios. |
 | `crates/pba_service/tests/ui_features/admin_ui.feature` | Modify | Add 3 new scenarios. |
 
@@ -893,46 +892,18 @@ Co-Authored-By: Claude Opus 4.7 <noreply@anthropic.com>"
 
 ---
 
-## Task 10: Rename `tests/ui_steps/mod.rs` → `tests/ui_steps.rs`
-
-**Files:**
-- Move: `crates/pba_service/tests/ui_steps/mod.rs` → `crates/pba_service/tests/ui_steps.rs`
-
-- [ ] **Step 1: Move the file**
-
-```bash
-cd /Users/natarajankannan/src/purpose-bound-accounts
-git mv crates/pba_service/tests/ui_steps/mod.rs crates/pba_service/tests/ui_steps.rs
-```
-
-- [ ] **Step 2: Verify the test target still compiles**
-
-Run: `cargo test -p pba-service --test ui_e2e --no-run`
-Expected: compiles successfully.
-
-- [ ] **Step 3: Commit**
-
-```bash
-git add -A
-git commit -m "refactor: rename ui_steps/mod.rs → ui_steps.rs (file-per-module style)
-
-Co-Authored-By: Claude Opus 4.7 <noreply@anthropic.com>"
-```
-
----
-
 ## Task 11: Add `transaction_steps.rs` and the first cucumber scenario
 
 This task introduces the new step file, registers it, and adds the first scenario: viewing the most recent transaction's detail page.
 
 **Files:**
 - Create: `crates/pba_service/tests/ui_steps/transaction_steps.rs`
-- Modify: `crates/pba_service/tests/ui_steps.rs` (register module)
+- Modify: `crates/pba_service/tests/ui_steps/mod.rs` (register module)
 - Modify: `crates/pba_service/tests/ui_features/admin_ui.feature` (add scenario)
 
 - [ ] **Step 1: Register the new step module**
 
-In `crates/pba_service/tests/ui_steps.rs`, change:
+In `crates/pba_service/tests/ui_steps/mod.rs`, change:
 
 ```rust
 pub mod account_steps;
@@ -1087,7 +1058,7 @@ Expected: all scenarios including the new one pass.
 - [ ] **Step 6: Commit**
 
 ```bash
-git add crates/pba_service/tests/ui_steps.rs crates/pba_service/tests/ui_steps/transaction_steps.rs crates/pba_service/tests/ui_features/admin_ui.feature
+git add crates/pba_service/tests/ui_steps/mod.rs crates/pba_service/tests/ui_steps/transaction_steps.rs crates/pba_service/tests/ui_features/admin_ui.feature
 git commit -m "test(ui): scenario for transaction detail page rendering all fields
 
 Co-Authored-By: Claude Opus 4.7 <noreply@anthropic.com>"
