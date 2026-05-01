@@ -69,7 +69,7 @@ async fn main() {
     tracing_subscriber::fmt()
         .with_env_filter(
             tracing_subscriber::EnvFilter::try_from_default_env()
-                .unwrap_or_else(|_| "pba_service=info".into()),
+                .unwrap_or_else(|_| "pba_service=info,tower_http=info".into()),
         )
         .init();
 
@@ -210,6 +210,14 @@ async fn main() {
     } else {
         Router::new().nest(&path_prefix, inner)
     };
+
+    use tower_http::trace::{DefaultMakeSpan, DefaultOnRequest, DefaultOnResponse, TraceLayer};
+    let app = app.layer(
+        TraceLayer::new_for_http()
+            .make_span_with(DefaultMakeSpan::new().level(tracing::Level::INFO))
+            .on_request(DefaultOnRequest::new().level(tracing::Level::INFO))
+            .on_response(DefaultOnResponse::new().level(tracing::Level::INFO)),
+    );
 
     let addr = format!("{}:{}", config.host, config.port);
     tracing::info!("Starting PBA service on {addr}");

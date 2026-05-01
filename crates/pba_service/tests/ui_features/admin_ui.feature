@@ -48,3 +48,26 @@ Feature: Admin UI
   Scenario: Transactions page shows funding type column
     When I visit the all transactions page
     Then I should see "Funding Type" on the page
+
+  Scenario: Transaction detail page shows all fields
+    Given a "health" account exists for holder "d6666666-6666-6666-6666-666666666666" with origin IFSC "HDFC0006666" and account number "6666600001"
+    And the account has 5000 in self-pool and 0 in others-pool
+    When I view the most recent transaction's detail page
+    Then the transaction detail should show the transaction ID
+    And the transaction detail should show the account ID
+    And the transaction detail should show amount "50.00"
+    And the transaction detail should show type "Deposit"
+
+  Scenario: Posting a pending deposit from the detail page
+    Given a "health" account exists for holder "d7777777-7777-7777-7777-777777777777" with origin IFSC "HDFC0007777" and account number "7777700001"
+    And the account has a pending deposit of 5000 in the self-pool
+    When I view that pending deposit's detail page
+    And I click the Post button
+    Then the transaction detail status should be "posted"
+
+  Scenario: Detail page hides Post and Void for posted transactions
+    Given a "health" account exists for holder "d8888888-8888-8888-8888-888888888888" with origin IFSC "HDFC0008888" and account number "8888800001"
+    And the account has 5000 in self-pool and 0 in others-pool
+    When I view the most recent transaction's detail page
+    Then the Post button should not be visible
+    And the Void button should not be visible

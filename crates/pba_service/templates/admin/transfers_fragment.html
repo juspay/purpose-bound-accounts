@@ -21,7 +21,7 @@
     <tbody>
         {% for t in &transfers %}
         <tr>
-            <td class="text-small muted">{{ t.timestamp }}</td>
+            <td class="text-small"><a href="{{ prefix }}/admin/transactions/{{ t.id }}">{{ t.timestamp }}</a></td>
             <td>{{ t.transfer_type }}</td>
             <td>{{ t.pool }}</td>
             <td class="{{ t.direction_class }}">{{ t.direction }}</td>

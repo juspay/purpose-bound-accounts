@@ -2633,6 +2633,7 @@ dependencies = [
  "tigerbeetle-unofficial",
  "tokio",
  "tower-cookies",
+ "tower-http",
  "tracing",
  "tracing-subscriber",
  "urlencoding",
@@ -4076,6 +4077,7 @@ dependencies = [
  "tower",
  "tower-layer",
  "tower-service",
+ "tracing",
 ]
 
 [[package]]

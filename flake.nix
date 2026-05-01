@@ -55,7 +55,7 @@
             DB_NAME = "pba_service";
             TIGERBEETLE_ADDRESSES = "3000";
             TIGERBEETLE_CLUSTER_ID = "0";
-            RUST_LOG = "pba_service=debug";
+            RUST_LOG = "pba_service=debug,tower_http=info";
             PG_DATA = ".pg_data";
             # Point TB sys crate to Nix-provided Zig instead of downloading its own
             ZIG_PATH = "${pkgs.zig_0_14}/bin/zig";

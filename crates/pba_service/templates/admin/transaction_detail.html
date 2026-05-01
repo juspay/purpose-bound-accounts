@@ -1,0 +1,97 @@
+{% extends "base.html" %}
+
+{% block title %}Transaction {{ id_short }} — PBA Ledger{% endblock %}
+{% block breadcrumb %}<a href="{{ prefix }}/admin">PBA Ledger</a> <span class="sep">/</span> <a href="{{ prefix }}/admin/transactions">Transactions</a> <span class="sep">/</span> <span class="current mono">{{ id_short }}</span>{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div>
+        <h1 class="page-title">Transaction detail</h1>
+        <p class="page-subtitle mono">{{ id }}</p>
+    </div>
+    <div class="page-actions">
+        <a href="{{ prefix }}/admin/transactions" role="button" class="outline">← All transactions</a>
+        {% if can_post_or_void %}
+        <form method="post" action="{{ prefix }}/admin/transactions/{{ id }}/post" class="inline-form" onsubmit="return confirm('Post this pending transaction? Funds will be committed.');">
+            <button type="submit">Post</button>
+        </form>
+        <form method="post" action="{{ prefix }}/admin/transactions/{{ id }}/void" class="inline-form" onsubmit="return confirm('Void this pending transaction? Reserved funds will be released.');">
+            <button type="submit" class="btn-danger">Void</button>
+        </form>
+        {% endif %}
+    </div>
+</div>
+
+<div class="grid">
+    <article class="stat-card">
+        <p class="stat-label">Amount</p>
+        <p class="stat-value">₹{{ amount }}</p>
+        <p class="stat-hint">{{ transaction_type_label }}</p>
+    </article>
+    <article class="stat-card">
+        <p class="stat-label">Status</p>
+        <p class="stat-value {{ status_class }}" style="font-size: 1.125rem; padding-top: 0.5rem; text-transform: capitalize;">{{ status }}</p>
+        <p class="stat-hint {{ direction_class }}" style="text-transform: capitalize;">{{ direction }}</p>
+    </article>
+    <article class="stat-card">
+        <p class="stat-label">Pool</p>
+        <p class="stat-value" style="font-size: 1.125rem; padding-top: 0.5rem; text-transform: capitalize;">{{ pool }}</p>
+        <p class="stat-hint">Funding: {{ funding_type }}</p>
+    </article>
+    <article class="stat-card">
+        <p class="stat-label">Created</p>
+        <p class="stat-value" style="font-size: 0.95rem; padding-top: 0.5rem;">{{ created_at }}</p>
+        <p class="stat-hint">Updated {{ updated_at }}</p>
+    </article>
+</div>
+
+<article>
+    <header>Identity</header>
+    <div class="grid" style="grid-template-columns: 1fr 1fr;">
+        <div class="kv">
+            <div>Transaction ID</div><div class="mono">{{ id }}</div>
+            <div>Account</div><div class="mono"><a href="{{ prefix }}/admin/accounts/{{ account_id }}">{{ account_id }}</a></div>
+            <div>Holder</div><div class="mono">{{ holder_id }}</div>
+            <div>Purpose</div><div><span class="badge">{{ purpose_code }}</span></div>
+        </div>
+        <div class="kv">
+            <div>TB transfer ID</div><div class="mono">{{ tb_transfer_id }}</div>
+            <div>Idempotency key</div><div class="mono">{{ idempotency_key }}</div>
+        </div>
+    </div>
+</article>
+
+{% if is_deposit %}
+<article>
+    <header>Source</header>
+    <div class="grid" style="grid-template-columns: 1fr 1fr;">
+        <div class="kv">
+            <div>Source IFSC</div><div class="mono">{{ source_ifsc }}</div>
+            <div>Source account</div><div class="mono">{{ source_account }}</div>
+        </div>
+        <div class="kv">
+            <div>Gateway ref</div><div class="mono">{{ gateway_ref }}</div>
+            <div>Timeout</div><div class="mono">{{ timeout_seconds }} seconds</div>
+        </div>
+    </div>
+</article>
+{% else if is_payment %}
+<article>
+    <header>Merchant</header>
+    <div class="grid" style="grid-template-columns: 1fr 1fr;">
+        <div class="kv">
+            <div>Merchant ID</div><div class="mono">{{ merchant_id }}</div>
+            <div>Merchant MCC</div><div class="mono">{{ merchant_mcc }}</div>
+        </div>
+        <div class="kv">
+            <div>Description</div><div>{{ description }}</div>
+        </div>
+    </div>
+</article>
+{% else if is_withdrawal %}
+<article>
+    <header>Source / Merchant</header>
+    <p class="muted mb-0">Withdrawals have no external source or merchant.</p>
+</article>
+{% endif %}
+{% endblock %}

@@ -156,7 +156,7 @@ Environment variables (loaded from `.env`):
 | `TIGERBEETLE_CLUSTER_ID` | `0` | TigerBeetle cluster ID |
 | `HOST` | `0.0.0.0` | Bind address |
 | `PORT` | `3030` | HTTP port |
-| `RUST_LOG` | `pba_service=debug` | Log level |
+| `RUST_LOG` | `pba_service=debug,tower_http=info` | Log level (`tower_http=info` enables per-request access logs) |
 | `OIDC_ISSUER_URL` | `http://localhost:8180/realms/pba` | OIDC provider issuer URL (discovery via `.well-known/openid-configuration`) |
 | `OIDC_CLIENT_ID` | `pba-admin` | OIDC client ID for admin UI login flow |
 | `COOKIE_SECRET` | _(dev default)_ | 32+ byte secret for session cookie signing |
