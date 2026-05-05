@@ -138,5 +138,19 @@ impl WithdrawFluentBuilder {
     pub fn get_idempotency_key(&self) -> &::std::option::Option<::std::string::String> {
                     self.inner.get_idempotency_key()
                 }
+    #[allow(missing_docs)] // documentation missing in model
+    pub fn gateway_ref(mut self, input: impl ::std::convert::Into<::std::string::String>) -> Self {
+                    self.inner = self.inner.gateway_ref(input.into());
+                    self
+                }
+    #[allow(missing_docs)] // documentation missing in model
+    pub fn set_gateway_ref(mut self, input: ::std::option::Option<::std::string::String>) -> Self {
+                    self.inner = self.inner.set_gateway_ref(input);
+                    self
+                }
+    #[allow(missing_docs)] // documentation missing in model
+    pub fn get_gateway_ref(&self) -> &::std::option::Option<::std::string::String> {
+                    self.inner.get_gateway_ref()
+                }
 }
 

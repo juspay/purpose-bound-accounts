@@ -15,6 +15,8 @@ pub struct MakePaymentOutput  {
     pub merchant_id: ::std::string::String,
     #[allow(missing_docs)] // documentation missing in model
     pub merchant_mcc: ::std::string::String,
+    #[allow(missing_docs)] // documentation missing in model
+    pub gateway_ref: ::std::option::Option<::std::string::String>,
 }
 impl  MakePaymentOutput  {
     #[allow(missing_docs)] // documentation missing in model
@@ -41,6 +43,10 @@ impl  MakePaymentOutput  {
     pub fn merchant_mcc(&self) -> &str {
         use std::ops::Deref; self.merchant_mcc.deref()
     }
+    #[allow(missing_docs)] // documentation missing in model
+    pub fn gateway_ref(&self) -> ::std::option::Option<&str> {
+        self.gateway_ref.as_deref()
+    }
 }
 impl MakePaymentOutput {
     /// Creates a new builder-style object to manufacture [`MakePaymentOutput`](crate::operation::make_payment::MakePaymentOutput).
@@ -59,6 +65,7 @@ pub struct MakePaymentOutputBuilder {
     pub(crate) from_self: ::std::option::Option<i64>,
     pub(crate) merchant_id: ::std::option::Option<::std::string::String>,
     pub(crate) merchant_mcc: ::std::option::Option<::std::string::String>,
+    pub(crate) gateway_ref: ::std::option::Option<::std::string::String>,
 }
 impl MakePaymentOutputBuilder {
     #[allow(missing_docs)] // documentation missing in model
@@ -145,6 +152,19 @@ impl MakePaymentOutputBuilder {
     pub fn get_merchant_mcc(&self) -> &::std::option::Option<::std::string::String> {
         &self.merchant_mcc
     }
+    #[allow(missing_docs)] // documentation missing in model
+    pub fn gateway_ref(mut self, input: impl ::std::convert::Into<::std::string::String>) -> Self {
+        self.gateway_ref = ::std::option::Option::Some(input.into());
+        self
+    }
+    #[allow(missing_docs)] // documentation missing in model
+    pub fn set_gateway_ref(mut self, input: ::std::option::Option<::std::string::String>) -> Self {
+        self.gateway_ref = input; self
+    }
+    #[allow(missing_docs)] // documentation missing in model
+    pub fn get_gateway_ref(&self) -> &::std::option::Option<::std::string::String> {
+        &self.gateway_ref
+    }
     /// Consumes the builder and constructs a [`MakePaymentOutput`](crate::operation::make_payment::MakePaymentOutput).
     /// This method will fail if any of the following fields are not set:
     /// - [`account_id`](crate::operation::make_payment::builders::MakePaymentOutputBuilder::account_id)
@@ -185,6 +205,8 @@ impl MakePaymentOutputBuilder {
                     .ok_or_else(||
                         ::aws_smithy_types::error::operation::BuildError::missing_field("merchant_mcc", "merchant_mcc was not specified but it is required when building MakePaymentOutput")
                     )?
+                ,
+                gateway_ref: self.gateway_ref
                 ,
             }
         )

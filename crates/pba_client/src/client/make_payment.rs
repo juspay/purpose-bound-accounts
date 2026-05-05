@@ -9,6 +9,7 @@ impl super::Client {
     ///   - [`merchant_id(impl Into<String>)`](crate::operation::make_payment::builders::MakePaymentFluentBuilder::merchant_id) / [`set_merchant_id(Option<String>)`](crate::operation::make_payment::builders::MakePaymentFluentBuilder::set_merchant_id):<br>required: **true**<br>(undocumented)<br>
     ///   - [`description(impl Into<String>)`](crate::operation::make_payment::builders::MakePaymentFluentBuilder::description) / [`set_description(Option<String>)`](crate::operation::make_payment::builders::MakePaymentFluentBuilder::set_description):<br>required: **true**<br>(undocumented)<br>
     ///   - [`idempotency_key(impl Into<String>)`](crate::operation::make_payment::builders::MakePaymentFluentBuilder::idempotency_key) / [`set_idempotency_key(Option<String>)`](crate::operation::make_payment::builders::MakePaymentFluentBuilder::set_idempotency_key):<br>required: **false**<br>(undocumented)<br>
+    ///   - [`gateway_ref(impl Into<String>)`](crate::operation::make_payment::builders::MakePaymentFluentBuilder::gateway_ref) / [`set_gateway_ref(Option<String>)`](crate::operation::make_payment::builders::MakePaymentFluentBuilder::set_gateway_ref):<br>required: **false**<br>(undocumented)<br>
                             /// - On success, responds with [`MakePaymentOutput`](crate::operation::make_payment::MakePaymentOutput) with field(s):
     ///   - [`account_id(String)`](crate::operation::make_payment::MakePaymentOutput::account_id): (undocumented)
     ///   - [`amount(i64)`](crate::operation::make_payment::MakePaymentOutput::amount): Monetary amount in the smallest currency unit (e.g., paise for INR).
@@ -16,6 +17,7 @@ impl super::Client {
     ///   - [`from_self(i64)`](crate::operation::make_payment::MakePaymentOutput::from_self): Monetary amount in the smallest currency unit (e.g., paise for INR).
     ///   - [`merchant_id(String)`](crate::operation::make_payment::MakePaymentOutput::merchant_id): (undocumented)
     ///   - [`merchant_mcc(String)`](crate::operation::make_payment::MakePaymentOutput::merchant_mcc): (undocumented)
+    ///   - [`gateway_ref(Option<String>)`](crate::operation::make_payment::MakePaymentOutput::gateway_ref): (undocumented)
                             /// - On failure, responds with [`SdkError<MakePaymentError>`](crate::operation::make_payment::MakePaymentError)
     pub fn make_payment(&self) -> crate::operation::make_payment::builders::MakePaymentFluentBuilder {
                                 crate::operation::make_payment::builders::MakePaymentFluentBuilder::new(self.handle.clone())
