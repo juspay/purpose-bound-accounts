@@ -170,6 +170,7 @@ pub async fn make_payment(
             &req.merchant_id,
             &req.description,
             req.idempotency_key.as_deref(),
+            req.gateway_ref.as_deref(),
         )
         .await?;
 
@@ -182,6 +183,7 @@ pub async fn make_payment(
             from_self: result.from_self,
             merchant_id: result.merchant_id,
             merchant_mcc: result.merchant_mcc,
+            gateway_ref: result.gateway_ref,
         }),
     ))
 }
@@ -195,7 +197,12 @@ pub async fn withdraw(
 ) -> Result<(axum::http::StatusCode, Json<WithdrawalResponse>), AppError> {
     let result = state
         .withdrawal_service
-        .withdraw(account_id, req.amount, req.idempotency_key.as_deref())
+        .withdraw(
+            account_id,
+            req.amount,
+            req.idempotency_key.as_deref(),
+            req.gateway_ref.as_deref(),
+        )
         .await?;
 
     Ok((
@@ -203,6 +210,7 @@ pub async fn withdraw(
         Json(WithdrawalResponse {
             account_id: result.account_id,
             amount: result.amount,
+            gateway_ref: result.gateway_ref,
         }),
     ))
 }

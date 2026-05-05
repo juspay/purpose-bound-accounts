@@ -14,6 +14,8 @@ operation Withdraw {
         amount: Money
 
         idempotency_key: String
+
+        gateway_ref: String
     }
     output := {
         @required
@@ -21,6 +23,8 @@ operation Withdraw {
 
         @required
         amount: Money
+
+        gateway_ref: String
     }
     errors: [
         AccountNotFoundError

@@ -24,6 +24,8 @@ operation MakePayment {
         description: String
 
         idempotency_key: String
+
+        gateway_ref: String
     }
     output := {
         @required
@@ -43,6 +45,8 @@ operation MakePayment {
 
         @required
         merchant_mcc: String
+
+        gateway_ref: String
     }
     errors: [
         AccountNotFoundError

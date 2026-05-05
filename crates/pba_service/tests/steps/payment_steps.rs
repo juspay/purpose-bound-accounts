@@ -85,6 +85,56 @@ async fn attempt_payment(
     }
 }
 
+#[when(
+    regex = r#"^I pay (\d+) to merchant "([^"]*)" with MCC "([^"]*)" described as "([^"]*)" with gateway ref "([^"]*)"$"#
+)]
+async fn make_payment_with_gateway_ref(
+    world: &mut PbaWorld,
+    amount: i64,
+    merchant_id: String,
+    mcc: String,
+    description: String,
+    gateway_ref: String,
+) {
+    let account_id = world.account_id.as_ref().expect("No account ID");
+    let result = world
+        .client
+        .make_payment()
+        .account_id(account_id)
+        .amount(amount)
+        .merchant_mcc(&mcc)
+        .merchant_id(&merchant_id)
+        .description(&description)
+        .gateway_ref(&gateway_ref)
+        .send()
+        .await;
+    match result {
+        Ok(output) => {
+            world.last_payment = Some(crate::PaymentResult {
+                amount: output.amount(),
+                from_others: output.from_others(),
+                from_self: output.from_self(),
+            });
+            world.last_payment_gateway_ref = output.gateway_ref().map(|s| s.to_string());
+            world.last_error = None;
+        }
+        Err(e) => panic!("Payment failed unexpectedly: {e:?}"),
+    }
+}
+
+#[then(regex = r#"^the payment response should echo gateway ref "([^"]*)"$"#)]
+async fn payment_echoes_gateway_ref(world: &mut PbaWorld, expected: String) {
+    let actual = world
+        .last_payment_gateway_ref
+        .as_deref()
+        .expect("No gateway_ref captured from last payment response");
+    assert_eq!(
+        actual, expected,
+        "Gateway ref mismatch: response echoed `{}`, expected `{}`",
+        actual, expected
+    );
+}
+
 #[then("the payment should succeed")]
 async fn payment_should_succeed(world: &mut PbaWorld) {
     assert!(

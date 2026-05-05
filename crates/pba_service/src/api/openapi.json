@@ -1100,6 +1100,9 @@
                     },
                     "idempotency_key": {
                         "type": "string"
+                    },
+                    "gateway_ref": {
+                        "type": "string"
                     }
                 },
                 "required": [
@@ -1131,6 +1134,9 @@
                         "type": "string"
                     },
                     "merchant_mcc": {
+                        "type": "string"
+                    },
+                    "gateway_ref": {
                         "type": "string"
                     }
                 },
@@ -1456,6 +1462,9 @@
                     },
                     "idempotency_key": {
                         "type": "string"
+                    },
+                    "gateway_ref": {
+                        "type": "string"
                     }
                 },
                 "required": [
@@ -1471,6 +1480,9 @@
                     "amount": {
                         "type": "number",
                         "description": "Monetary amount in the smallest currency unit (e.g., paise for INR)."
+                    },
+                    "gateway_ref": {
+                        "type": "string"
                     }
                 },
                 "required": [

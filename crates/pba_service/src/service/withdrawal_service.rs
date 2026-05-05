@@ -33,6 +33,7 @@ impl WithdrawalService {
         account_id: Uuid,
         amount: u64,
         idempotency_key: Option<&str>,
+        gateway_ref: Option<&str>,
     ) -> Result<WithdrawalResult, AppError> {
         // Idempotency check
         if let Some(key) = idempotency_key {
@@ -44,6 +45,7 @@ impl WithdrawalService {
                 return Ok(WithdrawalResult {
                     account_id: existing.account_id,
                     amount: existing.amount,
+                    gateway_ref: existing.gateway_ref,
                 });
             }
         }
@@ -80,7 +82,7 @@ impl WithdrawalService {
                 TransactionDirection::Outbound,
                 None,
                 None,
-                None,
+                gateway_ref,
                 None,
                 None,
                 None,
@@ -106,11 +108,16 @@ impl WithdrawalService {
 
         tx.commit().await?;
 
-        Ok(WithdrawalResult { account_id, amount })
+        Ok(WithdrawalResult {
+            account_id,
+            amount,
+            gateway_ref: gateway_ref.map(|s| s.to_string()),
+        })
     }
 }
 
 pub struct WithdrawalResult {
     pub account_id: Uuid,
     pub amount: u64,
+    pub gateway_ref: Option<String>,
 }

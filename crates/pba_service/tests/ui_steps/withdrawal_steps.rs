@@ -109,6 +109,57 @@ async fn when_attempt_withdraw(world: &mut UiWorld, amount: i64) {
     }
 }
 
+#[when(regex = r#"^I withdraw (\d+) from the admin UI with gateway ref "([^"]*)"$"#)]
+async fn when_withdraw_with_gateway_ref(world: &mut UiWorld, amount: i64, gateway_ref: String) {
+    let account_id = world
+        .account_id
+        .clone()
+        .expect("No account ID for withdrawal");
+    let url = world.url(&format!("/admin/accounts/{}/withdrawal", account_id));
+
+    let page = world.ensure_page().await;
+    page.goto(url)
+        .await
+        .expect("Failed to navigate to withdrawal page");
+    sleep(Duration::from_millis(400)).await;
+
+    let page = world.ensure_page().await;
+
+    let amount_input = page
+        .find_element("input[name='amount']")
+        .await
+        .expect("Could not find amount input");
+    amount_input.click().await.expect("Failed to click amount");
+    amount_input
+        .type_str(&amount.to_string())
+        .await
+        .expect("Failed to type amount");
+
+    let gw_input = page
+        .find_element("input[name='gateway_ref']")
+        .await
+        .expect("Could not find gateway_ref input");
+    gw_input.click().await.expect("Failed to click gateway_ref");
+    gw_input
+        .type_str(&gateway_ref)
+        .await
+        .expect("Failed to type gateway_ref");
+
+    let submit = page
+        .find_element("button[type='submit']")
+        .await
+        .expect("Could not find submit button");
+    submit.click().await.expect("Failed to click submit");
+
+    let succeeded = world.wait_for_redirect("/withdrawal").await;
+    assert!(
+        succeeded,
+        "Withdrawal form did not redirect — likely a server error"
+    );
+    world.last_withdrawal_amount = Some(amount);
+    world.last_error = None;
+}
+
 // ---------------------------------------------------------------------------
 // Then
 // ---------------------------------------------------------------------------

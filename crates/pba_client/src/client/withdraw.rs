@@ -6,9 +6,11 @@ impl super::Client {
     ///   - [`account_id(impl Into<String>)`](crate::operation::withdraw::builders::WithdrawFluentBuilder::account_id) / [`set_account_id(Option<String>)`](crate::operation::withdraw::builders::WithdrawFluentBuilder::set_account_id):<br>required: **true**<br>(undocumented)<br>
     ///   - [`amount(i64)`](crate::operation::withdraw::builders::WithdrawFluentBuilder::amount) / [`set_amount(Option<i64>)`](crate::operation::withdraw::builders::WithdrawFluentBuilder::set_amount):<br>required: **true**<br>Monetary amount in the smallest currency unit (e.g., paise for INR).<br>
     ///   - [`idempotency_key(impl Into<String>)`](crate::operation::withdraw::builders::WithdrawFluentBuilder::idempotency_key) / [`set_idempotency_key(Option<String>)`](crate::operation::withdraw::builders::WithdrawFluentBuilder::set_idempotency_key):<br>required: **false**<br>(undocumented)<br>
+    ///   - [`gateway_ref(impl Into<String>)`](crate::operation::withdraw::builders::WithdrawFluentBuilder::gateway_ref) / [`set_gateway_ref(Option<String>)`](crate::operation::withdraw::builders::WithdrawFluentBuilder::set_gateway_ref):<br>required: **false**<br>(undocumented)<br>
                             /// - On success, responds with [`WithdrawOutput`](crate::operation::withdraw::WithdrawOutput) with field(s):
     ///   - [`account_id(String)`](crate::operation::withdraw::WithdrawOutput::account_id): (undocumented)
     ///   - [`amount(i64)`](crate::operation::withdraw::WithdrawOutput::amount): Monetary amount in the smallest currency unit (e.g., paise for INR).
+    ///   - [`gateway_ref(Option<String>)`](crate::operation::withdraw::WithdrawOutput::gateway_ref): (undocumented)
                             /// - On failure, responds with [`SdkError<WithdrawError>`](crate::operation::withdraw::WithdrawError)
     pub fn withdraw(&self) -> crate::operation::withdraw::builders::WithdrawFluentBuilder {
                                 crate::operation::withdraw::builders::WithdrawFluentBuilder::new(self.handle.clone())

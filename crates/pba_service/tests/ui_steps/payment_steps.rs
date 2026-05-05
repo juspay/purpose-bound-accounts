@@ -172,6 +172,148 @@ fn classify_error(content: &str) -> String {
     }
 }
 
+async fn do_payment_with_gateway_ref(
+    world: &mut UiWorld,
+    amount: i64,
+    merchant_id: &str,
+    merchant_mcc: &str,
+    description: &str,
+    gateway_ref: &str,
+) -> Result<(i64, i64), String> {
+    // Read balances before payment
+    let (self_before, others_before, _) = get_current_balances(world).await;
+
+    let account_id = world.account_id.clone().expect("No account ID for payment");
+    let payment_url = world.url(&format!("/admin/accounts/{}/payment", account_id));
+
+    let page = world.ensure_page().await;
+    page.goto(payment_url)
+        .await
+        .expect("Failed to navigate to payment page");
+    sleep(Duration::from_millis(400)).await;
+
+    let page = world.ensure_page().await;
+
+    let amount_input = page
+        .find_element("input[name='amount']")
+        .await
+        .expect("Could not find amount input");
+    amount_input.click().await.expect("Failed to click amount");
+    amount_input
+        .type_str(&amount.to_string())
+        .await
+        .expect("Failed to type amount");
+
+    let mid_input = page
+        .find_element("input[name='merchant_id']")
+        .await
+        .expect("Could not find merchant_id input");
+    mid_input
+        .click()
+        .await
+        .expect("Failed to click merchant_id");
+    mid_input
+        .type_str(merchant_id)
+        .await
+        .expect("Failed to type merchant_id");
+
+    let mcc_input = page
+        .find_element("input[name='merchant_mcc']")
+        .await
+        .expect("Could not find merchant_mcc input");
+    mcc_input
+        .click()
+        .await
+        .expect("Failed to click merchant_mcc");
+    mcc_input
+        .type_str(merchant_mcc)
+        .await
+        .expect("Failed to type merchant_mcc");
+
+    let desc_input = page
+        .find_element("input[name='description']")
+        .await
+        .expect("Could not find description input");
+    desc_input
+        .click()
+        .await
+        .expect("Failed to click description");
+    desc_input
+        .type_str(description)
+        .await
+        .expect("Failed to type description");
+
+    let gw_input = page
+        .find_element("input[name='gateway_ref']")
+        .await
+        .expect("Could not find gateway_ref input");
+    gw_input.click().await.expect("Failed to click gateway_ref");
+    gw_input
+        .type_str(gateway_ref)
+        .await
+        .expect("Failed to type gateway_ref");
+
+    let submit = page
+        .find_element("button[type='submit']")
+        .await
+        .expect("Could not find submit button");
+    submit.click().await.expect("Failed to click submit");
+
+    let succeeded = world.wait_for_redirect("/payment").await;
+
+    if succeeded {
+        let page = world.ensure_page().await;
+        let content = page
+            .content()
+            .await
+            .expect("Failed to get page content after payment");
+        let (self_after, others_after, _) = read_balances_from_content(&content);
+        let from_others = (others_before - others_after).max(0);
+        let from_self = (self_before - self_after).max(0);
+        Ok((from_others, from_self))
+    } else {
+        let page = world.ensure_page().await;
+        let content = page
+            .content()
+            .await
+            .expect("Failed to get page content for error");
+        Err(classify_error(&content))
+    }
+}
+
+#[when(
+    regex = r#"^I pay (\d+) to merchant "([^"]*)" with MCC "([^"]*)" described as "([^"]*)" with gateway ref "([^"]*)"$"#
+)]
+async fn when_pay_with_gateway_ref(
+    world: &mut UiWorld,
+    amount: i64,
+    merchant_id: String,
+    mcc: String,
+    description: String,
+    gateway_ref: String,
+) {
+    match do_payment_with_gateway_ref(
+        world,
+        amount,
+        &merchant_id,
+        &mcc,
+        &description,
+        &gateway_ref,
+    )
+    .await
+    {
+        Ok((from_others, from_self)) => {
+            world.last_payment = Some(crate::PaymentInfo {
+                amount,
+                from_others,
+                from_self,
+            });
+            world.last_error = None;
+        }
+        Err(e) => panic!("Payment failed unexpectedly: {}", e),
+    }
+}
+
 // ---------------------------------------------------------------------------
 // When
 // ---------------------------------------------------------------------------

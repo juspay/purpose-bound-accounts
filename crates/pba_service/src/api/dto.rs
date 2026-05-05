@@ -104,6 +104,7 @@ pub struct PaymentRequest {
     pub merchant_id: String,
     pub description: String,
     pub idempotency_key: Option<String>,
+    pub gateway_ref: Option<String>,
 }
 
 #[derive(Debug, Serialize)]
@@ -114,6 +115,8 @@ pub struct PaymentResponse {
     pub from_self: u64,
     pub merchant_id: String,
     pub merchant_mcc: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub gateway_ref: Option<String>,
 }
 
 // ── Withdrawal ──
@@ -122,12 +125,15 @@ pub struct PaymentResponse {
 pub struct WithdrawalRequest {
     pub amount: u64,
     pub idempotency_key: Option<String>,
+    pub gateway_ref: Option<String>,
 }
 
 #[derive(Debug, Serialize)]
 pub struct WithdrawalResponse {
     pub account_id: Uuid,
     pub amount: u64,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub gateway_ref: Option<String>,
 }
 
 // ── Status Update ──

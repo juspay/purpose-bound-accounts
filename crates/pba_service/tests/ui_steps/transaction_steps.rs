@@ -91,6 +91,23 @@ async fn then_show_type(world: &mut UiWorld, expected: String) {
     );
 }
 
+#[then(regex = r#"^the transaction detail should show gateway ref "([^"]*)"$"#)]
+async fn then_show_gateway_ref(world: &mut UiWorld, expected: String) {
+    let content = current_page_content(world).await;
+    let marker = "Gateway Ref:</strong>";
+    let idx = content
+        .find(marker)
+        .unwrap_or_else(|| panic!("`Gateway Ref:` label not found on detail page"));
+    let after = &content[idx + marker.len()..];
+    let snippet = &after[..after.len().min(200)];
+    assert!(
+        snippet.contains(&expected),
+        "expected gateway ref `{}` after Gateway Ref label, got snippet: {}",
+        expected,
+        snippet
+    );
+}
+
 #[cucumber::given(regex = r"^the account has a pending deposit of (\d+) in the self-pool$")]
 async fn given_pending_self_deposit(world: &mut UiWorld, amount: i64) {
     let origin_ifsc = world.origin_ifsc.clone().expect("origin IFSC missing");

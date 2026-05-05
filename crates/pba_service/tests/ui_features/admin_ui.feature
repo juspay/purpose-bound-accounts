@@ -71,3 +71,18 @@ Feature: Admin UI
     When I view the most recent transaction's detail page
     Then the Post button should not be visible
     And the Void button should not be visible
+
+  Scenario: Payment from admin UI persists gateway_ref to detail page
+    Given a "health" account exists for holder "deadbeef-aaaa-bbbb-cccc-111111111111" with origin IFSC "HDFC00DEAD1" and account number "9999900001"
+    And the account has 5000 in self-pool and 5000 in others-pool
+    When I pay 1000 to merchant "PHARMACY001" with MCC "5912" described as "ui ref" with gateway ref "gw-ui-pay-1"
+    Then the payment should succeed
+    When I view the most recent transaction's detail page
+    Then the transaction detail should show gateway ref "gw-ui-pay-1"
+
+  Scenario: Withdrawal from admin UI persists gateway_ref to detail page
+    Given a "health" account exists for holder "deadbeef-aaaa-bbbb-cccc-222222222222" with origin IFSC "HDFC00DEAD2" and account number "9999900002"
+    And the account has 5000 in self-pool and 0 in others-pool
+    When I withdraw 1000 from the admin UI with gateway ref "gw-ui-wd-1"
+    When I view the most recent transaction's detail page
+    Then the transaction detail should show gateway ref "gw-ui-wd-1"

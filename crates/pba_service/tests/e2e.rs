@@ -16,6 +16,7 @@ pub struct PbaWorld {
     last_deposit_id: Option<String>,
     /// Last payment result
     last_payment: Option<PaymentResult>,
+    last_payment_gateway_ref: Option<String>,
     /// Last error (for negative test cases)
     last_error: Option<PbaError>,
     /// Purpose types from list operation
@@ -29,6 +30,7 @@ pub struct PbaWorld {
     last_account_status: Option<String>,
     /// Last withdrawal amount
     last_withdrawal_amount: Option<i64>,
+    last_withdrawal_gateway_ref: Option<String>,
     /// Results from concurrent payment tests
     concurrent_successes: Option<usize>,
     concurrent_failures: Option<usize>,
@@ -80,6 +82,7 @@ impl Default for PbaWorld {
             last_deposit_pool: None,
             last_deposit_id: None,
             last_payment: None,
+            last_payment_gateway_ref: None,
             last_error: None,
             purpose_types_count: None,
             last_purpose_code: None,
@@ -87,6 +90,7 @@ impl Default for PbaWorld {
             last_balance: None,
             last_account_status: None,
             last_withdrawal_amount: None,
+            last_withdrawal_gateway_ref: None,
             concurrent_successes: None,
             concurrent_failures: None,
             all_transactions_total: None,

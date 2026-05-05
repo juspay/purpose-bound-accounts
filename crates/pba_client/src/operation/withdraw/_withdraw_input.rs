@@ -9,6 +9,8 @@ pub struct WithdrawInput  {
     pub amount: ::std::option::Option<i64>,
     #[allow(missing_docs)] // documentation missing in model
     pub idempotency_key: ::std::option::Option<::std::string::String>,
+    #[allow(missing_docs)] // documentation missing in model
+    pub gateway_ref: ::std::option::Option<::std::string::String>,
 }
 impl  WithdrawInput  {
     #[allow(missing_docs)] // documentation missing in model
@@ -22,6 +24,10 @@ impl  WithdrawInput  {
     #[allow(missing_docs)] // documentation missing in model
     pub fn idempotency_key(&self) -> ::std::option::Option<&str> {
         self.idempotency_key.as_deref()
+    }
+    #[allow(missing_docs)] // documentation missing in model
+    pub fn gateway_ref(&self) -> ::std::option::Option<&str> {
+        self.gateway_ref.as_deref()
     }
 }
 impl WithdrawInput {
@@ -38,6 +44,7 @@ pub struct WithdrawInputBuilder {
     pub(crate) account_id: ::std::option::Option<::std::string::String>,
     pub(crate) amount: ::std::option::Option<i64>,
     pub(crate) idempotency_key: ::std::option::Option<::std::string::String>,
+    pub(crate) gateway_ref: ::std::option::Option<::std::string::String>,
 }
 impl WithdrawInputBuilder {
     #[allow(missing_docs)] // documentation missing in model
@@ -81,6 +88,19 @@ impl WithdrawInputBuilder {
     pub fn get_idempotency_key(&self) -> &::std::option::Option<::std::string::String> {
         &self.idempotency_key
     }
+    #[allow(missing_docs)] // documentation missing in model
+    pub fn gateway_ref(mut self, input: impl ::std::convert::Into<::std::string::String>) -> Self {
+        self.gateway_ref = ::std::option::Option::Some(input.into());
+        self
+    }
+    #[allow(missing_docs)] // documentation missing in model
+    pub fn set_gateway_ref(mut self, input: ::std::option::Option<::std::string::String>) -> Self {
+        self.gateway_ref = input; self
+    }
+    #[allow(missing_docs)] // documentation missing in model
+    pub fn get_gateway_ref(&self) -> &::std::option::Option<::std::string::String> {
+        &self.gateway_ref
+    }
     /// Consumes the builder and constructs a [`WithdrawInput`](crate::operation::withdraw::WithdrawInput).
     pub fn build(self) -> ::std::result::Result<crate::operation::withdraw::WithdrawInput, ::aws_smithy_types::error::operation::BuildError> {
         ::std::result::Result::Ok(
@@ -90,6 +110,8 @@ impl WithdrawInputBuilder {
                 amount: self.amount
                 ,
                 idempotency_key: self.idempotency_key
+                ,
+                gateway_ref: self.gateway_ref
                 ,
             }
         )

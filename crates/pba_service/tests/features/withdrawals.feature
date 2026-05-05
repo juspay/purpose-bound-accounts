@@ -35,3 +35,10 @@ Feature: Withdrawals
     And the account is closed
     When I attempt to withdraw 1000
     Then the withdrawal should be rejected as account not active
+
+  Scenario: Withdrawal echoes the supplied gateway_ref
+    Given a "health" account exists for holder "7A7A7A7A-7A7A-7A7A-7A7A-7A7A7A7A0099" with origin IFSC "HDFC007A7A9" and account number "707070099"
+    And the account has 5000 in self-pool and 0 in others-pool
+    When I withdraw 1000 with gateway ref "gw-api-wd-99"
+    Then the withdrawal should succeed with amount 1000
+    And the withdrawal response should echo gateway ref "gw-api-wd-99"

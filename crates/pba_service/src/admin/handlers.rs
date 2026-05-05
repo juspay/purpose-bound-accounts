@@ -594,6 +594,7 @@ pub struct PaymentForm {
     merchant_id: String,
     merchant_mcc: String,
     description: String,
+    gateway_ref: Option<String>,
 }
 
 pub async fn process_payment(
@@ -601,6 +602,7 @@ pub async fn process_payment(
     Path(account_id): Path<Uuid>,
     axum::extract::Form(form): axum::extract::Form<PaymentForm>,
 ) -> Response {
+    let gateway_ref = form.gateway_ref.as_deref().filter(|s| !s.is_empty());
     match state
         .payment_service
         .make_payment(
@@ -610,6 +612,7 @@ pub async fn process_payment(
             &form.merchant_id,
             &form.description,
             None,
+            gateway_ref,
         )
         .await
     {
@@ -660,6 +663,7 @@ pub async fn withdrawal_form(
 #[derive(Deserialize)]
 pub struct WithdrawalForm {
     amount: u64,
+    gateway_ref: Option<String>,
 }
 
 pub async fn process_withdrawal(
@@ -667,9 +671,10 @@ pub async fn process_withdrawal(
     Path(account_id): Path<Uuid>,
     axum::extract::Form(form): axum::extract::Form<WithdrawalForm>,
 ) -> Response {
+    let gateway_ref = form.gateway_ref.as_deref().filter(|s| !s.is_empty());
     match state
         .withdrawal_service
-        .withdraw(account_id, form.amount, None)
+        .withdraw(account_id, form.amount, None, gateway_ref)
         .await
     {
         Ok(_) => Redirect::to(&prefixed(&state, &format!("/admin/accounts/{account_id}")))
@@ -1190,7 +1195,7 @@ mod tests {
             amount: "12.34".to_string(),
             source_ifsc: "—".to_string(),
             source_account: "—".to_string(),
-            gateway_ref: "—".to_string(),
+            gateway_ref: "gw-pay-123".to_string(),
             merchant_id: "MERCH-1".to_string(),
             merchant_mcc: "8011".to_string(),
             description: "Doctor visit".to_string(),
@@ -1202,6 +1207,46 @@ mod tests {
             is_withdrawal: false,
             can_post_or_void: false,
         }
+    }
+
+    fn withdrawal_posted_fixture() -> TransactionDetailTemplate {
+        TransactionDetailTemplate {
+            prefix: "".to_string(),
+            id: "44444444-4444-4444-4444-444444444444".to_string(),
+            id_short: "44444444".to_string(),
+            account_id: "22222222-2222-2222-2222-222222222222".to_string(),
+            holder_id: "holder-xyz".to_string(),
+            purpose_code: "health".to_string(),
+            tb_transfer_id: "7777777777".to_string(),
+            idempotency_key: "—".to_string(),
+            transaction_type_label: "Withdrawal".to_string(),
+            status: "settled".to_string(),
+            status_class: "status-active".to_string(),
+            direction: "Outbound".to_string(),
+            direction_class: "outbound".to_string(),
+            pool: "Self".to_string(),
+            funding_type: "—".to_string(),
+            amount: "20.00".to_string(),
+            source_ifsc: "—".to_string(),
+            source_account: "—".to_string(),
+            gateway_ref: "gw-wd-456".to_string(),
+            merchant_id: "—".to_string(),
+            merchant_mcc: "—".to_string(),
+            description: "—".to_string(),
+            created_at: "2026-04-30 12:00:00".to_string(),
+            updated_at: "2026-04-30 12:00:00".to_string(),
+            timeout_seconds: "—".to_string(),
+            is_deposit: false,
+            is_payment: false,
+            is_withdrawal: true,
+            can_post_or_void: false,
+        }
+    }
+
+    fn withdrawal_no_gateway_ref_fixture() -> TransactionDetailTemplate {
+        let mut f = withdrawal_posted_fixture();
+        f.gateway_ref = "—".to_string();
+        f
     }
 
     #[test]
@@ -1273,12 +1318,65 @@ mod tests {
             "description missing: {}",
             html
         );
+        assert!(
+            html.contains("gw-pay-123"),
+            "gateway_ref missing on payment detail: {}",
+            html
+        );
+        assert!(
+            html.contains("Gateway Ref:"),
+            "Gateway Ref label missing on payment detail: {}",
+            html
+        );
         // For a payment, source IFSC value should not appear (we render "—"
         // for the absent source fields, so check the original value isn't there).
         assert!(
             !html.contains("HDFC0001234"),
             "payment should not show deposit-only source IFSC: {}",
             html
+        );
+    }
+
+    #[test]
+    fn renders_reference_section_for_withdrawal() {
+        let html = withdrawal_posted_fixture().render().expect("render");
+        assert!(
+            html.contains("<strong>Reference</strong>"),
+            "Reference card header missing on withdrawal detail: {}",
+            html
+        );
+        assert!(
+            html.contains("gw-wd-456"),
+            "gateway_ref missing on withdrawal detail: {}",
+            html
+        );
+        assert!(
+            html.contains("Gateway Ref:"),
+            "Gateway Ref label missing on withdrawal detail: {}",
+            html
+        );
+        assert!(
+            !html.contains("Withdrawals have no external source"),
+            "old placeholder still present on withdrawal detail: {}",
+            html
+        );
+    }
+
+    #[test]
+    fn renders_dash_for_absent_gateway_ref_on_withdrawal() {
+        let html = withdrawal_no_gateway_ref_fixture()
+            .render()
+            .expect("render");
+        let marker = "Gateway Ref:</strong>";
+        let idx = html
+            .find(marker)
+            .expect("Gateway Ref label not found on withdrawal detail");
+        let after = &html[idx + marker.len()..];
+        let snippet = &after[..after.len().min(40)];
+        assert!(
+            snippet.contains("—"),
+            "expected `—` after Gateway Ref label, got: {}",
+            snippet
         );
     }
 }
