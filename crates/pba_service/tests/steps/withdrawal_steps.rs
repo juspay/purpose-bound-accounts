@@ -50,6 +50,40 @@ async fn attempt_withdraw(world: &mut PbaWorld, amount: i64) {
     }
 }
 
+#[when(regex = r#"^I withdraw (\d+) with gateway ref "([^"]*)"$"#)]
+async fn withdraw_with_gateway_ref(world: &mut PbaWorld, amount: i64, gateway_ref: String) {
+    let account_id = world.account_id.as_ref().expect("No account ID");
+    let result = world
+        .client
+        .withdraw()
+        .account_id(account_id)
+        .amount(amount)
+        .gateway_ref(&gateway_ref)
+        .send()
+        .await;
+    match result {
+        Ok(output) => {
+            world.last_withdrawal_amount = Some(output.amount());
+            world.last_withdrawal_gateway_ref = output.gateway_ref().map(|s| s.to_string());
+            world.last_error = None;
+        }
+        Err(e) => panic!("Withdrawal failed unexpectedly: {e:?}"),
+    }
+}
+
+#[then(regex = r#"^the withdrawal response should echo gateway ref "([^"]*)"$"#)]
+async fn withdrawal_echoes_gateway_ref(world: &mut PbaWorld, expected: String) {
+    let actual = world
+        .last_withdrawal_gateway_ref
+        .as_deref()
+        .expect("No gateway_ref captured from last withdrawal response");
+    assert_eq!(
+        actual, expected,
+        "Gateway ref mismatch on withdrawal response: got `{}`, expected `{}`",
+        actual, expected
+    );
+}
+
 #[then(regex = r"^the withdrawal should succeed with amount (\d+)$")]
 async fn withdrawal_succeed(world: &mut PbaWorld, expected: i64) {
     let amount = world.last_withdrawal_amount.expect("No withdrawal result");
