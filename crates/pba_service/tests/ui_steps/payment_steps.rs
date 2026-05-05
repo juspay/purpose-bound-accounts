@@ -208,7 +208,10 @@ async fn do_payment_with_gateway_ref(
         .find_element("input[name='merchant_id']")
         .await
         .expect("Could not find merchant_id input");
-    mid_input.click().await.expect("Failed to click merchant_id");
+    mid_input
+        .click()
+        .await
+        .expect("Failed to click merchant_id");
     mid_input
         .type_str(merchant_id)
         .await
@@ -218,7 +221,10 @@ async fn do_payment_with_gateway_ref(
         .find_element("input[name='merchant_mcc']")
         .await
         .expect("Could not find merchant_mcc input");
-    mcc_input.click().await.expect("Failed to click merchant_mcc");
+    mcc_input
+        .click()
+        .await
+        .expect("Failed to click merchant_mcc");
     mcc_input
         .type_str(merchant_mcc)
         .await
@@ -228,7 +234,10 @@ async fn do_payment_with_gateway_ref(
         .find_element("input[name='description']")
         .await
         .expect("Could not find description input");
-    desc_input.click().await.expect("Failed to click description");
+    desc_input
+        .click()
+        .await
+        .expect("Failed to click description");
     desc_input
         .type_str(description)
         .await
