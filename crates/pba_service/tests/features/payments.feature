@@ -96,3 +96,10 @@ Feature: Payments
     When 10 concurrent payments of 1000 each are made to MCC "5912"
     Then exactly 5 payments should succeed
     And the total balance should be 0
+
+  Scenario: Payment echoes the supplied gateway_ref
+    Given a "health" account exists for holder "44444444-4444-4444-4444-444444440077" with origin IFSC "HDFC0044477" and account number "444440077"
+    And the account has 5000 in self-pool and 5000 in others-pool
+    When I pay 1000 to merchant "PHARMACY001" with MCC "5912" described as "with ref" with gateway ref "gw-api-pay-77"
+    Then the payment should succeed
+    And the payment response should echo gateway ref "gw-api-pay-77"
