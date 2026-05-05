@@ -66,13 +66,14 @@
         </div>
         <div>
             <p><strong>Description:</strong> {{ description }}</p>
+            <p><strong>Gateway Ref:</strong> {{ gateway_ref }}</p>
         </div>
     </div>
 </article>
 {% else if is_withdrawal %}
 <article>
-    <header><strong>Source / Merchant</strong></header>
-    <p>Withdrawals have no external source or merchant.</p>
+    <header><strong>Reference</strong></header>
+    <p><strong>Gateway Ref:</strong> {{ gateway_ref }}</p>
 </article>
 {% endif %}
 
