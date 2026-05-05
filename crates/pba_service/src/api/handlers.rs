@@ -170,7 +170,7 @@ pub async fn make_payment(
             &req.merchant_id,
             &req.description,
             req.idempotency_key.as_deref(),
-            None, // gateway_ref — wired in Task 4
+            req.gateway_ref.as_deref(),
         )
         .await?;
 
@@ -183,6 +183,7 @@ pub async fn make_payment(
             from_self: result.from_self,
             merchant_id: result.merchant_id,
             merchant_mcc: result.merchant_mcc,
+            gateway_ref: result.gateway_ref,
         }),
     ))
 }
