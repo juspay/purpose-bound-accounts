@@ -610,6 +610,7 @@ pub async fn process_payment(
             &form.merchant_id,
             &form.description,
             None,
+            None, // gateway_ref — wired in Task 6
         )
         .await
     {

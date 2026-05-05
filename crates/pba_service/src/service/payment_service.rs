@@ -30,6 +30,7 @@ impl PaymentService {
         }
     }
 
+    #[allow(clippy::too_many_arguments)]
     pub async fn make_payment(
         &self,
         account_id: Uuid,
@@ -38,6 +39,7 @@ impl PaymentService {
         merchant_id: &str,
         description: &str,
         idempotency_key: Option<&str>,
+        gateway_ref: Option<&str>,
     ) -> Result<PaymentResult, AppError> {
         // Idempotency check
         if let Some(key) = idempotency_key {
@@ -61,6 +63,7 @@ impl PaymentService {
                     },
                     merchant_id: existing.merchant_id.unwrap_or_default(),
                     merchant_mcc: existing.merchant_mcc.unwrap_or_default(),
+                    gateway_ref: existing.gateway_ref,
                 });
             }
         }
@@ -122,7 +125,7 @@ impl PaymentService {
                         TransactionDirection::Outbound,
                         None,
                         None,
-                        None,
+                        gateway_ref,
                         None,
                         Some(merchant_id),
                         Some(merchant_mcc),
@@ -152,7 +155,7 @@ impl PaymentService {
                         TransactionDirection::Outbound,
                         None,
                         None,
-                        None,
+                        gateway_ref,
                         None,
                         Some(merchant_id),
                         Some(merchant_mcc),
@@ -182,6 +185,7 @@ impl PaymentService {
                         from_self: split.from_self,
                         merchant_id: merchant_id.to_string(),
                         merchant_mcc: merchant_mcc.to_string(),
+                        gateway_ref: gateway_ref.map(|s| s.to_string()),
                     });
                 }
                 Err(AppError::ExceedsBalance) => {
@@ -248,4 +252,5 @@ pub struct PaymentResult {
     pub from_self: u64,
     pub merchant_id: String,
     pub merchant_mcc: String,
+    pub gateway_ref: Option<String>,
 }

@@ -170,6 +170,7 @@ pub async fn make_payment(
             &req.merchant_id,
             &req.description,
             req.idempotency_key.as_deref(),
+            None, // gateway_ref — wired in Task 4
         )
         .await?;
 
