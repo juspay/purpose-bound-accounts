@@ -594,6 +594,7 @@ pub struct PaymentForm {
     merchant_id: String,
     merchant_mcc: String,
     description: String,
+    gateway_ref: Option<String>,
 }
 
 pub async fn process_payment(
@@ -601,6 +602,7 @@ pub async fn process_payment(
     Path(account_id): Path<Uuid>,
     axum::extract::Form(form): axum::extract::Form<PaymentForm>,
 ) -> Response {
+    let gateway_ref = form.gateway_ref.as_deref().filter(|s| !s.is_empty());
     match state
         .payment_service
         .make_payment(
@@ -610,7 +612,7 @@ pub async fn process_payment(
             &form.merchant_id,
             &form.description,
             None,
-            None, // gateway_ref — wired in Task 6
+            gateway_ref,
         )
         .await
     {
@@ -661,6 +663,7 @@ pub async fn withdrawal_form(
 #[derive(Deserialize)]
 pub struct WithdrawalForm {
     amount: u64,
+    gateway_ref: Option<String>,
 }
 
 pub async fn process_withdrawal(
@@ -668,9 +671,10 @@ pub async fn process_withdrawal(
     Path(account_id): Path<Uuid>,
     axum::extract::Form(form): axum::extract::Form<WithdrawalForm>,
 ) -> Response {
+    let gateway_ref = form.gateway_ref.as_deref().filter(|s| !s.is_empty());
     match state
         .withdrawal_service
-        .withdraw(account_id, form.amount, None, None)
+        .withdraw(account_id, form.amount, None, gateway_ref)
         .await
     {
         Ok(_) => Redirect::to(&prefixed(&state, &format!("/admin/accounts/{account_id}")))
