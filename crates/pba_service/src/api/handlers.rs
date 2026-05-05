@@ -197,7 +197,12 @@ pub async fn withdraw(
 ) -> Result<(axum::http::StatusCode, Json<WithdrawalResponse>), AppError> {
     let result = state
         .withdrawal_service
-        .withdraw(account_id, req.amount, req.idempotency_key.as_deref(), None)
+        .withdraw(
+            account_id,
+            req.amount,
+            req.idempotency_key.as_deref(),
+            req.gateway_ref.as_deref(),
+        )
         .await?;
 
     Ok((
@@ -205,6 +210,7 @@ pub async fn withdraw(
         Json(WithdrawalResponse {
             account_id: result.account_id,
             amount: result.amount,
+            gateway_ref: result.gateway_ref,
         }),
     ))
 }
