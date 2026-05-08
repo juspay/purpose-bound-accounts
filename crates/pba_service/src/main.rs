@@ -16,8 +16,12 @@ mod service;
 
 use config::{AppConfig, MigrationMode};
 use repository::ledger_repo::LedgerRepo;
+use repository::normal_account_repo::NormalAccountRepo;
 use repository::pb_account_repo::PbAccountRepo;
 use repository::transaction_repo::TransactionRepo;
+use service::normal_account_service::NormalAccountService;
+use service::normal_deposit_service::NormalDepositService;
+use service::normal_withdrawal_service::NormalWithdrawalService;
 use service::pb_account_service::PbAccountService;
 use service::pb_deposit_service::PbDepositService;
 use service::pb_payment_service::PbPaymentService;
@@ -30,6 +34,10 @@ pub struct AppState {
     pub pb_payment_service: Arc<PbPaymentService>,
     pub pb_withdrawal_service: Arc<PbWithdrawalService>,
     pub pb_account_repo: Arc<PbAccountRepo>,
+    pub normal_account_service: Arc<NormalAccountService>,
+    pub normal_deposit_service: Arc<NormalDepositService>,
+    pub normal_withdrawal_service: Arc<NormalWithdrawalService>,
+    pub normal_account_repo: Arc<NormalAccountRepo>,
     pub ledger_repo: Arc<LedgerRepo>,
     pub transaction_repo: Arc<TransactionRepo>,
     pub auth: AuthContext,
@@ -237,6 +245,24 @@ async fn main() {
         Arc::clone(&transaction_repo),
     ));
 
+    let normal_account_repo = Arc::new(NormalAccountRepo::new(pg_pool.clone()));
+
+    let normal_account_service = Arc::new(NormalAccountService::new(
+        Arc::clone(&normal_account_repo),
+        Arc::clone(&ledger_repo),
+    ));
+    let normal_deposit_service = Arc::new(NormalDepositService::new(
+        Arc::clone(&normal_account_repo),
+        Arc::clone(&ledger_repo),
+        Arc::clone(&transaction_repo),
+        config.deposit_timeout_seconds,
+    ));
+    let normal_withdrawal_service = Arc::new(NormalWithdrawalService::new(
+        Arc::clone(&normal_account_repo),
+        Arc::clone(&ledger_repo),
+        Arc::clone(&transaction_repo),
+    ));
+
     let path_prefix = config.path_prefix.clone();
 
     let state = AppState {
@@ -245,6 +271,10 @@ async fn main() {
         pb_payment_service,
         pb_withdrawal_service,
         pb_account_repo,
+        normal_account_service,
+        normal_deposit_service,
+        normal_withdrawal_service,
+        normal_account_repo,
         ledger_repo,
         transaction_repo: Arc::clone(&transaction_repo),
         auth: auth_ctx,

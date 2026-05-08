@@ -255,7 +255,6 @@ impl From<crate::domain::transaction::TransactionRecord> for TransactionSummaryD
 
 // ── Normal Account ──
 
-#[allow(dead_code)]
 #[derive(Debug, Deserialize)]
 pub struct CreateNormalAccountRequest {
     pub holder_id: String,
@@ -263,7 +262,6 @@ pub struct CreateNormalAccountRequest {
     pub origin_account_number: Option<String>,
 }
 
-#[allow(dead_code)]
 #[derive(Debug, Serialize)]
 pub struct NormalAccountResponse {
     pub id: Uuid,
@@ -302,7 +300,6 @@ impl From<crate::domain::normal_account::NormalAccount> for NormalAccountRespons
     }
 }
 
-#[allow(dead_code)]
 #[derive(Debug, Serialize)]
 pub struct NormalAccountBalanceResponse {
     pub account_id: Uuid,
@@ -310,7 +307,6 @@ pub struct NormalAccountBalanceResponse {
     pub pending: u64,
 }
 
-#[allow(dead_code)]
 #[derive(Debug, Deserialize)]
 pub struct DepositToNormalAccountRequest {
     pub amount: u64,
@@ -321,7 +317,6 @@ pub struct DepositToNormalAccountRequest {
     pub idempotency_key: Option<String>,
 }
 
-#[allow(dead_code)]
 #[derive(Debug, Serialize)]
 pub struct NormalDepositResponse {
     pub deposit_id: Uuid,
@@ -334,7 +329,6 @@ pub struct NormalDepositResponse {
     pub timeout_seconds: Option<u32>,
 }
 
-#[allow(dead_code)]
 #[derive(Debug, Deserialize)]
 pub struct WithdrawFromNormalAccountRequest {
     pub amount: u64,
@@ -342,7 +336,6 @@ pub struct WithdrawFromNormalAccountRequest {
     pub gateway_ref: Option<String>,
 }
 
-#[allow(dead_code)]
 #[derive(Debug, Serialize)]
 pub struct NormalWithdrawalResponse {
     pub account_id: Uuid,
