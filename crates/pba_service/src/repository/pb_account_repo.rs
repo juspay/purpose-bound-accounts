@@ -6,11 +6,11 @@ use crate::domain::banking::{AccountNumber, Ifsc};
 use crate::domain::purpose::{MccEntry, PurposeType};
 use crate::error::AppError;
 
-pub struct AccountRepo {
+pub struct PbAccountRepo {
     pool: PgPool,
 }
 
-impl AccountRepo {
+impl PbAccountRepo {
     pub fn new(pool: PgPool) -> Self {
         Self { pool }
     }

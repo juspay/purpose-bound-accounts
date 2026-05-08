@@ -15,7 +15,7 @@ mod secrets_plaintext;
 mod service;
 
 use config::{AppConfig, MigrationMode};
-use repository::account_repo::AccountRepo;
+use repository::pb_account_repo::PbAccountRepo;
 use repository::ledger_repo::LedgerRepo;
 use repository::transaction_repo::TransactionRepo;
 use service::account_service::AccountService;
@@ -29,7 +29,7 @@ pub struct AppState {
     pub deposit_service: Arc<DepositService>,
     pub payment_service: Arc<PaymentService>,
     pub withdrawal_service: Arc<WithdrawalService>,
-    pub account_repo: Arc<AccountRepo>,
+    pub account_repo: Arc<PbAccountRepo>,
     pub ledger_repo: Arc<LedgerRepo>,
     pub transaction_repo: Arc<TransactionRepo>,
     pub auth: AuthContext,
@@ -202,7 +202,7 @@ async fn main() {
     }
 
     // Initialize repositories
-    let account_repo = Arc::new(AccountRepo::new(pg_pool.clone()));
+    let account_repo = Arc::new(PbAccountRepo::new(pg_pool.clone()));
     let transaction_repo = Arc::new(TransactionRepo::new(pg_pool.clone()));
     let ledger_repo = Arc::new(LedgerRepo::new(
         config.tigerbeetle_cluster_id,

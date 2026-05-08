@@ -4,7 +4,7 @@ use uuid::Uuid;
 use crate::domain::pool::PaymentSplit;
 use crate::domain::transaction::{TransactionDirection, TransactionStatus, TransactionType};
 use crate::error::AppError;
-use crate::repository::account_repo::AccountRepo;
+use crate::repository::pb_account_repo::PbAccountRepo;
 use crate::repository::ledger_repo::{LedgerRepo, MERCHANT_SETTLEMENT_TB_ID};
 use crate::repository::transaction_repo::TransactionRepo;
 
@@ -12,14 +12,14 @@ const PAYMENT_TRANSFER_CODE: u16 = 200;
 const MAX_SPLIT_RETRIES: u32 = 3;
 
 pub struct PaymentService {
-    pub account_repo: Arc<AccountRepo>,
+    pub account_repo: Arc<PbAccountRepo>,
     pub ledger_repo: Arc<LedgerRepo>,
     pub transaction_repo: Arc<TransactionRepo>,
 }
 
 impl PaymentService {
     pub fn new(
-        account_repo: Arc<AccountRepo>,
+        account_repo: Arc<PbAccountRepo>,
         ledger_repo: Arc<LedgerRepo>,
         transaction_repo: Arc<TransactionRepo>,
     ) -> Self {
