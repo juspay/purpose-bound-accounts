@@ -32,7 +32,7 @@ impl AccountRepo {
 
         let row = sqlx::query_as::<_, AccountRow>(
             r#"
-            INSERT INTO accounts (id, holder_id, purpose_code, origin_ifsc, origin_account_number,
+            INSERT INTO pb_accounts (id, holder_id, purpose_code, origin_ifsc, origin_account_number,
                                   tb_self_account_id, tb_others_account_id)
             VALUES ($1, $2, $3, $4, $5, $6::numeric, $7::numeric)
             RETURNING id, holder_id, purpose_code, origin_ifsc, origin_account_number,
@@ -63,7 +63,7 @@ impl AccountRepo {
                    tb_self_account_id::text as tb_self_account_id,
                    tb_others_account_id::text as tb_others_account_id,
                    kyc_tier, status, created_at, updated_at
-            FROM accounts WHERE id = $1
+            FROM pb_accounts WHERE id = $1
             "#,
         )
         .bind(id)
@@ -81,7 +81,7 @@ impl AccountRepo {
     ) -> Result<PurposeBoundAccount, AppError> {
         let row = sqlx::query_as::<_, AccountRow>(
             r#"
-            UPDATE accounts SET status = $2, updated_at = now()
+            UPDATE pb_accounts SET status = $2, updated_at = now()
             WHERE id = $1
             RETURNING id, holder_id, purpose_code, origin_ifsc, origin_account_number,
                       vpa, virtual_ifsc, virtual_account_number,
@@ -151,7 +151,7 @@ impl AccountRepo {
                    tb_self_account_id::text as tb_self_account_id,
                    tb_others_account_id::text as tb_others_account_id,
                    kyc_tier, status, created_at, updated_at
-            FROM accounts
+            FROM pb_accounts
             ORDER BY created_at DESC
             "#,
         )
@@ -165,7 +165,7 @@ impl AccountRepo {
         let rows: Vec<(String, i64)> = sqlx::query_as(
             r#"
             SELECT status, COUNT(*) as count
-            FROM accounts
+            FROM pb_accounts
             GROUP BY status
             "#,
         )
@@ -179,7 +179,7 @@ impl AccountRepo {
         let rows: Vec<(String, i64)> = sqlx::query_as(
             r#"
             SELECT purpose_code, COUNT(*) as count
-            FROM accounts
+            FROM pb_accounts
             GROUP BY purpose_code
             ORDER BY purpose_code
             "#,
