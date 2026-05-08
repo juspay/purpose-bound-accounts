@@ -964,6 +964,146 @@
                 }
             }
         },
+        "/normal-accounts/{account_id}/transfers": {
+            "post": {
+                "description": "Initiate a transfer of trust funds from a normal account to a PB account's others-pool.\n\nSource side records a Transfer (outbound, pool=null, funding_type='trust').\nDestination side records a Deposit (inbound, pool='others', funding_type='trust').\nBoth legs share a correlation_id.",
+                "operationId": "TransferToPBAccount",
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/TransferToPBAccountRequestContent"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "parameters": [
+                    {
+                        "name": "account_id",
+                        "in": "path",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "TransferToPBAccount 201 response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/TransferToPBAccountResponseContent"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "AccountNotFoundError 404 response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/AccountNotFoundErrorResponseContent"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/normal-accounts/{account_id}/transfers/{transfer_id}/post": {
+            "post": {
+                "description": "Post a pending transfer — both legs flip to 'posted' atomically via correlation_id.",
+                "operationId": "PostNormalAccountTransfer",
+                "parameters": [
+                    {
+                        "name": "account_id",
+                        "in": "path",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "required": true
+                    },
+                    {
+                        "name": "transfer_id",
+                        "in": "path",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "PostNormalAccountTransfer 200 response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/PostNormalAccountTransferResponseContent"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "AccountNotFoundError 404 response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/AccountNotFoundErrorResponseContent"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/normal-accounts/{account_id}/transfers/{transfer_id}/void": {
+            "post": {
+                "description": "Void a pending transfer — both legs flip to 'voided'.",
+                "operationId": "VoidNormalAccountTransfer",
+                "parameters": [
+                    {
+                        "name": "account_id",
+                        "in": "path",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "required": true
+                    },
+                    {
+                        "name": "transfer_id",
+                        "in": "path",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "VoidNormalAccountTransfer 200 response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/VoidNormalAccountTransferResponseContent"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "AccountNotFoundError 404 response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/AccountNotFoundErrorResponseContent"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
         "/normal-accounts/{account_id}/withdrawals": {
             "post": {
                 "description": "Withdraw funds from a normal account.",
@@ -2901,6 +3041,44 @@
                     "status"
                 ]
             },
+            "PostNormalAccountTransferResponseContent": {
+                "type": "object",
+                "properties": {
+                    "transfer_id": {
+                        "type": "string"
+                    },
+                    "source_account_id": {
+                        "type": "string"
+                    },
+                    "destination_account_id": {
+                        "type": "string"
+                    },
+                    "amount": {
+                        "type": "number",
+                        "description": "Monetary amount in the smallest currency unit (e.g., paise for INR)."
+                    },
+                    "status": {
+                        "type": "string"
+                    },
+                    "correlation_id": {
+                        "type": "string"
+                    },
+                    "created_at": {
+                        "type": "string",
+                        "description": "ISO 8601 date-time.",
+                        "format": "date-time"
+                    }
+                },
+                "required": [
+                    "amount",
+                    "correlation_id",
+                    "created_at",
+                    "destination_account_id",
+                    "source_account_id",
+                    "status",
+                    "transfer_id"
+                ]
+            },
             "PostPBAccountDepositResponseContent": {
                 "type": "object",
                 "properties": {
@@ -3074,6 +3252,75 @@
                     "deposit",
                     "payment",
                     "withdrawal"
+                ]
+            },
+            "TransferToPBAccountRequestContent": {
+                "type": "object",
+                "properties": {
+                    "destination_pb_account_id": {
+                        "type": "string"
+                    },
+                    "amount": {
+                        "type": "number",
+                        "description": "Monetary amount in the smallest currency unit (e.g., paise for INR)."
+                    },
+                    "pending": {
+                        "type": "boolean"
+                    },
+                    "gateway_ref": {
+                        "type": "string"
+                    },
+                    "timeout_seconds": {
+                        "type": "number"
+                    },
+                    "description": {
+                        "type": "string"
+                    },
+                    "idempotency_key": {
+                        "type": "string"
+                    }
+                },
+                "required": [
+                    "amount",
+                    "destination_pb_account_id"
+                ]
+            },
+            "TransferToPBAccountResponseContent": {
+                "type": "object",
+                "properties": {
+                    "transfer_id": {
+                        "type": "string"
+                    },
+                    "source_account_id": {
+                        "type": "string"
+                    },
+                    "destination_account_id": {
+                        "type": "string"
+                    },
+                    "amount": {
+                        "type": "number",
+                        "description": "Monetary amount in the smallest currency unit (e.g., paise for INR)."
+                    },
+                    "status": {
+                        "type": "string"
+                    },
+                    "correlation_id": {
+                        "type": "string"
+                    },
+                    "created_at": {
+                        "type": "string",
+                        "description": "ISO 8601 date-time.",
+                        "format": "date-time"
+                    }
+                },
+                "required": [
+                    "amount",
+                    "correlation_id",
+                    "created_at",
+                    "destination_account_id",
+                    "source_account_id",
+                    "status",
+                    "transfer_id"
                 ]
             },
             "UpdateAccountStatusRequestContent": {
@@ -3347,6 +3594,44 @@
                     "amount",
                     "deposit_id",
                     "status"
+                ]
+            },
+            "VoidNormalAccountTransferResponseContent": {
+                "type": "object",
+                "properties": {
+                    "transfer_id": {
+                        "type": "string"
+                    },
+                    "source_account_id": {
+                        "type": "string"
+                    },
+                    "destination_account_id": {
+                        "type": "string"
+                    },
+                    "amount": {
+                        "type": "number",
+                        "description": "Monetary amount in the smallest currency unit (e.g., paise for INR)."
+                    },
+                    "status": {
+                        "type": "string"
+                    },
+                    "correlation_id": {
+                        "type": "string"
+                    },
+                    "created_at": {
+                        "type": "string",
+                        "description": "ISO 8601 date-time.",
+                        "format": "date-time"
+                    }
+                },
+                "required": [
+                    "amount",
+                    "correlation_id",
+                    "created_at",
+                    "destination_account_id",
+                    "source_account_id",
+                    "status",
+                    "transfer_id"
                 ]
             },
             "VoidPBAccountDepositRequestContent": {

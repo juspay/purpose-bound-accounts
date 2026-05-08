@@ -177,7 +177,11 @@ mod post_deposit;
 
 mod post_normal_account_deposit;
 
+mod post_normal_account_transfer;
+
 mod post_pb_account_deposit;
+
+mod transfer_to_pb_account;
 
 mod update_account_status;
 
@@ -188,6 +192,8 @@ mod update_pb_account_status;
 mod void_deposit;
 
 mod void_normal_account_deposit;
+
+mod void_normal_account_transfer;
 
 mod void_pb_account_deposit;
 
