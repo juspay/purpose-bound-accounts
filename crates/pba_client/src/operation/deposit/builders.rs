@@ -19,7 +19,7 @@ impl crate::operation::deposit::builders::DepositInputBuilder {
                 }
 /// Fluent builder constructing a request to `Deposit`.
 /// 
-/// Deposit funds into a purpose-bound account. Automatically routes to self-contribution or others-contribution pool based on whether the source matches the account's origin bank. Set `pending` to true for two-phase deposits (pending → post/void).
+#[deprecated(note = "Use DepositToPBAccount.", since = "2026-05-08")]
 #[derive(::std::clone::Clone, ::std::fmt::Debug)]
 pub struct DepositFluentBuilder {
                 handle: ::std::sync::Arc<crate::client::Handle>,

@@ -19,7 +19,7 @@ impl crate::operation::withdraw::builders::WithdrawInputBuilder {
                 }
 /// Fluent builder constructing a request to `Withdraw`.
 /// 
-/// Withdraw funds from the self-contribution pool only. Cannot withdraw from the others-contribution pool.
+#[deprecated(note = "Use WithdrawFromPBAccount.", since = "2026-05-08")]
 #[derive(::std::clone::Clone, ::std::fmt::Debug)]
 pub struct WithdrawFluentBuilder {
                 handle: ::std::sync::Arc<crate::client::Handle>,

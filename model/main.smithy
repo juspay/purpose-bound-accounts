@@ -7,18 +7,45 @@ use aws.protocols#restJson1
 service PurposeBoundAccountService {
     version: "2026-04-14"
     operations: [
+        // Canonical PB account operations
+        CreatePBAccount
+        GetPBAccount
+        GetPBAccountBalance
+        UpdatePBAccountStatus
+        DepositToPBAccount
+        PostPBAccountDeposit
+        VoidPBAccountDeposit
+        MakePBAccountPayment
+        WithdrawFromPBAccount
+        ListPBAccountTransactions
+
+        // Deprecated PB account aliases (legacy /accounts/... URLs)
         CreateAccount
         GetAccount
         GetBalance
+        UpdateAccountStatus
         Deposit
         PostDeposit
         VoidDeposit
         MakePayment
         Withdraw
-        UpdateAccountStatus
+        ListTransactions
+
+        // Normal account operations
+        CreateNormalAccount
+        GetNormalAccount
+        ListNormalAccounts
+        UpdateNormalAccountStatus
+        GetNormalAccountBalance
+        DepositToNormalAccount
+        PostNormalAccountDeposit
+        VoidNormalAccountDeposit
+        WithdrawFromNormalAccount
+        ListNormalAccountTransactions
+
+        // Unchanged operations
         ListPurposeTypes
         GetPurposeType
-        ListTransactions
         ListAllTransactions
     ]
 }

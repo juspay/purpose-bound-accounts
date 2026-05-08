@@ -19,7 +19,7 @@ impl crate::operation::list_transactions::builders::ListTransactionsInputBuilder
                 }
 /// Fluent builder constructing a request to `ListTransactions`.
 /// 
-/// List transactions for an account with offset/limit pagination.
+#[deprecated(note = "Use ListPBAccountTransactions.", since = "2026-05-08")]
 #[derive(::std::clone::Clone, ::std::fmt::Debug)]
 pub struct ListTransactionsFluentBuilder {
                 handle: ::std::sync::Arc<crate::client::Handle>,

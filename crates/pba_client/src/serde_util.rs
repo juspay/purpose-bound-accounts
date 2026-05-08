@@ -18,6 +18,29 @@ if builder.updated_at.is_none() { builder.updated_at = Some(::aws_smithy_types::
                 builder
             }
 
+pub(crate) fn create_normal_account_output_output_correct_errors(mut builder: crate::operation::create_normal_account::builders::CreateNormalAccountOutputBuilder) -> crate::operation::create_normal_account::builders::CreateNormalAccountOutputBuilder {
+                if builder.id.is_none() { builder.id = Some(Default::default()) }
+if builder.holder_id.is_none() { builder.holder_id = Some(Default::default()) }
+if builder.kyc_tier.is_none() { builder.kyc_tier = Some(Default::default()) }
+if builder.status.is_none() { builder.status = Some(Default::default()) }
+if builder.created_at.is_none() { builder.created_at = Some(::aws_smithy_types::DateTime::from_fractional_secs(0, 0_f64)) }
+if builder.updated_at.is_none() { builder.updated_at = Some(::aws_smithy_types::DateTime::from_fractional_secs(0, 0_f64)) }
+                builder
+            }
+
+pub(crate) fn create_pb_account_output_output_correct_errors(mut builder: crate::operation::create_pb_account::builders::CreatePbAccountOutputBuilder) -> crate::operation::create_pb_account::builders::CreatePbAccountOutputBuilder {
+                if builder.id.is_none() { builder.id = Some(Default::default()) }
+if builder.holder_id.is_none() { builder.holder_id = Some(Default::default()) }
+if builder.purpose_code.is_none() { builder.purpose_code = Some(Default::default()) }
+if builder.origin_ifsc.is_none() { builder.origin_ifsc = Some(Default::default()) }
+if builder.origin_account_number.is_none() { builder.origin_account_number = Some(Default::default()) }
+if builder.kyc_tier.is_none() { builder.kyc_tier = Some(Default::default()) }
+if builder.status.is_none() { builder.status = Some(Default::default()) }
+if builder.created_at.is_none() { builder.created_at = Some(::aws_smithy_types::DateTime::from_fractional_secs(0, 0_f64)) }
+if builder.updated_at.is_none() { builder.updated_at = Some(::aws_smithy_types::DateTime::from_fractional_secs(0, 0_f64)) }
+                builder
+            }
+
 pub(crate) fn account_not_found_error_correct_errors(mut builder: crate::types::error::builders::AccountNotFoundErrorBuilder) -> crate::types::error::builders::AccountNotFoundErrorBuilder {
                 if builder.error.is_none() { builder.error = Some(Default::default()) }
 if builder.message.is_none() { builder.message = Some(Default::default()) }
@@ -31,6 +54,24 @@ if builder.message.is_none() { builder.message = Some(Default::default()) }
             }
 
 pub(crate) fn deposit_output_output_correct_errors(mut builder: crate::operation::deposit::builders::DepositOutputBuilder) -> crate::operation::deposit::builders::DepositOutputBuilder {
+                if builder.deposit_id.is_none() { builder.deposit_id = Some(Default::default()) }
+if builder.account_id.is_none() { builder.account_id = Some(Default::default()) }
+if builder.amount.is_none() { builder.amount = Some(Default::default()) }
+if builder.pool.is_none() { builder.pool = Some(Default::default()) }
+if builder.funding_type.is_none() { builder.funding_type = Some(Default::default()) }
+if builder.status.is_none() { builder.status = Some(Default::default()) }
+                builder
+            }
+
+pub(crate) fn deposit_to_normal_account_output_output_correct_errors(mut builder: crate::operation::deposit_to_normal_account::builders::DepositToNormalAccountOutputBuilder) -> crate::operation::deposit_to_normal_account::builders::DepositToNormalAccountOutputBuilder {
+                if builder.deposit_id.is_none() { builder.deposit_id = Some(Default::default()) }
+if builder.account_id.is_none() { builder.account_id = Some(Default::default()) }
+if builder.amount.is_none() { builder.amount = Some(Default::default()) }
+if builder.status.is_none() { builder.status = Some(Default::default()) }
+                builder
+            }
+
+pub(crate) fn deposit_to_pb_account_output_output_correct_errors(mut builder: crate::operation::deposit_to_pb_account::builders::DepositToPbAccountOutputBuilder) -> crate::operation::deposit_to_pb_account::builders::DepositToPbAccountOutputBuilder {
                 if builder.deposit_id.is_none() { builder.deposit_id = Some(Default::default()) }
 if builder.account_id.is_none() { builder.account_id = Some(Default::default()) }
 if builder.amount.is_none() { builder.amount = Some(Default::default()) }
@@ -63,6 +104,46 @@ if builder.pending_others.is_none() { builder.pending_others = Some(Default::def
                 builder
             }
 
+pub(crate) fn get_normal_account_output_output_correct_errors(mut builder: crate::operation::get_normal_account::builders::GetNormalAccountOutputBuilder) -> crate::operation::get_normal_account::builders::GetNormalAccountOutputBuilder {
+                if builder.id.is_none() { builder.id = Some(Default::default()) }
+if builder.holder_id.is_none() { builder.holder_id = Some(Default::default()) }
+if builder.kyc_tier.is_none() { builder.kyc_tier = Some(Default::default()) }
+if builder.status.is_none() { builder.status = Some(Default::default()) }
+if builder.created_at.is_none() { builder.created_at = Some(::aws_smithy_types::DateTime::from_fractional_secs(0, 0_f64)) }
+if builder.updated_at.is_none() { builder.updated_at = Some(::aws_smithy_types::DateTime::from_fractional_secs(0, 0_f64)) }
+                builder
+            }
+
+pub(crate) fn get_normal_account_balance_output_output_correct_errors(mut builder: crate::operation::get_normal_account_balance::builders::GetNormalAccountBalanceOutputBuilder) -> crate::operation::get_normal_account_balance::builders::GetNormalAccountBalanceOutputBuilder {
+                if builder.account_id.is_none() { builder.account_id = Some(Default::default()) }
+if builder.balance.is_none() { builder.balance = Some(Default::default()) }
+if builder.pending.is_none() { builder.pending = Some(Default::default()) }
+                builder
+            }
+
+pub(crate) fn get_pb_account_output_output_correct_errors(mut builder: crate::operation::get_pb_account::builders::GetPbAccountOutputBuilder) -> crate::operation::get_pb_account::builders::GetPbAccountOutputBuilder {
+                if builder.id.is_none() { builder.id = Some(Default::default()) }
+if builder.holder_id.is_none() { builder.holder_id = Some(Default::default()) }
+if builder.purpose_code.is_none() { builder.purpose_code = Some(Default::default()) }
+if builder.origin_ifsc.is_none() { builder.origin_ifsc = Some(Default::default()) }
+if builder.origin_account_number.is_none() { builder.origin_account_number = Some(Default::default()) }
+if builder.kyc_tier.is_none() { builder.kyc_tier = Some(Default::default()) }
+if builder.status.is_none() { builder.status = Some(Default::default()) }
+if builder.created_at.is_none() { builder.created_at = Some(::aws_smithy_types::DateTime::from_fractional_secs(0, 0_f64)) }
+if builder.updated_at.is_none() { builder.updated_at = Some(::aws_smithy_types::DateTime::from_fractional_secs(0, 0_f64)) }
+                builder
+            }
+
+pub(crate) fn get_pb_account_balance_output_output_correct_errors(mut builder: crate::operation::get_pb_account_balance::builders::GetPbAccountBalanceOutputBuilder) -> crate::operation::get_pb_account_balance::builders::GetPbAccountBalanceOutputBuilder {
+                if builder.account_id.is_none() { builder.account_id = Some(Default::default()) }
+if builder.self_contribution.is_none() { builder.self_contribution = Some(Default::default()) }
+if builder.others_contribution.is_none() { builder.others_contribution = Some(Default::default()) }
+if builder.total.is_none() { builder.total = Some(Default::default()) }
+if builder.pending_self.is_none() { builder.pending_self = Some(Default::default()) }
+if builder.pending_others.is_none() { builder.pending_others = Some(Default::default()) }
+                builder
+            }
+
 pub(crate) fn get_purpose_type_output_output_correct_errors(mut builder: crate::operation::get_purpose_type::builders::GetPurposeTypeOutputBuilder) -> crate::operation::get_purpose_type::builders::GetPurposeTypeOutputBuilder {
                 if builder.purpose_code.is_none() { builder.purpose_code = Some(Default::default()) }
 if builder.allowed_mccs.is_none() { builder.allowed_mccs = Some(Default::default()) }
@@ -70,6 +151,30 @@ if builder.allowed_mccs.is_none() { builder.allowed_mccs = Some(Default::default
             }
 
 pub(crate) fn list_all_transactions_output_output_correct_errors(mut builder: crate::operation::list_all_transactions::builders::ListAllTransactionsOutputBuilder) -> crate::operation::list_all_transactions::builders::ListAllTransactionsOutputBuilder {
+                if builder.transactions.is_none() { builder.transactions = Some(Default::default()) }
+if builder.total.is_none() { builder.total = Some(Default::default()) }
+if builder.offset.is_none() { builder.offset = Some(Default::default()) }
+if builder.limit.is_none() { builder.limit = Some(Default::default()) }
+                builder
+            }
+
+pub(crate) fn list_normal_account_transactions_output_output_correct_errors(mut builder: crate::operation::list_normal_account_transactions::builders::ListNormalAccountTransactionsOutputBuilder) -> crate::operation::list_normal_account_transactions::builders::ListNormalAccountTransactionsOutputBuilder {
+                if builder.transactions.is_none() { builder.transactions = Some(Default::default()) }
+if builder.total.is_none() { builder.total = Some(Default::default()) }
+if builder.offset.is_none() { builder.offset = Some(Default::default()) }
+if builder.limit.is_none() { builder.limit = Some(Default::default()) }
+                builder
+            }
+
+pub(crate) fn list_normal_accounts_output_output_correct_errors(mut builder: crate::operation::list_normal_accounts::builders::ListNormalAccountsOutputBuilder) -> crate::operation::list_normal_accounts::builders::ListNormalAccountsOutputBuilder {
+                if builder.accounts.is_none() { builder.accounts = Some(Default::default()) }
+if builder.total.is_none() { builder.total = Some(Default::default()) }
+if builder.offset.is_none() { builder.offset = Some(Default::default()) }
+if builder.limit.is_none() { builder.limit = Some(Default::default()) }
+                builder
+            }
+
+pub(crate) fn list_pb_account_transactions_output_output_correct_errors(mut builder: crate::operation::list_pb_account_transactions::builders::ListPbAccountTransactionsOutputBuilder) -> crate::operation::list_pb_account_transactions::builders::ListPbAccountTransactionsOutputBuilder {
                 if builder.transactions.is_none() { builder.transactions = Some(Default::default()) }
 if builder.total.is_none() { builder.total = Some(Default::default()) }
 if builder.offset.is_none() { builder.offset = Some(Default::default()) }
@@ -112,6 +217,16 @@ if builder.merchant_mcc.is_none() { builder.merchant_mcc = Some(Default::default
                 builder
             }
 
+pub(crate) fn make_pb_account_payment_output_output_correct_errors(mut builder: crate::operation::make_pb_account_payment::builders::MakePbAccountPaymentOutputBuilder) -> crate::operation::make_pb_account_payment::builders::MakePbAccountPaymentOutputBuilder {
+                if builder.account_id.is_none() { builder.account_id = Some(Default::default()) }
+if builder.amount.is_none() { builder.amount = Some(Default::default()) }
+if builder.from_others.is_none() { builder.from_others = Some(Default::default()) }
+if builder.from_self.is_none() { builder.from_self = Some(Default::default()) }
+if builder.merchant_id.is_none() { builder.merchant_id = Some(Default::default()) }
+if builder.merchant_mcc.is_none() { builder.merchant_mcc = Some(Default::default()) }
+                builder
+            }
+
 pub(crate) fn deposit_not_found_error_correct_errors(mut builder: crate::types::error::builders::DepositNotFoundErrorBuilder) -> crate::types::error::builders::DepositNotFoundErrorBuilder {
                 if builder.error.is_none() { builder.error = Some(Default::default()) }
 if builder.message.is_none() { builder.message = Some(Default::default()) }
@@ -133,7 +248,47 @@ if builder.status.is_none() { builder.status = Some(Default::default()) }
                 builder
             }
 
+pub(crate) fn post_normal_account_deposit_output_output_correct_errors(mut builder: crate::operation::post_normal_account_deposit::builders::PostNormalAccountDepositOutputBuilder) -> crate::operation::post_normal_account_deposit::builders::PostNormalAccountDepositOutputBuilder {
+                if builder.deposit_id.is_none() { builder.deposit_id = Some(Default::default()) }
+if builder.account_id.is_none() { builder.account_id = Some(Default::default()) }
+if builder.amount.is_none() { builder.amount = Some(Default::default()) }
+if builder.status.is_none() { builder.status = Some(Default::default()) }
+                builder
+            }
+
+pub(crate) fn post_pb_account_deposit_output_output_correct_errors(mut builder: crate::operation::post_pb_account_deposit::builders::PostPbAccountDepositOutputBuilder) -> crate::operation::post_pb_account_deposit::builders::PostPbAccountDepositOutputBuilder {
+                if builder.deposit_id.is_none() { builder.deposit_id = Some(Default::default()) }
+if builder.account_id.is_none() { builder.account_id = Some(Default::default()) }
+if builder.amount.is_none() { builder.amount = Some(Default::default()) }
+if builder.pool.is_none() { builder.pool = Some(Default::default()) }
+if builder.status.is_none() { builder.status = Some(Default::default()) }
+                builder
+            }
+
 pub(crate) fn update_account_status_output_output_correct_errors(mut builder: crate::operation::update_account_status::builders::UpdateAccountStatusOutputBuilder) -> crate::operation::update_account_status::builders::UpdateAccountStatusOutputBuilder {
+                if builder.id.is_none() { builder.id = Some(Default::default()) }
+if builder.holder_id.is_none() { builder.holder_id = Some(Default::default()) }
+if builder.purpose_code.is_none() { builder.purpose_code = Some(Default::default()) }
+if builder.origin_ifsc.is_none() { builder.origin_ifsc = Some(Default::default()) }
+if builder.origin_account_number.is_none() { builder.origin_account_number = Some(Default::default()) }
+if builder.kyc_tier.is_none() { builder.kyc_tier = Some(Default::default()) }
+if builder.status.is_none() { builder.status = Some(Default::default()) }
+if builder.created_at.is_none() { builder.created_at = Some(::aws_smithy_types::DateTime::from_fractional_secs(0, 0_f64)) }
+if builder.updated_at.is_none() { builder.updated_at = Some(::aws_smithy_types::DateTime::from_fractional_secs(0, 0_f64)) }
+                builder
+            }
+
+pub(crate) fn update_normal_account_status_output_output_correct_errors(mut builder: crate::operation::update_normal_account_status::builders::UpdateNormalAccountStatusOutputBuilder) -> crate::operation::update_normal_account_status::builders::UpdateNormalAccountStatusOutputBuilder {
+                if builder.id.is_none() { builder.id = Some(Default::default()) }
+if builder.holder_id.is_none() { builder.holder_id = Some(Default::default()) }
+if builder.kyc_tier.is_none() { builder.kyc_tier = Some(Default::default()) }
+if builder.status.is_none() { builder.status = Some(Default::default()) }
+if builder.created_at.is_none() { builder.created_at = Some(::aws_smithy_types::DateTime::from_fractional_secs(0, 0_f64)) }
+if builder.updated_at.is_none() { builder.updated_at = Some(::aws_smithy_types::DateTime::from_fractional_secs(0, 0_f64)) }
+                builder
+            }
+
+pub(crate) fn update_pb_account_status_output_output_correct_errors(mut builder: crate::operation::update_pb_account_status::builders::UpdatePbAccountStatusOutputBuilder) -> crate::operation::update_pb_account_status::builders::UpdatePbAccountStatusOutputBuilder {
                 if builder.id.is_none() { builder.id = Some(Default::default()) }
 if builder.holder_id.is_none() { builder.holder_id = Some(Default::default()) }
 if builder.purpose_code.is_none() { builder.purpose_code = Some(Default::default()) }
@@ -155,7 +310,36 @@ if builder.status.is_none() { builder.status = Some(Default::default()) }
                 builder
             }
 
+pub(crate) fn void_normal_account_deposit_output_output_correct_errors(mut builder: crate::operation::void_normal_account_deposit::builders::VoidNormalAccountDepositOutputBuilder) -> crate::operation::void_normal_account_deposit::builders::VoidNormalAccountDepositOutputBuilder {
+                if builder.deposit_id.is_none() { builder.deposit_id = Some(Default::default()) }
+if builder.account_id.is_none() { builder.account_id = Some(Default::default()) }
+if builder.amount.is_none() { builder.amount = Some(Default::default()) }
+if builder.status.is_none() { builder.status = Some(Default::default()) }
+                builder
+            }
+
+pub(crate) fn void_pb_account_deposit_output_output_correct_errors(mut builder: crate::operation::void_pb_account_deposit::builders::VoidPbAccountDepositOutputBuilder) -> crate::operation::void_pb_account_deposit::builders::VoidPbAccountDepositOutputBuilder {
+                if builder.deposit_id.is_none() { builder.deposit_id = Some(Default::default()) }
+if builder.account_id.is_none() { builder.account_id = Some(Default::default()) }
+if builder.amount.is_none() { builder.amount = Some(Default::default()) }
+if builder.pool.is_none() { builder.pool = Some(Default::default()) }
+if builder.status.is_none() { builder.status = Some(Default::default()) }
+                builder
+            }
+
 pub(crate) fn withdraw_output_output_correct_errors(mut builder: crate::operation::withdraw::builders::WithdrawOutputBuilder) -> crate::operation::withdraw::builders::WithdrawOutputBuilder {
+                if builder.account_id.is_none() { builder.account_id = Some(Default::default()) }
+if builder.amount.is_none() { builder.amount = Some(Default::default()) }
+                builder
+            }
+
+pub(crate) fn withdraw_from_normal_account_output_output_correct_errors(mut builder: crate::operation::withdraw_from_normal_account::builders::WithdrawFromNormalAccountOutputBuilder) -> crate::operation::withdraw_from_normal_account::builders::WithdrawFromNormalAccountOutputBuilder {
+                if builder.account_id.is_none() { builder.account_id = Some(Default::default()) }
+if builder.amount.is_none() { builder.amount = Some(Default::default()) }
+                builder
+            }
+
+pub(crate) fn withdraw_from_pb_account_output_output_correct_errors(mut builder: crate::operation::withdraw_from_pb_account::builders::WithdrawFromPbAccountOutputBuilder) -> crate::operation::withdraw_from_pb_account::builders::WithdrawFromPbAccountOutputBuilder {
                 if builder.account_id.is_none() { builder.account_id = Some(Default::default()) }
 if builder.amount.is_none() { builder.amount = Some(Default::default()) }
                 builder
@@ -163,6 +347,16 @@ if builder.amount.is_none() { builder.amount = Some(Default::default()) }
 
 pub(crate) fn mcc_entry_correct_errors(mut builder: crate::types::builders::MccEntryBuilder) -> crate::types::builders::MccEntryBuilder {
                 if builder.mcc.is_none() { builder.mcc = Some(Default::default()) }
+                builder
+            }
+
+pub(crate) fn normal_account_summary_correct_errors(mut builder: crate::types::builders::NormalAccountSummaryBuilder) -> crate::types::builders::NormalAccountSummaryBuilder {
+                if builder.id.is_none() { builder.id = Some(Default::default()) }
+if builder.holder_id.is_none() { builder.holder_id = Some(Default::default()) }
+if builder.kyc_tier.is_none() { builder.kyc_tier = Some(Default::default()) }
+if builder.status.is_none() { builder.status = Some(Default::default()) }
+if builder.created_at.is_none() { builder.created_at = Some(::aws_smithy_types::DateTime::from_fractional_secs(0, 0_f64)) }
+if builder.updated_at.is_none() { builder.updated_at = Some(::aws_smithy_types::DateTime::from_fractional_secs(0, 0_f64)) }
                 builder
             }
 
@@ -175,10 +369,10 @@ if builder.allowed_mccs.is_none() { builder.allowed_mccs = Some(Default::default
 pub(crate) fn transaction_summary_correct_errors(mut builder: crate::types::builders::TransactionSummaryBuilder) -> crate::types::builders::TransactionSummaryBuilder {
                 if builder.id.is_none() { builder.id = Some(Default::default()) }
 if builder.account_id.is_none() { builder.account_id = Some(Default::default()) }
+if builder.account_kind.is_none() { builder.account_kind = Some(Default::default()) }
 if builder.r#type.is_none() { builder.r#type = "no value was set".parse::<crate::types::TransactionType>().ok() }
 if builder.status.is_none() { builder.status = "no value was set".parse::<crate::types::TransactionStatus>().ok() }
 if builder.amount.is_none() { builder.amount = Some(Default::default()) }
-if builder.pool.is_none() { builder.pool = "no value was set".parse::<crate::types::PoolType>().ok() }
 if builder.direction.is_none() { builder.direction = "no value was set".parse::<crate::types::TransactionDirection>().ok() }
 if builder.created_at.is_none() { builder.created_at = Some(::aws_smithy_types::DateTime::from_fractional_secs(0, 0_f64)) }
                 builder

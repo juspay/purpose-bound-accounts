@@ -19,7 +19,7 @@ impl crate::operation::update_account_status::builders::UpdateAccountStatusInput
                 }
 /// Fluent builder constructing a request to `UpdateAccountStatus`.
 /// 
-/// Update account status (freeze, close, reactivate).
+#[deprecated(note = "Use UpdatePBAccountStatus.", since = "2026-05-08")]
 #[derive(::std::clone::Clone, ::std::fmt::Debug)]
 pub struct UpdateAccountStatusFluentBuilder {
                 handle: ::std::sync::Arc<crate::client::Handle>,

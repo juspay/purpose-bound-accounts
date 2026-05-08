@@ -19,7 +19,7 @@ impl crate::operation::create_account::builders::CreateAccountInputBuilder {
                 }
 /// Fluent builder constructing a request to `CreateAccount`.
 /// 
-/// Create a new purpose-bound account.
+#[deprecated(note = "Use CreatePBAccount.", since = "2026-05-08")]
 #[derive(::std::clone::Clone, ::std::fmt::Debug)]
 pub struct CreateAccountFluentBuilder {
                 handle: ::std::sync::Arc<crate::client::Handle>,

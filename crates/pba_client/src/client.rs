@@ -106,6 +106,10 @@
 
 mod create_account;
 
+mod create_normal_account;
+
+mod create_pb_account;
+
 /// Operation customization and supporting types.
 /// 
 /// The underlying HTTP requests made during an operation can be customized
@@ -135,13 +139,31 @@ pub mod customize;
 
 mod deposit;
 
+mod deposit_to_normal_account;
+
+mod deposit_to_pb_account;
+
 mod get_account;
 
 mod get_balance;
 
+mod get_normal_account;
+
+mod get_normal_account_balance;
+
+mod get_pb_account;
+
+mod get_pb_account_balance;
+
 mod get_purpose_type;
 
 mod list_all_transactions;
+
+mod list_normal_account_transactions;
+
+mod list_normal_accounts;
+
+mod list_pb_account_transactions;
 
 mod list_purpose_types;
 
@@ -149,11 +171,29 @@ mod list_transactions;
 
 mod make_payment;
 
+mod make_pb_account_payment;
+
 mod post_deposit;
+
+mod post_normal_account_deposit;
+
+mod post_pb_account_deposit;
 
 mod update_account_status;
 
+mod update_normal_account_status;
+
+mod update_pb_account_status;
+
 mod void_deposit;
 
+mod void_normal_account_deposit;
+
+mod void_pb_account_deposit;
+
 mod withdraw;
+
+mod withdraw_from_normal_account;
+
+mod withdraw_from_pb_account;
 

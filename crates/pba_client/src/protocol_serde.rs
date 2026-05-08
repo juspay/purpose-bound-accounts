@@ -15,15 +15,37 @@ pub fn parse_http_error_metadata(_response_status: u16, response_headers: &::aws
 
 pub(crate) mod shape_create_account;
 
+pub(crate) mod shape_create_normal_account;
+
+pub(crate) mod shape_create_pb_account;
+
 pub(crate) mod shape_deposit;
+
+pub(crate) mod shape_deposit_to_normal_account;
+
+pub(crate) mod shape_deposit_to_pb_account;
 
 pub(crate) mod shape_get_account;
 
 pub(crate) mod shape_get_balance;
 
+pub(crate) mod shape_get_normal_account;
+
+pub(crate) mod shape_get_normal_account_balance;
+
+pub(crate) mod shape_get_pb_account;
+
+pub(crate) mod shape_get_pb_account_balance;
+
 pub(crate) mod shape_get_purpose_type;
 
 pub(crate) mod shape_list_all_transactions;
+
+pub(crate) mod shape_list_normal_account_transactions;
+
+pub(crate) mod shape_list_normal_accounts;
+
+pub(crate) mod shape_list_pb_account_transactions;
 
 pub(crate) mod shape_list_purpose_types;
 
@@ -31,13 +53,31 @@ pub(crate) mod shape_list_transactions;
 
 pub(crate) mod shape_make_payment;
 
+pub(crate) mod shape_make_pb_account_payment;
+
 pub(crate) mod shape_post_deposit;
+
+pub(crate) mod shape_post_normal_account_deposit;
+
+pub(crate) mod shape_post_pb_account_deposit;
 
 pub(crate) mod shape_update_account_status;
 
+pub(crate) mod shape_update_normal_account_status;
+
+pub(crate) mod shape_update_pb_account_status;
+
 pub(crate) mod shape_void_deposit;
 
+pub(crate) mod shape_void_normal_account_deposit;
+
+pub(crate) mod shape_void_pb_account_deposit;
+
 pub(crate) mod shape_withdraw;
+
+pub(crate) mod shape_withdraw_from_normal_account;
+
+pub(crate) mod shape_withdraw_from_pb_account;
 
 pub(crate) fn or_empty_doc(data: &[u8]) -> &[u8] {
                     if data.is_empty() {
@@ -53,11 +93,19 @@ pub(crate) mod shape_account_not_found_error;
 
 pub(crate) mod shape_create_account_input;
 
+pub(crate) mod shape_create_normal_account_input;
+
+pub(crate) mod shape_create_pb_account_input;
+
 pub(crate) mod shape_deposit_input;
 
 pub(crate) mod shape_deposit_not_found_error;
 
 pub(crate) mod shape_deposit_not_pending_error;
+
+pub(crate) mod shape_deposit_to_normal_account_input;
+
+pub(crate) mod shape_deposit_to_pb_account_input;
 
 pub(crate) mod shape_insufficient_funds_error;
 
@@ -65,21 +113,37 @@ pub(crate) mod shape_invalid_mcc_error;
 
 pub(crate) mod shape_make_payment_input;
 
+pub(crate) mod shape_make_pb_account_payment_input;
+
 pub(crate) mod shape_purpose_type_not_found_error;
 
 pub(crate) mod shape_update_account_status_input;
 
+pub(crate) mod shape_update_normal_account_status_input;
+
+pub(crate) mod shape_update_pb_account_status_input;
+
 pub(crate) mod shape_void_deposit_input;
+
+pub(crate) mod shape_void_pb_account_deposit_input;
+
+pub(crate) mod shape_withdraw_from_normal_account_input;
+
+pub(crate) mod shape_withdraw_from_pb_account_input;
 
 pub(crate) mod shape_withdraw_input;
 
 pub(crate) mod shape_mcc_entry_list;
+
+pub(crate) mod shape_normal_account_list;
 
 pub(crate) mod shape_purpose_type_list;
 
 pub(crate) mod shape_transaction_list;
 
 pub(crate) mod shape_mcc_entry;
+
+pub(crate) mod shape_normal_account_summary;
 
 pub(crate) mod shape_purpose_type_summary;
 

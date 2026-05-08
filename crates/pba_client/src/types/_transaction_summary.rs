@@ -7,6 +7,8 @@ pub struct TransactionSummary  {
     pub id: ::std::string::String,
     #[allow(missing_docs)] // documentation missing in model
     pub account_id: ::std::string::String,
+    #[allow(missing_docs)] // documentation missing in model
+    pub account_kind: ::std::string::String,
     /// Transaction type.
     pub r#type: crate::types::TransactionType,
     /// Transaction status.
@@ -14,7 +16,7 @@ pub struct TransactionSummary  {
     /// Monetary amount in the smallest currency unit (e.g., paise for INR).
     pub amount: i64,
     /// Pool type indicating the source of funds.
-    pub pool: crate::types::PoolType,
+    pub pool: ::std::option::Option<crate::types::PoolType>,
     /// Transaction direction.
     pub direction: crate::types::TransactionDirection,
     #[allow(missing_docs)] // documentation missing in model
@@ -31,6 +33,8 @@ pub struct TransactionSummary  {
     pub gateway_ref: ::std::option::Option<::std::string::String>,
     #[allow(missing_docs)] // documentation missing in model
     pub funding_type: ::std::option::Option<::std::string::String>,
+    #[allow(missing_docs)] // documentation missing in model
+    pub correlation_id: ::std::option::Option<::std::string::String>,
     /// ISO 8601 date-time.
     pub created_at: ::aws_smithy_types::DateTime,
 }
@@ -42,6 +46,10 @@ impl  TransactionSummary  {
     #[allow(missing_docs)] // documentation missing in model
     pub fn account_id(&self) -> &str {
         use std::ops::Deref; self.account_id.deref()
+    }
+    #[allow(missing_docs)] // documentation missing in model
+    pub fn account_kind(&self) -> &str {
+        use std::ops::Deref; self.account_kind.deref()
     }
     /// Transaction type.
     pub fn r#type(&self) -> &crate::types::TransactionType {
@@ -56,8 +64,8 @@ impl  TransactionSummary  {
         self.amount
     }
     /// Pool type indicating the source of funds.
-    pub fn pool(&self) -> &crate::types::PoolType {
-        &self.pool
+    pub fn pool(&self) -> ::std::option::Option<&crate::types::PoolType> {
+        self.pool.as_ref()
     }
     /// Transaction direction.
     pub fn direction(&self) -> &crate::types::TransactionDirection {
@@ -91,6 +99,10 @@ impl  TransactionSummary  {
     pub fn funding_type(&self) -> ::std::option::Option<&str> {
         self.funding_type.as_deref()
     }
+    #[allow(missing_docs)] // documentation missing in model
+    pub fn correlation_id(&self) -> ::std::option::Option<&str> {
+        self.correlation_id.as_deref()
+    }
     /// ISO 8601 date-time.
     pub fn created_at(&self) -> &::aws_smithy_types::DateTime {
         &self.created_at
@@ -109,6 +121,7 @@ impl TransactionSummary {
 pub struct TransactionSummaryBuilder {
     pub(crate) id: ::std::option::Option<::std::string::String>,
     pub(crate) account_id: ::std::option::Option<::std::string::String>,
+    pub(crate) account_kind: ::std::option::Option<::std::string::String>,
     pub(crate) r#type: ::std::option::Option<crate::types::TransactionType>,
     pub(crate) status: ::std::option::Option<crate::types::TransactionStatus>,
     pub(crate) amount: ::std::option::Option<i64>,
@@ -121,6 +134,7 @@ pub struct TransactionSummaryBuilder {
     pub(crate) source_account: ::std::option::Option<::std::string::String>,
     pub(crate) gateway_ref: ::std::option::Option<::std::string::String>,
     pub(crate) funding_type: ::std::option::Option<::std::string::String>,
+    pub(crate) correlation_id: ::std::option::Option<::std::string::String>,
     pub(crate) created_at: ::std::option::Option<::aws_smithy_types::DateTime>,
 }
 impl TransactionSummaryBuilder {
@@ -151,6 +165,20 @@ impl TransactionSummaryBuilder {
     #[allow(missing_docs)] // documentation missing in model
     pub fn get_account_id(&self) -> &::std::option::Option<::std::string::String> {
         &self.account_id
+    }
+    #[allow(missing_docs)] // documentation missing in model
+    /// This field is required.
+    pub fn account_kind(mut self, input: impl ::std::convert::Into<::std::string::String>) -> Self {
+        self.account_kind = ::std::option::Option::Some(input.into());
+        self
+    }
+    #[allow(missing_docs)] // documentation missing in model
+    pub fn set_account_kind(mut self, input: ::std::option::Option<::std::string::String>) -> Self {
+        self.account_kind = input; self
+    }
+    #[allow(missing_docs)] // documentation missing in model
+    pub fn get_account_kind(&self) -> &::std::option::Option<::std::string::String> {
+        &self.account_kind
     }
     /// Transaction type.
     /// This field is required.
@@ -195,7 +223,6 @@ impl TransactionSummaryBuilder {
         &self.amount
     }
     /// Pool type indicating the source of funds.
-    /// This field is required.
     pub fn pool(mut self, input: crate::types::PoolType) -> Self {
         self.pool = ::std::option::Option::Some(input);
         self
@@ -313,6 +340,19 @@ impl TransactionSummaryBuilder {
     pub fn get_funding_type(&self) -> &::std::option::Option<::std::string::String> {
         &self.funding_type
     }
+    #[allow(missing_docs)] // documentation missing in model
+    pub fn correlation_id(mut self, input: impl ::std::convert::Into<::std::string::String>) -> Self {
+        self.correlation_id = ::std::option::Option::Some(input.into());
+        self
+    }
+    #[allow(missing_docs)] // documentation missing in model
+    pub fn set_correlation_id(mut self, input: ::std::option::Option<::std::string::String>) -> Self {
+        self.correlation_id = input; self
+    }
+    #[allow(missing_docs)] // documentation missing in model
+    pub fn get_correlation_id(&self) -> &::std::option::Option<::std::string::String> {
+        &self.correlation_id
+    }
     /// ISO 8601 date-time.
     /// This field is required.
     pub fn created_at(mut self, input: ::aws_smithy_types::DateTime) -> Self {
@@ -331,10 +371,10 @@ impl TransactionSummaryBuilder {
     /// This method will fail if any of the following fields are not set:
     /// - [`id`](crate::types::builders::TransactionSummaryBuilder::id)
     /// - [`account_id`](crate::types::builders::TransactionSummaryBuilder::account_id)
+    /// - [`account_kind`](crate::types::builders::TransactionSummaryBuilder::account_kind)
     /// - [`r#type`](crate::types::builders::TransactionSummaryBuilder::type)
     /// - [`status`](crate::types::builders::TransactionSummaryBuilder::status)
     /// - [`amount`](crate::types::builders::TransactionSummaryBuilder::amount)
-    /// - [`pool`](crate::types::builders::TransactionSummaryBuilder::pool)
     /// - [`direction`](crate::types::builders::TransactionSummaryBuilder::direction)
     /// - [`created_at`](crate::types::builders::TransactionSummaryBuilder::created_at)
     pub fn build(self) -> ::std::result::Result<crate::types::TransactionSummary, ::aws_smithy_types::error::operation::BuildError> {
@@ -348,6 +388,11 @@ impl TransactionSummaryBuilder {
                 account_id: self.account_id
                     .ok_or_else(||
                         ::aws_smithy_types::error::operation::BuildError::missing_field("account_id", "account_id was not specified but it is required when building TransactionSummary")
+                    )?
+                ,
+                account_kind: self.account_kind
+                    .ok_or_else(||
+                        ::aws_smithy_types::error::operation::BuildError::missing_field("account_kind", "account_kind was not specified but it is required when building TransactionSummary")
                     )?
                 ,
                 r#type: self.r#type
@@ -366,9 +411,6 @@ impl TransactionSummaryBuilder {
                     )?
                 ,
                 pool: self.pool
-                    .ok_or_else(||
-                        ::aws_smithy_types::error::operation::BuildError::missing_field("pool", "pool was not specified but it is required when building TransactionSummary")
-                    )?
                 ,
                 direction: self.direction
                     .ok_or_else(||
@@ -388,6 +430,8 @@ impl TransactionSummaryBuilder {
                 gateway_ref: self.gateway_ref
                 ,
                 funding_type: self.funding_type
+                ,
+                correlation_id: self.correlation_id
                 ,
                 created_at: self.created_at
                     .ok_or_else(||

@@ -84,6 +84,47 @@ impl From<crate::operation::create_account::CreateAccountError> for Error {
         }
     }
 }
+impl<R> From<::aws_smithy_runtime_api::client::result::SdkError<crate::operation::create_normal_account::CreateNormalAccountError, R>> for Error where R: Send + Sync + std::fmt::Debug + 'static {
+    fn from(err: ::aws_smithy_runtime_api::client::result::SdkError<crate::operation::create_normal_account::CreateNormalAccountError, R>) -> Self {
+        match err {
+            ::aws_smithy_runtime_api::client::result::SdkError::ServiceError(context) => Self::from(context.into_err()),
+            _ => Error::Unhandled(
+                                        crate::error::sealed_unhandled::Unhandled {
+                                            meta: ::aws_smithy_types::error::metadata::ProvideErrorMetadata::meta(&err).clone(),
+                                            source: err.into(),
+                                        }
+                                    ),
+        }
+    }
+}
+impl From<crate::operation::create_normal_account::CreateNormalAccountError> for Error {
+    fn from(err: crate::operation::create_normal_account::CreateNormalAccountError) -> Self {
+        match err {
+            crate::operation::create_normal_account::CreateNormalAccountError::Unhandled(inner) => Error::Unhandled(inner),
+        }
+    }
+}
+impl<R> From<::aws_smithy_runtime_api::client::result::SdkError<crate::operation::create_pb_account::CreatePBAccountError, R>> for Error where R: Send + Sync + std::fmt::Debug + 'static {
+    fn from(err: ::aws_smithy_runtime_api::client::result::SdkError<crate::operation::create_pb_account::CreatePBAccountError, R>) -> Self {
+        match err {
+            ::aws_smithy_runtime_api::client::result::SdkError::ServiceError(context) => Self::from(context.into_err()),
+            _ => Error::Unhandled(
+                                        crate::error::sealed_unhandled::Unhandled {
+                                            meta: ::aws_smithy_types::error::metadata::ProvideErrorMetadata::meta(&err).clone(),
+                                            source: err.into(),
+                                        }
+                                    ),
+        }
+    }
+}
+impl From<crate::operation::create_pb_account::CreatePBAccountError> for Error {
+    fn from(err: crate::operation::create_pb_account::CreatePBAccountError) -> Self {
+        match err {
+            crate::operation::create_pb_account::CreatePBAccountError::PurposeTypeNotFoundError(inner) => Error::PurposeTypeNotFoundError(inner),
+            crate::operation::create_pb_account::CreatePBAccountError::Unhandled(inner) => Error::Unhandled(inner),
+        }
+    }
+}
 impl<R> From<::aws_smithy_runtime_api::client::result::SdkError<crate::operation::deposit::DepositError, R>> for Error where R: Send + Sync + std::fmt::Debug + 'static {
     fn from(err: ::aws_smithy_runtime_api::client::result::SdkError<crate::operation::deposit::DepositError, R>) -> Self {
         match err {
@@ -103,6 +144,50 @@ impl From<crate::operation::deposit::DepositError> for Error {
             crate::operation::deposit::DepositError::AccountNotFoundError(inner) => Error::AccountNotFoundError(inner),
             crate::operation::deposit::DepositError::AccountNotActiveError(inner) => Error::AccountNotActiveError(inner),
             crate::operation::deposit::DepositError::Unhandled(inner) => Error::Unhandled(inner),
+        }
+    }
+}
+impl<R> From<::aws_smithy_runtime_api::client::result::SdkError<crate::operation::deposit_to_normal_account::DepositToNormalAccountError, R>> for Error where R: Send + Sync + std::fmt::Debug + 'static {
+    fn from(err: ::aws_smithy_runtime_api::client::result::SdkError<crate::operation::deposit_to_normal_account::DepositToNormalAccountError, R>) -> Self {
+        match err {
+            ::aws_smithy_runtime_api::client::result::SdkError::ServiceError(context) => Self::from(context.into_err()),
+            _ => Error::Unhandled(
+                                        crate::error::sealed_unhandled::Unhandled {
+                                            meta: ::aws_smithy_types::error::metadata::ProvideErrorMetadata::meta(&err).clone(),
+                                            source: err.into(),
+                                        }
+                                    ),
+        }
+    }
+}
+impl From<crate::operation::deposit_to_normal_account::DepositToNormalAccountError> for Error {
+    fn from(err: crate::operation::deposit_to_normal_account::DepositToNormalAccountError) -> Self {
+        match err {
+            crate::operation::deposit_to_normal_account::DepositToNormalAccountError::AccountNotFoundError(inner) => Error::AccountNotFoundError(inner),
+            crate::operation::deposit_to_normal_account::DepositToNormalAccountError::AccountNotActiveError(inner) => Error::AccountNotActiveError(inner),
+            crate::operation::deposit_to_normal_account::DepositToNormalAccountError::Unhandled(inner) => Error::Unhandled(inner),
+        }
+    }
+}
+impl<R> From<::aws_smithy_runtime_api::client::result::SdkError<crate::operation::deposit_to_pb_account::DepositToPBAccountError, R>> for Error where R: Send + Sync + std::fmt::Debug + 'static {
+    fn from(err: ::aws_smithy_runtime_api::client::result::SdkError<crate::operation::deposit_to_pb_account::DepositToPBAccountError, R>) -> Self {
+        match err {
+            ::aws_smithy_runtime_api::client::result::SdkError::ServiceError(context) => Self::from(context.into_err()),
+            _ => Error::Unhandled(
+                                        crate::error::sealed_unhandled::Unhandled {
+                                            meta: ::aws_smithy_types::error::metadata::ProvideErrorMetadata::meta(&err).clone(),
+                                            source: err.into(),
+                                        }
+                                    ),
+        }
+    }
+}
+impl From<crate::operation::deposit_to_pb_account::DepositToPBAccountError> for Error {
+    fn from(err: crate::operation::deposit_to_pb_account::DepositToPBAccountError) -> Self {
+        match err {
+            crate::operation::deposit_to_pb_account::DepositToPBAccountError::AccountNotFoundError(inner) => Error::AccountNotFoundError(inner),
+            crate::operation::deposit_to_pb_account::DepositToPBAccountError::AccountNotActiveError(inner) => Error::AccountNotActiveError(inner),
+            crate::operation::deposit_to_pb_account::DepositToPBAccountError::Unhandled(inner) => Error::Unhandled(inner),
         }
     }
 }
@@ -148,6 +233,90 @@ impl From<crate::operation::get_balance::GetBalanceError> for Error {
         }
     }
 }
+impl<R> From<::aws_smithy_runtime_api::client::result::SdkError<crate::operation::get_normal_account::GetNormalAccountError, R>> for Error where R: Send + Sync + std::fmt::Debug + 'static {
+    fn from(err: ::aws_smithy_runtime_api::client::result::SdkError<crate::operation::get_normal_account::GetNormalAccountError, R>) -> Self {
+        match err {
+            ::aws_smithy_runtime_api::client::result::SdkError::ServiceError(context) => Self::from(context.into_err()),
+            _ => Error::Unhandled(
+                                        crate::error::sealed_unhandled::Unhandled {
+                                            meta: ::aws_smithy_types::error::metadata::ProvideErrorMetadata::meta(&err).clone(),
+                                            source: err.into(),
+                                        }
+                                    ),
+        }
+    }
+}
+impl From<crate::operation::get_normal_account::GetNormalAccountError> for Error {
+    fn from(err: crate::operation::get_normal_account::GetNormalAccountError) -> Self {
+        match err {
+            crate::operation::get_normal_account::GetNormalAccountError::AccountNotFoundError(inner) => Error::AccountNotFoundError(inner),
+            crate::operation::get_normal_account::GetNormalAccountError::Unhandled(inner) => Error::Unhandled(inner),
+        }
+    }
+}
+impl<R> From<::aws_smithy_runtime_api::client::result::SdkError<crate::operation::get_normal_account_balance::GetNormalAccountBalanceError, R>> for Error where R: Send + Sync + std::fmt::Debug + 'static {
+    fn from(err: ::aws_smithy_runtime_api::client::result::SdkError<crate::operation::get_normal_account_balance::GetNormalAccountBalanceError, R>) -> Self {
+        match err {
+            ::aws_smithy_runtime_api::client::result::SdkError::ServiceError(context) => Self::from(context.into_err()),
+            _ => Error::Unhandled(
+                                        crate::error::sealed_unhandled::Unhandled {
+                                            meta: ::aws_smithy_types::error::metadata::ProvideErrorMetadata::meta(&err).clone(),
+                                            source: err.into(),
+                                        }
+                                    ),
+        }
+    }
+}
+impl From<crate::operation::get_normal_account_balance::GetNormalAccountBalanceError> for Error {
+    fn from(err: crate::operation::get_normal_account_balance::GetNormalAccountBalanceError) -> Self {
+        match err {
+            crate::operation::get_normal_account_balance::GetNormalAccountBalanceError::AccountNotFoundError(inner) => Error::AccountNotFoundError(inner),
+            crate::operation::get_normal_account_balance::GetNormalAccountBalanceError::Unhandled(inner) => Error::Unhandled(inner),
+        }
+    }
+}
+impl<R> From<::aws_smithy_runtime_api::client::result::SdkError<crate::operation::get_pb_account::GetPBAccountError, R>> for Error where R: Send + Sync + std::fmt::Debug + 'static {
+    fn from(err: ::aws_smithy_runtime_api::client::result::SdkError<crate::operation::get_pb_account::GetPBAccountError, R>) -> Self {
+        match err {
+            ::aws_smithy_runtime_api::client::result::SdkError::ServiceError(context) => Self::from(context.into_err()),
+            _ => Error::Unhandled(
+                                        crate::error::sealed_unhandled::Unhandled {
+                                            meta: ::aws_smithy_types::error::metadata::ProvideErrorMetadata::meta(&err).clone(),
+                                            source: err.into(),
+                                        }
+                                    ),
+        }
+    }
+}
+impl From<crate::operation::get_pb_account::GetPBAccountError> for Error {
+    fn from(err: crate::operation::get_pb_account::GetPBAccountError) -> Self {
+        match err {
+            crate::operation::get_pb_account::GetPBAccountError::AccountNotFoundError(inner) => Error::AccountNotFoundError(inner),
+            crate::operation::get_pb_account::GetPBAccountError::Unhandled(inner) => Error::Unhandled(inner),
+        }
+    }
+}
+impl<R> From<::aws_smithy_runtime_api::client::result::SdkError<crate::operation::get_pb_account_balance::GetPBAccountBalanceError, R>> for Error where R: Send + Sync + std::fmt::Debug + 'static {
+    fn from(err: ::aws_smithy_runtime_api::client::result::SdkError<crate::operation::get_pb_account_balance::GetPBAccountBalanceError, R>) -> Self {
+        match err {
+            ::aws_smithy_runtime_api::client::result::SdkError::ServiceError(context) => Self::from(context.into_err()),
+            _ => Error::Unhandled(
+                                        crate::error::sealed_unhandled::Unhandled {
+                                            meta: ::aws_smithy_types::error::metadata::ProvideErrorMetadata::meta(&err).clone(),
+                                            source: err.into(),
+                                        }
+                                    ),
+        }
+    }
+}
+impl From<crate::operation::get_pb_account_balance::GetPBAccountBalanceError> for Error {
+    fn from(err: crate::operation::get_pb_account_balance::GetPBAccountBalanceError) -> Self {
+        match err {
+            crate::operation::get_pb_account_balance::GetPBAccountBalanceError::AccountNotFoundError(inner) => Error::AccountNotFoundError(inner),
+            crate::operation::get_pb_account_balance::GetPBAccountBalanceError::Unhandled(inner) => Error::Unhandled(inner),
+        }
+    }
+}
 impl<R> From<::aws_smithy_runtime_api::client::result::SdkError<crate::operation::get_purpose_type::GetPurposeTypeError, R>> for Error where R: Send + Sync + std::fmt::Debug + 'static {
     fn from(err: ::aws_smithy_runtime_api::client::result::SdkError<crate::operation::get_purpose_type::GetPurposeTypeError, R>) -> Self {
         match err {
@@ -186,6 +355,68 @@ impl From<crate::operation::list_all_transactions::ListAllTransactionsError> for
     fn from(err: crate::operation::list_all_transactions::ListAllTransactionsError) -> Self {
         match err {
             crate::operation::list_all_transactions::ListAllTransactionsError::Unhandled(inner) => Error::Unhandled(inner),
+        }
+    }
+}
+impl<R> From<::aws_smithy_runtime_api::client::result::SdkError<crate::operation::list_normal_accounts::ListNormalAccountsError, R>> for Error where R: Send + Sync + std::fmt::Debug + 'static {
+    fn from(err: ::aws_smithy_runtime_api::client::result::SdkError<crate::operation::list_normal_accounts::ListNormalAccountsError, R>) -> Self {
+        match err {
+            ::aws_smithy_runtime_api::client::result::SdkError::ServiceError(context) => Self::from(context.into_err()),
+            _ => Error::Unhandled(
+                                        crate::error::sealed_unhandled::Unhandled {
+                                            meta: ::aws_smithy_types::error::metadata::ProvideErrorMetadata::meta(&err).clone(),
+                                            source: err.into(),
+                                        }
+                                    ),
+        }
+    }
+}
+impl From<crate::operation::list_normal_accounts::ListNormalAccountsError> for Error {
+    fn from(err: crate::operation::list_normal_accounts::ListNormalAccountsError) -> Self {
+        match err {
+            crate::operation::list_normal_accounts::ListNormalAccountsError::Unhandled(inner) => Error::Unhandled(inner),
+        }
+    }
+}
+impl<R> From<::aws_smithy_runtime_api::client::result::SdkError<crate::operation::list_normal_account_transactions::ListNormalAccountTransactionsError, R>> for Error where R: Send + Sync + std::fmt::Debug + 'static {
+    fn from(err: ::aws_smithy_runtime_api::client::result::SdkError<crate::operation::list_normal_account_transactions::ListNormalAccountTransactionsError, R>) -> Self {
+        match err {
+            ::aws_smithy_runtime_api::client::result::SdkError::ServiceError(context) => Self::from(context.into_err()),
+            _ => Error::Unhandled(
+                                        crate::error::sealed_unhandled::Unhandled {
+                                            meta: ::aws_smithy_types::error::metadata::ProvideErrorMetadata::meta(&err).clone(),
+                                            source: err.into(),
+                                        }
+                                    ),
+        }
+    }
+}
+impl From<crate::operation::list_normal_account_transactions::ListNormalAccountTransactionsError> for Error {
+    fn from(err: crate::operation::list_normal_account_transactions::ListNormalAccountTransactionsError) -> Self {
+        match err {
+            crate::operation::list_normal_account_transactions::ListNormalAccountTransactionsError::AccountNotFoundError(inner) => Error::AccountNotFoundError(inner),
+            crate::operation::list_normal_account_transactions::ListNormalAccountTransactionsError::Unhandled(inner) => Error::Unhandled(inner),
+        }
+    }
+}
+impl<R> From<::aws_smithy_runtime_api::client::result::SdkError<crate::operation::list_pb_account_transactions::ListPBAccountTransactionsError, R>> for Error where R: Send + Sync + std::fmt::Debug + 'static {
+    fn from(err: ::aws_smithy_runtime_api::client::result::SdkError<crate::operation::list_pb_account_transactions::ListPBAccountTransactionsError, R>) -> Self {
+        match err {
+            ::aws_smithy_runtime_api::client::result::SdkError::ServiceError(context) => Self::from(context.into_err()),
+            _ => Error::Unhandled(
+                                        crate::error::sealed_unhandled::Unhandled {
+                                            meta: ::aws_smithy_types::error::metadata::ProvideErrorMetadata::meta(&err).clone(),
+                                            source: err.into(),
+                                        }
+                                    ),
+        }
+    }
+}
+impl From<crate::operation::list_pb_account_transactions::ListPBAccountTransactionsError> for Error {
+    fn from(err: crate::operation::list_pb_account_transactions::ListPBAccountTransactionsError) -> Self {
+        match err {
+            crate::operation::list_pb_account_transactions::ListPBAccountTransactionsError::AccountNotFoundError(inner) => Error::AccountNotFoundError(inner),
+            crate::operation::list_pb_account_transactions::ListPBAccountTransactionsError::Unhandled(inner) => Error::Unhandled(inner),
         }
     }
 }
@@ -254,6 +485,30 @@ impl From<crate::operation::make_payment::MakePaymentError> for Error {
         }
     }
 }
+impl<R> From<::aws_smithy_runtime_api::client::result::SdkError<crate::operation::make_pb_account_payment::MakePBAccountPaymentError, R>> for Error where R: Send + Sync + std::fmt::Debug + 'static {
+    fn from(err: ::aws_smithy_runtime_api::client::result::SdkError<crate::operation::make_pb_account_payment::MakePBAccountPaymentError, R>) -> Self {
+        match err {
+            ::aws_smithy_runtime_api::client::result::SdkError::ServiceError(context) => Self::from(context.into_err()),
+            _ => Error::Unhandled(
+                                        crate::error::sealed_unhandled::Unhandled {
+                                            meta: ::aws_smithy_types::error::metadata::ProvideErrorMetadata::meta(&err).clone(),
+                                            source: err.into(),
+                                        }
+                                    ),
+        }
+    }
+}
+impl From<crate::operation::make_pb_account_payment::MakePBAccountPaymentError> for Error {
+    fn from(err: crate::operation::make_pb_account_payment::MakePBAccountPaymentError) -> Self {
+        match err {
+            crate::operation::make_pb_account_payment::MakePBAccountPaymentError::AccountNotFoundError(inner) => Error::AccountNotFoundError(inner),
+            crate::operation::make_pb_account_payment::MakePBAccountPaymentError::AccountNotActiveError(inner) => Error::AccountNotActiveError(inner),
+            crate::operation::make_pb_account_payment::MakePBAccountPaymentError::InvalidMccError(inner) => Error::InvalidMccError(inner),
+            crate::operation::make_pb_account_payment::MakePBAccountPaymentError::InsufficientFundsError(inner) => Error::InsufficientFundsError(inner),
+            crate::operation::make_pb_account_payment::MakePBAccountPaymentError::Unhandled(inner) => Error::Unhandled(inner),
+        }
+    }
+}
 impl<R> From<::aws_smithy_runtime_api::client::result::SdkError<crate::operation::post_deposit::PostDepositError, R>> for Error where R: Send + Sync + std::fmt::Debug + 'static {
     fn from(err: ::aws_smithy_runtime_api::client::result::SdkError<crate::operation::post_deposit::PostDepositError, R>) -> Self {
         match err {
@@ -277,6 +532,52 @@ impl From<crate::operation::post_deposit::PostDepositError> for Error {
         }
     }
 }
+impl<R> From<::aws_smithy_runtime_api::client::result::SdkError<crate::operation::post_normal_account_deposit::PostNormalAccountDepositError, R>> for Error where R: Send + Sync + std::fmt::Debug + 'static {
+    fn from(err: ::aws_smithy_runtime_api::client::result::SdkError<crate::operation::post_normal_account_deposit::PostNormalAccountDepositError, R>) -> Self {
+        match err {
+            ::aws_smithy_runtime_api::client::result::SdkError::ServiceError(context) => Self::from(context.into_err()),
+            _ => Error::Unhandled(
+                                        crate::error::sealed_unhandled::Unhandled {
+                                            meta: ::aws_smithy_types::error::metadata::ProvideErrorMetadata::meta(&err).clone(),
+                                            source: err.into(),
+                                        }
+                                    ),
+        }
+    }
+}
+impl From<crate::operation::post_normal_account_deposit::PostNormalAccountDepositError> for Error {
+    fn from(err: crate::operation::post_normal_account_deposit::PostNormalAccountDepositError) -> Self {
+        match err {
+            crate::operation::post_normal_account_deposit::PostNormalAccountDepositError::AccountNotFoundError(inner) => Error::AccountNotFoundError(inner),
+            crate::operation::post_normal_account_deposit::PostNormalAccountDepositError::DepositNotFoundError(inner) => Error::DepositNotFoundError(inner),
+            crate::operation::post_normal_account_deposit::PostNormalAccountDepositError::DepositNotPendingError(inner) => Error::DepositNotPendingError(inner),
+            crate::operation::post_normal_account_deposit::PostNormalAccountDepositError::Unhandled(inner) => Error::Unhandled(inner),
+        }
+    }
+}
+impl<R> From<::aws_smithy_runtime_api::client::result::SdkError<crate::operation::post_pb_account_deposit::PostPBAccountDepositError, R>> for Error where R: Send + Sync + std::fmt::Debug + 'static {
+    fn from(err: ::aws_smithy_runtime_api::client::result::SdkError<crate::operation::post_pb_account_deposit::PostPBAccountDepositError, R>) -> Self {
+        match err {
+            ::aws_smithy_runtime_api::client::result::SdkError::ServiceError(context) => Self::from(context.into_err()),
+            _ => Error::Unhandled(
+                                        crate::error::sealed_unhandled::Unhandled {
+                                            meta: ::aws_smithy_types::error::metadata::ProvideErrorMetadata::meta(&err).clone(),
+                                            source: err.into(),
+                                        }
+                                    ),
+        }
+    }
+}
+impl From<crate::operation::post_pb_account_deposit::PostPBAccountDepositError> for Error {
+    fn from(err: crate::operation::post_pb_account_deposit::PostPBAccountDepositError) -> Self {
+        match err {
+            crate::operation::post_pb_account_deposit::PostPBAccountDepositError::AccountNotFoundError(inner) => Error::AccountNotFoundError(inner),
+            crate::operation::post_pb_account_deposit::PostPBAccountDepositError::DepositNotFoundError(inner) => Error::DepositNotFoundError(inner),
+            crate::operation::post_pb_account_deposit::PostPBAccountDepositError::DepositNotPendingError(inner) => Error::DepositNotPendingError(inner),
+            crate::operation::post_pb_account_deposit::PostPBAccountDepositError::Unhandled(inner) => Error::Unhandled(inner),
+        }
+    }
+}
 impl<R> From<::aws_smithy_runtime_api::client::result::SdkError<crate::operation::update_account_status::UpdateAccountStatusError, R>> for Error where R: Send + Sync + std::fmt::Debug + 'static {
     fn from(err: ::aws_smithy_runtime_api::client::result::SdkError<crate::operation::update_account_status::UpdateAccountStatusError, R>) -> Self {
         match err {
@@ -295,6 +596,48 @@ impl From<crate::operation::update_account_status::UpdateAccountStatusError> for
         match err {
             crate::operation::update_account_status::UpdateAccountStatusError::AccountNotFoundError(inner) => Error::AccountNotFoundError(inner),
             crate::operation::update_account_status::UpdateAccountStatusError::Unhandled(inner) => Error::Unhandled(inner),
+        }
+    }
+}
+impl<R> From<::aws_smithy_runtime_api::client::result::SdkError<crate::operation::update_normal_account_status::UpdateNormalAccountStatusError, R>> for Error where R: Send + Sync + std::fmt::Debug + 'static {
+    fn from(err: ::aws_smithy_runtime_api::client::result::SdkError<crate::operation::update_normal_account_status::UpdateNormalAccountStatusError, R>) -> Self {
+        match err {
+            ::aws_smithy_runtime_api::client::result::SdkError::ServiceError(context) => Self::from(context.into_err()),
+            _ => Error::Unhandled(
+                                        crate::error::sealed_unhandled::Unhandled {
+                                            meta: ::aws_smithy_types::error::metadata::ProvideErrorMetadata::meta(&err).clone(),
+                                            source: err.into(),
+                                        }
+                                    ),
+        }
+    }
+}
+impl From<crate::operation::update_normal_account_status::UpdateNormalAccountStatusError> for Error {
+    fn from(err: crate::operation::update_normal_account_status::UpdateNormalAccountStatusError) -> Self {
+        match err {
+            crate::operation::update_normal_account_status::UpdateNormalAccountStatusError::AccountNotFoundError(inner) => Error::AccountNotFoundError(inner),
+            crate::operation::update_normal_account_status::UpdateNormalAccountStatusError::Unhandled(inner) => Error::Unhandled(inner),
+        }
+    }
+}
+impl<R> From<::aws_smithy_runtime_api::client::result::SdkError<crate::operation::update_pb_account_status::UpdatePBAccountStatusError, R>> for Error where R: Send + Sync + std::fmt::Debug + 'static {
+    fn from(err: ::aws_smithy_runtime_api::client::result::SdkError<crate::operation::update_pb_account_status::UpdatePBAccountStatusError, R>) -> Self {
+        match err {
+            ::aws_smithy_runtime_api::client::result::SdkError::ServiceError(context) => Self::from(context.into_err()),
+            _ => Error::Unhandled(
+                                        crate::error::sealed_unhandled::Unhandled {
+                                            meta: ::aws_smithy_types::error::metadata::ProvideErrorMetadata::meta(&err).clone(),
+                                            source: err.into(),
+                                        }
+                                    ),
+        }
+    }
+}
+impl From<crate::operation::update_pb_account_status::UpdatePBAccountStatusError> for Error {
+    fn from(err: crate::operation::update_pb_account_status::UpdatePBAccountStatusError) -> Self {
+        match err {
+            crate::operation::update_pb_account_status::UpdatePBAccountStatusError::AccountNotFoundError(inner) => Error::AccountNotFoundError(inner),
+            crate::operation::update_pb_account_status::UpdatePBAccountStatusError::Unhandled(inner) => Error::Unhandled(inner),
         }
     }
 }
@@ -321,6 +664,52 @@ impl From<crate::operation::void_deposit::VoidDepositError> for Error {
         }
     }
 }
+impl<R> From<::aws_smithy_runtime_api::client::result::SdkError<crate::operation::void_normal_account_deposit::VoidNormalAccountDepositError, R>> for Error where R: Send + Sync + std::fmt::Debug + 'static {
+    fn from(err: ::aws_smithy_runtime_api::client::result::SdkError<crate::operation::void_normal_account_deposit::VoidNormalAccountDepositError, R>) -> Self {
+        match err {
+            ::aws_smithy_runtime_api::client::result::SdkError::ServiceError(context) => Self::from(context.into_err()),
+            _ => Error::Unhandled(
+                                        crate::error::sealed_unhandled::Unhandled {
+                                            meta: ::aws_smithy_types::error::metadata::ProvideErrorMetadata::meta(&err).clone(),
+                                            source: err.into(),
+                                        }
+                                    ),
+        }
+    }
+}
+impl From<crate::operation::void_normal_account_deposit::VoidNormalAccountDepositError> for Error {
+    fn from(err: crate::operation::void_normal_account_deposit::VoidNormalAccountDepositError) -> Self {
+        match err {
+            crate::operation::void_normal_account_deposit::VoidNormalAccountDepositError::AccountNotFoundError(inner) => Error::AccountNotFoundError(inner),
+            crate::operation::void_normal_account_deposit::VoidNormalAccountDepositError::DepositNotFoundError(inner) => Error::DepositNotFoundError(inner),
+            crate::operation::void_normal_account_deposit::VoidNormalAccountDepositError::DepositNotPendingError(inner) => Error::DepositNotPendingError(inner),
+            crate::operation::void_normal_account_deposit::VoidNormalAccountDepositError::Unhandled(inner) => Error::Unhandled(inner),
+        }
+    }
+}
+impl<R> From<::aws_smithy_runtime_api::client::result::SdkError<crate::operation::void_pb_account_deposit::VoidPBAccountDepositError, R>> for Error where R: Send + Sync + std::fmt::Debug + 'static {
+    fn from(err: ::aws_smithy_runtime_api::client::result::SdkError<crate::operation::void_pb_account_deposit::VoidPBAccountDepositError, R>) -> Self {
+        match err {
+            ::aws_smithy_runtime_api::client::result::SdkError::ServiceError(context) => Self::from(context.into_err()),
+            _ => Error::Unhandled(
+                                        crate::error::sealed_unhandled::Unhandled {
+                                            meta: ::aws_smithy_types::error::metadata::ProvideErrorMetadata::meta(&err).clone(),
+                                            source: err.into(),
+                                        }
+                                    ),
+        }
+    }
+}
+impl From<crate::operation::void_pb_account_deposit::VoidPBAccountDepositError> for Error {
+    fn from(err: crate::operation::void_pb_account_deposit::VoidPBAccountDepositError) -> Self {
+        match err {
+            crate::operation::void_pb_account_deposit::VoidPBAccountDepositError::AccountNotFoundError(inner) => Error::AccountNotFoundError(inner),
+            crate::operation::void_pb_account_deposit::VoidPBAccountDepositError::DepositNotFoundError(inner) => Error::DepositNotFoundError(inner),
+            crate::operation::void_pb_account_deposit::VoidPBAccountDepositError::DepositNotPendingError(inner) => Error::DepositNotPendingError(inner),
+            crate::operation::void_pb_account_deposit::VoidPBAccountDepositError::Unhandled(inner) => Error::Unhandled(inner),
+        }
+    }
+}
 impl<R> From<::aws_smithy_runtime_api::client::result::SdkError<crate::operation::withdraw::WithdrawError, R>> for Error where R: Send + Sync + std::fmt::Debug + 'static {
     fn from(err: ::aws_smithy_runtime_api::client::result::SdkError<crate::operation::withdraw::WithdrawError, R>) -> Self {
         match err {
@@ -341,6 +730,52 @@ impl From<crate::operation::withdraw::WithdrawError> for Error {
             crate::operation::withdraw::WithdrawError::AccountNotActiveError(inner) => Error::AccountNotActiveError(inner),
             crate::operation::withdraw::WithdrawError::InsufficientFundsError(inner) => Error::InsufficientFundsError(inner),
             crate::operation::withdraw::WithdrawError::Unhandled(inner) => Error::Unhandled(inner),
+        }
+    }
+}
+impl<R> From<::aws_smithy_runtime_api::client::result::SdkError<crate::operation::withdraw_from_normal_account::WithdrawFromNormalAccountError, R>> for Error where R: Send + Sync + std::fmt::Debug + 'static {
+    fn from(err: ::aws_smithy_runtime_api::client::result::SdkError<crate::operation::withdraw_from_normal_account::WithdrawFromNormalAccountError, R>) -> Self {
+        match err {
+            ::aws_smithy_runtime_api::client::result::SdkError::ServiceError(context) => Self::from(context.into_err()),
+            _ => Error::Unhandled(
+                                        crate::error::sealed_unhandled::Unhandled {
+                                            meta: ::aws_smithy_types::error::metadata::ProvideErrorMetadata::meta(&err).clone(),
+                                            source: err.into(),
+                                        }
+                                    ),
+        }
+    }
+}
+impl From<crate::operation::withdraw_from_normal_account::WithdrawFromNormalAccountError> for Error {
+    fn from(err: crate::operation::withdraw_from_normal_account::WithdrawFromNormalAccountError) -> Self {
+        match err {
+            crate::operation::withdraw_from_normal_account::WithdrawFromNormalAccountError::AccountNotFoundError(inner) => Error::AccountNotFoundError(inner),
+            crate::operation::withdraw_from_normal_account::WithdrawFromNormalAccountError::AccountNotActiveError(inner) => Error::AccountNotActiveError(inner),
+            crate::operation::withdraw_from_normal_account::WithdrawFromNormalAccountError::InsufficientFundsError(inner) => Error::InsufficientFundsError(inner),
+            crate::operation::withdraw_from_normal_account::WithdrawFromNormalAccountError::Unhandled(inner) => Error::Unhandled(inner),
+        }
+    }
+}
+impl<R> From<::aws_smithy_runtime_api::client::result::SdkError<crate::operation::withdraw_from_pb_account::WithdrawFromPBAccountError, R>> for Error where R: Send + Sync + std::fmt::Debug + 'static {
+    fn from(err: ::aws_smithy_runtime_api::client::result::SdkError<crate::operation::withdraw_from_pb_account::WithdrawFromPBAccountError, R>) -> Self {
+        match err {
+            ::aws_smithy_runtime_api::client::result::SdkError::ServiceError(context) => Self::from(context.into_err()),
+            _ => Error::Unhandled(
+                                        crate::error::sealed_unhandled::Unhandled {
+                                            meta: ::aws_smithy_types::error::metadata::ProvideErrorMetadata::meta(&err).clone(),
+                                            source: err.into(),
+                                        }
+                                    ),
+        }
+    }
+}
+impl From<crate::operation::withdraw_from_pb_account::WithdrawFromPBAccountError> for Error {
+    fn from(err: crate::operation::withdraw_from_pb_account::WithdrawFromPBAccountError) -> Self {
+        match err {
+            crate::operation::withdraw_from_pb_account::WithdrawFromPBAccountError::AccountNotFoundError(inner) => Error::AccountNotFoundError(inner),
+            crate::operation::withdraw_from_pb_account::WithdrawFromPBAccountError::AccountNotActiveError(inner) => Error::AccountNotActiveError(inner),
+            crate::operation::withdraw_from_pb_account::WithdrawFromPBAccountError::InsufficientFundsError(inner) => Error::InsufficientFundsError(inner),
+            crate::operation::withdraw_from_pb_account::WithdrawFromPBAccountError::Unhandled(inner) => Error::Unhandled(inner),
         }
     }
 }

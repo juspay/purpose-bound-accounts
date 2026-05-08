@@ -2,6 +2,26 @@ $version: "2"
 namespace com.ppi.pba
 
 /// Create a new purpose-bound account.
+@http(method: "POST", uri: "/pb-accounts", code: 201)
+operation CreatePBAccount {
+    input := {
+        @required
+        holder_id: String
+
+        @required
+        purpose_code: String
+
+        @required
+        origin_ifsc: String
+
+        @required
+        origin_account_number: String
+    }
+    output := with [AccountMixin] {}
+    errors: [PurposeTypeNotFoundError]
+}
+
+@deprecated(message: "Use CreatePBAccount.", since: "2026-05-08")
 @http(method: "POST", uri: "/accounts", code: 201)
 operation CreateAccount {
     input := {
@@ -23,6 +43,19 @@ operation CreateAccount {
 
 /// Get account metadata.
 @readonly
+@http(method: "GET", uri: "/pb-accounts/{account_id}")
+operation GetPBAccount {
+    input := {
+        @required
+        @httpLabel
+        account_id: String
+    }
+    output := with [AccountMixin] {}
+    errors: [AccountNotFoundError]
+}
+
+@deprecated(message: "Use GetPBAccount.", since: "2026-05-08")
+@readonly
 @http(method: "GET", uri: "/accounts/{account_id}")
 operation GetAccount {
     input := {
@@ -35,6 +68,37 @@ operation GetAccount {
 }
 
 /// Get pool balances for an account.
+@readonly
+@http(method: "GET", uri: "/pb-accounts/{account_id}/balance")
+operation GetPBAccountBalance {
+    input := {
+        @required
+        @httpLabel
+        account_id: String
+    }
+    output := {
+        @required
+        account_id: String
+
+        @required
+        self_contribution: Money
+
+        @required
+        others_contribution: Money
+
+        @required
+        total: Money
+
+        @required
+        pending_self: Money
+
+        @required
+        pending_others: Money
+    }
+    errors: [AccountNotFoundError]
+}
+
+@deprecated(message: "Use GetPBAccountBalance.", since: "2026-05-08")
 @readonly
 @http(method: "GET", uri: "/accounts/{account_id}/balance")
 operation GetBalance {
@@ -66,6 +130,21 @@ operation GetBalance {
 }
 
 /// Update account status (freeze, close, reactivate).
+@http(method: "PATCH", uri: "/pb-accounts/{account_id}/status")
+operation UpdatePBAccountStatus {
+    input := {
+        @required
+        @httpLabel
+        account_id: String
+
+        @required
+        status: Status
+    }
+    output := with [AccountMixin] {}
+    errors: [AccountNotFoundError]
+}
+
+@deprecated(message: "Use UpdatePBAccountStatus.", since: "2026-05-08")
 @http(method: "PATCH", uri: "/accounts/{account_id}/status")
 operation UpdateAccountStatus {
     input := {
@@ -132,4 +211,3 @@ structure AccountNotActiveError {
     @required
     message: String
 }
-

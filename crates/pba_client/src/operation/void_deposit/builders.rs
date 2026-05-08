@@ -19,7 +19,7 @@ impl crate::operation::void_deposit::builders::VoidDepositInputBuilder {
                 }
 /// Fluent builder constructing a request to `VoidDeposit`.
 /// 
-/// Cancel a pending deposit (void the held funds).
+#[deprecated(note = "Use VoidPBAccountDeposit.", since = "2026-05-08")]
 #[derive(::std::clone::Clone, ::std::fmt::Debug)]
 pub struct VoidDepositFluentBuilder {
                 handle: ::std::sync::Arc<crate::client::Handle>,
