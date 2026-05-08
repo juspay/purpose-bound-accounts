@@ -545,6 +545,12 @@ ALTER TABLE transactions
 
 ALTER TABLE transactions ALTER COLUMN account_kind DROP DEFAULT;
 
+-- Constrain account_kind to the known set. Adding a third kind requires a follow-up
+-- migration alongside the code that handles it, which is the desired coupling.
+ALTER TABLE transactions
+    ADD CONSTRAINT transactions_account_kind_check
+    CHECK (account_kind IN ('pb', 'normal'));
+
 -- Drop the FK on transactions.account_id (was pointing at pb_accounts after the
 -- Phase 1 rename). With normal_accounts as a sibling table, the column now
 -- references one of two tables; the application enforces the link via account_kind.
