@@ -57,6 +57,21 @@ pub struct PbaWorld {
     last_normal_balance: Option<i64>,
     /// Last normal-account deposit ID set (for idempotency comparison)
     last_normal_deposit_ids: Option<Vec<String>>,
+    /// Last transfer ID
+    last_transfer_id: Option<String>,
+    /// Last transfer status
+    last_transfer_status: Option<String>,
+    /// Last transfer correlation_id
+    last_transfer_correlation_id: Option<String>,
+    /// Last set of transfer IDs (for idempotency replay)
+    last_transfer_ids: Option<Vec<String>>,
+    /// Source-side transaction fields (populated by correlation_id assertion step)
+    last_source_txn_type: Option<String>,
+    last_source_txn_direction: Option<String>,
+    /// Destination-side transaction fields (populated by correlation_id assertion step)
+    last_dest_txn_type: Option<String>,
+    last_dest_txn_pool: Option<String>,
+    last_dest_txn_funding_type: Option<String>,
 }
 
 #[derive(Debug, Clone)]
@@ -120,6 +135,15 @@ impl Default for PbaWorld {
             last_normal_deposit_status: None,
             last_normal_balance: None,
             last_normal_deposit_ids: None,
+            last_transfer_id: None,
+            last_transfer_status: None,
+            last_transfer_correlation_id: None,
+            last_transfer_ids: None,
+            last_source_txn_type: None,
+            last_source_txn_direction: None,
+            last_dest_txn_type: None,
+            last_dest_txn_pool: None,
+            last_dest_txn_funding_type: None,
         }
     }
 }
