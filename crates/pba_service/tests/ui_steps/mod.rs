@@ -4,4 +4,5 @@ pub mod normal_account_steps;
 pub mod payment_steps;
 pub mod purpose_steps;
 pub mod transaction_steps;
+pub mod transfer_steps;
 pub mod withdrawal_steps;

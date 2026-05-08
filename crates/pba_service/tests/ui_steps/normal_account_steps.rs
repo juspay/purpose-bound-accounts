@@ -219,7 +219,8 @@ async fn given_normal_account_exists(world: &mut UiWorld, holder_id: String) {
     let id = create_normal_account_via_ui(world, &holder_id).await;
     match id {
         Some(account_id) => {
-            world.account_id = Some(account_id);
+            world.account_id = Some(account_id.clone());
+            world.last_normal_account_id = Some(account_id);
         }
         None => {
             let page = world.ensure_page().await;

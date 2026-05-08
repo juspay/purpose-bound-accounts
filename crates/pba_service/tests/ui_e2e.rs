@@ -48,6 +48,10 @@ pub struct UiWorld {
     last_purpose_mccs_count: Option<usize>,
     last_balance: Option<BalanceResult>,
     last_account_status: Option<String>,
+    /// Saved normal account ID so it survives after a PB account step overwrites `account_id`.
+    last_normal_account_id: Option<String>,
+    /// Transfer ID from the most recent transfer initiation.
+    last_transfer_id: Option<String>,
 }
 
 impl std::fmt::Debug for UiWorld {
@@ -80,6 +84,8 @@ impl Default for UiWorld {
             last_purpose_mccs_count: None,
             last_balance: None,
             last_account_status: None,
+            last_normal_account_id: None,
+            last_transfer_id: None,
         }
     }
 }
