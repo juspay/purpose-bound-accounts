@@ -1,0 +1,93 @@
+{% extends "base.html" %}
+
+{% block title %}Normal Account {{ id }} - PBA Admin{% endblock %}
+
+{% block content %}
+<h1>Normal Account Detail</h1>
+
+<article>
+    <div class="grid">
+        <div>
+            <p><strong>Account ID:</strong> {{ id }}</p>
+            <p><strong>Holder ID:</strong> {{ holder_id }}</p>
+            <p><strong>KYC Tier:</strong> {{ kyc_tier }}</p>
+            <p>
+                <strong>Status:</strong> <span class="{{ status_class }}">{{ status }}</span>
+                {% if status != "closed" %}
+                &nbsp;
+                {% if status == "active" %}
+                <form method="post" action="{{ prefix }}/admin/normal-accounts/{{ id }}/freeze" class="inline-form">
+                    <button type="submit" class="outline secondary" style="padding: 0.25rem 0.75rem; font-size: 0.85rem;">Freeze</button>
+                </form>
+                {% else if status == "frozen" %}
+                <form method="post" action="{{ prefix }}/admin/normal-accounts/{{ id }}/reactivate" class="inline-form">
+                    <button type="submit" class="outline" style="padding: 0.25rem 0.75rem; font-size: 0.85rem; color: #2e7d32; border-color: #2e7d32;">Activate</button>
+                </form>
+                {% endif %}
+                {% endif %}
+            </p>
+        </div>
+        <div>
+            {% if let Some(ifsc) = origin_ifsc %}
+            <p><strong>Origin IFSC:</strong> {{ ifsc }}</p>
+            {% else %}
+            <p><strong>Origin IFSC:</strong> —</p>
+            {% endif %}
+            {% if let Some(acct) = origin_account_number %}
+            <p><strong>Origin Account:</strong> {{ acct }}</p>
+            {% else %}
+            <p><strong>Origin Account:</strong> —</p>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="grid">
+        <div>
+            <p><strong>Balance:</strong> ₹{{ balance }}{% if pending != "0.00" %} <span style="color: #b45309;">+ ₹{{ pending }} pending</span>{% endif %}</p>
+        </div>
+        <div>
+            <p><strong>Created:</strong> {{ created_at }}</p>
+            <p><strong>Updated:</strong> {{ updated_at }}</p>
+        </div>
+    </div>
+
+    {% if status == "active" %}
+    <div>
+        <a href="{{ prefix }}/admin/normal-accounts/{{ id }}/deposit" role="button" class="outline">Deposit</a>
+        <a href="{{ prefix }}/admin/normal-accounts/{{ id }}/withdrawal" role="button" class="outline">Withdraw</a>
+    </div>
+    {% endif %}
+</article>
+
+<h2>Transaction History</h2>
+{% if transactions.is_empty() %}
+<p>No transactions yet.</p>
+{% else %}
+<table>
+    <thead>
+        <tr>
+            <th>ID</th>
+            <th>Type</th>
+            <th>Status</th>
+            <th>Direction</th>
+            <th>Amount (INR)</th>
+            <th>Gateway Ref</th>
+            <th>Created</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for txn in &transactions %}
+        <tr>
+            <td><a href="{{ prefix }}/admin/transactions/{{ txn.id }}">{{ txn.id|truncate(8) }}</a></td>
+            <td>{{ txn.transfer_type }}</td>
+            <td class="{{ txn.status_class }}">{{ txn.status }}</td>
+            <td class="{{ txn.direction_class }}">{{ txn.direction }}</td>
+            <td>₹{{ txn.amount }}</td>
+            <td>{{ txn.gateway_ref }}</td>
+            <td>{{ txn.created_at }}</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endif %}
+{% endblock %}
