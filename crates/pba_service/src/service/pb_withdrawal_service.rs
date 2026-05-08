@@ -9,13 +9,13 @@ use crate::repository::transaction_repo::TransactionRepo;
 
 const WITHDRAWAL_TRANSFER_CODE: u16 = 300;
 
-pub struct WithdrawalService {
+pub struct PbWithdrawalService {
     pub account_repo: Arc<PbAccountRepo>,
     pub ledger_repo: Arc<LedgerRepo>,
     pub transaction_repo: Arc<TransactionRepo>,
 }
 
-impl WithdrawalService {
+impl PbWithdrawalService {
     pub fn new(
         account_repo: Arc<PbAccountRepo>,
         ledger_repo: Arc<LedgerRepo>,

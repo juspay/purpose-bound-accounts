@@ -15,14 +15,14 @@ use crate::repository::transaction_repo::TransactionRepo;
 const DEPOSIT_TRANSFER_CODE: u16 = 100;
 const PENDING_DEPOSIT_TRANSFER_CODE: u16 = 101;
 
-pub struct DepositService {
+pub struct PbDepositService {
     pub account_repo: Arc<PbAccountRepo>,
     pub ledger_repo: Arc<LedgerRepo>,
     pub transaction_repo: Arc<TransactionRepo>,
     pub default_timeout_seconds: u32,
 }
 
-impl DepositService {
+impl PbDepositService {
     pub fn new(
         account_repo: Arc<PbAccountRepo>,
         ledger_repo: Arc<LedgerRepo>,

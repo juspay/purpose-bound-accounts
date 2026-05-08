@@ -48,7 +48,7 @@ struct DashboardTemplate {
 }
 
 pub async fn dashboard(State(state): State<AppState>) -> Response {
-    let status_counts = match state.account_repo.count_accounts_by_status().await {
+    let status_counts = match state.pb_account_repo.count_accounts_by_status().await {
         Ok(c) => c,
         Err(e) => {
             tracing::error!("Failed to count accounts: {e}");
@@ -56,7 +56,7 @@ pub async fn dashboard(State(state): State<AppState>) -> Response {
         }
     };
 
-    let purpose_counts = match state.account_repo.count_accounts_by_purpose().await {
+    let purpose_counts = match state.pb_account_repo.count_accounts_by_purpose().await {
         Ok(c) => c,
         Err(e) => {
             tracing::error!("Failed to count by purpose: {e}");
@@ -114,7 +114,7 @@ async fn render_accounts_list(
     error: Option<String>,
     success: Option<String>,
 ) -> Response {
-    let accounts = match state.account_repo.list_accounts().await {
+    let accounts = match state.pb_account_repo.list_accounts().await {
         Ok(a) => a,
         Err(e) => {
             tracing::error!("Failed to list accounts: {e}");
@@ -122,7 +122,7 @@ async fn render_accounts_list(
         }
     };
 
-    let purpose_codes = match state.account_repo.list_purpose_types().await {
+    let purpose_codes = match state.pb_account_repo.list_purpose_types().await {
         Ok(pts) => pts.into_iter().map(|p| p.purpose_code).collect(),
         Err(_) => vec![],
     };
@@ -193,7 +193,7 @@ pub async fn create_account(
     };
 
     match state
-        .account_service
+        .pb_account_service
         .create_account(
             holder_id,
             &form.purpose_code,
@@ -229,7 +229,7 @@ pub async fn update_account_status(
     };
 
     match state
-        .account_service
+        .pb_account_service
         .update_status(account_id, status)
         .await
     {
@@ -278,7 +278,7 @@ pub async fn account_detail(
     State(state): State<AppState>,
     Path(account_id): Path<Uuid>,
 ) -> Response {
-    let account = match state.account_repo.get_account(account_id).await {
+    let account = match state.pb_account_repo.get_account(account_id).await {
         Ok(a) => a,
         Err(e) => {
             tracing::error!("Account not found: {e}");
@@ -463,7 +463,7 @@ struct DepositTemplate {
 }
 
 pub async fn deposit_form(State(state): State<AppState>, Path(account_id): Path<Uuid>) -> Response {
-    let account = match state.account_repo.get_account(account_id).await {
+    let account = match state.pb_account_repo.get_account(account_id).await {
         Ok(a) => a,
         Err(_) => return (StatusCode::NOT_FOUND, "Account not found").into_response(),
     };
@@ -495,7 +495,7 @@ pub async fn process_deposit(
     let gateway_ref = form.gateway_ref.as_deref().filter(|s| !s.is_empty());
     let funding_type = form.funding_type.as_deref().filter(|s| !s.is_empty());
     match state
-        .deposit_service
+        .pb_deposit_service
         .deposit(
             account_id,
             &form.source_ifsc,
@@ -513,7 +513,7 @@ pub async fn process_deposit(
             .into_response(),
         Err(e) => {
             let purpose_code = state
-                .account_repo
+                .pb_account_repo
                 .get_account(account_id)
                 .await
                 .map(|a| a.purpose_code)
@@ -533,7 +533,7 @@ pub async fn post_deposit(
     Path((account_id, deposit_id)): Path<(Uuid, Uuid)>,
 ) -> Response {
     match state
-        .deposit_service
+        .pb_deposit_service
         .post_deposit(account_id, deposit_id)
         .await
     {
@@ -552,7 +552,7 @@ pub async fn void_deposit(
     Path((account_id, deposit_id)): Path<(Uuid, Uuid)>,
 ) -> Response {
     match state
-        .deposit_service
+        .pb_deposit_service
         .void_deposit(account_id, deposit_id, None)
         .await
     {
@@ -576,7 +576,7 @@ struct PaymentTemplate {
 }
 
 pub async fn payment_form(State(state): State<AppState>, Path(account_id): Path<Uuid>) -> Response {
-    let account = match state.account_repo.get_account(account_id).await {
+    let account = match state.pb_account_repo.get_account(account_id).await {
         Ok(a) => a,
         Err(_) => return (StatusCode::NOT_FOUND, "Account not found").into_response(),
     };
@@ -604,7 +604,7 @@ pub async fn process_payment(
 ) -> Response {
     let gateway_ref = form.gateway_ref.as_deref().filter(|s| !s.is_empty());
     match state
-        .payment_service
+        .pb_payment_service
         .make_payment(
             account_id,
             form.amount,
@@ -620,7 +620,7 @@ pub async fn process_payment(
             .into_response(),
         Err(e) => {
             let purpose_code = state
-                .account_repo
+                .pb_account_repo
                 .get_account(account_id)
                 .await
                 .map(|a| a.purpose_code)
@@ -648,7 +648,7 @@ pub async fn withdrawal_form(
     State(state): State<AppState>,
     Path(account_id): Path<Uuid>,
 ) -> Response {
-    let account = match state.account_repo.get_account(account_id).await {
+    let account = match state.pb_account_repo.get_account(account_id).await {
         Ok(a) => a,
         Err(_) => return (StatusCode::NOT_FOUND, "Account not found").into_response(),
     };
@@ -673,7 +673,7 @@ pub async fn process_withdrawal(
 ) -> Response {
     let gateway_ref = form.gateway_ref.as_deref().filter(|s| !s.is_empty());
     match state
-        .withdrawal_service
+        .pb_withdrawal_service
         .withdraw(account_id, form.amount, None, gateway_ref)
         .await
     {
@@ -681,7 +681,7 @@ pub async fn process_withdrawal(
             .into_response(),
         Err(e) => {
             let purpose_code = state
-                .account_repo
+                .pb_account_repo
                 .get_account(account_id)
                 .await
                 .map(|a| a.purpose_code)
@@ -929,7 +929,7 @@ struct PurposeTypesTemplate {
 }
 
 pub async fn purpose_types_page(State(state): State<AppState>) -> Response {
-    let purpose_types = match state.account_repo.list_purpose_types().await {
+    let purpose_types = match state.pb_account_repo.list_purpose_types().await {
         Ok(pts) => pts,
         Err(e) => {
             tracing::error!("Failed to list purpose types: {e}");
@@ -993,7 +993,7 @@ pub async fn transaction_detail(
 
     let dash = "—".to_string();
 
-    let (holder_id, purpose_code) = match state.account_repo.get_account(txn.account_id).await {
+    let (holder_id, purpose_code) = match state.pb_account_repo.get_account(txn.account_id).await {
         Ok(a) => (a.holder_id, a.purpose_code),
         Err(e) => {
             tracing::warn!("Failed to load parent account for transaction {transaction_id}: {e}");
@@ -1101,7 +1101,7 @@ pub async fn post_transaction(
         Err(_) => return (StatusCode::NOT_FOUND, "Transaction not found").into_response(),
     };
     if let Err(e) = state
-        .deposit_service
+        .pb_deposit_service
         .post_deposit(txn.account_id, transaction_id)
         .await
     {
@@ -1123,7 +1123,7 @@ pub async fn void_transaction(
         Err(_) => return (StatusCode::NOT_FOUND, "Transaction not found").into_response(),
     };
     if let Err(e) = state
-        .deposit_service
+        .pb_deposit_service
         .void_deposit(txn.account_id, transaction_id, None)
         .await
     {

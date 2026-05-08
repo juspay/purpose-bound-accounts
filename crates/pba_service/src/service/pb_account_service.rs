@@ -7,12 +7,12 @@ use crate::error::AppError;
 use crate::repository::pb_account_repo::PbAccountRepo;
 use crate::repository::ledger_repo::LedgerRepo;
 
-pub struct AccountService {
+pub struct PbAccountService {
     pub account_repo: Arc<PbAccountRepo>,
     pub ledger_repo: Arc<LedgerRepo>,
 }
 
-impl AccountService {
+impl PbAccountService {
     pub fn new(account_repo: Arc<PbAccountRepo>, ledger_repo: Arc<LedgerRepo>) -> Self {
         Self {
             account_repo,

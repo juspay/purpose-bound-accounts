@@ -11,13 +11,13 @@ use crate::repository::transaction_repo::TransactionRepo;
 const PAYMENT_TRANSFER_CODE: u16 = 200;
 const MAX_SPLIT_RETRIES: u32 = 3;
 
-pub struct PaymentService {
+pub struct PbPaymentService {
     pub account_repo: Arc<PbAccountRepo>,
     pub ledger_repo: Arc<LedgerRepo>,
     pub transaction_repo: Arc<TransactionRepo>,
 }
 
-impl PaymentService {
+impl PbPaymentService {
     pub fn new(
         account_repo: Arc<PbAccountRepo>,
         ledger_repo: Arc<LedgerRepo>,

@@ -18,18 +18,18 @@ use config::{AppConfig, MigrationMode};
 use repository::pb_account_repo::PbAccountRepo;
 use repository::ledger_repo::LedgerRepo;
 use repository::transaction_repo::TransactionRepo;
-use service::account_service::AccountService;
-use service::deposit_service::DepositService;
-use service::payment_service::PaymentService;
-use service::withdrawal_service::WithdrawalService;
+use service::pb_account_service::PbAccountService;
+use service::pb_deposit_service::PbDepositService;
+use service::pb_payment_service::PbPaymentService;
+use service::pb_withdrawal_service::PbWithdrawalService;
 
 #[derive(Clone)]
 pub struct AppState {
-    pub account_service: Arc<AccountService>,
-    pub deposit_service: Arc<DepositService>,
-    pub payment_service: Arc<PaymentService>,
-    pub withdrawal_service: Arc<WithdrawalService>,
-    pub account_repo: Arc<PbAccountRepo>,
+    pub pb_account_service: Arc<PbAccountService>,
+    pub pb_deposit_service: Arc<PbDepositService>,
+    pub pb_payment_service: Arc<PbPaymentService>,
+    pub pb_withdrawal_service: Arc<PbWithdrawalService>,
+    pub pb_account_repo: Arc<PbAccountRepo>,
     pub ledger_repo: Arc<LedgerRepo>,
     pub transaction_repo: Arc<TransactionRepo>,
     pub auth: AuthContext,
@@ -202,7 +202,7 @@ async fn main() {
     }
 
     // Initialize repositories
-    let account_repo = Arc::new(PbAccountRepo::new(pg_pool.clone()));
+    let pb_account_repo = Arc::new(PbAccountRepo::new(pg_pool.clone()));
     let transaction_repo = Arc::new(TransactionRepo::new(pg_pool.clone()));
     let ledger_repo = Arc::new(LedgerRepo::new(
         config.tigerbeetle_cluster_id,
@@ -216,23 +216,23 @@ async fn main() {
         .expect("Failed to initialize sentinel TB accounts");
 
     // Initialize services
-    let account_service = Arc::new(AccountService::new(
-        Arc::clone(&account_repo),
+    let pb_account_service = Arc::new(PbAccountService::new(
+        Arc::clone(&pb_account_repo),
         Arc::clone(&ledger_repo),
     ));
-    let deposit_service = Arc::new(DepositService::new(
-        Arc::clone(&account_repo),
+    let pb_deposit_service = Arc::new(PbDepositService::new(
+        Arc::clone(&pb_account_repo),
         Arc::clone(&ledger_repo),
         Arc::clone(&transaction_repo),
         config.deposit_timeout_seconds,
     ));
-    let payment_service = Arc::new(PaymentService::new(
-        Arc::clone(&account_repo),
+    let pb_payment_service = Arc::new(PbPaymentService::new(
+        Arc::clone(&pb_account_repo),
         Arc::clone(&ledger_repo),
         Arc::clone(&transaction_repo),
     ));
-    let withdrawal_service = Arc::new(WithdrawalService::new(
-        Arc::clone(&account_repo),
+    let pb_withdrawal_service = Arc::new(PbWithdrawalService::new(
+        Arc::clone(&pb_account_repo),
         Arc::clone(&ledger_repo),
         Arc::clone(&transaction_repo),
     ));
@@ -240,11 +240,11 @@ async fn main() {
     let path_prefix = config.path_prefix.clone();
 
     let state = AppState {
-        account_service,
-        deposit_service,
-        payment_service,
-        withdrawal_service,
-        account_repo,
+        pb_account_service,
+        pb_deposit_service,
+        pb_payment_service,
+        pb_withdrawal_service,
+        pb_account_repo,
         ledger_repo,
         transaction_repo: Arc::clone(&transaction_repo),
         auth: auth_ctx,
