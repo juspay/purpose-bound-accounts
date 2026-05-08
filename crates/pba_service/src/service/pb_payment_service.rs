@@ -71,7 +71,7 @@ impl PbPaymentService {
         let account = self.account_repo.get_account(account_id).await?;
 
         if !account.status.is_active() {
-            return Err(AppError::AccountNotActive(account_id.to_string()));
+            return Err(AppError::PbAccountNotActive(account_id.to_string()));
         }
 
         // Validate MCC

@@ -64,7 +64,7 @@ impl PbDepositService {
         let account = self.account_repo.get_account(account_id).await?;
 
         if !account.status.is_active() {
-            return Err(AppError::AccountNotActive(account_id.to_string()));
+            return Err(AppError::PbAccountNotActive(account_id.to_string()));
         }
 
         let is_self = account.is_origin_source(source_ifsc, source_account_number);

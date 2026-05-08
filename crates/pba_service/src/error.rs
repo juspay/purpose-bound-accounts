@@ -10,8 +10,12 @@ struct ErrorBody {
 
 #[derive(Debug)]
 pub enum AppError {
-    AccountNotFound(String),
-    AccountNotActive(String),
+    PbAccountNotFound(String),
+    PbAccountNotActive(String),
+    #[allow(dead_code)]
+    NormalAccountNotFound(String),
+    #[allow(dead_code)]
+    NormalAccountNotActive(String),
     PurposeTypeNotFound(String),
     InsufficientFunds {
         requested: u64,
@@ -37,8 +41,10 @@ pub enum AppError {
 impl std::fmt::Display for AppError {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            Self::AccountNotFound(id) => write!(f, "Account not found: {id}"),
-            Self::AccountNotActive(id) => write!(f, "Account not active: {id}"),
+            Self::PbAccountNotFound(id) => write!(f, "PB account not found: {id}"),
+            Self::PbAccountNotActive(id) => write!(f, "PB account not active: {id}"),
+            Self::NormalAccountNotFound(id) => write!(f, "Normal account not found: {id}"),
+            Self::NormalAccountNotActive(id) => write!(f, "Normal account not active: {id}"),
             Self::PurposeTypeNotFound(code) => {
                 write!(f, "Purpose type not found: {code}")
             }
@@ -70,8 +76,10 @@ impl std::fmt::Display for AppError {
 impl IntoResponse for AppError {
     fn into_response(self) -> Response {
         let (status, error_type) = match &self {
-            AppError::AccountNotFound(_) => (StatusCode::NOT_FOUND, "AccountNotFound"),
-            AppError::AccountNotActive(_) => (StatusCode::CONFLICT, "AccountNotActive"),
+            AppError::PbAccountNotFound(_) => (StatusCode::NOT_FOUND, "PbAccountNotFound"),
+            AppError::PbAccountNotActive(_) => (StatusCode::CONFLICT, "PbAccountNotActive"),
+            AppError::NormalAccountNotFound(_) => (StatusCode::NOT_FOUND, "NormalAccountNotFound"),
+            AppError::NormalAccountNotActive(_) => (StatusCode::CONFLICT, "NormalAccountNotActive"),
             AppError::PurposeTypeNotFound(_) => (StatusCode::NOT_FOUND, "PurposeTypeNotFound"),
             AppError::InsufficientFunds { .. } => {
                 (StatusCode::UNPROCESSABLE_ENTITY, "InsufficientFunds")
