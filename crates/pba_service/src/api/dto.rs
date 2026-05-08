@@ -202,6 +202,7 @@ pub struct ListTransactionsResponse {
 pub struct TransactionSummaryDto {
     pub id: Uuid,
     pub account_id: Uuid,
+    pub account_kind: String,
     #[serde(rename = "type")]
     pub transaction_type: String,
     pub status: String,
@@ -223,6 +224,8 @@ pub struct TransactionSummaryDto {
     pub gateway_ref: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub funding_type: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub correlation_id: Option<Uuid>,
     pub created_at: chrono::DateTime<chrono::Utc>,
 }
 
@@ -231,6 +234,7 @@ impl From<crate::domain::transaction::TransactionRecord> for TransactionSummaryD
         Self {
             id: t.id,
             account_id: t.account_id,
+            account_kind: t.account_kind.as_str().to_string(),
             transaction_type: t.transaction_type.as_str().to_string(),
             status: t.status.as_str().to_string(),
             amount: t.amount,
@@ -243,7 +247,106 @@ impl From<crate::domain::transaction::TransactionRecord> for TransactionSummaryD
             source_account: t.source_account,
             gateway_ref: t.gateway_ref,
             funding_type: t.funding_type,
+            correlation_id: t.correlation_id,
             created_at: t.created_at,
         }
     }
+}
+
+// ── Normal Account ──
+
+#[allow(dead_code)]
+#[derive(Debug, Deserialize)]
+pub struct CreateNormalAccountRequest {
+    pub holder_id: String,
+    pub origin_ifsc: Option<String>,
+    pub origin_account_number: Option<String>,
+}
+
+#[allow(dead_code)]
+#[derive(Debug, Serialize)]
+pub struct NormalAccountResponse {
+    pub id: Uuid,
+    pub holder_id: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub origin_ifsc: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub origin_account_number: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub vpa: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub virtual_ifsc: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub virtual_account_number: Option<String>,
+    pub kyc_tier: String,
+    pub status: String,
+    pub created_at: chrono::DateTime<chrono::Utc>,
+    pub updated_at: chrono::DateTime<chrono::Utc>,
+}
+
+impl From<crate::domain::normal_account::NormalAccount> for NormalAccountResponse {
+    fn from(a: crate::domain::normal_account::NormalAccount) -> Self {
+        Self {
+            id: a.id,
+            holder_id: a.holder_id,
+            origin_ifsc: a.origin_ifsc.map(|v| v.to_string()),
+            origin_account_number: a.origin_account_number.map(|v| v.to_string()),
+            vpa: a.vpa,
+            virtual_ifsc: a.virtual_ifsc.map(|v| v.to_string()),
+            virtual_account_number: a.virtual_account_number.map(|v| v.to_string()),
+            kyc_tier: a.kyc_tier,
+            status: a.status.as_str().to_string(),
+            created_at: a.created_at,
+            updated_at: a.updated_at,
+        }
+    }
+}
+
+#[allow(dead_code)]
+#[derive(Debug, Serialize)]
+pub struct NormalAccountBalanceResponse {
+    pub account_id: Uuid,
+    pub balance: u64,
+    pub pending: u64,
+}
+
+#[allow(dead_code)]
+#[derive(Debug, Deserialize)]
+pub struct DepositToNormalAccountRequest {
+    pub amount: u64,
+    #[serde(default)]
+    pub pending: bool,
+    pub gateway_ref: Option<String>,
+    pub timeout_seconds: Option<u32>,
+    pub idempotency_key: Option<String>,
+}
+
+#[allow(dead_code)]
+#[derive(Debug, Serialize)]
+pub struct NormalDepositResponse {
+    pub deposit_id: Uuid,
+    pub account_id: Uuid,
+    pub amount: u64,
+    pub status: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub gateway_ref: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub timeout_seconds: Option<u32>,
+}
+
+#[allow(dead_code)]
+#[derive(Debug, Deserialize)]
+pub struct WithdrawFromNormalAccountRequest {
+    pub amount: u64,
+    pub idempotency_key: Option<String>,
+    pub gateway_ref: Option<String>,
+}
+
+#[allow(dead_code)]
+#[derive(Debug, Serialize)]
+pub struct NormalWithdrawalResponse {
+    pub account_id: Uuid,
+    pub amount: u64,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub gateway_ref: Option<String>,
 }
