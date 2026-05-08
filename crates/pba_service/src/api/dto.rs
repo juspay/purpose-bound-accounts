@@ -81,7 +81,8 @@ pub struct DepositResponse {
     pub deposit_id: Uuid,
     pub account_id: Uuid,
     pub amount: u64,
-    pub pool: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub pool: Option<String>,
     pub funding_type: String,
     pub status: String,
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -205,7 +206,8 @@ pub struct TransactionSummaryDto {
     pub transaction_type: String,
     pub status: String,
     pub amount: u64,
-    pub pool: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub pool: Option<String>,
     pub direction: String,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub description: Option<String>,

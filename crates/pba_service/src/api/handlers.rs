@@ -230,7 +230,14 @@ pub async fn list_transactions(
 
     let transactions = state
         .transaction_repo
-        .list_by_account(account_id, offset, limit, query.from_date, query.to_date)
+        .list_by_account(
+            crate::domain::account_kind::AccountKind::Pb,
+            account_id,
+            offset,
+            limit,
+            query.from_date,
+            query.to_date,
+        )
         .await?;
     let total = state
         .transaction_repo
