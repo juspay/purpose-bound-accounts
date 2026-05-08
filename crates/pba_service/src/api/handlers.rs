@@ -284,7 +284,10 @@ pub async fn get_purpose_type(
     State(state): State<AppState>,
     Path(purpose_code): Path<String>,
 ) -> Result<Json<PurposeTypeResponse>, AppError> {
-    let purpose = state.pb_account_repo.get_purpose_type(&purpose_code).await?;
+    let purpose = state
+        .pb_account_repo
+        .get_purpose_type(&purpose_code)
+        .await?;
     Ok(Json(purpose.into()))
 }
 

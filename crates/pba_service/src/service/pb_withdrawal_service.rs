@@ -3,8 +3,8 @@ use uuid::Uuid;
 
 use crate::domain::transaction::{TransactionDirection, TransactionStatus, TransactionType};
 use crate::error::AppError;
-use crate::repository::pb_account_repo::PbAccountRepo;
 use crate::repository::ledger_repo::{LedgerRepo, WITHDRAWAL_SETTLEMENT_TB_ID};
+use crate::repository::pb_account_repo::PbAccountRepo;
 use crate::repository::transaction_repo::TransactionRepo;
 
 const WITHDRAWAL_TRANSFER_CODE: u16 = 300;

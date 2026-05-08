@@ -15,8 +15,8 @@ mod secrets_plaintext;
 mod service;
 
 use config::{AppConfig, MigrationMode};
-use repository::pb_account_repo::PbAccountRepo;
 use repository::ledger_repo::LedgerRepo;
+use repository::pb_account_repo::PbAccountRepo;
 use repository::transaction_repo::TransactionRepo;
 use service::pb_account_service::PbAccountService;
 use service::pb_deposit_service::PbDepositService;

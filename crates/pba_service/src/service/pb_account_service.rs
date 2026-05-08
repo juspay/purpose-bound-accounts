@@ -4,8 +4,8 @@ use uuid::Uuid;
 use crate::domain::account::{tb_others_id, tb_self_id, AccountStatus, PurposeBoundAccount};
 use crate::domain::banking::{AccountNumber, Ifsc};
 use crate::error::AppError;
-use crate::repository::pb_account_repo::PbAccountRepo;
 use crate::repository::ledger_repo::LedgerRepo;
+use crate::repository::pb_account_repo::PbAccountRepo;
 
 pub struct PbAccountService {
     pub account_repo: Arc<PbAccountRepo>,
