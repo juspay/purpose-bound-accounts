@@ -497,7 +497,7 @@ git checkout -b normal-accounts-phase-2
 ```sql
 CREATE TABLE normal_accounts (
     id                     UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    holder_id              VARCHAR(64) NOT NULL,
+    holder_id              VARCHAR(255) NOT NULL,             -- matches pb_accounts.holder_id width
     origin_ifsc            VARCHAR(11),
     origin_account_number  VARCHAR(20),
     vpa                    VARCHAR(50),
