@@ -43,6 +43,20 @@ pub struct PbaWorld {
     last_funding_type: Option<String>,
     /// All-transactions funding types
     all_transactions_funding_types: Option<Vec<Option<String>>>,
+    /// Last normal-account ID
+    last_normal_account_id: Option<String>,
+    /// Last normal-account holder_id
+    last_normal_holder_id: Option<String>,
+    /// Last normal-account origin_ifsc
+    last_normal_origin_ifsc: Option<String>,
+    /// Last normal-account deposit ID
+    last_normal_deposit_id: Option<String>,
+    /// Last normal-account deposit status
+    last_normal_deposit_status: Option<String>,
+    /// Last normal-account balance
+    last_normal_balance: Option<i64>,
+    /// Last normal-account deposit ID set (for idempotency comparison)
+    last_normal_deposit_ids: Option<Vec<String>>,
 }
 
 #[derive(Debug, Clone)]
@@ -99,6 +113,13 @@ impl Default for PbaWorld {
             all_transactions_account_ids: None,
             last_funding_type: None,
             all_transactions_funding_types: None,
+            last_normal_account_id: None,
+            last_normal_holder_id: None,
+            last_normal_origin_ifsc: None,
+            last_normal_deposit_id: None,
+            last_normal_deposit_status: None,
+            last_normal_balance: None,
+            last_normal_deposit_ids: None,
         }
     }
 }
