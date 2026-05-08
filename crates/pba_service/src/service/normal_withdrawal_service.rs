@@ -53,7 +53,10 @@ impl NormalWithdrawalService {
             return Err(AppError::NormalAccountNotActive(account_id.to_string()));
         }
 
-        let balance = self.ledger_repo.get_single_balance(account.tb_account_id).await?;
+        let balance = self
+            .ledger_repo
+            .get_single_balance(account.tb_account_id)
+            .await?;
         if balance.posted < amount {
             return Err(AppError::InsufficientFunds {
                 requested: amount,

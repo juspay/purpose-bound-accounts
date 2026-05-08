@@ -39,7 +39,11 @@ impl PbWithdrawalService {
         if let Some(key) = idempotency_key {
             if let Some(existing) = self
                 .transaction_repo
-                .find_by_idempotency_key(crate::domain::account_kind::AccountKind::Pb, account_id, key)
+                .find_by_idempotency_key(
+                    crate::domain::account_kind::AccountKind::Pb,
+                    account_id,
+                    key,
+                )
                 .await?
             {
                 return Ok(WithdrawalResult {

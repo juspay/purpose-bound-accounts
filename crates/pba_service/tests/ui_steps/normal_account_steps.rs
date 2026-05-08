@@ -26,7 +26,9 @@ fn extract_normal_account_id_from_url(url: &str) -> Option<String> {
 async fn create_normal_account_via_ui(world: &mut UiWorld, holder_id: &str) -> Option<String> {
     let url = world.url("/admin/normal-accounts");
     let page = world.ensure_page().await;
-    page.goto(url).await.expect("Failed to navigate to normal accounts page");
+    page.goto(url)
+        .await
+        .expect("Failed to navigate to normal accounts page");
     sleep(Duration::from_millis(400)).await;
 
     // Open the <details> create form by clicking <summary>
@@ -45,8 +47,14 @@ async fn create_normal_account_via_ui(world: &mut UiWorld, holder_id: &str) -> O
         .find_element("input[name='holder_id']")
         .await
         .expect("Could not find holder_id input on normal accounts form");
-    holder_input.click().await.expect("Failed to click holder_id");
-    holder_input.type_str(holder_id).await.expect("Failed to type holder_id");
+    holder_input
+        .click()
+        .await
+        .expect("Failed to click holder_id");
+    holder_input
+        .type_str(holder_id)
+        .await
+        .expect("Failed to type holder_id");
 
     // Submit
     let submit = page
@@ -59,7 +67,11 @@ async fn create_normal_account_via_ui(world: &mut UiWorld, holder_id: &str) -> O
     for _ in 0..10 {
         sleep(Duration::from_millis(500)).await;
         let page = world.ensure_page().await;
-        let current_url = page.url().await.expect("Failed to get URL").unwrap_or_default();
+        let current_url = page
+            .url()
+            .await
+            .expect("Failed to get URL")
+            .unwrap_or_default();
         if let Some(id) = extract_normal_account_id_from_url(&current_url) {
             return Some(id);
         }
@@ -76,7 +88,9 @@ async fn do_normal_deposit(world: &mut UiWorld, amount: u64) -> bool {
     let url = world.url(&format!("/admin/normal-accounts/{}/deposit", account_id));
 
     let page = world.ensure_page().await;
-    page.goto(url).await.expect("Failed to navigate to normal deposit page");
+    page.goto(url)
+        .await
+        .expect("Failed to navigate to normal deposit page");
     sleep(Duration::from_millis(400)).await;
 
     let page = world.ensure_page().await;
@@ -101,7 +115,11 @@ async fn do_normal_deposit(world: &mut UiWorld, amount: u64) -> bool {
     for _ in 0..20 {
         sleep(Duration::from_millis(500)).await;
         let page = world.ensure_page().await;
-        let current_url = page.url().await.expect("Failed to get URL").unwrap_or_default();
+        let current_url = page
+            .url()
+            .await
+            .expect("Failed to get URL")
+            .unwrap_or_default();
         if current_url.contains("/admin/normal-accounts/") && !current_url.contains("/deposit") {
             return true;
         }
@@ -118,7 +136,9 @@ async fn do_normal_withdrawal(world: &mut UiWorld, amount: u64) -> bool {
     let url = world.url(&format!("/admin/normal-accounts/{}/withdrawal", account_id));
 
     let page = world.ensure_page().await;
-    page.goto(url).await.expect("Failed to navigate to normal withdrawal page");
+    page.goto(url)
+        .await
+        .expect("Failed to navigate to normal withdrawal page");
     sleep(Duration::from_millis(400)).await;
 
     let page = world.ensure_page().await;
@@ -143,7 +163,11 @@ async fn do_normal_withdrawal(world: &mut UiWorld, amount: u64) -> bool {
     for _ in 0..20 {
         sleep(Duration::from_millis(500)).await;
         let page = world.ensure_page().await;
-        let current_url = page.url().await.expect("Failed to get URL").unwrap_or_default();
+        let current_url = page
+            .url()
+            .await
+            .expect("Failed to get URL")
+            .unwrap_or_default();
         if current_url.contains("/admin/normal-accounts/") && !current_url.contains("/withdrawal") {
             return true;
         }
@@ -159,7 +183,9 @@ async fn read_normal_balance(world: &mut UiWorld) -> String {
         .expect("No account ID to read balance");
     let url = world.url(&format!("/admin/normal-accounts/{}", account_id));
     let page = world.ensure_page().await;
-    page.goto(url).await.expect("Failed to navigate to normal account detail");
+    page.goto(url)
+        .await
+        .expect("Failed to navigate to normal account detail");
     sleep(Duration::from_millis(400)).await;
 
     let page = world.ensure_page().await;
@@ -172,7 +198,9 @@ async fn read_normal_balance(world: &mut UiWorld) -> String {
         // Skip whitespace
         let trimmed = after.trim_start();
         // Skip the ₹ symbol and any tags
-        let start = trimmed.find(|c: char| c.is_ascii_digit()).unwrap_or(trimmed.len());
+        let start = trimmed
+            .find(|c: char| c.is_ascii_digit())
+            .unwrap_or(trimmed.len());
         let rest = &trimmed[start..];
         let end = rest
             .find(|c: char| !c.is_ascii_digit() && c != '.')
@@ -257,8 +285,14 @@ async fn when_submit_normal_account_form(world: &mut UiWorld, holder_id: String)
         .find_element("input[name='holder_id']")
         .await
         .expect("Could not find holder_id input");
-    holder_input.click().await.expect("Failed to click holder_id");
-    holder_input.type_str(&holder_id).await.expect("Failed to type holder_id");
+    holder_input
+        .click()
+        .await
+        .expect("Failed to click holder_id");
+    holder_input
+        .type_str(&holder_id)
+        .await
+        .expect("Failed to type holder_id");
 
     let submit = page
         .find_element("button[type='submit']")
@@ -270,7 +304,11 @@ async fn when_submit_normal_account_form(world: &mut UiWorld, holder_id: String)
     for _ in 0..10 {
         sleep(Duration::from_millis(500)).await;
         let page = world.ensure_page().await;
-        let current_url = page.url().await.expect("Failed to get URL").unwrap_or_default();
+        let current_url = page
+            .url()
+            .await
+            .expect("Failed to get URL")
+            .unwrap_or_default();
         if let Some(id) = extract_normal_account_id_from_url(&current_url) {
             world.account_id = Some(id);
             return;
@@ -323,7 +361,11 @@ async fn when_submit_normal_deposit(world: &mut UiWorld, amount: u64) {
     for _ in 0..20 {
         sleep(Duration::from_millis(500)).await;
         let page = world.ensure_page().await;
-        let current_url = page.url().await.expect("Failed to get URL").unwrap_or_default();
+        let current_url = page
+            .url()
+            .await
+            .expect("Failed to get URL")
+            .unwrap_or_default();
         if current_url.contains("/admin/normal-accounts/") && !current_url.contains("/deposit") {
             return;
         }
@@ -376,7 +418,11 @@ async fn when_submit_normal_withdrawal(world: &mut UiWorld, amount: u64) {
     for _ in 0..20 {
         sleep(Duration::from_millis(500)).await;
         let page = world.ensure_page().await;
-        let current_url = page.url().await.expect("Failed to get URL").unwrap_or_default();
+        let current_url = page
+            .url()
+            .await
+            .expect("Failed to get URL")
+            .unwrap_or_default();
         if current_url.contains("/admin/normal-accounts/") && !current_url.contains("/withdrawal") {
             return;
         }

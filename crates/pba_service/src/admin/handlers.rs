@@ -433,7 +433,11 @@ pub async fn account_transfers_fragment(
     let rows: Vec<TransferRow> = transactions
         .into_iter()
         .map(|t| {
-            let pool = if t.pool.as_deref() == Some("self") { "Self" } else { "Others" };
+            let pool = if t.pool.as_deref() == Some("self") {
+                "Self"
+            } else {
+                "Others"
+            };
             TransferRow {
                 id: t.id.to_string(),
                 timestamp: t.created_at.format("%Y-%m-%d %H:%M:%S").to_string(),
@@ -782,7 +786,11 @@ pub async fn transactions_page(
     let rows: Vec<AllTransactionRow> = transactions
         .into_iter()
         .map(|t| {
-            let pool = if t.pool.as_deref() == Some("self") { "Self" } else { "Others" };
+            let pool = if t.pool.as_deref() == Some("self") {
+                "Self"
+            } else {
+                "Others"
+            };
             let status_class = match t.status {
                 TransactionStatus::Pending => "status-frozen",
                 TransactionStatus::Posted | TransactionStatus::Settled => "status-active",

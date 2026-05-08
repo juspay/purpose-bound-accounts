@@ -34,7 +34,13 @@ impl NormalAccountService {
 
         let account = self
             .normal_account_repo
-            .create_account(account_id, holder_id, origin_ifsc, origin_account_number, tb_id)
+            .create_account(
+                account_id,
+                holder_id,
+                origin_ifsc,
+                origin_account_number,
+                tb_id,
+            )
             .await?;
 
         Ok(account)

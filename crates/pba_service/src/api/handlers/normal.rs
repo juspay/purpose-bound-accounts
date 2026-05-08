@@ -5,8 +5,8 @@ use uuid::Uuid;
 
 use crate::api::dto::*;
 use crate::domain::account::AccountStatus;
-use crate::domain::banking::{AccountNumber, Ifsc};
 use crate::domain::account_kind::AccountKind;
+use crate::domain::banking::{AccountNumber, Ifsc};
 use crate::error::AppError;
 use crate::AppState;
 
@@ -191,7 +191,14 @@ pub async fn list_normal_account_transactions(
     let limit = q.limit.unwrap_or(50);
     let txns = state
         .transaction_repo
-        .list_by_account(AccountKind::Normal, id, offset, limit, q.from_date, q.to_date)
+        .list_by_account(
+            AccountKind::Normal,
+            id,
+            offset,
+            limit,
+            q.from_date,
+            q.to_date,
+        )
         .await?;
     let total = state
         .transaction_repo

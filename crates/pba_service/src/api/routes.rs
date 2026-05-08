@@ -137,14 +137,10 @@ pub fn protected_router() -> Router<AppState> {
         )
         .layer(axum::middleware::from_fn(deprecation_headers));
 
-    Router::new()
-        .merge(pb)
-        .merge(normal)
-        .merge(legacy)
-        .route(
-            "/transactions",
-            get(handlers::transactions::list_all_transactions),
-        )
+    Router::new().merge(pb).merge(normal).merge(legacy).route(
+        "/transactions",
+        get(handlers::transactions::list_all_transactions),
+    )
 }
 
 /// Attach Deprecation and Sunset headers to legacy /accounts/* responses.
@@ -159,9 +155,7 @@ async fn deprecation_headers(req: Request<Body>, next: Next) -> Response {
         .insert("Sunset", "2026-08-06".parse().unwrap());
     response.headers_mut().insert(
         "Link",
-        "</docs#deprecation>; rel=\"deprecation\""
-            .parse()
-            .unwrap(),
+        "</docs#deprecation>; rel=\"deprecation\"".parse().unwrap(),
     );
     response
 }

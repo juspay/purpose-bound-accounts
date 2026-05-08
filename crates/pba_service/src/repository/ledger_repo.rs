@@ -332,7 +332,9 @@ impl LedgerRepo {
         self.client
             .create_accounts(vec![account])
             .await
-            .map_err(|e| AppError::TigerBeetleError(format!("create_normal_account failed: {e:?}")))?;
+            .map_err(|e| {
+                AppError::TigerBeetleError(format!("create_normal_account failed: {e:?}"))
+            })?;
 
         tracing::info!(tb_account_id = %tb_account_id, "Created TB normal account");
         Ok(())
@@ -351,7 +353,9 @@ impl LedgerRepo {
 
         for account in &accounts {
             if account.id() == tb_account_id {
-                let net = account.credits_posted().saturating_sub(account.debits_posted());
+                let net = account
+                    .credits_posted()
+                    .saturating_sub(account.debits_posted());
                 posted = u64::try_from(net).unwrap_or(u64::MAX);
                 pending = u64::try_from(account.credits_pending()).unwrap_or(u64::MAX);
             }

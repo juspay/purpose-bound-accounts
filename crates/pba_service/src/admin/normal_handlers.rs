@@ -158,7 +158,11 @@ pub async fn create_normal_account(
 
     match state
         .normal_account_service
-        .create_account(holder_id, origin_ifsc.as_ref(), origin_account_number.as_ref())
+        .create_account(
+            holder_id,
+            origin_ifsc.as_ref(),
+            origin_account_number.as_ref(),
+        )
         .await
     {
         Ok(account) => Redirect::to(&prefixed(
@@ -307,14 +311,18 @@ pub async fn freeze_normal_account(
         .update_status(account_id, AccountStatus::Frozen)
         .await
     {
-        Ok(_) => {
-            Redirect::to(&prefixed(&state, &format!("/admin/normal-accounts/{account_id}")))
-                .into_response()
-        }
+        Ok(_) => Redirect::to(&prefixed(
+            &state,
+            &format!("/admin/normal-accounts/{account_id}"),
+        ))
+        .into_response(),
         Err(e) => {
             tracing::error!("Failed to freeze normal account: {e}");
-            Redirect::to(&prefixed(&state, &format!("/admin/normal-accounts/{account_id}")))
-                .into_response()
+            Redirect::to(&prefixed(
+                &state,
+                &format!("/admin/normal-accounts/{account_id}"),
+            ))
+            .into_response()
         }
     }
 }
@@ -328,14 +336,18 @@ pub async fn reactivate_normal_account(
         .update_status(account_id, AccountStatus::Active)
         .await
     {
-        Ok(_) => {
-            Redirect::to(&prefixed(&state, &format!("/admin/normal-accounts/{account_id}")))
-                .into_response()
-        }
+        Ok(_) => Redirect::to(&prefixed(
+            &state,
+            &format!("/admin/normal-accounts/{account_id}"),
+        ))
+        .into_response(),
         Err(e) => {
             tracing::error!("Failed to reactivate normal account: {e}");
-            Redirect::to(&prefixed(&state, &format!("/admin/normal-accounts/{account_id}")))
-                .into_response()
+            Redirect::to(&prefixed(
+                &state,
+                &format!("/admin/normal-accounts/{account_id}"),
+            ))
+            .into_response()
         }
     }
 }
@@ -395,13 +407,21 @@ pub async fn process_normal_deposit(
 
     match state
         .normal_deposit_service
-        .deposit(account_id, form.amount, is_pending, gateway_ref, timeout_seconds, None)
+        .deposit(
+            account_id,
+            form.amount,
+            is_pending,
+            gateway_ref,
+            timeout_seconds,
+            None,
+        )
         .await
     {
-        Ok(_) => {
-            Redirect::to(&prefixed(&state, &format!("/admin/normal-accounts/{account_id}")))
-                .into_response()
-        }
+        Ok(_) => Redirect::to(&prefixed(
+            &state,
+            &format!("/admin/normal-accounts/{account_id}"),
+        ))
+        .into_response(),
         Err(e) => {
             let holder_id = state
                 .normal_account_repo
@@ -465,10 +485,11 @@ pub async fn process_normal_withdrawal(
         .withdraw(account_id, form.amount, None, gateway_ref)
         .await
     {
-        Ok(_) => {
-            Redirect::to(&prefixed(&state, &format!("/admin/normal-accounts/{account_id}")))
-                .into_response()
-        }
+        Ok(_) => Redirect::to(&prefixed(
+            &state,
+            &format!("/admin/normal-accounts/{account_id}"),
+        ))
+        .into_response(),
         Err(e) => {
             let holder_id = state
                 .normal_account_repo
