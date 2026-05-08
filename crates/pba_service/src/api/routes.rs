@@ -90,6 +90,18 @@ pub fn protected_router() -> Router<AppState> {
             post(handlers::normal::void_normal_account_deposit),
         )
         .route(
+            "/normal-accounts/{account_id}/transfers",
+            post(handlers::transfer::initiate_transfer),
+        )
+        .route(
+            "/normal-accounts/{account_id}/transfers/{transfer_id}/post",
+            post(handlers::transfer::post_transfer),
+        )
+        .route(
+            "/normal-accounts/{account_id}/transfers/{transfer_id}/void",
+            post(handlers::transfer::void_transfer),
+        )
+        .route(
             "/normal-accounts/{account_id}/withdrawals",
             post(handlers::normal::withdraw_from_normal_account),
         )

@@ -93,7 +93,9 @@ impl IntoResponse for AppError {
             AppError::TransactionNotFound(_) => (StatusCode::NOT_FOUND, "TransactionNotFound"),
             AppError::TransactionNotPending(_) => (StatusCode::CONFLICT, "TransactionNotPending"),
             AppError::FundingTypeRequired => (StatusCode::BAD_REQUEST, "FundingTypeRequired"),
-            AppError::TrustDepositRequiresTransfer => (StatusCode::BAD_REQUEST, "TrustDepositRequiresTransfer"),
+            AppError::TrustDepositRequiresTransfer => {
+                (StatusCode::BAD_REQUEST, "TrustDepositRequiresTransfer")
+            }
             AppError::ExceedsBalance => (StatusCode::UNPROCESSABLE_ENTITY, "InsufficientFunds"),
             AppError::TigerBeetleError(_) => {
                 (StatusCode::INTERNAL_SERVER_ERROR, "TigerBeetleError")

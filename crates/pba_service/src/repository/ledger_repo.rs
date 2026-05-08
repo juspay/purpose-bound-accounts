@@ -350,8 +350,13 @@ impl LedgerRepo {
         credit_account_id: u128,
         amount: u64,
     ) -> Result<(), AppError> {
-        self.create_transfer(debit_account_id, credit_account_id, amount, INTERNAL_TRANSFER_CODE)
-            .await
+        self.create_transfer(
+            debit_account_id,
+            credit_account_id,
+            amount,
+            INTERNAL_TRANSFER_CODE,
+        )
+        .await
     }
 
     #[allow(dead_code)]
