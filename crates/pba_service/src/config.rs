@@ -99,9 +99,7 @@ impl AppConfig {
             "none" | "skip" | "off" => MigrationMode::None,
             "run" | "apply" | "auto" => MigrationMode::Run,
             "dry-run" | "dry_run" | "dryrun" | "print" => MigrationMode::DryRun,
-            other => panic!(
-                "DB_MIGRATION_MODE must be one of: none, run, dry-run (got: {other})"
-            ),
+            other => panic!("DB_MIGRATION_MODE must be one of: none, run, dry-run (got: {other})"),
         };
 
         let path_prefix = std::env::var("PATH_PREFIX").unwrap_or_default();
