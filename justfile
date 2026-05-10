@@ -38,11 +38,11 @@ logs:
 # Run the service in the foreground (requires infra running separately)
 run-service:
     @echo "Admin dashboard will be at http://localhost:${PORT:-3030}/admin"
-    cargo run -p pba-service
+    DB_MIGRATION_MODE=run cargo run -p pba-service
 
 # Run with file watching (restarts on changes)
 watch:
-    cargo watch -x 'run -p pba-service'
+    DB_MIGRATION_MODE=run cargo watch -x 'run -p pba-service'
 
 # Stop all services
 stop:
