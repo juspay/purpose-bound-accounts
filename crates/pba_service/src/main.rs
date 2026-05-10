@@ -14,7 +14,7 @@ mod secrets_kms;
 mod secrets_plaintext;
 mod service;
 
-use config::AppConfig;
+use config::{AppConfig, MigrationMode};
 use repository::account_repo::AccountRepo;
 use repository::ledger_repo::LedgerRepo;
 use repository::transaction_repo::TransactionRepo;
@@ -120,11 +120,86 @@ async fn main() {
         .await
         .expect("Failed to connect to PostgreSQL");
 
-    // Run migrations
-    sqlx::migrate!("src/db/migrations")
-        .run(&pg_pool)
-        .await
-        .expect("Failed to run database migrations");
+    // Handle database migrations per configured mode.
+    let migrator = sqlx::migrate!("src/db/migrations");
+    match config.db_migration_mode {
+        MigrationMode::None => {
+            tracing::info!("Skipping database migrations (DB_MIGRATION_MODE=none)");
+        }
+        MigrationMode::Run => {
+            migrator
+                .run(&pg_pool)
+                .await
+                .expect("Failed to run database migrations");
+        }
+        MigrationMode::DryRun => {
+            use sqlx::migrate::Migrate;
+            use std::collections::HashSet;
+
+            let mut conn = pg_pool
+                .acquire()
+                .await
+                .expect("Failed to acquire connection for migration dry-run");
+            conn.ensure_migrations_table()
+                .await
+                .expect("Failed to ensure _sqlx_migrations table");
+            let applied: HashSet<i64> = conn
+                .list_applied_migrations()
+                .await
+                .expect("Failed to list applied migrations")
+                .into_iter()
+                .map(|m| m.version)
+                .collect();
+            drop(conn);
+
+            let mut pending = 0usize;
+            for migration in migrator.iter() {
+                if migration.migration_type.is_down_migration() {
+                    continue;
+                }
+                if applied.contains(&migration.version) {
+                    continue;
+                }
+                pending += 1;
+
+                // Mirror what sqlx-postgres' apply() emits per migration: a per-migration
+                // transaction (omitted when the file declares `-- no transaction`),
+                // the migration SQL itself, and the bookkeeping INSERT into
+                // _sqlx_migrations so a subsequent run sees this version as applied.
+                // execution_time = -1 matches sqlx's in-transaction placeholder.
+                let checksum_hex: String = migration
+                    .checksum
+                    .iter()
+                    .map(|b| format!("{b:02x}"))
+                    .collect();
+                let description_sql = migration.description.replace('\'', "''");
+
+                println!(
+                    "-- migration {} ({})",
+                    migration.version, migration.description
+                );
+                if !migration.no_tx {
+                    println!("BEGIN;");
+                }
+                println!("{}", migration.sql.trim_end());
+                println!(
+                    "INSERT INTO _sqlx_migrations (version, description, success, checksum, execution_time) \
+                     VALUES ({}, '{}', TRUE, '\\x{}'::bytea, -1);",
+                    migration.version, description_sql, checksum_hex
+                );
+                if !migration.no_tx {
+                    println!("COMMIT;");
+                }
+                println!();
+            }
+
+            // Use eprintln! so stdout stays a clean SQL stream that can be piped to psql.
+            eprintln!(
+                "DB_MIGRATION_MODE=dry-run: dumped {pending} pending migration(s); exiting without starting server"
+            );
+            return;
+        }
+    }
 
     // Initialize repositories
     let account_repo = Arc::new(AccountRepo::new(pg_pool.clone()));

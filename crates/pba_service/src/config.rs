@@ -1,5 +1,16 @@
 use crate::secrets::SecretsProvider;
 
+/// Controls how database migrations are handled at startup.
+#[derive(Debug, Clone)]
+pub enum MigrationMode {
+    /// Skip migrations entirely (default — operator must explicitly opt in to apply).
+    None,
+    /// Apply any pending migrations.
+    Run,
+    /// Print SQL for any pending migrations to stdout, then exit without serving.
+    DryRun,
+}
+
 /// Application configuration loaded from environment variables.
 #[derive(Debug, Clone)]
 pub struct AppConfig {
@@ -15,6 +26,7 @@ pub struct AppConfig {
     pub cookie_secret: String,
     pub auth_enabled: bool,
     pub path_prefix: String,
+    pub db_migration_mode: MigrationMode,
 }
 
 impl AppConfig {
@@ -79,6 +91,17 @@ impl AppConfig {
             .parse::<bool>()
             .unwrap_or(true);
 
+        let db_migration_mode = match std::env::var("DB_MIGRATION_MODE")
+            .unwrap_or_else(|_| "none".to_string())
+            .to_ascii_lowercase()
+            .as_str()
+        {
+            "none" | "skip" | "off" => MigrationMode::None,
+            "run" | "apply" | "auto" => MigrationMode::Run,
+            "dry-run" | "dry_run" | "dryrun" | "print" => MigrationMode::DryRun,
+            other => panic!("DB_MIGRATION_MODE must be one of: none, run, dry-run (got: {other})"),
+        };
+
         let path_prefix = std::env::var("PATH_PREFIX").unwrap_or_default();
         let path_prefix = path_prefix.trim_end_matches('/').to_string();
         let path_prefix = if !path_prefix.is_empty() && !path_prefix.starts_with('/') {
@@ -103,6 +126,7 @@ impl AppConfig {
             cookie_secret,
             auth_enabled,
             path_prefix,
+            db_migration_mode,
         }
     }
 }
