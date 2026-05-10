@@ -1,11 +1,11 @@
 use crate::secrets::SecretsProvider;
 
 /// Controls how database migrations are handled at startup.
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone)]
 pub enum MigrationMode {
-    /// Skip migrations entirely.
+    /// Skip migrations entirely (default — operator must explicitly opt in to apply).
     None,
-    /// Apply any pending migrations (default).
+    /// Apply any pending migrations.
     Run,
     /// Print SQL for any pending migrations to stdout, then exit without serving.
     DryRun,
@@ -92,7 +92,7 @@ impl AppConfig {
             .unwrap_or(true);
 
         let db_migration_mode = match std::env::var("DB_MIGRATION_MODE")
-            .unwrap_or_else(|_| "run".to_string())
+            .unwrap_or_else(|_| "none".to_string())
             .to_ascii_lowercase()
             .as_str()
         {
