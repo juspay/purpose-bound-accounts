@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+
+{% block title %}Withdrawal - Normal Account - PBA Admin{% endblock %}
+
+{% block content %}
+<h1>Withdraw from Normal Account</h1>
+<p><a href="{{ prefix }}/admin/normal-accounts/{{ account_id }}">&larr; Back to account</a></p>
+
+<article>
+    <p><strong>Account:</strong> {{ account_id }}</p>
+    <p><strong>Holder:</strong> {{ holder_id }}</p>
+
+    {% if let Some(err) = error %}
+    <p id="form-error" style="color: #c62828;"><strong>Error:</strong> {{ err }}</p>
+    {% endif %}
+
+    <form method="post" action="{{ prefix }}/admin/normal-accounts/{{ account_id }}/withdrawals">
+        <label>
+            Amount (paisa)
+            <input type="number" name="amount" min="1" required>
+        </label>
+        <label>
+            Gateway Reference (optional)
+            <input type="text" name="gateway_ref" placeholder="e.g. gw-txn-12345">
+        </label>
+        <button type="submit">Withdraw</button>
+    </form>
+</article>
+{% endblock %}

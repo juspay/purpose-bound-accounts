@@ -1,4 +1,5 @@
 mod handlers;
+mod normal_handlers;
 
 use axum::routing::get;
 use axum::Router;
@@ -69,4 +70,37 @@ pub fn create_router() -> Router<AppState> {
             get(handlers::system_accounts_page),
         )
         .route("/admin/purpose-types", get(handlers::purpose_types_page))
+        // Normal account routes
+        .route(
+            "/admin/normal-accounts",
+            get(normal_handlers::normal_accounts_list).post(normal_handlers::create_normal_account),
+        )
+        .route(
+            "/admin/normal-accounts/{account_id}",
+            get(normal_handlers::normal_account_detail),
+        )
+        .route(
+            "/admin/normal-accounts/{account_id}/freeze",
+            axum::routing::post(normal_handlers::freeze_normal_account),
+        )
+        .route(
+            "/admin/normal-accounts/{account_id}/reactivate",
+            axum::routing::post(normal_handlers::reactivate_normal_account),
+        )
+        .route(
+            "/admin/normal-accounts/{account_id}/deposit",
+            get(normal_handlers::normal_deposit_form),
+        )
+        .route(
+            "/admin/normal-accounts/{account_id}/deposits",
+            axum::routing::post(normal_handlers::process_normal_deposit),
+        )
+        .route(
+            "/admin/normal-accounts/{account_id}/withdrawal",
+            get(normal_handlers::normal_withdrawal_form),
+        )
+        .route(
+            "/admin/normal-accounts/{account_id}/withdrawals",
+            axum::routing::post(normal_handlers::process_normal_withdrawal),
+        )
 }

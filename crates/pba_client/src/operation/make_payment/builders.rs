@@ -19,7 +19,7 @@ impl crate::operation::make_payment::builders::MakePaymentInputBuilder {
                 }
 /// Fluent builder constructing a request to `MakePayment`.
 /// 
-/// Make a payment from a purpose-bound account. Validates the merchant's MCC against the account's purpose type. Uses others-contribution pool first, then self-contribution.
+#[deprecated(note = "Use MakePBAccountPayment.", since = "2026-05-08")]
 #[derive(::std::clone::Clone, ::std::fmt::Debug)]
 pub struct MakePaymentFluentBuilder {
                 handle: ::std::sync::Arc<crate::client::Handle>,

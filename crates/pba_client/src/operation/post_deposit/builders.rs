@@ -19,7 +19,7 @@ impl crate::operation::post_deposit::builders::PostDepositInputBuilder {
                 }
 /// Fluent builder constructing a request to `PostDeposit`.
 /// 
-/// Confirm a pending deposit (post the held funds).
+#[deprecated(note = "Use PostPBAccountDeposit.", since = "2026-05-08")]
 #[derive(::std::clone::Clone, ::std::fmt::Debug)]
 pub struct PostDepositFluentBuilder {
                 handle: ::std::sync::Arc<crate::client::Handle>,

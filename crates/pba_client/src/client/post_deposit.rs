@@ -15,6 +15,7 @@ impl super::Client {
     ///   - [`gateway_ref(Option<String>)`](crate::operation::post_deposit::PostDepositOutput::gateway_ref): (undocumented)
     ///   - [`timeout_seconds(Option<i32>)`](crate::operation::post_deposit::PostDepositOutput::timeout_seconds): (undocumented)
                             /// - On failure, responds with [`SdkError<PostDepositError>`](crate::operation::post_deposit::PostDepositError)
+    #[deprecated(note = "Use PostPBAccountDeposit.", since = "2026-05-08")]
     pub fn post_deposit(&self) -> crate::operation::post_deposit::builders::PostDepositFluentBuilder {
                                 crate::operation::post_deposit::builders::PostDepositFluentBuilder::new(self.handle.clone())
                             }

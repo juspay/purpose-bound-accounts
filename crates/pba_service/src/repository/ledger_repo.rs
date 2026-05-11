@@ -18,7 +18,16 @@ pub const THIRD_PARTY_FUNDING_SOURCE_TB_ID: u128 = u128::MAX - 14;
 const LEDGER_INR_PAISA: u32 = 1;
 const CODE_SELF_POOL: u16 = 1;
 const CODE_OTHERS_POOL: u16 = 2;
+#[allow(dead_code)]
+const CODE_NORMAL_POOL: u16 = 3;
 const CODE_SENTINEL: u16 = 99;
+
+#[allow(dead_code)]
+#[derive(Debug, Clone, Copy)]
+pub struct SingleBalance {
+    pub posted: u64,
+    pub pending: u64,
+}
 
 fn generate_transfer_id() -> u128 {
     u128::from_be_bytes(*Uuid::new_v4().as_bytes())
@@ -313,6 +322,46 @@ impl LedgerRepo {
 
         tracing::info!(pending_id = %pending_id, "Voided pending TB transfer");
         Ok(())
+    }
+
+    #[allow(dead_code)]
+    pub async fn create_normal_account(&self, tb_account_id: u128) -> Result<(), AppError> {
+        let account = tb::Account::new(tb_account_id, LEDGER_INR_PAISA, CODE_NORMAL_POOL)
+            .with_flags(AccountFlags::DEBITS_MUST_NOT_EXCEED_CREDITS | AccountFlags::HISTORY);
+
+        self.client
+            .create_accounts(vec![account])
+            .await
+            .map_err(|e| {
+                AppError::TigerBeetleError(format!("create_normal_account failed: {e:?}"))
+            })?;
+
+        tracing::info!(tb_account_id = %tb_account_id, "Created TB normal account");
+        Ok(())
+    }
+
+    #[allow(dead_code)]
+    pub async fn get_single_balance(&self, tb_account_id: u128) -> Result<SingleBalance, AppError> {
+        let accounts = self
+            .client
+            .lookup_accounts(vec![tb_account_id])
+            .await
+            .map_err(|e| AppError::TigerBeetleError(format!("lookup_accounts failed: {e:?}")))?;
+
+        let mut posted: u64 = 0;
+        let mut pending: u64 = 0;
+
+        for account in &accounts {
+            if account.id() == tb_account_id {
+                let net = account
+                    .credits_posted()
+                    .saturating_sub(account.debits_posted());
+                posted = u64::try_from(net).unwrap_or(u64::MAX);
+                pending = u64::try_from(account.credits_pending()).unwrap_or(u64::MAX);
+            }
+        }
+
+        Ok(SingleBalance { posted, pending })
     }
 }
 

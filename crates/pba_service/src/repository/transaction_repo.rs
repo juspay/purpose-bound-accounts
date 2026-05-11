@@ -51,11 +51,12 @@ pub struct TransactionRepo {
 struct TransactionRow {
     id: Uuid,
     account_id: Uuid,
+    account_kind: String,
     #[sqlx(rename = "type")]
     transaction_type: String,
     status: String,
     amount: i64,
-    pool: String,
+    pool: Option<String>,
     direction: String,
     source_ifsc: Option<String>,
     source_account: Option<String>,
@@ -67,6 +68,7 @@ struct TransactionRow {
     funding_type: Option<String>,
     tb_transfer_id: String,
     idempotency_key: Option<String>,
+    correlation_id: Option<Uuid>,
     created_at: DateTime<Utc>,
     updated_at: DateTime<Utc>,
 }
@@ -76,6 +78,8 @@ impl TransactionRow {
         TransactionRecord {
             id: self.id,
             account_id: self.account_id,
+            account_kind: crate::domain::account_kind::AccountKind::from_str(&self.account_kind)
+                .unwrap_or(crate::domain::account_kind::AccountKind::Pb),
             transaction_type: TransactionType::from_str(&self.transaction_type)
                 .unwrap_or(TransactionType::Deposit),
             status: TransactionStatus::from_str(&self.status).unwrap_or(TransactionStatus::Pending),
@@ -93,6 +97,7 @@ impl TransactionRow {
             funding_type: self.funding_type,
             tb_transfer_id: self.tb_transfer_id.parse().unwrap_or(0),
             idempotency_key: self.idempotency_key,
+            correlation_id: self.correlation_id,
             created_at: self.created_at,
             updated_at: self.updated_at,
         }
@@ -114,10 +119,11 @@ impl TransactionRepo {
         tx: &mut PgTransaction<'_, Postgres>,
         id: Uuid,
         account_id: Uuid,
+        account_kind: crate::domain::account_kind::AccountKind,
         transaction_type: TransactionType,
         status: TransactionStatus,
         amount: u64,
-        pool: &str,
+        pool: Option<&str>,
         direction: TransactionDirection,
         source_ifsc: Option<&str>,
         source_account: Option<&str>,
@@ -129,24 +135,26 @@ impl TransactionRepo {
         funding_type: Option<&str>,
         tb_transfer_id: u128,
         idempotency_key: Option<&str>,
+        correlation_id: Option<Uuid>,
     ) -> Result<TransactionRecord, AppError> {
         let tb_id_str = tb_transfer_id.to_string();
         let row = sqlx::query_as::<_, TransactionRow>(
             r#"
-            INSERT INTO transactions (id, account_id, type, status, amount, pool, direction,
+            INSERT INTO transactions (id, account_id, account_kind, type, status, amount, pool, direction,
                                       source_ifsc, source_account, gateway_ref, timeout_seconds,
                                       merchant_id, merchant_mcc, description, funding_type,
-                                      tb_transfer_id, idempotency_key)
-            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16::numeric, $17)
-            RETURNING id, account_id, type, status, amount, pool, direction,
+                                      tb_transfer_id, idempotency_key, correlation_id)
+            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17::numeric, $18, $19)
+            RETURNING id, account_id, account_kind, type, status, amount, pool, direction,
                       source_ifsc, source_account, gateway_ref, timeout_seconds,
                       merchant_id, merchant_mcc, description, funding_type,
-                      tb_transfer_id::text as tb_transfer_id, idempotency_key,
+                      tb_transfer_id::text as tb_transfer_id, idempotency_key, correlation_id,
                       created_at, updated_at
             "#,
         )
         .bind(id)
         .bind(account_id)
+        .bind(account_kind.as_str())
         .bind(transaction_type.as_str())
         .bind(status.as_str())
         .bind(amount as i64)
@@ -162,6 +170,7 @@ impl TransactionRepo {
         .bind(funding_type)
         .bind(&tb_id_str)
         .bind(idempotency_key)
+        .bind(correlation_id)
         .fetch_one(tx.as_mut())
         .await
         .map_err(|e| AppError::DatabaseError(e.to_string()))?;
@@ -195,10 +204,10 @@ impl TransactionRepo {
             r#"
             UPDATE transactions SET status = $2, updated_at = now()
             WHERE id = $1
-            RETURNING id, account_id, type, status, amount, pool, direction,
+            RETURNING id, account_id, account_kind, type, status, amount, pool, direction,
                       source_ifsc, source_account, gateway_ref, timeout_seconds,
                       merchant_id, merchant_mcc, description, funding_type,
-                      tb_transfer_id::text as tb_transfer_id, idempotency_key,
+                      tb_transfer_id::text as tb_transfer_id, idempotency_key, correlation_id,
                       created_at, updated_at
             "#,
         )
@@ -218,10 +227,10 @@ impl TransactionRepo {
     ) -> Result<TransactionRecord, AppError> {
         let row = sqlx::query_as::<_, TransactionRow>(
             r#"
-            SELECT id, account_id, type, status, amount, pool, direction,
+            SELECT id, account_id, account_kind, type, status, amount, pool, direction,
                    source_ifsc, source_account, gateway_ref, timeout_seconds,
                    merchant_id, merchant_mcc, description, funding_type,
-                   tb_transfer_id::text as tb_transfer_id, idempotency_key,
+                   tb_transfer_id::text as tb_transfer_id, idempotency_key, correlation_id,
                    created_at, updated_at
             FROM transactions
             WHERE id = $1 AND account_id = $2
@@ -239,10 +248,10 @@ impl TransactionRepo {
     pub async fn get_transaction(&self, id: Uuid) -> Result<TransactionRecord, AppError> {
         let row = sqlx::query_as::<_, TransactionRow>(
             r#"
-            SELECT id, account_id, type, status, amount, pool, direction,
+            SELECT id, account_id, account_kind, type, status, amount, pool, direction,
                    source_ifsc, source_account, gateway_ref, timeout_seconds,
                    merchant_id, merchant_mcc, description, funding_type,
-                   tb_transfer_id::text as tb_transfer_id, idempotency_key,
+                   tb_transfer_id::text as tb_transfer_id, idempotency_key, correlation_id,
                    created_at, updated_at
             FROM transactions
             WHERE id = $1
@@ -258,20 +267,22 @@ impl TransactionRepo {
 
     pub async fn find_by_idempotency_key(
         &self,
+        account_kind: crate::domain::account_kind::AccountKind,
         account_id: Uuid,
         key: &str,
     ) -> Result<Option<TransactionRecord>, AppError> {
         let row = sqlx::query_as::<_, TransactionRow>(
             r#"
-            SELECT id, account_id, type, status, amount, pool, direction,
+            SELECT id, account_id, account_kind, type, status, amount, pool, direction,
                    source_ifsc, source_account, gateway_ref, timeout_seconds,
                    merchant_id, merchant_mcc, description, funding_type,
-                   tb_transfer_id::text as tb_transfer_id, idempotency_key,
+                   tb_transfer_id::text as tb_transfer_id, idempotency_key, correlation_id,
                    created_at, updated_at
             FROM transactions
-            WHERE account_id = $1 AND idempotency_key = $2
+            WHERE account_kind = $1 AND account_id = $2 AND idempotency_key = $3
             "#,
         )
+        .bind(account_kind.as_str())
         .bind(account_id)
         .bind(key)
         .fetch_optional(&self.pool)
@@ -282,6 +293,7 @@ impl TransactionRepo {
 
     pub async fn list_by_account(
         &self,
+        account_kind: crate::domain::account_kind::AccountKind,
         account_id: Uuid,
         offset: i64,
         limit: i64,
@@ -290,19 +302,20 @@ impl TransactionRepo {
     ) -> Result<Vec<TransactionRecord>, AppError> {
         let rows = sqlx::query_as::<_, TransactionRow>(
             r#"
-            SELECT id, account_id, type, status, amount, pool, direction,
+            SELECT id, account_id, account_kind, type, status, amount, pool, direction,
                    source_ifsc, source_account, gateway_ref, timeout_seconds,
                    merchant_id, merchant_mcc, description, funding_type,
-                   tb_transfer_id::text as tb_transfer_id, idempotency_key,
+                   tb_transfer_id::text as tb_transfer_id, idempotency_key, correlation_id,
                    created_at, updated_at
             FROM transactions
-            WHERE account_id = $1
-              AND ($4::timestamptz IS NULL OR created_at >= $4)
-              AND ($5::timestamptz IS NULL OR created_at <= $5)
+            WHERE account_kind = $1 AND account_id = $2
+              AND ($5::timestamptz IS NULL OR created_at >= $5)
+              AND ($6::timestamptz IS NULL OR created_at <= $6)
             ORDER BY created_at DESC, id DESC
-            LIMIT $2 OFFSET $3
+            LIMIT $3 OFFSET $4
             "#,
         )
+        .bind(account_kind.as_str())
         .bind(account_id)
         .bind(limit)
         .bind(offset)
@@ -346,10 +359,10 @@ impl TransactionRepo {
     ) -> Result<Vec<TransactionRecord>, AppError> {
         let rows = sqlx::query_as::<_, TransactionRow>(
             r#"
-            SELECT id, account_id, type, status, amount, pool, direction,
+            SELECT id, account_id, account_kind, type, status, amount, pool, direction,
                    source_ifsc, source_account, gateway_ref, timeout_seconds,
                    merchant_id, merchant_mcc, description, funding_type,
-                   tb_transfer_id::text as tb_transfer_id, idempotency_key,
+                   tb_transfer_id::text as tb_transfer_id, idempotency_key, correlation_id,
                    created_at, updated_at
             FROM transactions
             WHERE ($3::timestamptz IS NULL OR created_at >= $3)
@@ -389,7 +402,7 @@ impl TransactionRepo {
     }
 
     pub async fn pool_summary(&self) -> Result<PoolSummary, AppError> {
-        let rows: Vec<(String, String, String, i64)> = sqlx::query_as(
+        let rows: Vec<(Option<String>, String, String, i64)> = sqlx::query_as(
             r#"
             SELECT pool, direction, status, COALESCE(SUM(amount), 0)::bigint AS total
             FROM transactions
@@ -403,7 +416,8 @@ impl TransactionRepo {
         let mut summary = PoolSummary::default();
         for (pool, direction, status, total) in rows {
             let amt = total as u64;
-            match (pool.as_str(), direction.as_str(), status.as_str()) {
+            let pool_str = pool.as_deref().unwrap_or("");
+            match (pool_str, direction.as_str(), status.as_str()) {
                 ("self", "inbound", "posted" | "settled") => summary.self_inbound += amt,
                 ("self", "outbound", "posted" | "settled") => summary.self_outbound += amt,
                 ("others", "inbound", "posted" | "settled") => summary.others_inbound += amt,
@@ -417,7 +431,7 @@ impl TransactionRepo {
     }
 
     pub async fn pool_summary_extended(&self) -> Result<PoolSummaryExtended, AppError> {
-        let rows: Vec<(String, String, String, i64)> = sqlx::query_as(
+        let rows: Vec<(Option<String>, String, String, i64)> = sqlx::query_as(
             r#"
             SELECT pool, direction, status, COALESCE(SUM(amount), 0)::bigint AS total
             FROM transactions
@@ -431,7 +445,8 @@ impl TransactionRepo {
         let mut summary = PoolSummaryExtended::default();
         for (pool, direction, status, total) in rows {
             let amt = total as u64;
-            match (pool.as_str(), direction.as_str(), status.as_str()) {
+            let pool_str = pool.as_deref().unwrap_or("");
+            match (pool_str, direction.as_str(), status.as_str()) {
                 ("self", "inbound", "posted" | "settled") => summary.self_inbound += amt,
                 ("self", "outbound", "posted" | "settled") => summary.self_outbound += amt,
                 ("others", "inbound", "posted" | "settled") => summary.others_inbound += amt,
@@ -452,10 +467,10 @@ impl TransactionRepo {
     ) -> Result<Vec<TransactionRecord>, AppError> {
         let rows = sqlx::query_as::<_, TransactionRow>(
             r#"
-            SELECT id, account_id, type, status, amount, pool, direction,
+            SELECT id, account_id, account_kind, type, status, amount, pool, direction,
                    source_ifsc, source_account, gateway_ref, timeout_seconds,
                    merchant_id, merchant_mcc, description, funding_type,
-                   tb_transfer_id::text as tb_transfer_id, idempotency_key,
+                   tb_transfer_id::text as tb_transfer_id, idempotency_key, correlation_id,
                    created_at, updated_at
             FROM transactions
             WHERE account_id = $1 AND status = 'pending'
@@ -472,10 +487,10 @@ impl TransactionRepo {
     pub async fn find_timed_out_pending(&self) -> Result<Vec<TransactionRecord>, AppError> {
         let rows = sqlx::query_as::<_, TransactionRow>(
             r#"
-            SELECT id, account_id, type, status, amount, pool, direction,
+            SELECT id, account_id, account_kind, type, status, amount, pool, direction,
                    source_ifsc, source_account, gateway_ref, timeout_seconds,
                    merchant_id, merchant_mcc, description, funding_type,
-                   tb_transfer_id::text as tb_transfer_id, idempotency_key,
+                   tb_transfer_id::text as tb_transfer_id, idempotency_key, correlation_id,
                    created_at, updated_at
             FROM transactions
             WHERE status = 'pending'
@@ -483,6 +498,30 @@ impl TransactionRepo {
               AND created_at + timeout_seconds * interval '1 second' < now()
             "#,
         )
+        .fetch_all(&self.pool)
+        .await?;
+
+        Ok(rows.into_iter().map(|r| r.into_domain()).collect())
+    }
+
+    #[allow(dead_code)]
+    pub async fn find_by_correlation_id(
+        &self,
+        correlation_id: Uuid,
+    ) -> Result<Vec<TransactionRecord>, AppError> {
+        let rows = sqlx::query_as::<_, TransactionRow>(
+            r#"
+            SELECT id, account_id, account_kind, type, status, amount, pool, direction,
+                   source_ifsc, source_account, gateway_ref, timeout_seconds,
+                   merchant_id, merchant_mcc, description, funding_type,
+                   tb_transfer_id::text as tb_transfer_id, idempotency_key, correlation_id,
+                   created_at, updated_at
+            FROM transactions
+            WHERE correlation_id = $1
+            ORDER BY created_at ASC
+            "#,
+        )
+        .bind(correlation_id)
         .fetch_all(&self.pool)
         .await?;
 

@@ -12,6 +12,7 @@ impl super::Client {
     ///   - [`pending_self(i64)`](crate::operation::get_balance::GetBalanceOutput::pending_self): Monetary amount in the smallest currency unit (e.g., paise for INR).
     ///   - [`pending_others(i64)`](crate::operation::get_balance::GetBalanceOutput::pending_others): Monetary amount in the smallest currency unit (e.g., paise for INR).
                             /// - On failure, responds with [`SdkError<GetBalanceError>`](crate::operation::get_balance::GetBalanceError)
+    #[deprecated(note = "Use GetPBAccountBalance.", since = "2026-05-08")]
     pub fn get_balance(&self) -> crate::operation::get_balance::builders::GetBalanceFluentBuilder {
                                 crate::operation::get_balance::builders::GetBalanceFluentBuilder::new(self.handle.clone())
                             }

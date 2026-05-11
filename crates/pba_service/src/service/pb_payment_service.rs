@@ -45,18 +45,22 @@ impl PbPaymentService {
         if let Some(key) = idempotency_key {
             if let Some(existing) = self
                 .transaction_repo
-                .find_by_idempotency_key(account_id, key)
+                .find_by_idempotency_key(
+                    crate::domain::account_kind::AccountKind::Pb,
+                    account_id,
+                    key,
+                )
                 .await?
             {
                 return Ok(PaymentResult {
                     account_id: existing.account_id,
                     amount: existing.amount,
-                    from_others: if existing.pool == "others" {
+                    from_others: if existing.pool.as_deref() == Some("others") {
                         existing.amount
                     } else {
                         0
                     },
-                    from_self: if existing.pool == "self" {
+                    from_self: if existing.pool.as_deref() == Some("self") {
                         existing.amount
                     } else {
                         0
@@ -71,7 +75,7 @@ impl PbPaymentService {
         let account = self.account_repo.get_account(account_id).await?;
 
         if !account.status.is_active() {
-            return Err(AppError::AccountNotActive(account_id.to_string()));
+            return Err(AppError::PbAccountNotActive(account_id.to_string()));
         }
 
         // Validate MCC
@@ -118,10 +122,11 @@ impl PbPaymentService {
                         &mut tx,
                         Uuid::new_v4(),
                         account_id,
+                        crate::domain::account_kind::AccountKind::Pb,
                         TransactionType::Payment,
                         TransactionStatus::Settled,
                         split.from_others,
-                        "others",
+                        Some("others"),
                         TransactionDirection::Outbound,
                         None,
                         None,
@@ -133,6 +138,7 @@ impl PbPaymentService {
                         None, // funding_type
                         0,
                         idempotency_key,
+                        None,
                     )
                     .await?;
             }
@@ -148,10 +154,11 @@ impl PbPaymentService {
                         &mut tx,
                         Uuid::new_v4(),
                         account_id,
+                        crate::domain::account_kind::AccountKind::Pb,
                         TransactionType::Payment,
                         TransactionStatus::Settled,
                         split.from_self,
-                        "self",
+                        Some("self"),
                         TransactionDirection::Outbound,
                         None,
                         None,
@@ -163,6 +170,7 @@ impl PbPaymentService {
                         None, // funding_type
                         0,
                         idem_key,
+                        None,
                     )
                     .await?;
             }

@@ -12,6 +12,7 @@ impl super::Client {
     ///   - [`amount(i64)`](crate::operation::withdraw::WithdrawOutput::amount): Monetary amount in the smallest currency unit (e.g., paise for INR).
     ///   - [`gateway_ref(Option<String>)`](crate::operation::withdraw::WithdrawOutput::gateway_ref): (undocumented)
                             /// - On failure, responds with [`SdkError<WithdrawError>`](crate::operation::withdraw::WithdrawError)
+    #[deprecated(note = "Use WithdrawFromPBAccount.", since = "2026-05-08")]
     pub fn withdraw(&self) -> crate::operation::withdraw::builders::WithdrawFluentBuilder {
                                 crate::operation::withdraw::builders::WithdrawFluentBuilder::new(self.handle.clone())
                             }

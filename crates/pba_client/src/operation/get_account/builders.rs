@@ -19,7 +19,7 @@ impl crate::operation::get_account::builders::GetAccountInputBuilder {
                 }
 /// Fluent builder constructing a request to `GetAccount`.
 /// 
-/// Get account metadata.
+#[deprecated(note = "Use GetPBAccount.", since = "2026-05-08")]
 #[derive(::std::clone::Clone, ::std::fmt::Debug)]
 pub struct GetAccountFluentBuilder {
                 handle: ::std::sync::Arc<crate::client::Handle>,
