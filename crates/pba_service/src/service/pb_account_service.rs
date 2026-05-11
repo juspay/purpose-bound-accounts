@@ -4,16 +4,16 @@ use uuid::Uuid;
 use crate::domain::account::{tb_others_id, tb_self_id, AccountStatus, PurposeBoundAccount};
 use crate::domain::banking::{AccountNumber, Ifsc};
 use crate::error::AppError;
-use crate::repository::account_repo::AccountRepo;
 use crate::repository::ledger_repo::LedgerRepo;
+use crate::repository::pb_account_repo::PbAccountRepo;
 
-pub struct AccountService {
-    pub account_repo: Arc<AccountRepo>,
+pub struct PbAccountService {
+    pub account_repo: Arc<PbAccountRepo>,
     pub ledger_repo: Arc<LedgerRepo>,
 }
 
-impl AccountService {
-    pub fn new(account_repo: Arc<AccountRepo>, ledger_repo: Arc<LedgerRepo>) -> Self {
+impl PbAccountService {
+    pub fn new(account_repo: Arc<PbAccountRepo>, ledger_repo: Arc<LedgerRepo>) -> Self {
         Self {
             account_repo,
             ledger_repo,

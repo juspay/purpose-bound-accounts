@@ -5,26 +5,26 @@ use crate::domain::transaction::{
     TransactionDirection, TransactionRecord, TransactionStatus, TransactionType,
 };
 use crate::error::AppError;
-use crate::repository::account_repo::AccountRepo;
 use crate::repository::ledger_repo::{
     LedgerRepo, SELF_FUNDING_SOURCE_TB_ID, THIRD_PARTY_FUNDING_SOURCE_TB_ID,
     TRUST_FUNDING_SOURCE_TB_ID,
 };
+use crate::repository::pb_account_repo::PbAccountRepo;
 use crate::repository::transaction_repo::TransactionRepo;
 
 const DEPOSIT_TRANSFER_CODE: u16 = 100;
 const PENDING_DEPOSIT_TRANSFER_CODE: u16 = 101;
 
-pub struct DepositService {
-    pub account_repo: Arc<AccountRepo>,
+pub struct PbDepositService {
+    pub account_repo: Arc<PbAccountRepo>,
     pub ledger_repo: Arc<LedgerRepo>,
     pub transaction_repo: Arc<TransactionRepo>,
     pub default_timeout_seconds: u32,
 }
 
-impl DepositService {
+impl PbDepositService {
     pub fn new(
-        account_repo: Arc<AccountRepo>,
+        account_repo: Arc<PbAccountRepo>,
         ledger_repo: Arc<LedgerRepo>,
         transaction_repo: Arc<TransactionRepo>,
         default_timeout_seconds: u32,

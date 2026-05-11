@@ -18,7 +18,7 @@ pub async fn create_account(
     let origin_account_number = AccountNumber::parse(&req.origin_account_number)?;
 
     let account = state
-        .account_service
+        .pb_account_service
         .create_account(
             &req.holder_id,
             &req.purpose_code,
@@ -34,7 +34,7 @@ pub async fn get_account(
     State(state): State<AppState>,
     Path(account_id): Path<Uuid>,
 ) -> Result<Json<AccountResponse>, AppError> {
-    let account = state.account_service.get_account(account_id).await?;
+    let account = state.pb_account_service.get_account(account_id).await?;
     Ok(Json(account.into()))
 }
 
@@ -46,7 +46,7 @@ pub async fn update_account_status(
     let status = AccountStatus::from_str(&req.status)
         .ok_or_else(|| AppError::DatabaseError(format!("Invalid status: {}", req.status)))?;
     let account = state
-        .account_service
+        .pb_account_service
         .update_status(account_id, status)
         .await?;
     Ok(Json(account.into()))
@@ -58,7 +58,7 @@ pub async fn get_balance(
     State(state): State<AppState>,
     Path(account_id): Path<Uuid>,
 ) -> Result<Json<BalanceResponse>, AppError> {
-    let account = state.account_service.get_account(account_id).await?;
+    let account = state.pb_account_service.get_account(account_id).await?;
     let balance = state
         .ledger_repo
         .get_balance(account.tb_self_account_id, account.tb_others_account_id)
@@ -82,7 +82,7 @@ pub async fn deposit(
     Json(req): Json<DepositRequest>,
 ) -> Result<(axum::http::StatusCode, Json<DepositResponse>), AppError> {
     let result = state
-        .deposit_service
+        .pb_deposit_service
         .deposit(
             account_id,
             &req.source_ifsc,
@@ -116,7 +116,7 @@ pub async fn post_deposit(
     Path((account_id, deposit_id)): Path<(Uuid, Uuid)>,
 ) -> Result<Json<DepositResponse>, AppError> {
     let result = state
-        .deposit_service
+        .pb_deposit_service
         .post_deposit(account_id, deposit_id)
         .await?;
 
@@ -138,7 +138,7 @@ pub async fn void_deposit(
     Json(req): Json<VoidDepositRequest>,
 ) -> Result<Json<DepositResponse>, AppError> {
     let result = state
-        .deposit_service
+        .pb_deposit_service
         .void_deposit(account_id, deposit_id, req.reason.as_deref())
         .await?;
 
@@ -162,7 +162,7 @@ pub async fn make_payment(
     Json(req): Json<PaymentRequest>,
 ) -> Result<(axum::http::StatusCode, Json<PaymentResponse>), AppError> {
     let result = state
-        .payment_service
+        .pb_payment_service
         .make_payment(
             account_id,
             req.amount,
@@ -196,7 +196,7 @@ pub async fn withdraw(
     Json(req): Json<WithdrawalRequest>,
 ) -> Result<(axum::http::StatusCode, Json<WithdrawalResponse>), AppError> {
     let result = state
-        .withdrawal_service
+        .pb_withdrawal_service
         .withdraw(
             account_id,
             req.amount,
@@ -223,7 +223,7 @@ pub async fn list_transactions(
     axum::extract::Query(query): axum::extract::Query<ListTransactionsQuery>,
 ) -> Result<Json<ListTransactionsResponse>, AppError> {
     // Verify account exists
-    let _ = state.account_service.get_account(account_id).await?;
+    let _ = state.pb_account_service.get_account(account_id).await?;
 
     let offset = query.offset.unwrap_or(0).max(0);
     let limit = query.limit.unwrap_or(20).clamp(1, 100);
@@ -274,7 +274,7 @@ pub async fn list_all_transactions(
 pub async fn list_purpose_types(
     State(state): State<AppState>,
 ) -> Result<Json<ListPurposeTypesResponse>, AppError> {
-    let types = state.account_repo.list_purpose_types().await?;
+    let types = state.pb_account_repo.list_purpose_types().await?;
     Ok(Json(ListPurposeTypesResponse {
         purpose_types: types.into_iter().map(|t| t.into()).collect(),
     }))
@@ -284,7 +284,10 @@ pub async fn get_purpose_type(
     State(state): State<AppState>,
     Path(purpose_code): Path<String>,
 ) -> Result<Json<PurposeTypeResponse>, AppError> {
-    let purpose = state.account_repo.get_purpose_type(&purpose_code).await?;
+    let purpose = state
+        .pb_account_repo
+        .get_purpose_type(&purpose_code)
+        .await?;
     Ok(Json(purpose.into()))
 }
 

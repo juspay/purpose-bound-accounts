@@ -3,21 +3,21 @@ use uuid::Uuid;
 
 use crate::domain::transaction::{TransactionDirection, TransactionStatus, TransactionType};
 use crate::error::AppError;
-use crate::repository::account_repo::AccountRepo;
 use crate::repository::ledger_repo::{LedgerRepo, WITHDRAWAL_SETTLEMENT_TB_ID};
+use crate::repository::pb_account_repo::PbAccountRepo;
 use crate::repository::transaction_repo::TransactionRepo;
 
 const WITHDRAWAL_TRANSFER_CODE: u16 = 300;
 
-pub struct WithdrawalService {
-    pub account_repo: Arc<AccountRepo>,
+pub struct PbWithdrawalService {
+    pub account_repo: Arc<PbAccountRepo>,
     pub ledger_repo: Arc<LedgerRepo>,
     pub transaction_repo: Arc<TransactionRepo>,
 }
 
-impl WithdrawalService {
+impl PbWithdrawalService {
     pub fn new(
-        account_repo: Arc<AccountRepo>,
+        account_repo: Arc<PbAccountRepo>,
         ledger_repo: Arc<LedgerRepo>,
         transaction_repo: Arc<TransactionRepo>,
     ) -> Self {
