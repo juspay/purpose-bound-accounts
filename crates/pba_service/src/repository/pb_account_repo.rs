@@ -69,7 +69,7 @@ impl PbAccountRepo {
         .bind(id)
         .fetch_optional(&self.pool)
         .await?
-        .ok_or_else(|| AppError::AccountNotFound(id.to_string()))?;
+        .ok_or_else(|| AppError::PbAccountNotFound(id.to_string()))?;
 
         Ok(row.into_domain())
     }
@@ -94,7 +94,7 @@ impl PbAccountRepo {
         .bind(status.as_str())
         .fetch_optional(&self.pool)
         .await?
-        .ok_or_else(|| AppError::AccountNotFound(id.to_string()))?;
+        .ok_or_else(|| AppError::PbAccountNotFound(id.to_string()))?;
 
         Ok(row.into_domain())
     }

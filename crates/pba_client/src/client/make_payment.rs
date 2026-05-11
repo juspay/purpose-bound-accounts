@@ -19,6 +19,7 @@ impl super::Client {
     ///   - [`merchant_mcc(String)`](crate::operation::make_payment::MakePaymentOutput::merchant_mcc): (undocumented)
     ///   - [`gateway_ref(Option<String>)`](crate::operation::make_payment::MakePaymentOutput::gateway_ref): (undocumented)
                             /// - On failure, responds with [`SdkError<MakePaymentError>`](crate::operation::make_payment::MakePaymentError)
+    #[deprecated(note = "Use MakePBAccountPayment.", since = "2026-05-08")]
     pub fn make_payment(&self) -> crate::operation::make_payment::builders::MakePaymentFluentBuilder {
                                 crate::operation::make_payment::builders::MakePaymentFluentBuilder::new(self.handle.clone())
                             }

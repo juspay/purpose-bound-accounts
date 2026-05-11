@@ -5,3 +5,5 @@ pub use crate::types::_mcc_entry::MccEntryBuilder;
 
 pub use crate::types::_purpose_type_summary::PurposeTypeSummaryBuilder;
 
+pub use crate::types::_normal_account_summary::NormalAccountSummaryBuilder;
+

@@ -19,6 +19,7 @@ impl super::Client {
     ///   - [`created_at(DateTime)`](crate::operation::update_account_status::UpdateAccountStatusOutput::created_at): ISO 8601 date-time.
     ///   - [`updated_at(DateTime)`](crate::operation::update_account_status::UpdateAccountStatusOutput::updated_at): ISO 8601 date-time.
                             /// - On failure, responds with [`SdkError<UpdateAccountStatusError>`](crate::operation::update_account_status::UpdateAccountStatusError)
+    #[deprecated(note = "Use UpdatePBAccountStatus.", since = "2026-05-08")]
     pub fn update_account_status(&self) -> crate::operation::update_account_status::builders::UpdateAccountStatusFluentBuilder {
                                 crate::operation::update_account_status::builders::UpdateAccountStatusFluentBuilder::new(self.handle.clone())
                             }

@@ -497,7 +497,7 @@ git checkout -b normal-accounts-phase-2
 ```sql
 CREATE TABLE normal_accounts (
     id                     UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    holder_id              VARCHAR(64) NOT NULL,
+    holder_id              VARCHAR(255) NOT NULL,             -- matches pb_accounts.holder_id width
     origin_ifsc            VARCHAR(11),
     origin_account_number  VARCHAR(20),
     vpa                    VARCHAR(50),
@@ -544,6 +544,12 @@ ALTER TABLE transactions
     ALTER COLUMN pool DROP NOT NULL;
 
 ALTER TABLE transactions ALTER COLUMN account_kind DROP DEFAULT;
+
+-- Constrain account_kind to the known set. Adding a third kind requires a follow-up
+-- migration alongside the code that handles it, which is the desired coupling.
+ALTER TABLE transactions
+    ADD CONSTRAINT transactions_account_kind_check
+    CHECK (account_kind IN ('pb', 'normal'));
 
 -- Drop the FK on transactions.account_id (was pointing at pb_accounts after the
 -- Phase 1 rename). With normal_accounts as a sibling table, the column now

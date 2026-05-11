@@ -14,6 +14,7 @@ impl super::Client {
     ///   - [`offset(i64)`](crate::operation::list_transactions::ListTransactionsOutput::offset): (undocumented)
     ///   - [`limit(i64)`](crate::operation::list_transactions::ListTransactionsOutput::limit): (undocumented)
                             /// - On failure, responds with [`SdkError<ListTransactionsError>`](crate::operation::list_transactions::ListTransactionsError)
+    #[deprecated(note = "Use ListPBAccountTransactions.", since = "2026-05-08")]
     pub fn list_transactions(&self) -> crate::operation::list_transactions::builders::ListTransactionsFluentBuilder {
                                 crate::operation::list_transactions::builders::ListTransactionsFluentBuilder::new(self.handle.clone())
                             }

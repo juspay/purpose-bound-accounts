@@ -19,7 +19,7 @@ impl crate::operation::get_balance::builders::GetBalanceInputBuilder {
                 }
 /// Fluent builder constructing a request to `GetBalance`.
 /// 
-/// Get pool balances for an account.
+#[deprecated(note = "Use GetPBAccountBalance.", since = "2026-05-08")]
 #[derive(::std::clone::Clone, ::std::fmt::Debug)]
 pub struct GetBalanceFluentBuilder {
                 handle: ::std::sync::Arc<crate::client::Handle>,

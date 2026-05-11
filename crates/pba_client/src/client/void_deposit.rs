@@ -16,6 +16,7 @@ impl super::Client {
     ///   - [`gateway_ref(Option<String>)`](crate::operation::void_deposit::VoidDepositOutput::gateway_ref): (undocumented)
     ///   - [`timeout_seconds(Option<i32>)`](crate::operation::void_deposit::VoidDepositOutput::timeout_seconds): (undocumented)
                             /// - On failure, responds with [`SdkError<VoidDepositError>`](crate::operation::void_deposit::VoidDepositError)
+    #[deprecated(note = "Use VoidPBAccountDeposit.", since = "2026-05-08")]
     pub fn void_deposit(&self) -> crate::operation::void_deposit::builders::VoidDepositFluentBuilder {
                                 crate::operation::void_deposit::builders::VoidDepositFluentBuilder::new(self.handle.clone())
                             }

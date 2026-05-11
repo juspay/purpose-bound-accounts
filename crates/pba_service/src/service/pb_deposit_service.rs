@@ -54,7 +54,11 @@ impl PbDepositService {
         if let Some(key) = idempotency_key {
             if let Some(existing) = self
                 .transaction_repo
-                .find_by_idempotency_key(account_id, key)
+                .find_by_idempotency_key(
+                    crate::domain::account_kind::AccountKind::Pb,
+                    account_id,
+                    key,
+                )
                 .await?
             {
                 return Ok(existing);
@@ -64,7 +68,7 @@ impl PbDepositService {
         let account = self.account_repo.get_account(account_id).await?;
 
         if !account.status.is_active() {
-            return Err(AppError::AccountNotActive(account_id.to_string()));
+            return Err(AppError::PbAccountNotActive(account_id.to_string()));
         }
 
         let is_self = account.is_origin_source(source_ifsc, source_account_number);
@@ -98,10 +102,11 @@ impl PbDepositService {
                     &mut tx,
                     deposit_id,
                     account_id,
+                    crate::domain::account_kind::AccountKind::Pb,
                     TransactionType::Deposit,
                     TransactionStatus::Pending,
                     amount,
-                    pool,
+                    Some(pool),
                     TransactionDirection::Inbound,
                     Some(source_ifsc),
                     Some(source_account_number),
@@ -113,6 +118,7 @@ impl PbDepositService {
                     Some(resolved_funding_type),
                     0,
                     idempotency_key,
+                    None,
                 )
                 .await?;
 
@@ -151,10 +157,11 @@ impl PbDepositService {
                     &mut tx,
                     deposit_id,
                     account_id,
+                    crate::domain::account_kind::AccountKind::Pb,
                     TransactionType::Deposit,
                     TransactionStatus::Posted,
                     amount,
-                    pool,
+                    Some(pool),
                     TransactionDirection::Inbound,
                     Some(source_ifsc),
                     Some(source_account_number),
@@ -166,6 +173,7 @@ impl PbDepositService {
                     Some(resolved_funding_type),
                     0,
                     idempotency_key,
+                    None,
                 )
                 .await?;
 

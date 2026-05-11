@@ -318,7 +318,7 @@ pub async fn account_detail(
             .map(|d| PendingDepositRow {
                 id: d.id.to_string(),
                 amount: d.amount_display(),
-                pool: if d.pool == "self" {
+                pool: if d.pool.as_deref() == Some("self") {
                     "Self".to_string()
                 } else {
                     "Others".to_string()
@@ -400,7 +400,14 @@ pub async fn account_transfers_fragment(
 
     let transactions: Vec<TransactionRecord> = match state
         .transaction_repo
-        .list_by_account(account_id, offset, limit, None, None)
+        .list_by_account(
+            crate::domain::account_kind::AccountKind::Pb,
+            account_id,
+            offset,
+            limit,
+            None,
+            None,
+        )
         .await
     {
         Ok(t) => t,
@@ -426,7 +433,11 @@ pub async fn account_transfers_fragment(
     let rows: Vec<TransferRow> = transactions
         .into_iter()
         .map(|t| {
-            let pool = if t.pool == "self" { "Self" } else { "Others" };
+            let pool = if t.pool.as_deref() == Some("self") {
+                "Self"
+            } else {
+                "Others"
+            };
             TransferRow {
                 id: t.id.to_string(),
                 timestamp: t.created_at.format("%Y-%m-%d %H:%M:%S").to_string(),
@@ -775,7 +786,11 @@ pub async fn transactions_page(
     let rows: Vec<AllTransactionRow> = transactions
         .into_iter()
         .map(|t| {
-            let pool = if t.pool == "self" { "Self" } else { "Others" };
+            let pool = if t.pool.as_deref() == Some("self") {
+                "Self"
+            } else {
+                "Others"
+            };
             let status_class = match t.status {
                 TransactionStatus::Pending => "status-frozen",
                 TransactionStatus::Posted | TransactionStatus::Settled => "status-active",
@@ -1011,7 +1026,7 @@ pub async fn transaction_detail(
     }
     .to_string();
 
-    let pool = if txn.pool == "self" {
+    let pool = if txn.pool.as_deref() == Some("self") {
         "Self".to_string()
     } else {
         "Others".to_string()

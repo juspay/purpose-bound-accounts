@@ -21,6 +21,7 @@ impl super::Client {
     ///   - [`created_at(DateTime)`](crate::operation::create_account::CreateAccountOutput::created_at): ISO 8601 date-time.
     ///   - [`updated_at(DateTime)`](crate::operation::create_account::CreateAccountOutput::updated_at): ISO 8601 date-time.
                             /// - On failure, responds with [`SdkError<CreateAccountError>`](crate::operation::create_account::CreateAccountError)
+    #[deprecated(note = "Use CreatePBAccount.", since = "2026-05-08")]
     pub fn create_account(&self) -> crate::operation::create_account::builders::CreateAccountFluentBuilder {
                                 crate::operation::create_account::builders::CreateAccountFluentBuilder::new(self.handle.clone())
                             }

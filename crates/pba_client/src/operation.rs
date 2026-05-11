@@ -3,8 +3,20 @@
 /// Types for the `CreateAccount` operation.
 pub mod create_account;
 
+/// Types for the `CreateNormalAccount` operation.
+pub mod create_normal_account;
+
+/// Types for the `CreatePBAccount` operation.
+pub mod create_pb_account;
+
 /// Types for the `Deposit` operation.
 pub mod deposit;
+
+/// Types for the `DepositToNormalAccount` operation.
+pub mod deposit_to_normal_account;
+
+/// Types for the `DepositToPBAccount` operation.
+pub mod deposit_to_pb_account;
 
 /// Types for the `GetAccount` operation.
 pub mod get_account;
@@ -12,11 +24,32 @@ pub mod get_account;
 /// Types for the `GetBalance` operation.
 pub mod get_balance;
 
+/// Types for the `GetNormalAccount` operation.
+pub mod get_normal_account;
+
+/// Types for the `GetNormalAccountBalance` operation.
+pub mod get_normal_account_balance;
+
+/// Types for the `GetPBAccount` operation.
+pub mod get_pb_account;
+
+/// Types for the `GetPBAccountBalance` operation.
+pub mod get_pb_account_balance;
+
 /// Types for the `GetPurposeType` operation.
 pub mod get_purpose_type;
 
 /// Types for the `ListAllTransactions` operation.
 pub mod list_all_transactions;
+
+/// Types for the `ListNormalAccountTransactions` operation.
+pub mod list_normal_account_transactions;
+
+/// Types for the `ListNormalAccounts` operation.
+pub mod list_normal_accounts;
+
+/// Types for the `ListPBAccountTransactions` operation.
+pub mod list_pb_account_transactions;
 
 /// Types for the `ListPurposeTypes` operation.
 pub mod list_purpose_types;
@@ -27,15 +60,42 @@ pub mod list_transactions;
 /// Types for the `MakePayment` operation.
 pub mod make_payment;
 
+/// Types for the `MakePBAccountPayment` operation.
+pub mod make_pb_account_payment;
+
 /// Types for the `PostDeposit` operation.
 pub mod post_deposit;
+
+/// Types for the `PostNormalAccountDeposit` operation.
+pub mod post_normal_account_deposit;
+
+/// Types for the `PostPBAccountDeposit` operation.
+pub mod post_pb_account_deposit;
 
 /// Types for the `UpdateAccountStatus` operation.
 pub mod update_account_status;
 
+/// Types for the `UpdateNormalAccountStatus` operation.
+pub mod update_normal_account_status;
+
+/// Types for the `UpdatePBAccountStatus` operation.
+pub mod update_pb_account_status;
+
 /// Types for the `VoidDeposit` operation.
 pub mod void_deposit;
 
+/// Types for the `VoidNormalAccountDeposit` operation.
+pub mod void_normal_account_deposit;
+
+/// Types for the `VoidPBAccountDeposit` operation.
+pub mod void_pb_account_deposit;
+
 /// Types for the `Withdraw` operation.
 pub mod withdraw;
+
+/// Types for the `WithdrawFromNormalAccount` operation.
+pub mod withdraw_from_normal_account;
+
+/// Types for the `WithdrawFromPBAccount` operation.
+pub mod withdraw_from_pb_account;
 

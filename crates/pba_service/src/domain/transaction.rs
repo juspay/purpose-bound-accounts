@@ -6,6 +6,7 @@ pub enum TransactionType {
     Deposit,
     Payment,
     Withdrawal,
+    Transfer,
 }
 
 impl TransactionType {
@@ -14,6 +15,7 @@ impl TransactionType {
             Self::Deposit => "deposit",
             Self::Payment => "payment",
             Self::Withdrawal => "withdrawal",
+            Self::Transfer => "transfer",
         }
     }
 
@@ -22,6 +24,7 @@ impl TransactionType {
             "deposit" => Some(Self::Deposit),
             "payment" => Some(Self::Payment),
             "withdrawal" => Some(Self::Withdrawal),
+            "transfer" => Some(Self::Transfer),
             _ => None,
         }
     }
@@ -97,10 +100,11 @@ impl TransactionDirection {
 pub struct TransactionRecord {
     pub id: Uuid,
     pub account_id: Uuid,
+    pub account_kind: crate::domain::account_kind::AccountKind,
     pub transaction_type: TransactionType,
     pub status: TransactionStatus,
     pub amount: u64,
-    pub pool: String,
+    pub pool: Option<String>,
     pub direction: TransactionDirection,
     pub source_ifsc: Option<String>,
     pub source_account: Option<String>,
@@ -112,6 +116,7 @@ pub struct TransactionRecord {
     pub funding_type: Option<String>,
     pub tb_transfer_id: u128,
     pub idempotency_key: Option<String>,
+    pub correlation_id: Option<Uuid>,
     pub created_at: DateTime<Utc>,
     pub updated_at: DateTime<Utc>,
 }
@@ -128,7 +133,25 @@ impl TransactionRecord {
             (TransactionType::Deposit, TransactionStatus::Voided) => "Deposit (Voided)",
             (TransactionType::Payment, _) => "Payment",
             (TransactionType::Withdrawal, _) => "Withdrawal",
+            (TransactionType::Transfer, TransactionStatus::Pending) => "Transfer (Pending)",
+            (TransactionType::Transfer, TransactionStatus::Posted)
+            | (TransactionType::Transfer, TransactionStatus::Settled) => "Transfer",
+            (TransactionType::Transfer, TransactionStatus::Voided) => "Transfer (Voided)",
             _ => "Unknown",
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn transfer_round_trips() {
+        assert_eq!(TransactionType::Transfer.as_str(), "transfer");
+        assert_eq!(
+            TransactionType::from_str("transfer"),
+            Some(TransactionType::Transfer)
+        );
     }
 }
