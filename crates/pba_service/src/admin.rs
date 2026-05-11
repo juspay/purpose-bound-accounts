@@ -1,5 +1,6 @@
 mod handlers;
 mod normal_handlers;
+mod transfer_handlers;
 
 use axum::routing::get;
 use axum::Router;
@@ -102,5 +103,26 @@ pub fn create_router() -> Router<AppState> {
         .route(
             "/admin/normal-accounts/{account_id}/withdrawals",
             axum::routing::post(normal_handlers::process_normal_withdrawal),
+        )
+        // Transfer routes
+        .route(
+            "/admin/normal-accounts/{account_id}/transfer",
+            get(transfer_handlers::normal_transfer_form),
+        )
+        .route(
+            "/admin/normal-accounts/{account_id}/transfers",
+            axum::routing::post(transfer_handlers::process_normal_transfer),
+        )
+        .route(
+            "/admin/transfers/{transfer_id}",
+            get(transfer_handlers::transfer_detail),
+        )
+        .route(
+            "/admin/transfers/{transfer_id}/post",
+            axum::routing::post(transfer_handlers::post_transfer),
+        )
+        .route(
+            "/admin/transfers/{transfer_id}/void",
+            axum::routing::post(transfer_handlers::void_transfer),
         )
 }

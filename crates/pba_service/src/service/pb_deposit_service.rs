@@ -65,6 +65,10 @@ impl PbDepositService {
             }
         }
 
+        if funding_type == Some("trust") {
+            return Err(AppError::TrustDepositRequiresTransfer);
+        }
+
         let account = self.account_repo.get_account(account_id).await?;
 
         if !account.status.is_active() {

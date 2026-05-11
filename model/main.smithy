@@ -42,6 +42,9 @@ service PurposeBoundAccountService {
         VoidNormalAccountDeposit
         WithdrawFromNormalAccount
         ListNormalAccountTransactions
+        TransferToPBAccount
+        PostNormalAccountTransfer
+        VoidNormalAccountTransfer
 
         // Unchanged operations
         ListPurposeTypes

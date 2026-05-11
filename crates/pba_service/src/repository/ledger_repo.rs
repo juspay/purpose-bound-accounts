@@ -22,6 +22,9 @@ const CODE_OTHERS_POOL: u16 = 2;
 const CODE_NORMAL_POOL: u16 = 3;
 const CODE_SENTINEL: u16 = 99;
 
+const INTERNAL_TRANSFER_CODE: u16 = 400;
+const PENDING_INTERNAL_TRANSFER_CODE: u16 = 401;
+
 #[allow(dead_code)]
 #[derive(Debug, Clone, Copy)]
 pub struct SingleBalance {
@@ -338,6 +341,40 @@ impl LedgerRepo {
 
         tracing::info!(tb_account_id = %tb_account_id, "Created TB normal account");
         Ok(())
+    }
+
+    #[allow(dead_code)]
+    pub async fn create_internal_transfer(
+        &self,
+        debit_account_id: u128,
+        credit_account_id: u128,
+        amount: u64,
+    ) -> Result<(), AppError> {
+        self.create_transfer(
+            debit_account_id,
+            credit_account_id,
+            amount,
+            INTERNAL_TRANSFER_CODE,
+        )
+        .await
+    }
+
+    #[allow(dead_code)]
+    pub async fn create_pending_internal_transfer(
+        &self,
+        debit_account_id: u128,
+        credit_account_id: u128,
+        amount: u64,
+        timeout_seconds: u32,
+    ) -> Result<u128, AppError> {
+        self.create_pending_transfer(
+            debit_account_id,
+            credit_account_id,
+            amount,
+            PENDING_INTERNAL_TRANSFER_CODE,
+            timeout_seconds,
+        )
+        .await
     }
 
     #[allow(dead_code)]

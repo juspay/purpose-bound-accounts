@@ -343,3 +343,44 @@ pub struct NormalWithdrawalResponse {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub gateway_ref: Option<String>,
 }
+
+// ── Transfer ──
+
+#[allow(dead_code)]
+#[derive(Debug, Deserialize)]
+pub struct TransferToPBAccountRequest {
+    pub destination_pb_account_id: Uuid,
+    pub amount: u64,
+    #[serde(default)]
+    pub pending: bool,
+    pub gateway_ref: Option<String>,
+    pub timeout_seconds: Option<u32>,
+    pub description: Option<String>,
+    pub idempotency_key: Option<String>,
+}
+
+#[allow(dead_code)]
+#[derive(Debug, Serialize)]
+pub struct TransferResponse {
+    pub transfer_id: Uuid,
+    pub source_account_id: Uuid,
+    pub destination_account_id: Uuid,
+    pub amount: u64,
+    pub status: String,
+    pub correlation_id: Uuid,
+    pub created_at: chrono::DateTime<chrono::Utc>,
+}
+
+impl From<crate::service::transfer_service::TransferResult> for TransferResponse {
+    fn from(r: crate::service::transfer_service::TransferResult) -> Self {
+        Self {
+            transfer_id: r.source_txn_id,
+            source_account_id: r.source_account_id,
+            destination_account_id: r.destination_account_id,
+            amount: r.amount,
+            status: r.status.as_str().to_string(),
+            correlation_id: r.correlation_id,
+            created_at: r.created_at,
+        }
+    }
+}
