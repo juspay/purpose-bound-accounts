@@ -1,0 +1,67 @@
+{% extends "base.html" %}
+
+{% block title %}Transfer {{ transfer_id }} - PBA Admin{% endblock %}
+
+{% block content %}
+<h1>Transfer Detail</h1>
+
+<p><a href="{{ prefix }}/admin/normal-accounts/{{ source_account_id }}">&larr; Back to source account</a></p>
+
+<article>
+    <header><strong>Identity</strong></header>
+    <div class="grid">
+        <div>
+            <p><strong>Transfer ID:</strong> {{ transfer_id }}</p>
+            <p><strong>Correlation ID:</strong> {{ correlation_id }}</p>
+        </div>
+        <div>
+            <p><strong>Status:</strong> <span id="transfer-status" class="{{ status_class }}">{{ status }}</span></p>
+            <p><strong>Amount:</strong> ₹{{ amount }}</p>
+        </div>
+    </div>
+</article>
+
+<article>
+    <header><strong>Accounts</strong></header>
+    <div class="grid">
+        <div>
+            <p><strong>Source (Normal):</strong>
+                <a href="{{ prefix }}/admin/normal-accounts/{{ source_account_id }}">{{ source_account_id }}</a>
+            </p>
+            <p><strong>Source Holder:</strong> {{ source_holder_id }}</p>
+        </div>
+        <div>
+            <p><strong>Destination (PB):</strong>
+                <a href="{{ prefix }}/admin/accounts/{{ dest_account_id }}">{{ dest_account_id }}</a>
+            </p>
+            <p><strong>Destination Holder:</strong> {{ dest_holder_id }}</p>
+            <p><strong>Purpose:</strong> {{ dest_purpose }}</p>
+        </div>
+    </div>
+</article>
+
+<article>
+    <header><strong>Details</strong></header>
+    <div class="grid">
+        <div>
+            <p><strong>Gateway Ref:</strong> {{ gateway_ref }}</p>
+            <p><strong>Description:</strong> {{ description }}</p>
+        </div>
+        <div>
+            <p><strong>Created:</strong> {{ created_at }}</p>
+        </div>
+    </div>
+</article>
+
+{% if can_post_or_void %}
+<article>
+    <header><strong>Actions</strong></header>
+    <form method="post" action="{{ prefix }}/admin/transfers/{{ transfer_id }}/post" class="inline-form">
+        <button type="submit" class="outline" style="color: #2e7d32; border-color: #2e7d32;">Post</button>
+    </form>
+    <form method="post" action="{{ prefix }}/admin/transfers/{{ transfer_id }}/void" class="inline-form">
+        <button type="submit" class="outline" style="color: #c62828; border-color: #c62828;">Void</button>
+    </form>
+</article>
+{% endif %}
+{% endblock %}

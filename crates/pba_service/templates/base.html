@@ -16,6 +16,11 @@
         .stat-card h2 { margin-bottom: 0.25rem; }
         .stat-card p { margin: 0; color: var(--pico-muted-color); }
         nav { margin-bottom: 1rem; }
+        nav ul + ul li:not(:last-child)::after {
+            content: "|";
+            color: var(--pico-muted-color);
+            padding-left: 0.75rem;
+        }
         .inline-form { display: inline-block !important; margin: 0 !important; padding: 0 !important; }
         .inline-form button { display: inline-block !important; width: auto !important; margin: 0 0.25rem !important; }
     </style>
@@ -27,7 +32,7 @@
         </ul>
         <ul>
             <li><a href="{{ prefix }}/admin">Dashboard</a></li>
-            <li><a href="{{ prefix }}/admin/accounts">Accounts</a></li>
+            <li><a href="{{ prefix }}/admin/accounts">PB Accounts</a></li>
             <li><a href="{{ prefix }}/admin/normal-accounts">Normal Accounts</a></li>
             <li><a href="{{ prefix }}/admin/transactions">All Transactions</a></li>
             <li><a href="{{ prefix }}/admin/system-accounts">System Accounts</a></li>

@@ -256,12 +256,34 @@ if builder.status.is_none() { builder.status = Some(Default::default()) }
                 builder
             }
 
+pub(crate) fn post_normal_account_transfer_output_output_correct_errors(mut builder: crate::operation::post_normal_account_transfer::builders::PostNormalAccountTransferOutputBuilder) -> crate::operation::post_normal_account_transfer::builders::PostNormalAccountTransferOutputBuilder {
+                if builder.transfer_id.is_none() { builder.transfer_id = Some(Default::default()) }
+if builder.source_account_id.is_none() { builder.source_account_id = Some(Default::default()) }
+if builder.destination_account_id.is_none() { builder.destination_account_id = Some(Default::default()) }
+if builder.amount.is_none() { builder.amount = Some(Default::default()) }
+if builder.status.is_none() { builder.status = Some(Default::default()) }
+if builder.correlation_id.is_none() { builder.correlation_id = Some(Default::default()) }
+if builder.created_at.is_none() { builder.created_at = Some(::aws_smithy_types::DateTime::from_fractional_secs(0, 0_f64)) }
+                builder
+            }
+
 pub(crate) fn post_pb_account_deposit_output_output_correct_errors(mut builder: crate::operation::post_pb_account_deposit::builders::PostPbAccountDepositOutputBuilder) -> crate::operation::post_pb_account_deposit::builders::PostPbAccountDepositOutputBuilder {
                 if builder.deposit_id.is_none() { builder.deposit_id = Some(Default::default()) }
 if builder.account_id.is_none() { builder.account_id = Some(Default::default()) }
 if builder.amount.is_none() { builder.amount = Some(Default::default()) }
 if builder.pool.is_none() { builder.pool = Some(Default::default()) }
 if builder.status.is_none() { builder.status = Some(Default::default()) }
+                builder
+            }
+
+pub(crate) fn transfer_to_pb_account_output_output_correct_errors(mut builder: crate::operation::transfer_to_pb_account::builders::TransferToPbAccountOutputBuilder) -> crate::operation::transfer_to_pb_account::builders::TransferToPbAccountOutputBuilder {
+                if builder.transfer_id.is_none() { builder.transfer_id = Some(Default::default()) }
+if builder.source_account_id.is_none() { builder.source_account_id = Some(Default::default()) }
+if builder.destination_account_id.is_none() { builder.destination_account_id = Some(Default::default()) }
+if builder.amount.is_none() { builder.amount = Some(Default::default()) }
+if builder.status.is_none() { builder.status = Some(Default::default()) }
+if builder.correlation_id.is_none() { builder.correlation_id = Some(Default::default()) }
+if builder.created_at.is_none() { builder.created_at = Some(::aws_smithy_types::DateTime::from_fractional_secs(0, 0_f64)) }
                 builder
             }
 
@@ -315,6 +337,17 @@ pub(crate) fn void_normal_account_deposit_output_output_correct_errors(mut build
 if builder.account_id.is_none() { builder.account_id = Some(Default::default()) }
 if builder.amount.is_none() { builder.amount = Some(Default::default()) }
 if builder.status.is_none() { builder.status = Some(Default::default()) }
+                builder
+            }
+
+pub(crate) fn void_normal_account_transfer_output_output_correct_errors(mut builder: crate::operation::void_normal_account_transfer::builders::VoidNormalAccountTransferOutputBuilder) -> crate::operation::void_normal_account_transfer::builders::VoidNormalAccountTransferOutputBuilder {
+                if builder.transfer_id.is_none() { builder.transfer_id = Some(Default::default()) }
+if builder.source_account_id.is_none() { builder.source_account_id = Some(Default::default()) }
+if builder.destination_account_id.is_none() { builder.destination_account_id = Some(Default::default()) }
+if builder.amount.is_none() { builder.amount = Some(Default::default()) }
+if builder.status.is_none() { builder.status = Some(Default::default()) }
+if builder.correlation_id.is_none() { builder.correlation_id = Some(Default::default()) }
+if builder.created_at.is_none() { builder.created_at = Some(::aws_smithy_types::DateTime::from_fractional_secs(0, 0_f64)) }
                 builder
             }
 
