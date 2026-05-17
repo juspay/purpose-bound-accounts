@@ -92,7 +92,7 @@ impl PbDepositService {
         } else {
             account.tb_others_account_id
         };
-        let deposit_id = Uuid::new_v4();
+        let deposit_id = Uuid::now_v7();
 
         let mut tx = self.transaction_repo.pool().begin().await?;
 

@@ -12,9 +12,9 @@ pub struct TransferLegs {
 impl TransferLegs {
     pub fn new() -> Self {
         Self {
-            source_txn_id: Uuid::new_v4(),
-            destination_txn_id: Uuid::new_v4(),
-            correlation_id: Uuid::new_v4(),
+            source_txn_id: Uuid::now_v7(),
+            destination_txn_id: Uuid::now_v7(),
+            correlation_id: Uuid::now_v7(),
         }
     }
 }

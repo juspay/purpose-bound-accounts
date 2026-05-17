@@ -122,7 +122,7 @@ impl PbPaymentService {
             // Single payment_id, used as both the primary row's id and the
             // correlation_id linking split legs. Lookup-by-payment_id can use
             // either column.
-            let payment_id = Uuid::new_v4();
+            let payment_id = Uuid::now_v7();
 
             // Insert transaction row(s). The "primary" row (idempotency-key holder)
             // gets id=payment_id; the secondary split leg gets a fresh id but shares
@@ -157,7 +157,7 @@ impl PbPaymentService {
                 // For split payments, only the first row gets the idempotency key
                 // (unique constraint) and the payment_id-as-row-id.
                 let (row_id, idem_key) = if split.from_others > 0 {
-                    (Uuid::new_v4(), None)
+                    (Uuid::now_v7(), None)
                 } else {
                     (payment_id, idempotency_key)
                 };

@@ -36,14 +36,14 @@ mod tests {
 
     #[test]
     fn tb_normal_id_is_deterministic() {
-        let id = Uuid::new_v4();
+        let id = Uuid::now_v7();
         assert_eq!(tb_normal_id(id), tb_normal_id(id));
     }
 
     #[test]
     fn tb_normal_id_distinguishes_uuids() {
-        let a = Uuid::new_v4();
-        let b = Uuid::new_v4();
+        let a = Uuid::now_v7();
+        let b = Uuid::now_v7();
         assert_ne!(tb_normal_id(a), tb_normal_id(b));
     }
 }

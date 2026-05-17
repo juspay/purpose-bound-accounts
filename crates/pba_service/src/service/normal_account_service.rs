@@ -27,7 +27,7 @@ impl NormalAccountService {
         origin_ifsc: Option<&Ifsc>,
         origin_account_number: Option<&AccountNumber>,
     ) -> Result<NormalAccount, AppError> {
-        let account_id = Uuid::new_v4();
+        let account_id = Uuid::now_v7();
         let tb_id = tb_normal_id(account_id);
 
         self.ledger_repo.create_normal_account(tb_id).await?;

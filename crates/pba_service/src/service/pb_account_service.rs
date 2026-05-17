@@ -30,7 +30,7 @@ impl PbAccountService {
         // Validate purpose code exists
         self.account_repo.get_purpose_type(purpose_code).await?;
 
-        let account_id = Uuid::new_v4();
+        let account_id = Uuid::now_v7();
         let self_tb_id = tb_self_id(account_id);
         let others_tb_id = tb_others_id(account_id);
 
