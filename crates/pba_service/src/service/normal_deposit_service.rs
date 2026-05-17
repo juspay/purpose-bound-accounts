@@ -60,7 +60,7 @@ impl NormalDepositService {
             return Err(AppError::NormalAccountNotActive(account_id.to_string()));
         }
 
-        let deposit_id = Uuid::new_v4();
+        let deposit_id = Uuid::now_v7();
         let mut tx = self.transaction_repo.pool().begin().await?;
 
         if pending {

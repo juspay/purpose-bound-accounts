@@ -77,7 +77,7 @@ impl PbWithdrawalService {
         self.transaction_repo
             .insert_in_tx(
                 &mut tx,
-                Uuid::new_v4(),
+                Uuid::now_v7(),
                 account_id,
                 crate::domain::account_kind::AccountKind::Pb,
                 TransactionType::Withdrawal,

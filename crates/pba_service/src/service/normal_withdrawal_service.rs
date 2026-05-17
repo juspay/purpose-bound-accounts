@@ -64,7 +64,7 @@ impl NormalWithdrawalService {
             });
         }
 
-        let withdrawal_id = Uuid::new_v4();
+        let withdrawal_id = Uuid::now_v7();
         let mut tx = self.transaction_repo.pool().begin().await?;
 
         let record = self
