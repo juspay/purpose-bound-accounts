@@ -2800,6 +2800,10 @@
             "MakePBAccountPaymentResponseContent": {
                 "type": "object",
                 "properties": {
+                    "payment_id": {
+                        "type": "string",
+                        "description": "Stable identifier for this payment. For split payments, this is also the\ncorrelation_id linking the per-pool legs."
+                    },
                     "account_id": {
                         "type": "string"
                     },
@@ -2831,7 +2835,8 @@
                     "from_others",
                     "from_self",
                     "merchant_id",
-                    "merchant_mcc"
+                    "merchant_mcc",
+                    "payment_id"
                 ]
             },
             "MakePaymentRequestContent": {
@@ -2867,6 +2872,10 @@
             "MakePaymentResponseContent": {
                 "type": "object",
                 "properties": {
+                    "payment_id": {
+                        "type": "string",
+                        "description": "Stable identifier for this payment. For split payments, this is also the\ncorrelation_id linking the per-pool legs."
+                    },
                     "account_id": {
                         "type": "string"
                     },
@@ -2898,7 +2907,8 @@
                     "from_others",
                     "from_self",
                     "merchant_id",
-                    "merchant_mcc"
+                    "merchant_mcc",
+                    "payment_id"
                 ]
             },
             "MccEntry": {

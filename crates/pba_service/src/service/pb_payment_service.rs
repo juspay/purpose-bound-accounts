@@ -52,7 +52,11 @@ impl PbPaymentService {
                 )
                 .await?
             {
+                // payment_id is correlation_id (also = primary row's id for payments
+                // written by this service). Fall back to id for legacy rows.
+                let payment_id = existing.correlation_id.unwrap_or(existing.id);
                 return Ok(PaymentResult {
+                    payment_id,
                     account_id: existing.account_id,
                     amount: existing.amount,
                     from_others: if existing.pool.as_deref() == Some("others") {
@@ -115,12 +119,19 @@ impl PbPaymentService {
             // Begin PG transaction
             let mut tx = self.transaction_repo.pool().begin().await?;
 
-            // Insert transaction row(s)
+            // Single payment_id, used as both the primary row's id and the
+            // correlation_id linking split legs. Lookup-by-payment_id can use
+            // either column.
+            let payment_id = Uuid::new_v4();
+
+            // Insert transaction row(s). The "primary" row (idempotency-key holder)
+            // gets id=payment_id; the secondary split leg gets a fresh id but shares
+            // correlation_id=payment_id.
             if split.from_others > 0 {
                 self.transaction_repo
                     .insert_in_tx(
                         &mut tx,
-                        Uuid::new_v4(),
+                        payment_id,
                         account_id,
                         crate::domain::account_kind::AccountKind::Pb,
                         TransactionType::Payment,
@@ -138,21 +149,22 @@ impl PbPaymentService {
                         None, // funding_type
                         0,
                         idempotency_key,
-                        None,
+                        Some(payment_id),
                     )
                     .await?;
             }
             if split.from_self > 0 {
-                // For split payments, only first row gets the idempotency key (unique constraint)
-                let idem_key = if split.from_others > 0 {
-                    None
+                // For split payments, only the first row gets the idempotency key
+                // (unique constraint) and the payment_id-as-row-id.
+                let (row_id, idem_key) = if split.from_others > 0 {
+                    (Uuid::new_v4(), None)
                 } else {
-                    idempotency_key
+                    (payment_id, idempotency_key)
                 };
                 self.transaction_repo
                     .insert_in_tx(
                         &mut tx,
-                        Uuid::new_v4(),
+                        row_id,
                         account_id,
                         crate::domain::account_kind::AccountKind::Pb,
                         TransactionType::Payment,
@@ -170,7 +182,7 @@ impl PbPaymentService {
                         None, // funding_type
                         0,
                         idem_key,
-                        None,
+                        Some(payment_id),
                     )
                     .await?;
             }
@@ -182,11 +194,13 @@ impl PbPaymentService {
                 Ok(()) => {
                     tx.commit().await?;
                     tracing::info!(
-                        account_id = %account_id, merchant_id, merchant_mcc,
+                        payment_id = %payment_id, account_id = %account_id,
+                        merchant_id, merchant_mcc,
                         amount, from_others = split.from_others, from_self = split.from_self,
                         "Payment processed"
                     );
                     return Ok(PaymentResult {
+                        payment_id,
                         account_id,
                         amount,
                         from_others: split.from_others,
@@ -254,6 +268,7 @@ impl PbPaymentService {
 }
 
 pub struct PaymentResult {
+    pub payment_id: Uuid,
     pub account_id: Uuid,
     pub amount: u64,
     pub from_others: u64,

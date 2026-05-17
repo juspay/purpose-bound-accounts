@@ -17,6 +17,11 @@ pub struct PbaWorld {
     /// Last payment result
     last_payment: Option<PaymentResult>,
     last_payment_gateway_ref: Option<String>,
+    /// Payment ID stashed for cross-call comparison (e.g. idempotency replay)
+    remembered_payment_id: Option<String>,
+    /// Per-account transactions listing (separate from the all-transactions view)
+    last_account_transactions_correlation_ids: Option<Vec<Option<String>>>,
+    last_account_transactions_types: Option<Vec<String>>,
     /// Last error (for negative test cases)
     last_error: Option<PbaError>,
     /// Purpose types from list operation
@@ -76,6 +81,7 @@ pub struct PbaWorld {
 
 #[derive(Debug, Clone)]
 pub struct PaymentResult {
+    pub payment_id: String,
     pub amount: i64,
     pub from_others: i64,
     pub from_self: i64,
@@ -112,6 +118,9 @@ impl Default for PbaWorld {
             last_deposit_id: None,
             last_payment: None,
             last_payment_gateway_ref: None,
+            remembered_payment_id: None,
+            last_account_transactions_correlation_ids: None,
+            last_account_transactions_types: None,
             last_error: None,
             purpose_types_count: None,
             last_purpose_code: None,

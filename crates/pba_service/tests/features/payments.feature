@@ -103,3 +103,25 @@ Feature: Payments
     When I pay 1000 to merchant "PHARMACY001" with MCC "5912" described as "with ref" with gateway ref "gw-api-pay-77"
     Then the payment should succeed
     And the payment response should echo gateway ref "gw-api-pay-77"
+
+  Scenario: Idempotency replay returns the same payment_id
+    Given a "health" account exists for holder "44444444-4444-4444-4444-444444440088" with origin IFSC "HDFC0044488" and account number "444440088"
+    And the account has 5000 in self-pool and 5000 in others-pool
+    When I pay 1500 to merchant "PHARMACY001" with MCC "5912" described as "idempotent" with idempotency key "idem-pay-88"
+    Then the payment should succeed
+    And the payment response should include a payment_id
+    And I remember the payment_id
+    When I pay 1500 to merchant "PHARMACY001" with MCC "5912" described as "idempotent" with idempotency key "idem-pay-88"
+    Then the payment should succeed
+    And the payment_id should match the remembered payment_id
+
+  Scenario: Split payment legs share correlation_id equal to payment_id
+    Given a "health" account exists for holder "44444444-4444-4444-4444-444444440099" with origin IFSC "HDFC0044499" and account number "444440099"
+    And the account has 1000 in self-pool and 2000 in others-pool
+    When I pay 2500 to merchant "PHARMACY001" with MCC "5912" described as "split"
+    Then the payment should succeed
+    And the payment response should include a payment_id
+    And 2000 should come from others-pool
+    And 500 should come from self-pool
+    When I list transactions for the current account
+    Then the payment legs share correlation_id equal to the payment_id

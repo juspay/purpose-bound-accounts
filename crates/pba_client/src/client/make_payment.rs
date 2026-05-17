@@ -11,6 +11,7 @@ impl super::Client {
     ///   - [`idempotency_key(impl Into<String>)`](crate::operation::make_payment::builders::MakePaymentFluentBuilder::idempotency_key) / [`set_idempotency_key(Option<String>)`](crate::operation::make_payment::builders::MakePaymentFluentBuilder::set_idempotency_key):<br>required: **false**<br>(undocumented)<br>
     ///   - [`gateway_ref(impl Into<String>)`](crate::operation::make_payment::builders::MakePaymentFluentBuilder::gateway_ref) / [`set_gateway_ref(Option<String>)`](crate::operation::make_payment::builders::MakePaymentFluentBuilder::set_gateway_ref):<br>required: **false**<br>(undocumented)<br>
                             /// - On success, responds with [`MakePaymentOutput`](crate::operation::make_payment::MakePaymentOutput) with field(s):
+    ///   - [`payment_id(String)`](crate::operation::make_payment::MakePaymentOutput::payment_id): Stable identifier for this payment. For split payments, this is also the correlation_id linking the per-pool legs.
     ///   - [`account_id(String)`](crate::operation::make_payment::MakePaymentOutput::account_id): (undocumented)
     ///   - [`amount(i64)`](crate::operation::make_payment::MakePaymentOutput::amount): Monetary amount in the smallest currency unit (e.g., paise for INR).
     ///   - [`from_others(i64)`](crate::operation::make_payment::MakePaymentOutput::from_others): Monetary amount in the smallest currency unit (e.g., paise for INR).

@@ -28,6 +28,11 @@ operation MakePBAccountPayment {
         gateway_ref: String
     }
     output := {
+        /// Stable identifier for this payment. For split payments, this is also the
+        /// correlation_id linking the per-pool legs.
+        @required
+        payment_id: String
+
         @required
         account_id: String
 
@@ -81,6 +86,11 @@ operation MakePayment {
         gateway_ref: String
     }
     output := {
+        /// Stable identifier for this payment. For split payments, this is also the
+        /// correlation_id linking the per-pool legs.
+        @required
+        payment_id: String
+
         @required
         account_id: String
 

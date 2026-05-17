@@ -208,7 +208,8 @@ if builder.message.is_none() { builder.message = Some(Default::default()) }
             }
 
 pub(crate) fn make_payment_output_output_correct_errors(mut builder: crate::operation::make_payment::builders::MakePaymentOutputBuilder) -> crate::operation::make_payment::builders::MakePaymentOutputBuilder {
-                if builder.account_id.is_none() { builder.account_id = Some(Default::default()) }
+                if builder.payment_id.is_none() { builder.payment_id = Some(Default::default()) }
+if builder.account_id.is_none() { builder.account_id = Some(Default::default()) }
 if builder.amount.is_none() { builder.amount = Some(Default::default()) }
 if builder.from_others.is_none() { builder.from_others = Some(Default::default()) }
 if builder.from_self.is_none() { builder.from_self = Some(Default::default()) }
@@ -218,7 +219,8 @@ if builder.merchant_mcc.is_none() { builder.merchant_mcc = Some(Default::default
             }
 
 pub(crate) fn make_pb_account_payment_output_output_correct_errors(mut builder: crate::operation::make_pb_account_payment::builders::MakePbAccountPaymentOutputBuilder) -> crate::operation::make_pb_account_payment::builders::MakePbAccountPaymentOutputBuilder {
-                if builder.account_id.is_none() { builder.account_id = Some(Default::default()) }
+                if builder.payment_id.is_none() { builder.payment_id = Some(Default::default()) }
+if builder.account_id.is_none() { builder.account_id = Some(Default::default()) }
 if builder.amount.is_none() { builder.amount = Some(Default::default()) }
 if builder.from_others.is_none() { builder.from_others = Some(Default::default()) }
 if builder.from_self.is_none() { builder.from_self = Some(Default::default()) }
