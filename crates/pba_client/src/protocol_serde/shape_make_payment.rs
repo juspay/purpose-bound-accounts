@@ -151,6 +151,15 @@ pub(crate) fn de_make_payment(value: &[u8], mut builder: crate::operation::make_
                             ).transpose()?
                         );
                     }
+                    "payment_id" => {
+                        builder = builder.set_payment_id(
+                            ::aws_smithy_json::deserialize::token::expect_string_or_null(tokens.next())?.map(|s|
+                                s.to_unescaped().map(|u|
+                                    u.into_owned()
+                                )
+                            ).transpose()?
+                        );
+                    }
                     _ => ::aws_smithy_json::deserialize::token::skip_value(tokens)?
                 }
             }

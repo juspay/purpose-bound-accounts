@@ -177,6 +177,7 @@ pub async fn make_payment(
     Ok((
         axum::http::StatusCode::CREATED,
         Json(PaymentResponse {
+            payment_id: result.payment_id,
             account_id: result.account_id,
             amount: result.amount,
             from_others: result.from_others,

@@ -25,6 +25,7 @@ async fn make_payment(
     match result {
         Ok(output) => {
             world.last_payment = Some(crate::PaymentResult {
+                payment_id: output.payment_id().to_string(),
                 amount: output.amount(),
                 from_others: output.from_others(),
                 from_self: output.from_self(),
@@ -59,6 +60,7 @@ async fn attempt_payment(
     match result {
         Ok(output) => {
             world.last_payment = Some(crate::PaymentResult {
+                payment_id: output.payment_id().to_string(),
                 amount: output.amount(),
                 from_others: output.from_others(),
                 from_self: output.from_self(),
@@ -111,6 +113,7 @@ async fn make_payment_with_gateway_ref(
     match result {
         Ok(output) => {
             world.last_payment = Some(crate::PaymentResult {
+                payment_id: output.payment_id().to_string(),
                 amount: output.amount(),
                 from_others: output.from_others(),
                 from_self: output.from_self(),
@@ -234,4 +237,138 @@ async fn exactly_n_succeed(world: &mut PbaWorld, expected: usize) {
         successes, expected,
         "Expected {expected} successes but got {successes}"
     );
+}
+
+#[when(
+    regex = r#"^I pay (\d+) to merchant "([^"]*)" with MCC "([^"]*)" described as "([^"]*)" with idempotency key "([^"]*)"$"#
+)]
+async fn make_payment_with_idempotency_key(
+    world: &mut PbaWorld,
+    amount: i64,
+    merchant_id: String,
+    mcc: String,
+    description: String,
+    idempotency_key: String,
+) {
+    let account_id = world.account_id.as_ref().expect("No account ID");
+    let result = world
+        .client
+        .make_payment()
+        .account_id(account_id)
+        .amount(amount)
+        .merchant_mcc(&mcc)
+        .merchant_id(&merchant_id)
+        .description(&description)
+        .idempotency_key(&idempotency_key)
+        .send()
+        .await;
+    match result {
+        Ok(output) => {
+            world.last_payment = Some(crate::PaymentResult {
+                payment_id: output.payment_id().to_string(),
+                amount: output.amount(),
+                from_others: output.from_others(),
+                from_self: output.from_self(),
+            });
+            world.last_error = None;
+        }
+        Err(e) => panic!("Payment failed unexpectedly: {e:?}"),
+    }
+}
+
+#[then("the payment response should include a payment_id")]
+async fn payment_response_has_id(world: &mut PbaWorld) {
+    let payment = world.last_payment.as_ref().expect("No payment result");
+    assert!(
+        !payment.payment_id.is_empty(),
+        "Expected non-empty payment_id in response"
+    );
+    uuid::Uuid::parse_str(&payment.payment_id).unwrap_or_else(|e| {
+        panic!(
+            "payment_id `{}` is not a valid UUID: {e}",
+            payment.payment_id
+        )
+    });
+}
+
+#[when("I remember the payment_id")]
+#[then("I remember the payment_id")]
+async fn remember_payment_id(world: &mut PbaWorld) {
+    let payment = world.last_payment.as_ref().expect("No payment result");
+    world.remembered_payment_id = Some(payment.payment_id.clone());
+}
+
+#[then("the payment_id should match the remembered payment_id")]
+async fn payment_id_matches_remembered(world: &mut PbaWorld) {
+    let payment = world.last_payment.as_ref().expect("No payment result");
+    let remembered = world
+        .remembered_payment_id
+        .as_ref()
+        .expect("No remembered payment_id");
+    assert_eq!(
+        &payment.payment_id, remembered,
+        "Expected payment_id to match remembered (idempotency replay): got `{}`, expected `{}`",
+        payment.payment_id, remembered
+    );
+}
+
+#[when("I list transactions for the current account")]
+async fn list_transactions_for_current_account(world: &mut PbaWorld) {
+    let account_id = world.account_id.as_ref().expect("No account ID");
+    let result = world
+        .client
+        .list_pb_account_transactions()
+        .account_id(account_id)
+        .send()
+        .await
+        .expect("Failed to list transactions for account");
+    world.last_account_transactions_types = Some(
+        result
+            .transactions()
+            .iter()
+            .map(|t| t.r#type().to_string())
+            .collect(),
+    );
+    world.last_account_transactions_correlation_ids = Some(
+        result
+            .transactions()
+            .iter()
+            .map(|t| t.correlation_id().map(|s| s.to_string()))
+            .collect(),
+    );
+}
+
+#[then("the payment legs share correlation_id equal to the payment_id")]
+async fn payment_legs_share_correlation_id(world: &mut PbaWorld) {
+    let payment = world.last_payment.as_ref().expect("No payment result");
+    let types = world
+        .last_account_transactions_types
+        .as_ref()
+        .expect("Need to list transactions for the current account first");
+    let corr_ids = world
+        .last_account_transactions_correlation_ids
+        .as_ref()
+        .expect("Need to list transactions for the current account first");
+
+    let payment_correlation_ids: Vec<&Option<String>> = types
+        .iter()
+        .zip(corr_ids.iter())
+        .filter(|(t, _)| t.as_str() == "payment")
+        .map(|(_, c)| c)
+        .collect();
+
+    assert!(
+        !payment_correlation_ids.is_empty(),
+        "Expected at least one payment transaction in account listing"
+    );
+    for (i, c) in payment_correlation_ids.iter().enumerate() {
+        let actual = c
+            .as_deref()
+            .unwrap_or_else(|| panic!("Payment leg {i} has no correlation_id"));
+        assert_eq!(
+            actual, payment.payment_id,
+            "Payment leg {i} has correlation_id `{}`, expected `{}` (payment_id)",
+            actual, payment.payment_id
+        );
+    }
 }

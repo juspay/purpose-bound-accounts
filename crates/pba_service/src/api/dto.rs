@@ -110,6 +110,7 @@ pub struct PaymentRequest {
 
 #[derive(Debug, Serialize)]
 pub struct PaymentResponse {
+    pub payment_id: Uuid,
     pub account_id: Uuid,
     pub amount: u64,
     pub from_others: u64,

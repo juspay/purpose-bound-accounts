@@ -3,6 +3,8 @@
 #[non_exhaustive]
 #[derive(::std::clone::Clone, ::std::cmp::PartialEq, ::std::fmt::Debug)]
 pub struct MakePaymentOutput  {
+    /// Stable identifier for this payment. For split payments, this is also the correlation_id linking the per-pool legs.
+    pub payment_id: ::std::string::String,
     #[allow(missing_docs)] // documentation missing in model
     pub account_id: ::std::string::String,
     /// Monetary amount in the smallest currency unit (e.g., paise for INR).
@@ -19,6 +21,10 @@ pub struct MakePaymentOutput  {
     pub gateway_ref: ::std::option::Option<::std::string::String>,
 }
 impl  MakePaymentOutput  {
+    /// Stable identifier for this payment. For split payments, this is also the correlation_id linking the per-pool legs.
+    pub fn payment_id(&self) -> &str {
+        use std::ops::Deref; self.payment_id.deref()
+    }
     #[allow(missing_docs)] // documentation missing in model
     pub fn account_id(&self) -> &str {
         use std::ops::Deref; self.account_id.deref()
@@ -59,6 +65,7 @@ impl MakePaymentOutput {
 #[derive(::std::clone::Clone, ::std::cmp::PartialEq, ::std::default::Default, ::std::fmt::Debug)]
 #[non_exhaustive]
 pub struct MakePaymentOutputBuilder {
+    pub(crate) payment_id: ::std::option::Option<::std::string::String>,
     pub(crate) account_id: ::std::option::Option<::std::string::String>,
     pub(crate) amount: ::std::option::Option<i64>,
     pub(crate) from_others: ::std::option::Option<i64>,
@@ -68,6 +75,20 @@ pub struct MakePaymentOutputBuilder {
     pub(crate) gateway_ref: ::std::option::Option<::std::string::String>,
 }
 impl MakePaymentOutputBuilder {
+    /// Stable identifier for this payment. For split payments, this is also the correlation_id linking the per-pool legs.
+    /// This field is required.
+    pub fn payment_id(mut self, input: impl ::std::convert::Into<::std::string::String>) -> Self {
+        self.payment_id = ::std::option::Option::Some(input.into());
+        self
+    }
+    /// Stable identifier for this payment. For split payments, this is also the correlation_id linking the per-pool legs.
+    pub fn set_payment_id(mut self, input: ::std::option::Option<::std::string::String>) -> Self {
+        self.payment_id = input; self
+    }
+    /// Stable identifier for this payment. For split payments, this is also the correlation_id linking the per-pool legs.
+    pub fn get_payment_id(&self) -> &::std::option::Option<::std::string::String> {
+        &self.payment_id
+    }
     #[allow(missing_docs)] // documentation missing in model
     /// This field is required.
     pub fn account_id(mut self, input: impl ::std::convert::Into<::std::string::String>) -> Self {
@@ -167,6 +188,7 @@ impl MakePaymentOutputBuilder {
     }
     /// Consumes the builder and constructs a [`MakePaymentOutput`](crate::operation::make_payment::MakePaymentOutput).
     /// This method will fail if any of the following fields are not set:
+    /// - [`payment_id`](crate::operation::make_payment::builders::MakePaymentOutputBuilder::payment_id)
     /// - [`account_id`](crate::operation::make_payment::builders::MakePaymentOutputBuilder::account_id)
     /// - [`amount`](crate::operation::make_payment::builders::MakePaymentOutputBuilder::amount)
     /// - [`from_others`](crate::operation::make_payment::builders::MakePaymentOutputBuilder::from_others)
@@ -176,6 +198,11 @@ impl MakePaymentOutputBuilder {
     pub fn build(self) -> ::std::result::Result<crate::operation::make_payment::MakePaymentOutput, ::aws_smithy_types::error::operation::BuildError> {
         ::std::result::Result::Ok(
             crate::operation::make_payment::MakePaymentOutput {
+                payment_id: self.payment_id
+                    .ok_or_else(||
+                        ::aws_smithy_types::error::operation::BuildError::missing_field("payment_id", "payment_id was not specified but it is required when building MakePaymentOutput")
+                    )?
+                ,
                 account_id: self.account_id
                     .ok_or_else(||
                         ::aws_smithy_types::error::operation::BuildError::missing_field("account_id", "account_id was not specified but it is required when building MakePaymentOutput")
