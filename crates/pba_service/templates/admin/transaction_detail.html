@@ -50,9 +50,10 @@
     <div class="grid" style="grid-template-columns: 1fr 1fr;">
         <div class="kv">
             <div>Transaction ID</div><div class="mono">{{ id }}</div>
-            <div>Account</div><div class="mono"><a href="{{ prefix }}/admin/accounts/{{ account_id }}">{{ account_id }}</a></div>
+            <div>Account kind</div><div><span class="badge{% if account_kind_label == "Normal" %} pill-pending{% else %} pill-sentinel{% endif %}">{{ account_kind_label }}</span></div>
+            <div>Account</div><div class="mono"><a href="{{ prefix }}{{ account_href }}">{{ account_id }}</a></div>
             <div>Holder</div><div class="mono">{{ holder_id }}</div>
-            <div>Purpose</div><div><span class="badge">{{ purpose_code }}</span></div>
+            {% if account_kind_label != "Normal" %}<div>Purpose</div><div><span class="badge">{{ purpose_code }}</span></div>{% endif %}
         </div>
         <div class="kv">
             <div>TB transfer ID</div><div class="mono">{{ tb_transfer_id }}</div>

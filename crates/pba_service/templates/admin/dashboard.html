@@ -7,40 +7,68 @@
 <div class="page-header">
     <div>
         <h1 class="page-title">Dashboard</h1>
-        <p class="page-subtitle">Overview of purpose-bound accounts across the ledger.</p>
-    </div>
-    <div class="page-actions">
-        <a href="{{ prefix }}/admin/accounts" role="button" class="outline">View all accounts</a>
-        <a href="{{ prefix }}/admin/accounts" role="button">+ New account</a>
+        <p class="page-subtitle">Overview of all accounts across the ledger.</p>
     </div>
 </div>
 
+<h2 style="margin-bottom: 0.75rem;">Purpose-Bound Accounts</h2>
+<p class="page-subtitle" style="margin-bottom: 1rem; color: var(--text-muted); font-size: 0.875rem;">Restricted accounts tied to a specific spending purpose.</p>
 <div class="grid">
     <article class="stat-card stat-primary">
-        <p class="stat-label">Total accounts</p>
-        <p class="stat-value">{{ total_accounts }}</p>
+        <p class="stat-label">Total PB accounts</p>
+        <p class="stat-value">{{ total_pb_accounts }}</p>
         <p class="stat-hint">Across all statuses and purposes</p>
     </article>
     <article class="stat-card stat-success">
         <p class="stat-label">Active</p>
-        <p class="stat-value">{{ active_accounts }}</p>
+        <p class="stat-value">{{ active_pb_accounts }}</p>
         <p class="stat-hint">Available for deposits & payments</p>
     </article>
     <article class="stat-card stat-warn">
         <p class="stat-label">Frozen</p>
-        <p class="stat-value">{{ frozen_accounts }}</p>
+        <p class="stat-value">{{ frozen_pb_accounts }}</p>
         <p class="stat-hint">Temporarily suspended</p>
     </article>
     <article class="stat-card stat-danger">
         <p class="stat-label">Closed</p>
-        <p class="stat-value">{{ closed_accounts }}</p>
+        <p class="stat-value">{{ closed_pb_accounts }}</p>
         <p class="stat-hint">Terminal state — no further activity</p>
     </article>
 </div>
 
+<div class="page-actions" style="margin-bottom: 1.5rem;">
+    <a href="{{ prefix }}/admin/accounts" role="button" class="outline">View PB Accounts</a>
+    <a href="{{ prefix }}/admin/accounts" role="button">+ New PB Account</a>
+</div>
+
+<h2 style="margin-bottom: 0.75rem;">Normal Accounts</h2>
+<p class="page-subtitle" style="margin-bottom: 1rem; color: var(--text-muted); font-size: 0.875rem;">General-purpose accounts — trust money enters here before transferring to PB accounts.</p>
+<div class="grid">
+    <article class="stat-card stat-primary">
+        <p class="stat-label">Total normal accounts</p>
+        <p class="stat-value">{{ total_normal_accounts }}</p>
+        <p class="stat-hint">Active + frozen</p>
+    </article>
+    <article class="stat-card stat-success">
+        <p class="stat-label">Active</p>
+        <p class="stat-value">{{ active_normal_accounts }}</p>
+        <p class="stat-hint">Available for deposits & transfers</p>
+    </article>
+    <article class="stat-card stat-warn">
+        <p class="stat-label">Frozen</p>
+        <p class="stat-value">{{ frozen_normal_accounts }}</p>
+        <p class="stat-hint">Temporarily suspended</p>
+    </article>
+</div>
+
+<div class="page-actions" style="margin-bottom: 1.5rem;">
+    <a href="{{ prefix }}/admin/normal-accounts" role="button" class="outline">View Normal Accounts</a>
+    <a href="{{ prefix }}/admin/normal-accounts" role="button">+ New Normal Account</a>
+</div>
+
 {% if !purpose_counts.is_empty() %}
 <article>
-    <header>Accounts by purpose</header>
+    <header>PB Accounts by purpose</header>
     <figure>
     <table>
         <thead>

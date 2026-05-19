@@ -173,10 +173,10 @@ pub async fn overview(State(state): State<AppState>) -> Response {
     }
 
     let pba_accounts = state
-        .account_repo
+        .pb_account_repo
         .list_accounts()
         .await
-        .map(|v| v.len() as i64)
+        .map(|v: Vec<_>| v.len() as i64)
         .unwrap_or(0);
 
     render(OverviewTemplate {
