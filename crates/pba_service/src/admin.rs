@@ -1,5 +1,7 @@
 mod handlers;
+mod normal_handlers;
 mod tb;
+mod transfer_handlers;
 
 use axum::routing::{get, post};
 use axum::Router;
@@ -70,6 +72,61 @@ pub fn create_router() -> Router<AppState> {
             get(handlers::system_accounts_page),
         )
         .route("/admin/purpose-types", get(handlers::purpose_types_page))
+        // Normal account routes
+        .route(
+            "/admin/normal-accounts",
+            get(normal_handlers::normal_accounts_list).post(normal_handlers::create_normal_account),
+        )
+        .route(
+            "/admin/normal-accounts/{account_id}",
+            get(normal_handlers::normal_account_detail),
+        )
+        .route(
+            "/admin/normal-accounts/{account_id}/freeze",
+            axum::routing::post(normal_handlers::freeze_normal_account),
+        )
+        .route(
+            "/admin/normal-accounts/{account_id}/reactivate",
+            axum::routing::post(normal_handlers::reactivate_normal_account),
+        )
+        .route(
+            "/admin/normal-accounts/{account_id}/deposit",
+            get(normal_handlers::normal_deposit_form),
+        )
+        .route(
+            "/admin/normal-accounts/{account_id}/deposits",
+            axum::routing::post(normal_handlers::process_normal_deposit),
+        )
+        .route(
+            "/admin/normal-accounts/{account_id}/withdrawal",
+            get(normal_handlers::normal_withdrawal_form),
+        )
+        .route(
+            "/admin/normal-accounts/{account_id}/withdrawals",
+            axum::routing::post(normal_handlers::process_normal_withdrawal),
+        )
+        // Transfer routes
+        .route(
+            "/admin/normal-accounts/{account_id}/transfer",
+            get(transfer_handlers::normal_transfer_form),
+        )
+        .route(
+            "/admin/normal-accounts/{account_id}/transfers",
+            get(normal_handlers::normal_transfers_fragment)
+                .post(transfer_handlers::process_normal_transfer),
+        )
+        .route(
+            "/admin/transfers/{transfer_id}",
+            get(transfer_handlers::transfer_detail),
+        )
+        .route(
+            "/admin/transfers/{transfer_id}/post",
+            axum::routing::post(transfer_handlers::post_transfer),
+        )
+        .route(
+            "/admin/transfers/{transfer_id}/void",
+            axum::routing::post(transfer_handlers::void_transfer),
+        )
         // TigerBeetle explorer
         .route("/admin/tb", get(tb::overview))
         .route("/admin/tb/accounts", get(tb::accounts_page))

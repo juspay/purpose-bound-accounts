@@ -1,0 +1,79 @@
+{% extends "base.html" %}
+
+{% block title %}Normal Account {{ id }} — PBA Ledger{% endblock %}
+{% block breadcrumb %}<a href="{{ prefix }}/admin">PBA Ledger</a> <span class="sep">/</span> <a href="{{ prefix }}/admin/normal-accounts">Normal Accounts</a> <span class="sep">/</span> <span class="current mono">{{ id }}</span>{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div>
+        <h1 class="page-title">Normal Account</h1>
+        <p class="page-subtitle mono">{{ id }}</p>
+    </div>
+    {% if status == "active" %}
+    <div class="page-actions">
+        <a href="{{ prefix }}/admin/normal-accounts/{{ id }}/deposit" role="button" class="outline">Deposit</a>
+        <a href="{{ prefix }}/admin/normal-accounts/{{ id }}/withdrawal" role="button" class="outline">Withdraw</a>
+        <a href="{{ prefix }}/admin/normal-accounts/{{ id }}/transfer" role="button">Transfer to PB →</a>
+    </div>
+    {% endif %}
+</div>
+
+<div class="grid">
+    <article class="stat-card {% if status == "active" %}stat-success{% else if status == "frozen" %}stat-warn{% else %}stat-danger{% endif %}">
+        <p class="stat-label">Status</p>
+        <p class="stat-value" style="font-size: 1.25rem; padding-top: 0.35rem; text-transform: capitalize;">{{ status }}</p>
+        <p class="stat-hint">KYC tier: {{ kyc_tier }}</p>
+    </article>
+    <article class="stat-card stat-primary">
+        <p class="stat-label">Balance</p>
+        <p class="stat-value">₹{{ balance }}</p>
+        {% if pending != "0.00" %}<p class="stat-hint" style="color: var(--warn);">+ ₹{{ pending }} pending</p>{% else %}<p class="stat-hint">No pending amounts</p>{% endif %}
+    </article>
+</div>
+
+<article>
+    <header>Account details</header>
+    <div class="grid" style="grid-template-columns: 1fr 1fr;">
+        <div class="kv">
+            <div>Account ID</div><div class="mono">{{ id }}</div>
+            <div>Holder ID</div><div class="mono">{{ holder_id }}</div>
+            <div>KYC Tier</div><div>{{ kyc_tier }}</div>
+            <div>Status</div>
+            <div>
+                <span class="{{ status_class }}">{{ status }}</span>
+                {% if status != "closed" %}
+                &nbsp;
+                {% if status == "active" %}
+                <form method="post" action="{{ prefix }}/admin/normal-accounts/{{ id }}/freeze" class="inline-form">
+                    <button type="submit" class="btn-sm outline secondary">Freeze</button>
+                </form>
+                {% else if status == "frozen" %}
+                <form method="post" action="{{ prefix }}/admin/normal-accounts/{{ id }}/reactivate" class="inline-form">
+                    <button type="submit" class="btn-sm outline" style="color: var(--success); border-color: var(--success);">Reactivate</button>
+                </form>
+                {% endif %}
+                {% endif %}
+            </div>
+        </div>
+        <div class="kv">
+            {% if let Some(ifsc) = origin_ifsc %}
+            <div>Origin IFSC</div><div class="mono">{{ ifsc }}</div>
+            {% else %}
+            <div>Origin IFSC</div><div class="muted">—</div>
+            {% endif %}
+            {% if let Some(acct) = origin_account_number %}
+            <div>Origin account</div><div class="mono">{{ acct }}</div>
+            {% else %}
+            <div>Origin account</div><div class="muted">—</div>
+            {% endif %}
+            <div>Created</div><div>{{ created_at }}</div>
+            <div>Updated</div><div>{{ updated_at }}</div>
+        </div>
+    </div>
+</article>
+
+<h2>Transaction history</h2>
+<div id="normal-transfers" hx-get="{{ prefix }}/admin/normal-accounts/{{ id }}/transfers" hx-trigger="load" hx-swap="innerHTML">
+    <article><p class="muted" aria-busy="true">Loading transactions…</p></article>
+</div>
+{% endblock %}

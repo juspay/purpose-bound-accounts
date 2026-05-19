@@ -1,45 +1,56 @@
 {% extends "base.html" %}
 
-{% block title %}All Transactions - PBA Admin{% endblock %}
+{% block title %}Transactions — PBA Ledger{% endblock %}
+{% block breadcrumb %}<a href="{{ prefix }}/admin">PBA Ledger</a> <span class="sep">/</span> <span class="current">Transactions</span>{% endblock %}
 
 {% block content %}
-<h1>All Transactions</h1>
+<div class="page-header">
+    <div>
+        <h1 class="page-title">All Transactions</h1>
+        <p class="page-subtitle">Across both purpose-bound and normal accounts.</p>
+    </div>
+</div>
+
+<nav class="subnav">
+    <a href="{{ prefix }}/admin/transactions" class="{% if active_kind == "all" %}active{% endif %}">All</a>
+    <a href="{{ prefix }}/admin/transactions?kind=pb" class="{% if active_kind == "pb" %}active{% endif %}">PB Accounts</a>
+    <a href="{{ prefix }}/admin/transactions?kind=normal" class="{% if active_kind == "normal" %}active{% endif %}">Normal Accounts</a>
+</nav>
 
 <div class="grid">
-    <article class="stat-card">
-        <h2>{{ total_balance }}</h2>
-        <p>Total Pool Balance</p>
+    <article class="stat-card stat-primary">
+        <p class="stat-label">Total Pool Balance</p>
+        <p class="stat-value">₹{{ total_balance }}</p>
+        <p class="stat-hint">Self + Others pools</p>
     </article>
-    <article class="stat-card">
-        <h2>{{ self_balance }}</h2>
-        <p>Self Pool</p>
+    <article class="stat-card stat-success">
+        <p class="stat-label">Self Pool</p>
+        <p class="stat-value">₹{{ self_balance }}</p>
+        <p class="stat-hint">No pending: ₹{{ pending_self }}</p>
     </article>
-    <article class="stat-card">
-        <h2>{{ others_balance }}</h2>
-        <p>Others Pool</p>
-    </article>
-    <article class="stat-card">
-        <h2 class="status-frozen">{{ pending_self }}</h2>
-        <p>Pending Self</p>
-    </article>
-    <article class="stat-card">
-        <h2 class="status-frozen">{{ pending_others }}</h2>
-        <p>Pending Others</p>
+    <article class="stat-card stat-success">
+        <p class="stat-label">Others Pool</p>
+        <p class="stat-value">₹{{ others_balance }}</p>
+        <p class="stat-hint">No pending: ₹{{ pending_others }}</p>
     </article>
 </div>
 
 {% if transactions.is_empty() %}
-<p>No transactions found.</p>
+<article>
+    <p class="muted mb-0">No transactions found.</p>
+</article>
 {% else %}
 <table>
     <thead>
         <tr>
+            <th>ID</th>
             <th>Timestamp</th>
+            <th>Kind</th>
             <th>Account</th>
             <th>Type</th>
             <th>Status</th>
             <th>Pool</th>
-            <th>Funding Type</th>
+            <th>Funding</th>
             <th>Direction</th>
             <th>Amount (INR)</th>
         </tr>
@@ -47,14 +58,16 @@
     <tbody>
         {% for t in &transactions %}
         <tr>
-            <td><a href="{{ prefix }}/admin/transactions/{{ t.id }}">{{ t.timestamp }}</a></td>
-            <td><a href="{{ prefix }}/admin/accounts/{{ t.account_id }}">{{ t.account_id_short }}</a></td>
+            <td class="mono text-small"><a href="{{ prefix }}/admin/transactions/{{ t.id }}">{{ t.id }}</a></td>
+            <td class="text-small muted">{{ t.timestamp }}</td>
+            <td><span class="{{ t.account_kind_class }}">{{ t.account_kind }}</span></td>
+            <td class="mono"><a href="{{ prefix }}{{ t.account_href }}">{{ t.account_id }}</a></td>
             <td>{{ t.transfer_type }}</td>
             <td class="{{ t.status_class }}">{{ t.status }}</td>
             <td>{{ t.pool }}</td>
             <td>{{ t.funding_type }}</td>
             <td class="{{ t.direction_class }}">{{ t.direction }}</td>
-            <td>{{ t.amount }}</td>
+            <td>₹{{ t.amount }}</td>
         </tr>
         {% endfor %}
     </tbody>
@@ -63,13 +76,13 @@
 <nav>
     <ul>
         {% if offset > 0 %}
-        <li><a href="{{ prefix }}/admin/transactions?offset={{ prev_offset }}&limit={{ limit }}" role="button" class="outline">&larr; Previous</a></li>
+        <li><a href="{{ prefix }}/admin/transactions?kind={{ active_kind }}&offset={{ prev_offset }}&limit={{ limit }}" role="button" class="outline">&larr; Previous</a></li>
         {% endif %}
         {% if has_next %}
-        <li><a href="{{ prefix }}/admin/transactions?offset={{ next_offset }}&limit={{ limit }}" role="button" class="outline">Next &rarr;</a></li>
+        <li><a href="{{ prefix }}/admin/transactions?kind={{ active_kind }}&offset={{ next_offset }}&limit={{ limit }}" role="button" class="outline">Next &rarr;</a></li>
         {% endif %}
     </ul>
 </nav>
-<p><small>Showing {{ offset + 1 }}–{{ offset + count }} of {{ total }} transactions</small></p>
+<p class="muted text-small">Showing {{ offset + 1 }}–{{ offset + count }} of {{ total }} transactions</p>
 {% endif %}
 {% endblock %}

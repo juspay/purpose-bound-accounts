@@ -40,23 +40,26 @@ pub async fn login_page(State(state): State<AppState>) -> impl IntoResponse {
 #[template(path = "admin/dashboard.html")]
 struct DashboardTemplate {
     prefix: String,
-    total_accounts: i64,
-    active_accounts: i64,
-    frozen_accounts: i64,
-    closed_accounts: i64,
+    total_pb_accounts: i64,
+    active_pb_accounts: i64,
+    frozen_pb_accounts: i64,
+    closed_pb_accounts: i64,
+    total_normal_accounts: i64,
+    active_normal_accounts: i64,
+    frozen_normal_accounts: i64,
     purpose_counts: Vec<(String, i64)>,
 }
 
 pub async fn dashboard(State(state): State<AppState>) -> Response {
-    let status_counts = match state.account_repo.count_accounts_by_status().await {
+    let pb_status_counts = match state.pb_account_repo.count_accounts_by_status().await {
         Ok(c) => c,
         Err(e) => {
-            tracing::error!("Failed to count accounts: {e}");
+            tracing::error!("Failed to count pb accounts: {e}");
             return (StatusCode::INTERNAL_SERVER_ERROR, "Database error").into_response();
         }
     };
 
-    let purpose_counts = match state.account_repo.count_accounts_by_purpose().await {
+    let purpose_counts = match state.pb_account_repo.count_accounts_by_purpose().await {
         Ok(c) => c,
         Err(e) => {
             tracing::error!("Failed to count by purpose: {e}");
@@ -64,24 +67,45 @@ pub async fn dashboard(State(state): State<AppState>) -> Response {
         }
     };
 
-    let mut active = 0i64;
-    let mut frozen = 0i64;
-    let mut closed = 0i64;
-    for (status, count) in &status_counts {
+    let normal_status_counts = match state.normal_account_repo.count_accounts_by_status().await {
+        Ok(c) => c,
+        Err(e) => {
+            tracing::error!("Failed to count normal accounts: {e}");
+            return (StatusCode::INTERNAL_SERVER_ERROR, "Database error").into_response();
+        }
+    };
+
+    let mut pb_active = 0i64;
+    let mut pb_frozen = 0i64;
+    let mut pb_closed = 0i64;
+    for (status, count) in &pb_status_counts {
         match status.as_str() {
-            "active" => active = *count,
-            "frozen" => frozen = *count,
-            "closed" => closed = *count,
+            "active" => pb_active = *count,
+            "frozen" => pb_frozen = *count,
+            "closed" => pb_closed = *count,
+            _ => {}
+        }
+    }
+
+    let mut normal_active = 0i64;
+    let mut normal_frozen = 0i64;
+    for (status, count) in &normal_status_counts {
+        match status.as_str() {
+            "active" => normal_active = *count,
+            "frozen" => normal_frozen = *count,
             _ => {}
         }
     }
 
     render(DashboardTemplate {
         prefix: state.path_prefix.clone(),
-        total_accounts: active + frozen + closed,
-        active_accounts: active,
-        frozen_accounts: frozen,
-        closed_accounts: closed,
+        total_pb_accounts: pb_active + pb_frozen + pb_closed,
+        active_pb_accounts: pb_active,
+        frozen_pb_accounts: pb_frozen,
+        closed_pb_accounts: pb_closed,
+        total_normal_accounts: normal_active + normal_frozen,
+        active_normal_accounts: normal_active,
+        frozen_normal_accounts: normal_frozen,
         purpose_counts,
     })
 }
@@ -114,7 +138,7 @@ async fn render_accounts_list(
     error: Option<String>,
     success: Option<String>,
 ) -> Response {
-    let accounts = match state.account_repo.list_accounts().await {
+    let accounts = match state.pb_account_repo.list_accounts().await {
         Ok(a) => a,
         Err(e) => {
             tracing::error!("Failed to list accounts: {e}");
@@ -122,7 +146,7 @@ async fn render_accounts_list(
         }
     };
 
-    let purpose_codes = match state.account_repo.list_purpose_types().await {
+    let purpose_codes = match state.pb_account_repo.list_purpose_types().await {
         Ok(pts) => pts.into_iter().map(|p| p.purpose_code).collect(),
         Err(_) => vec![],
     };
@@ -193,7 +217,7 @@ pub async fn create_account(
     };
 
     match state
-        .account_service
+        .pb_account_service
         .create_account(
             holder_id,
             &form.purpose_code,
@@ -229,7 +253,7 @@ pub async fn update_account_status(
     };
 
     match state
-        .account_service
+        .pb_account_service
         .update_status(account_id, status)
         .await
     {
@@ -278,7 +302,7 @@ pub async fn account_detail(
     State(state): State<AppState>,
     Path(account_id): Path<Uuid>,
 ) -> Response {
-    let account = match state.account_repo.get_account(account_id).await {
+    let account = match state.pb_account_repo.get_account(account_id).await {
         Ok(a) => a,
         Err(e) => {
             tracing::error!("Account not found: {e}");
@@ -318,7 +342,7 @@ pub async fn account_detail(
             .map(|d| PendingDepositRow {
                 id: d.id.to_string(),
                 amount: d.amount_display(),
-                pool: if d.pool == "self" {
+                pool: if d.pool.as_deref() == Some("self") {
                     "Self".to_string()
                 } else {
                     "Others".to_string()
@@ -400,7 +424,14 @@ pub async fn account_transfers_fragment(
 
     let transactions: Vec<TransactionRecord> = match state
         .transaction_repo
-        .list_by_account(account_id, offset, limit, None, None)
+        .list_by_account(
+            crate::domain::account_kind::AccountKind::Pb,
+            account_id,
+            offset,
+            limit,
+            None,
+            None,
+        )
         .await
     {
         Ok(t) => t,
@@ -426,7 +457,11 @@ pub async fn account_transfers_fragment(
     let rows: Vec<TransferRow> = transactions
         .into_iter()
         .map(|t| {
-            let pool = if t.pool == "self" { "Self" } else { "Others" };
+            let pool = if t.pool.as_deref() == Some("self") {
+                "Self"
+            } else {
+                "Others"
+            };
             TransferRow {
                 id: t.id.to_string(),
                 timestamp: t.created_at.format("%Y-%m-%d %H:%M:%S").to_string(),
@@ -463,7 +498,7 @@ struct DepositTemplate {
 }
 
 pub async fn deposit_form(State(state): State<AppState>, Path(account_id): Path<Uuid>) -> Response {
-    let account = match state.account_repo.get_account(account_id).await {
+    let account = match state.pb_account_repo.get_account(account_id).await {
         Ok(a) => a,
         Err(_) => return (StatusCode::NOT_FOUND, "Account not found").into_response(),
     };
@@ -495,7 +530,7 @@ pub async fn process_deposit(
     let gateway_ref = form.gateway_ref.as_deref().filter(|s| !s.is_empty());
     let funding_type = form.funding_type.as_deref().filter(|s| !s.is_empty());
     match state
-        .deposit_service
+        .pb_deposit_service
         .deposit(
             account_id,
             &form.source_ifsc,
@@ -513,7 +548,7 @@ pub async fn process_deposit(
             .into_response(),
         Err(e) => {
             let purpose_code = state
-                .account_repo
+                .pb_account_repo
                 .get_account(account_id)
                 .await
                 .map(|a| a.purpose_code)
@@ -533,7 +568,7 @@ pub async fn post_deposit(
     Path((account_id, deposit_id)): Path<(Uuid, Uuid)>,
 ) -> Response {
     match state
-        .deposit_service
+        .pb_deposit_service
         .post_deposit(account_id, deposit_id)
         .await
     {
@@ -552,7 +587,7 @@ pub async fn void_deposit(
     Path((account_id, deposit_id)): Path<(Uuid, Uuid)>,
 ) -> Response {
     match state
-        .deposit_service
+        .pb_deposit_service
         .void_deposit(account_id, deposit_id, None)
         .await
     {
@@ -576,7 +611,7 @@ struct PaymentTemplate {
 }
 
 pub async fn payment_form(State(state): State<AppState>, Path(account_id): Path<Uuid>) -> Response {
-    let account = match state.account_repo.get_account(account_id).await {
+    let account = match state.pb_account_repo.get_account(account_id).await {
         Ok(a) => a,
         Err(_) => return (StatusCode::NOT_FOUND, "Account not found").into_response(),
     };
@@ -594,6 +629,7 @@ pub struct PaymentForm {
     merchant_id: String,
     merchant_mcc: String,
     description: String,
+    gateway_ref: Option<String>,
 }
 
 pub async fn process_payment(
@@ -601,8 +637,9 @@ pub async fn process_payment(
     Path(account_id): Path<Uuid>,
     axum::extract::Form(form): axum::extract::Form<PaymentForm>,
 ) -> Response {
+    let gateway_ref = form.gateway_ref.as_deref().filter(|s| !s.is_empty());
     match state
-        .payment_service
+        .pb_payment_service
         .make_payment(
             account_id,
             form.amount,
@@ -610,6 +647,7 @@ pub async fn process_payment(
             &form.merchant_id,
             &form.description,
             None,
+            gateway_ref,
         )
         .await
     {
@@ -617,7 +655,7 @@ pub async fn process_payment(
             .into_response(),
         Err(e) => {
             let purpose_code = state
-                .account_repo
+                .pb_account_repo
                 .get_account(account_id)
                 .await
                 .map(|a| a.purpose_code)
@@ -645,7 +683,7 @@ pub async fn withdrawal_form(
     State(state): State<AppState>,
     Path(account_id): Path<Uuid>,
 ) -> Response {
-    let account = match state.account_repo.get_account(account_id).await {
+    let account = match state.pb_account_repo.get_account(account_id).await {
         Ok(a) => a,
         Err(_) => return (StatusCode::NOT_FOUND, "Account not found").into_response(),
     };
@@ -660,6 +698,7 @@ pub async fn withdrawal_form(
 #[derive(Deserialize)]
 pub struct WithdrawalForm {
     amount: u64,
+    gateway_ref: Option<String>,
 }
 
 pub async fn process_withdrawal(
@@ -667,16 +706,17 @@ pub async fn process_withdrawal(
     Path(account_id): Path<Uuid>,
     axum::extract::Form(form): axum::extract::Form<WithdrawalForm>,
 ) -> Response {
+    let gateway_ref = form.gateway_ref.as_deref().filter(|s| !s.is_empty());
     match state
-        .withdrawal_service
-        .withdraw(account_id, form.amount, None)
+        .pb_withdrawal_service
+        .withdraw(account_id, form.amount, None, gateway_ref)
         .await
     {
         Ok(_) => Redirect::to(&prefixed(&state, &format!("/admin/accounts/{account_id}")))
             .into_response(),
         Err(e) => {
             let purpose_code = state
-                .account_repo
+                .pb_account_repo
                 .get_account(account_id)
                 .await
                 .map(|a| a.purpose_code)
@@ -708,13 +748,16 @@ struct TransactionsPageTemplate {
     prev_offset: i64,
     next_offset: i64,
     has_next: bool,
+    active_kind: String,
 }
 
 struct AllTransactionRow {
     id: String,
     timestamp: String,
     account_id: String,
-    account_id_short: String,
+    account_kind: String,
+    account_kind_class: String,
+    account_href: String,
     transfer_type: String,
     status: String,
     status_class: String,
@@ -729,6 +772,7 @@ struct AllTransactionRow {
 pub struct TransactionsPageQuery {
     offset: Option<i64>,
     limit: Option<i64>,
+    kind: Option<String>,
 }
 
 pub async fn transactions_page(
@@ -737,6 +781,12 @@ pub async fn transactions_page(
 ) -> Response {
     let offset = query.offset.unwrap_or(0).max(0);
     let limit = query.limit.unwrap_or(50).clamp(1, 100);
+    let kind_filter = match query.kind.as_deref() {
+        Some("pb") => Some(crate::domain::account_kind::AccountKind::Pb),
+        Some("normal") => Some(crate::domain::account_kind::AccountKind::Normal),
+        _ => None,
+    };
+    let active_kind = query.kind.clone().unwrap_or_else(|| "all".to_string());
 
     let pool_summary = match state.transaction_repo.pool_summary().await {
         Ok(s) => s,
@@ -748,7 +798,7 @@ pub async fn transactions_page(
 
     let transactions = match state
         .transaction_repo
-        .list_all(offset, limit, None, None)
+        .list_all(offset, limit, None, None, kind_filter.clone())
         .await
     {
         Ok(t) => t,
@@ -758,7 +808,7 @@ pub async fn transactions_page(
         }
     };
 
-    let total = match state.transaction_repo.count_all(None, None).await {
+    let total = match state.transaction_repo.count_all(None, None, kind_filter).await {
         Ok(c) => c,
         Err(e) => {
             tracing::error!("Failed to count transactions: {e}");
@@ -770,17 +820,29 @@ pub async fn transactions_page(
     let rows: Vec<AllTransactionRow> = transactions
         .into_iter()
         .map(|t| {
-            let pool = if t.pool == "self" { "Self" } else { "Others" };
+            let pool = if t.pool.as_deref() == Some("self") {
+                "Self"
+            } else {
+                "Others"
+            };
             let status_class = match t.status {
                 TransactionStatus::Pending => "status-frozen",
                 TransactionStatus::Posted | TransactionStatus::Settled => "status-active",
                 TransactionStatus::Voided => "status-closed",
             };
+            let is_normal = t.account_kind == crate::domain::account_kind::AccountKind::Normal;
+            let account_href = if is_normal {
+                format!("/admin/normal-accounts/{}", t.account_id)
+            } else {
+                format!("/admin/accounts/{}", t.account_id)
+            };
             AllTransactionRow {
                 id: t.id.to_string(),
                 timestamp: t.created_at.format("%Y-%m-%d %H:%M:%S").to_string(),
                 account_id: t.account_id.to_string(),
-                account_id_short: t.account_id.to_string()[..8].to_string(),
+                account_kind: if is_normal { "Normal".to_string() } else { "PB".to_string() },
+                account_kind_class: if is_normal { "badge pill-pending".to_string() } else { "badge pill-sentinel".to_string() },
+                account_href,
                 transfer_type: t.type_label().to_string(),
                 status: t.status.as_str().to_string(),
                 status_class: status_class.to_string(),
@@ -810,6 +872,7 @@ pub async fn transactions_page(
         prev_offset: (offset - limit).max(0),
         next_offset: offset + limit,
         has_next: offset + count < total,
+        active_kind,
     })
 }
 
@@ -924,7 +987,7 @@ struct PurposeTypesTemplate {
 }
 
 pub async fn purpose_types_page(State(state): State<AppState>) -> Response {
-    let purpose_types = match state.account_repo.list_purpose_types().await {
+    let purpose_types = match state.pb_account_repo.list_purpose_types().await {
         Ok(pts) => pts,
         Err(e) => {
             tracing::error!("Failed to list purpose types: {e}");
@@ -944,6 +1007,8 @@ struct TransactionDetailTemplate {
     id: String,
     id_short: String,
     account_id: String,
+    account_href: String,
+    account_kind_label: String,
     holder_id: String,
     purpose_code: String,
     tb_transfer_id: String,
@@ -987,12 +1052,29 @@ pub async fn transaction_detail(
     };
 
     let dash = "—".to_string();
+    let is_normal_txn = txn.account_kind == crate::domain::account_kind::AccountKind::Normal;
+    let account_href = if is_normal_txn {
+        format!("/admin/normal-accounts/{}", txn.account_id)
+    } else {
+        format!("/admin/accounts/{}", txn.account_id)
+    };
+    let account_kind_label = if is_normal_txn { "Normal".to_string() } else { "PB".to_string() };
 
-    let (holder_id, purpose_code) = match state.account_repo.get_account(txn.account_id).await {
-        Ok(a) => (a.holder_id, a.purpose_code),
-        Err(e) => {
-            tracing::warn!("Failed to load parent account for transaction {transaction_id}: {e}");
-            (dash.clone(), dash.clone())
+    let (holder_id, purpose_code) = if is_normal_txn {
+        match state.normal_account_repo.get_account(txn.account_id).await {
+            Ok(a) => (a.holder_id, dash.clone()),
+            Err(e) => {
+                tracing::warn!("Failed to load normal account for transaction {transaction_id}: {e}");
+                (dash.clone(), dash.clone())
+            }
+        }
+    } else {
+        match state.pb_account_repo.get_account(txn.account_id).await {
+            Ok(a) => (a.holder_id, a.purpose_code),
+            Err(e) => {
+                tracing::warn!("Failed to load pb account for transaction {transaction_id}: {e}");
+                (dash.clone(), dash.clone())
+            }
         }
     };
 
@@ -1006,7 +1088,7 @@ pub async fn transaction_detail(
     }
     .to_string();
 
-    let pool = if txn.pool == "self" {
+    let pool = if txn.pool.as_deref() == Some("self") {
         "Self".to_string()
     } else {
         "Others".to_string()
@@ -1059,6 +1141,8 @@ pub async fn transaction_detail(
         id: id_str,
         id_short,
         account_id,
+        account_href,
+        account_kind_label,
         holder_id,
         purpose_code,
         tb_transfer_id,
@@ -1096,7 +1180,7 @@ pub async fn post_transaction(
         Err(_) => return (StatusCode::NOT_FOUND, "Transaction not found").into_response(),
     };
     if let Err(e) = state
-        .deposit_service
+        .pb_deposit_service
         .post_deposit(txn.account_id, transaction_id)
         .await
     {
@@ -1118,7 +1202,7 @@ pub async fn void_transaction(
         Err(_) => return (StatusCode::NOT_FOUND, "Transaction not found").into_response(),
     };
     if let Err(e) = state
-        .deposit_service
+        .pb_deposit_service
         .void_deposit(txn.account_id, transaction_id, None)
         .await
     {
@@ -1142,6 +1226,8 @@ mod tests {
             id: "11111111-1111-1111-1111-111111111111".to_string(),
             id_short: "11111111".to_string(),
             account_id: "22222222-2222-2222-2222-222222222222".to_string(),
+            account_href: "/admin/accounts/22222222-2222-2222-2222-222222222222".to_string(),
+            account_kind_label: "PB".to_string(),
             holder_id: "holder-xyz".to_string(),
             purpose_code: "health".to_string(),
             tb_transfer_id: "9999999999".to_string(),
@@ -1176,6 +1262,8 @@ mod tests {
             id: "33333333-3333-3333-3333-333333333333".to_string(),
             id_short: "33333333".to_string(),
             account_id: "22222222-2222-2222-2222-222222222222".to_string(),
+            account_href: "/admin/accounts/22222222-2222-2222-2222-222222222222".to_string(),
+            account_kind_label: "PB".to_string(),
             holder_id: "holder-xyz".to_string(),
             purpose_code: "health".to_string(),
             tb_transfer_id: "8888888888".to_string(),
@@ -1190,7 +1278,7 @@ mod tests {
             amount: "12.34".to_string(),
             source_ifsc: "—".to_string(),
             source_account: "—".to_string(),
-            gateway_ref: "—".to_string(),
+            gateway_ref: "gw-pay-123".to_string(),
             merchant_id: "MERCH-1".to_string(),
             merchant_mcc: "8011".to_string(),
             description: "Doctor visit".to_string(),
@@ -1202,6 +1290,48 @@ mod tests {
             is_withdrawal: false,
             can_post_or_void: false,
         }
+    }
+
+    fn withdrawal_posted_fixture() -> TransactionDetailTemplate {
+        TransactionDetailTemplate {
+            prefix: "".to_string(),
+            id: "44444444-4444-4444-4444-444444444444".to_string(),
+            id_short: "44444444".to_string(),
+            account_id: "22222222-2222-2222-2222-222222222222".to_string(),
+            account_href: "/admin/accounts/22222222-2222-2222-2222-222222222222".to_string(),
+            account_kind_label: "PB".to_string(),
+            holder_id: "holder-xyz".to_string(),
+            purpose_code: "health".to_string(),
+            tb_transfer_id: "7777777777".to_string(),
+            idempotency_key: "—".to_string(),
+            transaction_type_label: "Withdrawal".to_string(),
+            status: "settled".to_string(),
+            status_class: "status-active".to_string(),
+            direction: "Outbound".to_string(),
+            direction_class: "outbound".to_string(),
+            pool: "Self".to_string(),
+            funding_type: "—".to_string(),
+            amount: "20.00".to_string(),
+            source_ifsc: "—".to_string(),
+            source_account: "—".to_string(),
+            gateway_ref: "gw-wd-456".to_string(),
+            merchant_id: "—".to_string(),
+            merchant_mcc: "—".to_string(),
+            description: "—".to_string(),
+            created_at: "2026-04-30 12:00:00".to_string(),
+            updated_at: "2026-04-30 12:00:00".to_string(),
+            timeout_seconds: "—".to_string(),
+            is_deposit: false,
+            is_payment: false,
+            is_withdrawal: true,
+            can_post_or_void: false,
+        }
+    }
+
+    fn withdrawal_no_gateway_ref_fixture() -> TransactionDetailTemplate {
+        let mut f = withdrawal_posted_fixture();
+        f.gateway_ref = "—".to_string();
+        f
     }
 
     #[test]
@@ -1273,12 +1403,65 @@ mod tests {
             "description missing: {}",
             html
         );
+        assert!(
+            html.contains("gw-pay-123"),
+            "gateway_ref missing on payment detail: {}",
+            html
+        );
+        assert!(
+            html.contains("Gateway Ref:"),
+            "Gateway Ref label missing on payment detail: {}",
+            html
+        );
         // For a payment, source IFSC value should not appear (we render "—"
         // for the absent source fields, so check the original value isn't there).
         assert!(
             !html.contains("HDFC0001234"),
             "payment should not show deposit-only source IFSC: {}",
             html
+        );
+    }
+
+    #[test]
+    fn renders_reference_section_for_withdrawal() {
+        let html = withdrawal_posted_fixture().render().expect("render");
+        assert!(
+            html.contains("<strong>Reference</strong>"),
+            "Reference card header missing on withdrawal detail: {}",
+            html
+        );
+        assert!(
+            html.contains("gw-wd-456"),
+            "gateway_ref missing on withdrawal detail: {}",
+            html
+        );
+        assert!(
+            html.contains("Gateway Ref:"),
+            "Gateway Ref label missing on withdrawal detail: {}",
+            html
+        );
+        assert!(
+            !html.contains("Withdrawals have no external source"),
+            "old placeholder still present on withdrawal detail: {}",
+            html
+        );
+    }
+
+    #[test]
+    fn renders_dash_for_absent_gateway_ref_on_withdrawal() {
+        let html = withdrawal_no_gateway_ref_fixture()
+            .render()
+            .expect("render");
+        let marker = "Gateway Ref:</strong>";
+        let idx = html
+            .find(marker)
+            .expect("Gateway Ref label not found on withdrawal detail");
+        let after = &html[idx + marker.len()..];
+        let snippet = &after[..after.len().min(40)];
+        assert!(
+            snippet.contains("—"),
+            "expected `—` after Gateway Ref label, got: {}",
+            snippet
         );
     }
 }
