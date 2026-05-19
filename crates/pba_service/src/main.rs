@@ -14,24 +14,35 @@ mod secrets_kms;
 mod secrets_plaintext;
 mod service;
 
-use config::AppConfig;
-use repository::account_repo::AccountRepo;
+use config::{AppConfig, MigrationMode};
 use repository::ledger_repo::LedgerRepo;
+use repository::normal_account_repo::NormalAccountRepo;
+use repository::pb_account_repo::PbAccountRepo;
 use repository::transaction_repo::TransactionRepo;
-use service::account_service::AccountService;
-use service::deposit_service::DepositService;
-use service::payment_service::PaymentService;
-use service::withdrawal_service::WithdrawalService;
+use service::normal_account_service::NormalAccountService;
+use service::normal_deposit_service::NormalDepositService;
+use service::normal_withdrawal_service::NormalWithdrawalService;
+use service::pb_account_service::PbAccountService;
+use service::pb_deposit_service::PbDepositService;
+use service::pb_payment_service::PbPaymentService;
+use service::pb_withdrawal_service::PbWithdrawalService;
+use service::transfer_service::TransferService;
 
 #[derive(Clone)]
 pub struct AppState {
-    pub account_service: Arc<AccountService>,
-    pub deposit_service: Arc<DepositService>,
-    pub payment_service: Arc<PaymentService>,
-    pub withdrawal_service: Arc<WithdrawalService>,
-    pub account_repo: Arc<AccountRepo>,
+    pub pb_account_service: Arc<PbAccountService>,
+    pub pb_deposit_service: Arc<PbDepositService>,
+    pub pb_payment_service: Arc<PbPaymentService>,
+    pub pb_withdrawal_service: Arc<PbWithdrawalService>,
+    pub pb_account_repo: Arc<PbAccountRepo>,
+    pub normal_account_service: Arc<NormalAccountService>,
+    pub normal_deposit_service: Arc<NormalDepositService>,
+    pub normal_withdrawal_service: Arc<NormalWithdrawalService>,
+    pub normal_account_repo: Arc<NormalAccountRepo>,
+    pub transfer_service: Arc<TransferService>,
     pub ledger_repo: Arc<LedgerRepo>,
     pub transaction_repo: Arc<TransactionRepo>,
+    // TigerBeetle explorer (branch-only feature)
     pub tb_cluster_id: u128,
     pub tb_addresses: Vec<String>,
     pub auth: AuthContext,
@@ -122,14 +133,89 @@ async fn main() {
         .await
         .expect("Failed to connect to PostgreSQL");
 
-    // Run migrations
-    sqlx::migrate!("src/db/migrations")
-        .run(&pg_pool)
-        .await
-        .expect("Failed to run database migrations");
+    // Handle database migrations per configured mode.
+    let migrator = sqlx::migrate!("src/db/migrations");
+    match config.db_migration_mode {
+        MigrationMode::None => {
+            tracing::info!("Skipping database migrations (DB_MIGRATION_MODE=none)");
+        }
+        MigrationMode::Run => {
+            migrator
+                .run(&pg_pool)
+                .await
+                .expect("Failed to run database migrations");
+        }
+        MigrationMode::DryRun => {
+            use sqlx::migrate::Migrate;
+            use std::collections::HashSet;
+
+            let mut conn = pg_pool
+                .acquire()
+                .await
+                .expect("Failed to acquire connection for migration dry-run");
+            conn.ensure_migrations_table()
+                .await
+                .expect("Failed to ensure _sqlx_migrations table");
+            let applied: HashSet<i64> = conn
+                .list_applied_migrations()
+                .await
+                .expect("Failed to list applied migrations")
+                .into_iter()
+                .map(|m| m.version)
+                .collect();
+            drop(conn);
+
+            let mut pending = 0usize;
+            for migration in migrator.iter() {
+                if migration.migration_type.is_down_migration() {
+                    continue;
+                }
+                if applied.contains(&migration.version) {
+                    continue;
+                }
+                pending += 1;
+
+                // Mirror what sqlx-postgres' apply() emits per migration: a per-migration
+                // transaction (omitted when the file declares `-- no transaction`),
+                // the migration SQL itself, and the bookkeeping INSERT into
+                // _sqlx_migrations so a subsequent run sees this version as applied.
+                // execution_time = -1 matches sqlx's in-transaction placeholder.
+                let checksum_hex: String = migration
+                    .checksum
+                    .iter()
+                    .map(|b| format!("{b:02x}"))
+                    .collect();
+                let description_sql = migration.description.replace('\'', "''");
+
+                println!(
+                    "-- migration {} ({})",
+                    migration.version, migration.description
+                );
+                if !migration.no_tx {
+                    println!("BEGIN;");
+                }
+                println!("{}", migration.sql.trim_end());
+                println!(
+                    "INSERT INTO _sqlx_migrations (version, description, success, checksum, execution_time) \
+                     VALUES ({}, '{}', TRUE, '\\x{}'::bytea, -1);",
+                    migration.version, description_sql, checksum_hex
+                );
+                if !migration.no_tx {
+                    println!("COMMIT;");
+                }
+                println!();
+            }
+
+            // Use eprintln! so stdout stays a clean SQL stream that can be piped to psql.
+            eprintln!(
+                "DB_MIGRATION_MODE=dry-run: dumped {pending} pending migration(s); exiting without starting server"
+            );
+            return;
+        }
+    }
 
     // Initialize repositories
-    let account_repo = Arc::new(AccountRepo::new(pg_pool.clone()));
+    let pb_account_repo = Arc::new(PbAccountRepo::new(pg_pool.clone()));
     let transaction_repo = Arc::new(TransactionRepo::new(pg_pool.clone()));
     let ledger_repo = Arc::new(LedgerRepo::new(
         config.tigerbeetle_cluster_id,
@@ -143,35 +229,65 @@ async fn main() {
         .expect("Failed to initialize sentinel TB accounts");
 
     // Initialize services
-    let account_service = Arc::new(AccountService::new(
-        Arc::clone(&account_repo),
+    let pb_account_service = Arc::new(PbAccountService::new(
+        Arc::clone(&pb_account_repo),
         Arc::clone(&ledger_repo),
     ));
-    let deposit_service = Arc::new(DepositService::new(
-        Arc::clone(&account_repo),
+    let pb_deposit_service = Arc::new(PbDepositService::new(
+        Arc::clone(&pb_account_repo),
         Arc::clone(&ledger_repo),
         Arc::clone(&transaction_repo),
         config.deposit_timeout_seconds,
     ));
-    let payment_service = Arc::new(PaymentService::new(
-        Arc::clone(&account_repo),
+    let pb_payment_service = Arc::new(PbPaymentService::new(
+        Arc::clone(&pb_account_repo),
         Arc::clone(&ledger_repo),
         Arc::clone(&transaction_repo),
     ));
-    let withdrawal_service = Arc::new(WithdrawalService::new(
-        Arc::clone(&account_repo),
+    let pb_withdrawal_service = Arc::new(PbWithdrawalService::new(
+        Arc::clone(&pb_account_repo),
         Arc::clone(&ledger_repo),
         Arc::clone(&transaction_repo),
+    ));
+
+    let normal_account_repo = Arc::new(NormalAccountRepo::new(pg_pool.clone()));
+
+    let normal_account_service = Arc::new(NormalAccountService::new(
+        Arc::clone(&normal_account_repo),
+        Arc::clone(&ledger_repo),
+    ));
+    let normal_deposit_service = Arc::new(NormalDepositService::new(
+        Arc::clone(&normal_account_repo),
+        Arc::clone(&ledger_repo),
+        Arc::clone(&transaction_repo),
+        config.deposit_timeout_seconds,
+    ));
+    let normal_withdrawal_service = Arc::new(NormalWithdrawalService::new(
+        Arc::clone(&normal_account_repo),
+        Arc::clone(&ledger_repo),
+        Arc::clone(&transaction_repo),
+    ));
+    let transfer_service = Arc::new(TransferService::new(
+        Arc::clone(&normal_account_repo),
+        Arc::clone(&pb_account_repo),
+        Arc::clone(&ledger_repo),
+        Arc::clone(&transaction_repo),
+        config.deposit_timeout_seconds,
     ));
 
     let path_prefix = config.path_prefix.clone();
 
     let state = AppState {
-        account_service,
-        deposit_service,
-        payment_service,
-        withdrawal_service,
-        account_repo,
+        pb_account_service,
+        pb_deposit_service,
+        pb_payment_service,
+        pb_withdrawal_service,
+        pb_account_repo,
+        normal_account_service,
+        normal_deposit_service,
+        normal_withdrawal_service,
+        normal_account_repo,
+        transfer_service,
         ledger_repo,
         transaction_repo: Arc::clone(&transaction_repo),
         tb_cluster_id: config.tigerbeetle_cluster_id,

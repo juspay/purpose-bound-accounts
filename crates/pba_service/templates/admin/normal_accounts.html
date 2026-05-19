@@ -1,0 +1,77 @@
+{% extends "base.html" %}
+
+{% block title %}Normal Accounts — PBA Ledger{% endblock %}
+{% block breadcrumb %}<a href="{{ prefix }}/admin">PBA Ledger</a> <span class="sep">/</span> <span class="current">Normal Accounts</span>{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div>
+        <h1 class="page-title">Normal Accounts</h1>
+        <p class="page-subtitle">General-purpose accounts — trust money is received here and transferred to purpose-bound accounts.</p>
+    </div>
+    <div class="page-actions">
+        <a href="#new-account" role="button" onclick="document.getElementById('new-account-panel').open=true; return true;">+ New account</a>
+    </div>
+</div>
+
+{% if let Some(err) = error %}
+<div class="error-box"><strong>Error:</strong> {{ err }}</div>
+{% endif %}
+{% if let Some(msg) = success %}
+<div class="success-box">{{ msg }}</div>
+{% endif %}
+
+<details id="new-account-panel"{% if error.is_some() %} open{% endif %}>
+    <summary role="button" class="outline">Create Normal Account</summary>
+    <article>
+        <form method="post" action="{{ prefix }}/admin/normal-accounts">
+            <label>
+                Holder ID
+                <input type="text" name="holder_id" placeholder="External account reference" maxlength="255" required>
+            </label>
+            <div class="grid">
+                <label>
+                    Origin IFSC <span class="muted text-small">(optional)</span>
+                    <input type="text" name="origin_ifsc" placeholder="e.g. HDFC0001234">
+                </label>
+                <label>
+                    Origin Account Number <span class="muted text-small">(optional)</span>
+                    <input type="text" name="origin_account_number" placeholder="e.g. 1234567890">
+                </label>
+            </div>
+            <button type="submit">Create Account</button>
+        </form>
+    </article>
+</details>
+
+{% if accounts.is_empty() %}
+<article>
+    <p class="muted mb-0">No normal accounts found. Create one above.</p>
+</article>
+{% else %}
+<table>
+    <thead>
+        <tr>
+            <th>ID</th>
+            <th>Holder</th>
+            <th>Status</th>
+            <th>KYC Tier</th>
+            <th>Created</th>
+            <th></th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for account in &accounts %}
+        <tr>
+            <td class="mono"><a href="{{ prefix }}/admin/normal-accounts/{{ account.id }}">{{ account.id }}</a></td>
+            <td>{{ account.holder_id }}</td>
+            <td class="{{ account.status_class }}">{{ account.status }}</td>
+            <td>{{ account.kyc_tier }}</td>
+            <td>{{ account.created_at }}</td>
+            <td><a href="{{ prefix }}/admin/normal-accounts/{{ account.id }}" class="btn btn-sm outline">Open →</a></td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endif %}
+{% endblock %}

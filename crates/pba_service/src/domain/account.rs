@@ -79,13 +79,13 @@ mod tests {
 
     #[test]
     fn tb_ids_are_distinct() {
-        let id = Uuid::new_v4();
+        let id = Uuid::now_v7();
         assert_ne!(tb_self_id(id), tb_others_id(id));
     }
 
     #[test]
     fn tb_ids_are_deterministic() {
-        let id = Uuid::new_v4();
+        let id = Uuid::now_v7();
         assert_eq!(tb_self_id(id), tb_self_id(id));
         assert_eq!(tb_others_id(id), tb_others_id(id));
     }
@@ -93,7 +93,7 @@ mod tests {
     #[test]
     fn origin_source_match() {
         let account = PurposeBoundAccount {
-            id: Uuid::new_v4(),
+            id: Uuid::now_v7(),
             holder_id: "test-holder".to_string(),
             purpose_code: "health".to_string(),
             origin_ifsc: Ifsc::parse("HDFC0001234").unwrap(),

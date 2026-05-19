@@ -10,8 +10,12 @@ struct ErrorBody {
 
 #[derive(Debug)]
 pub enum AppError {
-    AccountNotFound(String),
-    AccountNotActive(String),
+    PbAccountNotFound(String),
+    PbAccountNotActive(String),
+    #[allow(dead_code)]
+    NormalAccountNotFound(String),
+    #[allow(dead_code)]
+    NormalAccountNotActive(String),
     PurposeTypeNotFound(String),
     InsufficientFunds {
         requested: u64,
@@ -24,6 +28,7 @@ pub enum AppError {
     TransactionNotFound(String),
     TransactionNotPending(String),
     FundingTypeRequired,
+    TrustDepositRequiresTransfer,
     /// Transfer rejected by TigerBeetle because debit would exceed credits (overdraft).
     /// This is retryable with a fresh balance read.
     ExceedsBalance,
@@ -37,8 +42,10 @@ pub enum AppError {
 impl std::fmt::Display for AppError {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            Self::AccountNotFound(id) => write!(f, "Account not found: {id}"),
-            Self::AccountNotActive(id) => write!(f, "Account not active: {id}"),
+            Self::PbAccountNotFound(id) => write!(f, "PB account not found: {id}"),
+            Self::PbAccountNotActive(id) => write!(f, "PB account not active: {id}"),
+            Self::NormalAccountNotFound(id) => write!(f, "Normal account not found: {id}"),
+            Self::NormalAccountNotActive(id) => write!(f, "Normal account not active: {id}"),
             Self::PurposeTypeNotFound(code) => {
                 write!(f, "Purpose type not found: {code}")
             }
@@ -57,6 +64,10 @@ impl std::fmt::Display for AppError {
                 write!(f, "Transaction is not in pending state: {id}")
             }
             Self::FundingTypeRequired => write!(f, "funding_type is required for non-origin deposits (must be 'trust' or 'third_party')"),
+            Self::TrustDepositRequiresTransfer => write!(
+                f,
+                "Trust-funded deposits to PB accounts have been removed. Use POST /normal-accounts/{{id}}/transfers instead."
+            ),
             Self::ExceedsBalance => write!(f, "Transfer exceeds available balance"),
             Self::TigerBeetleError(msg) => write!(f, "TigerBeetle error: {msg}"),
             Self::DatabaseError(msg) => write!(f, "Database error: {msg}"),
@@ -70,8 +81,10 @@ impl std::fmt::Display for AppError {
 impl IntoResponse for AppError {
     fn into_response(self) -> Response {
         let (status, error_type) = match &self {
-            AppError::AccountNotFound(_) => (StatusCode::NOT_FOUND, "AccountNotFound"),
-            AppError::AccountNotActive(_) => (StatusCode::CONFLICT, "AccountNotActive"),
+            AppError::PbAccountNotFound(_) => (StatusCode::NOT_FOUND, "PbAccountNotFound"),
+            AppError::PbAccountNotActive(_) => (StatusCode::CONFLICT, "PbAccountNotActive"),
+            AppError::NormalAccountNotFound(_) => (StatusCode::NOT_FOUND, "NormalAccountNotFound"),
+            AppError::NormalAccountNotActive(_) => (StatusCode::CONFLICT, "NormalAccountNotActive"),
             AppError::PurposeTypeNotFound(_) => (StatusCode::NOT_FOUND, "PurposeTypeNotFound"),
             AppError::InsufficientFunds { .. } => {
                 (StatusCode::UNPROCESSABLE_ENTITY, "InsufficientFunds")
@@ -80,6 +93,9 @@ impl IntoResponse for AppError {
             AppError::TransactionNotFound(_) => (StatusCode::NOT_FOUND, "TransactionNotFound"),
             AppError::TransactionNotPending(_) => (StatusCode::CONFLICT, "TransactionNotPending"),
             AppError::FundingTypeRequired => (StatusCode::BAD_REQUEST, "FundingTypeRequired"),
+            AppError::TrustDepositRequiresTransfer => {
+                (StatusCode::BAD_REQUEST, "TrustDepositRequiresTransfer")
+            }
             AppError::ExceedsBalance => (StatusCode::UNPROCESSABLE_ENTITY, "InsufficientFunds"),
             AppError::TigerBeetleError(_) => {
                 (StatusCode::INTERNAL_SERVER_ERROR, "TigerBeetleError")

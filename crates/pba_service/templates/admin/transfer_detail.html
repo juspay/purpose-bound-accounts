@@ -1,0 +1,73 @@
+{% extends "base.html" %}
+
+{% block title %}Transfer {{ transfer_id }} — PBA Ledger{% endblock %}
+{% block breadcrumb %}<a href="{{ prefix }}/admin">PBA Ledger</a> <span class="sep">/</span> <a href="{{ prefix }}/admin/normal-accounts">Normal Accounts</a> <span class="sep">/</span> <a href="{{ prefix }}/admin/normal-accounts/{{ source_account_id }}" class="mono">{{ source_account_id }}</a> <span class="sep">/</span> <span class="current">Transfer</span>{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div>
+        <h1 class="page-title">Transfer Detail</h1>
+        <p class="page-subtitle mono">{{ transfer_id }}</p>
+    </div>
+    <div class="page-actions">
+        {% if can_post_or_void %}
+        <form method="post" action="{{ prefix }}/admin/transfers/{{ transfer_id }}/void" class="inline-form">
+            <button type="submit" class="btn-sm outline" style="color: var(--danger); border-color: var(--danger);">Void</button>
+        </form>
+        <form method="post" action="{{ prefix }}/admin/transfers/{{ transfer_id }}/post" class="inline-form">
+            <button type="submit" class="btn-sm" style="background: var(--success);">Post</button>
+        </form>
+        {% endif %}
+        <a href="{{ prefix }}/admin/normal-accounts/{{ source_account_id }}" role="button" class="outline">← Back to account</a>
+    </div>
+</div>
+
+<div class="grid">
+    <article class="stat-card {% if status == "posted" %}stat-success{% else if status == "pending" %}stat-warn{% else if status == "voided" %}stat-danger{% else %}stat-primary{% endif %}">
+        <p class="stat-label">Status</p>
+        <p class="stat-value" style="font-size: 1.25rem; padding-top: 0.35rem; text-transform: capitalize;">{{ status }}</p>
+        <p class="stat-hint">Transfer state</p>
+    </article>
+    <article class="stat-card stat-primary">
+        <p class="stat-label">Amount</p>
+        <p class="stat-value">₹{{ amount }}</p>
+        <p class="stat-hint">Normal → PB transfer</p>
+    </article>
+</div>
+
+<article>
+    <header>Transfer details</header>
+    <div class="grid" style="grid-template-columns: 1fr 1fr;">
+        <div class="kv">
+            <div>Transfer ID</div><div class="mono">{{ transfer_id }}</div>
+            <div>Correlation ID</div><div class="mono">{{ correlation_id }}</div>
+            <div>Status</div><div><span class="{{ status_class }}">{{ status }}</span></div>
+            <div>Amount</div><div>₹{{ amount }}</div>
+            <div>Created</div><div>{{ created_at }}</div>
+        </div>
+        <div class="kv">
+            <div>Gateway Ref</div>
+            <div class="mono">{% if gateway_ref.is_empty() %}<span class="muted">—</span>{% else %}{{ gateway_ref }}{% endif %}</div>
+            <div>Description</div>
+            <div>{% if description.is_empty() %}<span class="muted">—</span>{% else %}{{ description }}{% endif %}</div>
+        </div>
+    </div>
+</article>
+
+<article>
+    <header>Accounts</header>
+    <div class="grid" style="grid-template-columns: 1fr 1fr;">
+        <div class="kv">
+            <div>Source (Normal)</div>
+            <div class="mono"><a href="{{ prefix }}/admin/normal-accounts/{{ source_account_id }}">{{ source_account_id }}</a></div>
+            <div>Source Holder</div><div class="mono">{{ source_holder_id }}</div>
+        </div>
+        <div class="kv">
+            <div>Destination (PB)</div>
+            <div class="mono"><a href="{{ prefix }}/admin/accounts/{{ dest_account_id }}">{{ dest_account_id }}</a></div>
+            <div>Destination Holder</div><div class="mono">{{ dest_holder_id }}</div>
+            <div>Purpose</div><div><span class="badge">{{ dest_purpose }}</span></div>
+        </div>
+    </div>
+</article>
+{% endblock %}
