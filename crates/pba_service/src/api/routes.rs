@@ -102,6 +102,10 @@ pub fn protected_router() -> Router<AppState> {
             post(handlers::transfer::void_transfer),
         )
         .route(
+            "/normal-accounts/{account_id}/transfers/{transfer_id}/reverse",
+            post(handlers::transfer::reverse_transfer),
+        )
+        .route(
             "/normal-accounts/{account_id}/withdrawals",
             post(handlers::normal::withdraw_from_normal_account),
         )
