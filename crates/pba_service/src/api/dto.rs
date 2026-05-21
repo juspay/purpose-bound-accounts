@@ -227,6 +227,8 @@ pub struct TransactionSummaryDto {
     pub funding_type: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub correlation_id: Option<Uuid>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub reverses_transaction_id: Option<Uuid>,
     pub created_at: chrono::DateTime<chrono::Utc>,
 }
 
@@ -249,6 +251,7 @@ impl From<crate::domain::transaction::TransactionRecord> for TransactionSummaryD
             gateway_ref: t.gateway_ref,
             funding_type: t.funding_type,
             correlation_id: t.correlation_id,
+            reverses_transaction_id: t.reverses_transaction_id,
             created_at: t.created_at,
         }
     }
@@ -379,6 +382,47 @@ impl From<crate::service::transfer_service::TransferResult> for TransferResponse
             source_account_id: r.source_account_id,
             destination_account_id: r.destination_account_id,
             amount: r.amount,
+            status: r.status.as_str().to_string(),
+            correlation_id: r.correlation_id,
+            created_at: r.created_at,
+        }
+    }
+}
+
+// ── Transfer Reversal ──
+
+#[allow(dead_code)]
+#[derive(Debug, Deserialize)]
+pub struct ReverseTransferRequest {
+    pub amount: u64,
+    pub gateway_ref: Option<String>,
+    pub description: Option<String>,
+    pub idempotency_key: Option<String>,
+}
+
+#[allow(dead_code)]
+#[derive(Debug, Serialize)]
+pub struct ReversalResponse {
+    pub reversal_id: Uuid,
+    pub original_transfer_id: Uuid,
+    pub source_account_id: Uuid,
+    pub destination_account_id: Uuid,
+    pub amount: u64,
+    pub original_amount: u64,
+    pub status: String,
+    pub correlation_id: Uuid,
+    pub created_at: chrono::DateTime<chrono::Utc>,
+}
+
+impl From<crate::service::transfer_service::ReversalResult> for ReversalResponse {
+    fn from(r: crate::service::transfer_service::ReversalResult) -> Self {
+        Self {
+            reversal_id: r.reversal_id,
+            original_transfer_id: r.original_transfer_id,
+            source_account_id: r.source_account_id,
+            destination_account_id: r.destination_account_id,
+            amount: r.amount,
+            original_amount: r.original_amount,
             status: r.status.as_str().to_string(),
             correlation_id: r.correlation_id,
             created_at: r.created_at,
