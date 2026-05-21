@@ -29,7 +29,8 @@ async fn transfer_to_pb(world: &mut PbaWorld, amount: i64) {
         }
         Err(e) => {
             let kind = extract_transfer_error_kind(&e);
-            world.last_error = Some(crate::PbaError { kind });
+            let message = extract_transfer_error_message(&e);
+            world.last_error = Some(crate::PbaError { kind, message });
         }
     }
 }
@@ -69,7 +70,8 @@ async fn transfer_to_pb_with_idempotency(
         }
         Err(e) => {
             let kind = extract_transfer_error_kind(&e);
-            world.last_error = Some(crate::PbaError { kind });
+            let message = extract_transfer_error_message(&e);
+            world.last_error = Some(crate::PbaError { kind, message });
         }
     }
 }
@@ -99,7 +101,8 @@ async fn attempt_transfer_to_pb(world: &mut PbaWorld, amount: i64) {
         }
         Err(e) => {
             let kind = extract_transfer_error_kind(&e);
-            world.last_error = Some(crate::PbaError { kind });
+            let message = extract_transfer_error_message(&e);
+            world.last_error = Some(crate::PbaError { kind, message });
         }
     }
 }
@@ -224,9 +227,33 @@ async fn retry_transfer_with_idempotency(world: &mut PbaWorld, idempotency_key: 
         }
         Err(e) => {
             let kind = extract_transfer_error_kind(&e);
-            world.last_error = Some(crate::PbaError { kind });
+            let message = extract_transfer_error_message(&e);
+            world.last_error = Some(crate::PbaError { kind, message });
         }
     }
+}
+
+// ── Payment from PB account (reversal scenarios use this to drain others-pool) ──
+
+#[when(regex = r#"^I pay (\d+) paisa to merchant "([^"]*)" with MCC "([^"]*)"$"#)]
+async fn pay_paisa_to_merchant(
+    world: &mut PbaWorld,
+    amount: i64,
+    merchant_id: String,
+    mcc: String,
+) {
+    let account_id = world.account_id.as_ref().expect("No PB account ID").clone();
+    world
+        .client
+        .make_payment()
+        .account_id(&account_id)
+        .amount(amount)
+        .merchant_mcc(&mcc)
+        .merchant_id(&merchant_id)
+        .description("reversal-test payment")
+        .send()
+        .await
+        .expect("Payment to drain others-pool failed unexpectedly");
 }
 
 // ── Freeze PB account ─────────────────────────────────────────────────────────
@@ -504,10 +531,237 @@ where
         "PbAccountNotActive",
         "AccountNotFound",
         "AccountNotActive",
+        "TransferNotReversible",
+        "TransferAlreadyReversed",
+        "ReversalAmountInvalid",
+        "TransactionNotFound",
     ] {
         if s.contains(code) {
             return code.to_string();
         }
     }
     s
+}
+
+fn extract_transfer_error_message<E>(e: &E) -> Option<String>
+where
+    E: std::fmt::Debug,
+{
+    Some(format!("{e:?}"))
+}
+
+// ── Reversal ──────────────────────────────────────────────────────────────────
+
+#[when(regex = r#"^I reverse (\d+) paisa from the transfer$"#)]
+async fn reverse_transfer(world: &mut PbaWorld, amount: i64) {
+    let normal_account_id = world
+        .last_normal_account_id
+        .as_ref()
+        .expect("No normal account ID")
+        .clone();
+    let transfer_id = world
+        .last_transfer_id
+        .as_ref()
+        .expect("No transfer ID")
+        .clone();
+    let result = world
+        .client
+        .reverse_normal_account_transfer()
+        .account_id(&normal_account_id)
+        .transfer_id(&transfer_id)
+        .amount(amount)
+        .send()
+        .await;
+    match result {
+        Ok(output) => {
+            world.last_reversal_id = Some(output.reversal_id().to_string());
+            world.last_reversal_status = Some(output.status().to_string());
+            world.last_reversal_correlation_id = Some(output.correlation_id().to_string());
+            world.last_reversal_original_amount = Some(output.original_amount());
+            world.last_error = None;
+        }
+        Err(e) => {
+            let kind = extract_transfer_error_kind(&e);
+            let message = extract_transfer_error_message(&e);
+            world.last_error = Some(crate::PbaError { kind, message });
+        }
+    }
+}
+
+#[when(regex = r#"^I attempt to reverse (\d+) paisa from the transfer$"#)]
+async fn attempt_reverse_transfer(world: &mut PbaWorld, amount: i64) {
+    reverse_transfer(world, amount).await;
+}
+
+#[when(regex = r#"^I reverse (\d+) paisa from the transfer with idempotency key "([^"]*)"$"#)]
+async fn reverse_transfer_with_idempotency(
+    world: &mut PbaWorld,
+    amount: i64,
+    idempotency_key: String,
+) {
+    let normal_account_id = world
+        .last_normal_account_id
+        .as_ref()
+        .expect("No normal account ID")
+        .clone();
+    let transfer_id = world
+        .last_transfer_id
+        .as_ref()
+        .expect("No transfer ID")
+        .clone();
+    let result = world
+        .client
+        .reverse_normal_account_transfer()
+        .account_id(&normal_account_id)
+        .transfer_id(&transfer_id)
+        .amount(amount)
+        .idempotency_key(&idempotency_key)
+        .send()
+        .await;
+    match result {
+        Ok(output) => {
+            world.last_reversal_id = Some(output.reversal_id().to_string());
+            world.last_reversal_status = Some(output.status().to_string());
+            world.last_reversal_correlation_id = Some(output.correlation_id().to_string());
+            world.last_reversal_original_amount = Some(output.original_amount());
+            world.last_error = None;
+        }
+        Err(e) => {
+            let kind = extract_transfer_error_kind(&e);
+            let message = extract_transfer_error_message(&e);
+            world.last_error = Some(crate::PbaError { kind, message });
+        }
+    }
+}
+
+#[then(regex = r#"^the reversal is successful$"#)]
+async fn reversal_is_successful(world: &mut PbaWorld) {
+    assert!(
+        world.last_error.is_none(),
+        "Expected reversal to succeed, got error: {:?}",
+        world.last_error
+    );
+    assert!(world.last_reversal_id.is_some(), "No reversal ID captured");
+}
+
+#[then(regex = r#"^the reversal status field is "([^"]*)"$"#)]
+async fn reversal_status_field_is(world: &mut PbaWorld, expected: String) {
+    let actual = world
+        .last_reversal_status
+        .as_ref()
+        .expect("No reversal status captured");
+    assert_eq!(actual, &expected);
+}
+
+#[then(regex = r#"^the reversal fails with "([^"]*)"$"#)]
+async fn reversal_fails_with(world: &mut PbaWorld, expected_kind: String) {
+    let err = world
+        .last_error
+        .as_ref()
+        .expect("Expected reversal to fail, but it succeeded");
+    assert_eq!(err.kind, expected_kind);
+}
+
+#[then(regex = r#"^the reversal fails with "([^"]*)" reason "([^"]*)"$"#)]
+async fn reversal_fails_with_reason(
+    world: &mut PbaWorld,
+    expected_kind: String,
+    expected_reason: String,
+) {
+    let err = world
+        .last_error
+        .as_ref()
+        .expect("Expected reversal to fail, but it succeeded");
+    assert_eq!(err.kind, expected_kind);
+    assert!(
+        err.message
+            .as_ref()
+            .map_or(false, |m| m.contains(&expected_reason)),
+        "Expected reason '{expected_reason}' in error message; got {:?}",
+        err.message
+    );
+}
+
+#[then(regex = r#"^the reversal available balance is (\d+)$"#)]
+async fn reversal_available_balance_is(world: &mut PbaWorld, expected: i64) {
+    let err = world
+        .last_error
+        .as_ref()
+        .expect("Expected an error with available balance, but none was recorded");
+    let msg = err.message.as_ref().expect("Error has no message");
+    let expected_str = format!("available {expected}");
+    assert!(
+        msg.contains(&expected_str),
+        "expected '{}' substring in error message, got '{}'",
+        expected_str,
+        msg
+    );
+}
+
+#[when(regex = r#"^I switch the current normal account to a fresh holder "([^"]*)"$"#)]
+async fn switch_normal_account_to_fresh_holder(world: &mut PbaWorld, holder: String) {
+    let result = world
+        .client
+        .create_normal_account()
+        .holder_id(&holder)
+        .send()
+        .await
+        .expect("Failed to create fresh normal account");
+    world.last_normal_account_id = Some(result.id().to_string());
+}
+
+#[when("I treat the reversal row as the current transfer")]
+async fn treat_reversal_row_as_current_transfer(world: &mut PbaWorld) {
+    world.last_transfer_id = world.last_reversal_id.clone();
+}
+
+#[then(regex = r#"^the normal account has at least (\d+) transactions$"#)]
+async fn normal_account_has_at_least_n_transactions(world: &mut PbaWorld, min_count: usize) {
+    let account_id = world
+        .last_normal_account_id
+        .as_ref()
+        .expect("No normal account ID")
+        .clone();
+    let txns = world
+        .client
+        .list_normal_account_transactions()
+        .account_id(&account_id)
+        .send()
+        .await
+        .expect("Failed to list normal account transactions");
+    let count = txns.transactions().len();
+    assert!(
+        count >= min_count,
+        "Expected at least {min_count} transactions on normal account, got {count}"
+    );
+}
+
+#[then(regex = r#"^the PB account has at least (\d+) transactions$"#)]
+async fn pb_account_has_at_least_n_transactions(world: &mut PbaWorld, min_count: usize) {
+    let account_id = world.account_id.as_ref().expect("No PB account ID").clone();
+    let txns = world
+        .client
+        .list_pb_account_transactions()
+        .account_id(&account_id)
+        .send()
+        .await
+        .expect("Failed to list PB account transactions");
+    let count = txns.transactions().len();
+    assert!(
+        count >= min_count,
+        "Expected at least {min_count} transactions on PB account, got {count}"
+    );
+}
+
+#[when("I reactivate the PB account")]
+async fn reactivate_pb_account(world: &mut PbaWorld) {
+    let account_id = world.account_id.as_ref().expect("No PB account ID").clone();
+    world
+        .client
+        .update_account_status()
+        .account_id(&account_id)
+        .status(pba_client::types::Status::Active)
+        .send()
+        .await
+        .expect("Failed to reactivate PB account");
 }

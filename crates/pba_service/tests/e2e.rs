@@ -77,6 +77,14 @@ pub struct PbaWorld {
     last_dest_txn_type: Option<String>,
     last_dest_txn_pool: Option<String>,
     last_dest_txn_funding_type: Option<String>,
+    /// Last reversal ID
+    last_reversal_id: Option<String>,
+    /// Last reversal status
+    last_reversal_status: Option<String>,
+    /// Last reversal correlation_id
+    last_reversal_correlation_id: Option<String>,
+    /// Last reversal's original_amount (echoes the original transfer's amount)
+    last_reversal_original_amount: Option<i64>,
 }
 
 #[derive(Debug, Clone)]
@@ -97,6 +105,7 @@ pub struct BalanceResult {
 #[derive(Debug, Clone)]
 pub struct PbaError {
     pub kind: String,
+    pub message: Option<String>,
 }
 
 impl Default for PbaWorld {
@@ -153,6 +162,10 @@ impl Default for PbaWorld {
             last_dest_txn_type: None,
             last_dest_txn_pool: None,
             last_dest_txn_funding_type: None,
+            last_reversal_id: None,
+            last_reversal_status: None,
+            last_reversal_correlation_id: None,
+            last_reversal_original_amount: None,
         }
     }
 }

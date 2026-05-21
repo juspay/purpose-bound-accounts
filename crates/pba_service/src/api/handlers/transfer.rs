@@ -66,3 +66,29 @@ pub async fn void_transfer(
         .await?;
     Ok(Json(result.into()))
 }
+
+pub async fn reverse_transfer(
+    State(state): State<AppState>,
+    Path((source_id, transfer_id)): Path<(Uuid, Uuid)>,
+    Json(req): Json<crate::api::dto::ReverseTransferRequest>,
+) -> Result<(StatusCode, Json<crate::api::dto::ReversalResponse>), AppError> {
+    if let Some(d) = req.description.as_deref() {
+        if d.len() > 256 {
+            return Err(AppError::Validation(
+                "description must be ≤ 256 chars".into(),
+            ));
+        }
+    }
+    let result = state
+        .transfer_service
+        .reverse_transfer(
+            source_id,
+            transfer_id,
+            req.amount,
+            req.gateway_ref.as_deref(),
+            req.description.as_deref(),
+            req.idempotency_key.as_deref(),
+        )
+        .await?;
+    Ok((StatusCode::CREATED, Json(result.into())))
+}

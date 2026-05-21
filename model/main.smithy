@@ -45,6 +45,7 @@ service PurposeBoundAccountService {
         TransferToPBAccount
         PostNormalAccountTransfer
         VoidNormalAccountTransfer
+        ReverseNormalAccountTransfer
 
         // Unchanged operations
         ListPurposeTypes

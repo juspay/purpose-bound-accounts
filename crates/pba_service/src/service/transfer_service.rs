@@ -36,6 +36,20 @@ pub struct TransferResult {
     pub created_at: chrono::DateTime<chrono::Utc>,
 }
 
+#[derive(Debug, Clone)]
+#[allow(dead_code)]
+pub struct ReversalResult {
+    pub reversal_id: Uuid,            // normal-side reversal row id
+    pub original_transfer_id: Uuid,   // T_src.id of the original
+    pub source_account_id: Uuid,      // the normal account being credited
+    pub destination_account_id: Uuid, // the PB account being debited
+    pub amount: u64,
+    pub original_amount: u64,
+    pub status: TransactionStatus,
+    pub correlation_id: Uuid,
+    pub created_at: chrono::DateTime<chrono::Utc>,
+}
+
 impl TransferService {
     pub fn new(
         normal_account_repo: Arc<NormalAccountRepo>,
@@ -163,6 +177,7 @@ impl TransferService {
                     0,
                     idempotency_key,
                     Some(legs.correlation_id),
+                    None,
                 )
                 .await?;
 
@@ -189,6 +204,7 @@ impl TransferService {
                     0,
                     None,
                     Some(legs.correlation_id),
+                    None,
                 )
                 .await?;
 
@@ -366,6 +382,261 @@ impl TransferService {
                 .correlation_id
                 .expect("source leg has correlation_id"),
             created_at: source_leg.created_at,
+        }
+    }
+
+    #[allow(clippy::too_many_arguments)]
+    #[allow(dead_code)]
+    pub async fn reverse_transfer(
+        &self,
+        source_normal_id: Uuid,
+        original_transfer_id: Uuid,
+        amount: u64,
+        gateway_ref: Option<&str>,
+        description: Option<&str>,
+        idempotency_key: Option<&str>,
+    ) -> Result<ReversalResult, AppError> {
+        // Step 1: Idempotency replay.
+        if let Some(key) = idempotency_key {
+            if let Some(existing) = self
+                .transaction_repo
+                .find_by_idempotency_key(AccountKind::Normal, source_normal_id, key)
+                .await?
+            {
+                let correlation_id = existing.correlation_id.ok_or_else(|| {
+                    AppError::DatabaseError(
+                        "reversal source row missing correlation_id".to_string(),
+                    )
+                })?;
+                let legs = self
+                    .transaction_repo
+                    .find_by_correlation_id(correlation_id)
+                    .await?;
+                if legs.len() != 2 {
+                    return Err(AppError::DatabaseError(
+                        "reversal correlation has != 2 legs".to_string(),
+                    ));
+                }
+                let mut result = self.reversal_legs_to_result(&legs, source_normal_id);
+                // Best-effort lookup of the original amount via the reverses_transaction_id link.
+                if let Some(orig_id) = legs.iter().find_map(|l| l.reverses_transaction_id) {
+                    if let Ok(orig) = self.transaction_repo.get_transaction(orig_id).await {
+                        result.original_amount = orig.amount;
+                    }
+                }
+                return Ok(result);
+            }
+        }
+
+        // Step 2: Load and validate the original source row.
+        let original = self
+            .transaction_repo
+            .get_by_id(original_transfer_id, source_normal_id)
+            .await?;
+
+        if original.account_kind != AccountKind::Normal
+            || original.transaction_type != TransactionType::Transfer
+            || original.direction != TransactionDirection::Outbound
+        {
+            return Err(AppError::TransferNotReversible(
+                original_transfer_id.to_string(),
+                "wrong_type".to_string(),
+            ));
+        }
+        if original.status != TransactionStatus::Posted {
+            return Err(AppError::TransferNotReversible(
+                original_transfer_id.to_string(),
+                "not_posted".to_string(),
+            ));
+        }
+        if original.reverses_transaction_id.is_some() {
+            return Err(AppError::TransferNotReversible(
+                original_transfer_id.to_string(),
+                "is_itself_a_reversal".to_string(),
+            ));
+        }
+
+        // Step 3: Reject if already reversed.
+        if self
+            .transaction_repo
+            .find_reversal_of(original_transfer_id)
+            .await?
+            .is_some()
+        {
+            return Err(AppError::TransferAlreadyReversed(
+                original_transfer_id.to_string(),
+            ));
+        }
+
+        // Step 4: Validate amount.
+        if amount == 0 || amount > original.amount {
+            return Err(AppError::ReversalAmountInvalid {
+                requested: amount,
+                original: original.amount,
+            });
+        }
+
+        // Step 5: Resolve destination PB account from the original's correlation pair.
+        let original_corr = original.correlation_id.ok_or_else(|| {
+            AppError::DatabaseError("original transfer row missing correlation_id".to_string())
+        })?;
+        let original_legs = self
+            .transaction_repo
+            .find_by_correlation_id(original_corr)
+            .await?;
+        let dst_leg = original_legs
+            .iter()
+            .find(|l| l.account_kind == AccountKind::Pb)
+            .ok_or_else(|| {
+                AppError::DatabaseError("original transfer missing pb leg".to_string())
+            })?;
+        let destination_pb_id = dst_leg.account_id;
+        let destination = self.pb_account_repo.get_account(destination_pb_id).await?;
+
+        // Step 6: Active checks on both sides.
+        let source = self
+            .normal_account_repo
+            .get_account(source_normal_id)
+            .await?;
+        if !source.status.is_active() {
+            return Err(AppError::NormalAccountNotActive(
+                source_normal_id.to_string(),
+            ));
+        }
+        if !destination.status.is_active() {
+            return Err(AppError::PbAccountNotActive(destination_pb_id.to_string()));
+        }
+
+        // Step 7: Insert the two reversal rows under a fresh correlation_id.
+        let legs = TransferLegs::new();
+        let pb_side_id = legs.source_txn_id;
+        let normal_side_id = legs.destination_txn_id;
+        let correlation_id = legs.correlation_id;
+
+        let mut tx = self.transaction_repo.pool().begin().await?;
+
+        // PB-side debit row.
+        self.transaction_repo
+            .insert_in_tx(
+                &mut tx,
+                pb_side_id,
+                destination_pb_id,
+                AccountKind::Pb,
+                TransactionType::Transfer,
+                TransactionStatus::Posted,
+                amount,
+                Some("others"),
+                TransactionDirection::Outbound,
+                None,
+                None,
+                gateway_ref,
+                None, // no timeout — reversal is immediate
+                None,
+                None,
+                description,
+                Some("trust"),
+                0,    // tb_transfer_id (immediate transfers leave this 0, matching transfer())
+                None, // no idempotency key on the pb-side row
+                Some(correlation_id),
+                None, // reverses_transaction_id NULL on pb-side
+            )
+            .await?;
+
+        // Normal-side credit row — carries the link back to the original.
+        self.transaction_repo
+            .insert_in_tx(
+                &mut tx,
+                normal_side_id,
+                source_normal_id,
+                AccountKind::Normal,
+                TransactionType::Transfer,
+                TransactionStatus::Posted,
+                amount,
+                None,
+                TransactionDirection::Inbound,
+                None,
+                None,
+                gateway_ref,
+                None,
+                None,
+                None,
+                description,
+                Some("trust"),
+                0,
+                idempotency_key, // idempotency lives here, mirroring transfer()
+                Some(correlation_id),
+                Some(original_transfer_id), // <-- the link
+            )
+            .await?;
+
+        // Step 8: Execute the TB transfer (code 410).
+        let tb_result = self
+            .ledger_repo
+            .create_internal_transfer_reversal(
+                destination.tb_others_account_id,
+                source.tb_account_id,
+                amount,
+            )
+            .await;
+
+        match tb_result {
+            Ok(()) => {
+                tx.commit().await?;
+                let updated_legs = self
+                    .transaction_repo
+                    .find_by_correlation_id(correlation_id)
+                    .await?;
+                let mut result = self.reversal_legs_to_result(&updated_legs, source_normal_id);
+                result.original_amount = original.amount;
+                Ok(result)
+            }
+            Err(AppError::ExceedsBalance) => {
+                // Roll back PG, fetch fresh balance, surface InsufficientFunds.
+                drop(tx);
+                let balance = self
+                    .ledger_repo
+                    .get_single_balance(destination.tb_others_account_id)
+                    .await
+                    .unwrap_or(crate::repository::ledger_repo::SingleBalance {
+                        posted: 0,
+                        pending: 0,
+                    });
+                Err(AppError::InsufficientFunds {
+                    requested: amount,
+                    available: balance.posted,
+                })
+            }
+            Err(e) => Err(e),
+        }
+    }
+
+    fn reversal_legs_to_result(
+        &self,
+        legs: &[TransactionRecord],
+        source_normal_id: Uuid,
+    ) -> ReversalResult {
+        let normal_leg = legs
+            .iter()
+            .find(|l| l.account_kind == AccountKind::Normal)
+            .expect("reversal correlation has a normal leg");
+        let pb_leg = legs
+            .iter()
+            .find(|l| l.account_kind == AccountKind::Pb)
+            .expect("reversal correlation has a pb leg");
+        ReversalResult {
+            reversal_id: normal_leg.id,
+            original_transfer_id: normal_leg
+                .reverses_transaction_id
+                .expect("normal-side reversal row carries reverses_transaction_id"),
+            source_account_id: source_normal_id,
+            destination_account_id: pb_leg.account_id,
+            amount: normal_leg.amount,
+            original_amount: normal_leg.amount, // overwritten by caller with original.amount
+            status: normal_leg.status,
+            correlation_id: normal_leg
+                .correlation_id
+                .expect("reversal leg has correlation_id"),
+            created_at: normal_leg.created_at,
         }
     }
 }

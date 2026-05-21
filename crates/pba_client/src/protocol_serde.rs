@@ -63,6 +63,8 @@ pub(crate) mod shape_post_normal_account_transfer;
 
 pub(crate) mod shape_post_pb_account_deposit;
 
+pub(crate) mod shape_reverse_normal_account_transfer;
+
 pub(crate) mod shape_transfer_to_pb_account;
 
 pub(crate) mod shape_update_account_status;
@@ -122,6 +124,8 @@ pub(crate) mod shape_make_payment_input;
 pub(crate) mod shape_make_pb_account_payment_input;
 
 pub(crate) mod shape_purpose_type_not_found_error;
+
+pub(crate) mod shape_reverse_normal_account_transfer_input;
 
 pub(crate) mod shape_transfer_to_pb_account_input;
 

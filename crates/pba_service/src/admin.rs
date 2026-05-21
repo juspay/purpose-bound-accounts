@@ -125,4 +125,9 @@ pub fn create_router() -> Router<AppState> {
             "/admin/transfers/{transfer_id}/void",
             axum::routing::post(transfer_handlers::void_transfer),
         )
+        .route(
+            "/admin/transfers/{transfer_id}/reverse",
+            get(transfer_handlers::reverse_transfer_form)
+                .post(transfer_handlers::process_reverse_transfer),
+        )
 }

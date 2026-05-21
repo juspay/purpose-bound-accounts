@@ -65,6 +65,76 @@ operation VoidNormalAccountTransfer {
     errors: [AccountNotFoundError]
 }
 
+/// Reverse a posted normal→PB transfer.
+///
+/// Records a new compensating transaction pair (PB others-pool debit + normal
+/// account credit) plus a new TB transfer in the opposite direction. The
+/// original transfer rows are not mutated; the reversal links back via
+/// `reverses_transaction_id` on the normal-side reversal row.
+///
+/// Only `posted` transfers can be reversed. Pending transfers should be
+/// cancelled via VoidNormalAccountTransfer. At most one reversal per original
+/// transfer. Both source and destination accounts must be Active. The PB
+/// others-pool must have sufficient balance; if not, returns InsufficientFunds
+/// with the available amount.
+@http(
+    method: "POST",
+    uri: "/normal-accounts/{account_id}/transfers/{transfer_id}/reverse",
+    code: 201
+)
+operation ReverseNormalAccountTransfer {
+    input := {
+        @required
+        @httpLabel
+        account_id: String
+
+        @required
+        @httpLabel
+        transfer_id: String
+
+        @required
+        amount: Money
+
+        gateway_ref: String
+
+        description: String
+
+        idempotency_key: String
+    }
+    output := with [ReversalResponseMixin] {}
+    errors: [AccountNotFoundError]
+}
+
+@mixin
+structure ReversalResponseMixin {
+    @required
+    reversal_id: String
+
+    @required
+    original_transfer_id: String
+
+    @required
+    source_account_id: String
+
+    @required
+    destination_account_id: String
+
+    @required
+    amount: Money
+
+    @required
+    original_amount: Money
+
+    @required
+    status: String
+
+    @required
+    correlation_id: String
+
+    @required
+    created_at: DateTime
+}
+
 @mixin
 structure TransferResponseMixin {
     @required

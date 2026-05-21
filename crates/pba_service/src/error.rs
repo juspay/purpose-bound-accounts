@@ -29,6 +29,16 @@ pub enum AppError {
     TransactionNotPending(String),
     FundingTypeRequired,
     TrustDepositRequiresTransfer,
+    /// The transfer cannot be reversed in its current state.
+    /// `reason` is one of: "not_posted", "is_itself_a_reversal", "wrong_type".
+    TransferNotReversible(String, String),
+    /// A reversal already exists for this original transfer.
+    TransferAlreadyReversed(String),
+    /// Requested reversal amount is zero or exceeds the original transfer amount.
+    ReversalAmountInvalid {
+        requested: u64,
+        original: u64,
+    },
     /// Transfer rejected by TigerBeetle because debit would exceed credits (overdraft).
     /// This is retryable with a fresh balance read.
     ExceedsBalance,
@@ -68,6 +78,16 @@ impl std::fmt::Display for AppError {
                 f,
                 "Trust-funded deposits to PB accounts have been removed. Use POST /normal-accounts/{{id}}/transfers instead."
             ),
+            Self::TransferNotReversible(id, reason) => {
+                write!(f, "Transfer {id} cannot be reversed: {reason}")
+            }
+            Self::TransferAlreadyReversed(id) => {
+                write!(f, "Transfer {id} has already been reversed")
+            }
+            Self::ReversalAmountInvalid { requested, original } => write!(
+                f,
+                "Reversal amount {requested} is invalid for original transfer of {original}"
+            ),
             Self::ExceedsBalance => write!(f, "Transfer exceeds available balance"),
             Self::TigerBeetleError(msg) => write!(f, "TigerBeetle error: {msg}"),
             Self::DatabaseError(msg) => write!(f, "Database error: {msg}"),
@@ -95,6 +115,15 @@ impl IntoResponse for AppError {
             AppError::FundingTypeRequired => (StatusCode::BAD_REQUEST, "FundingTypeRequired"),
             AppError::TrustDepositRequiresTransfer => {
                 (StatusCode::BAD_REQUEST, "TrustDepositRequiresTransfer")
+            }
+            AppError::TransferNotReversible(_, _) => {
+                (StatusCode::CONFLICT, "TransferNotReversible")
+            }
+            AppError::TransferAlreadyReversed(_) => {
+                (StatusCode::CONFLICT, "TransferAlreadyReversed")
+            }
+            AppError::ReversalAmountInvalid { .. } => {
+                (StatusCode::BAD_REQUEST, "ReversalAmountInvalid")
             }
             AppError::ExceedsBalance => (StatusCode::UNPROCESSABLE_ENTITY, "InsufficientFunds"),
             AppError::TigerBeetleError(_) => {
@@ -124,5 +153,52 @@ impl From<sqlx::Error> for AppError {
 impl From<crate::domain::banking::BankingValidationError> for AppError {
     fn from(err: crate::domain::banking::BankingValidationError) -> Self {
         AppError::Validation(err.to_string())
+    }
+}
+
+#[cfg(test)]
+mod reversal_error_tests {
+    use super::*;
+    use axum::response::IntoResponse;
+    use http_body_util::BodyExt;
+
+    async fn body_json(resp: axum::response::Response) -> serde_json::Value {
+        let (_parts, body) = resp.into_parts();
+        let bytes = body.collect().await.unwrap().to_bytes();
+        serde_json::from_slice(&bytes).unwrap()
+    }
+
+    #[tokio::test]
+    async fn transfer_not_reversible_returns_409_with_pascal_case_kind() {
+        let err = AppError::TransferNotReversible("abc".into(), "not_posted".into());
+        let resp = err.into_response();
+        assert_eq!(resp.status(), axum::http::StatusCode::CONFLICT);
+        let body = body_json(resp).await;
+        assert_eq!(body["error"], "TransferNotReversible");
+        assert!(body["message"].as_str().unwrap().contains("not_posted"));
+    }
+
+    #[tokio::test]
+    async fn transfer_already_reversed_returns_409() {
+        let err = AppError::TransferAlreadyReversed("xyz".into());
+        let resp = err.into_response();
+        assert_eq!(resp.status(), axum::http::StatusCode::CONFLICT);
+        let body = body_json(resp).await;
+        assert_eq!(body["error"], "TransferAlreadyReversed");
+    }
+
+    #[tokio::test]
+    async fn reversal_amount_invalid_returns_400_with_amounts_in_message() {
+        let err = AppError::ReversalAmountInvalid {
+            requested: 1500,
+            original: 1000,
+        };
+        let resp = err.into_response();
+        assert_eq!(resp.status(), axum::http::StatusCode::BAD_REQUEST);
+        let body = body_json(resp).await;
+        assert_eq!(body["error"], "ReversalAmountInvalid");
+        let msg = body["message"].as_str().unwrap();
+        assert!(msg.contains("1500"));
+        assert!(msg.contains("1000"));
     }
 }

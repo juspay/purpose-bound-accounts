@@ -117,6 +117,7 @@ pub struct TransactionRecord {
     pub tb_transfer_id: u128,
     pub idempotency_key: Option<String>,
     pub correlation_id: Option<Uuid>,
+    pub reverses_transaction_id: Option<Uuid>,
     pub created_at: DateTime<Utc>,
     pub updated_at: DateTime<Utc>,
 }
@@ -133,6 +134,7 @@ impl TransactionRecord {
             (TransactionType::Deposit, TransactionStatus::Voided) => "Deposit (Voided)",
             (TransactionType::Payment, _) => "Payment",
             (TransactionType::Withdrawal, _) => "Withdrawal",
+            (TransactionType::Transfer, _) if self.reverses_transaction_id.is_some() => "Reversal",
             (TransactionType::Transfer, TransactionStatus::Pending) => "Transfer (Pending)",
             (TransactionType::Transfer, TransactionStatus::Posted)
             | (TransactionType::Transfer, TransactionStatus::Settled) => "Transfer",
@@ -145,6 +147,35 @@ impl TransactionRecord {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::domain::account_kind::AccountKind;
+    use uuid::Uuid;
+
+    fn make(transaction_type: TransactionType, reverses: Option<Uuid>) -> TransactionRecord {
+        TransactionRecord {
+            id: Uuid::now_v7(),
+            account_id: Uuid::now_v7(),
+            account_kind: AccountKind::Normal,
+            transaction_type,
+            status: TransactionStatus::Posted,
+            amount: 0,
+            pool: None,
+            direction: TransactionDirection::Outbound,
+            source_ifsc: None,
+            source_account: None,
+            gateway_ref: None,
+            timeout_seconds: None,
+            merchant_id: None,
+            merchant_mcc: None,
+            description: None,
+            funding_type: None,
+            tb_transfer_id: 0,
+            idempotency_key: None,
+            correlation_id: None,
+            reverses_transaction_id: reverses,
+            created_at: chrono::Utc::now(),
+            updated_at: chrono::Utc::now(),
+        }
+    }
 
     #[test]
     fn transfer_round_trips() {
@@ -153,5 +184,17 @@ mod tests {
             TransactionType::from_str("transfer"),
             Some(TransactionType::Transfer)
         );
+    }
+
+    #[test]
+    fn reversal_label_when_reverses_transaction_id_is_set() {
+        let r = make(TransactionType::Transfer, Some(Uuid::now_v7()));
+        assert_eq!(r.type_label(), "Reversal");
+    }
+
+    #[test]
+    fn transfer_label_when_reverses_transaction_id_is_none() {
+        let r = make(TransactionType::Transfer, None);
+        assert_eq!(r.type_label(), "Transfer");
     }
 }

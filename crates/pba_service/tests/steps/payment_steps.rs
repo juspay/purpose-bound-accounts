@@ -82,6 +82,7 @@ async fn attempt_payment(
             };
             world.last_error = Some(crate::PbaError {
                 kind: kind.to_string(),
+                message: None,
             });
         }
     }

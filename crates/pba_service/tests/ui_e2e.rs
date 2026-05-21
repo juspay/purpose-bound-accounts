@@ -52,6 +52,8 @@ pub struct UiWorld {
     last_normal_account_id: Option<String>,
     /// Transfer ID from the most recent transfer initiation.
     last_transfer_id: Option<String>,
+    /// Reversal transaction ID captured from the "Reversed by" link.
+    last_reversal_id: Option<String>,
 }
 
 impl std::fmt::Debug for UiWorld {
@@ -86,6 +88,7 @@ impl Default for UiWorld {
             last_account_status: None,
             last_normal_account_id: None,
             last_transfer_id: None,
+            last_reversal_id: None,
         }
     }
 }

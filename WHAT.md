@@ -32,3 +32,31 @@ hsa_tb_accounts:
   tb_account_id (u128)
   pool_type (self_contribution | others_contribution)
 
+
+## Normal accounts and reversing a sponsor transfer
+
+Normal accounts (introduced in the Phase 2/3 normal-accounts work) hold
+trust-sourced funds and act as the inbound funding container for purpose-bound
+accounts. A sponsor's bank deposit lands in a normal account, then moves into
+a PB account's others-pool via an internal transfer.
+
+If, after a posted transfer, the PB account holder turns out not to meet the
+sponsor's matching requirements, an admin can reverse the transfer. The
+reversal is recorded as a new compensating transaction pair (debit on the PB
+others-pool, credit back to the normal account) plus a TigerBeetle transfer
+in the opposite direction. The original transfer rows are not mutated; the
+reversal links back via `reverses_transaction_id`.
+
+Constraints:
+
+- Only `posted` transfers are reversible. Pending transfers continue to be
+  cancelled via `VoidNormalAccountTransfer`.
+- At most one reversal per original transfer.
+- Both the source normal account and destination PB account must be Active.
+- The reversal amount must be greater than zero and at most the original
+  amount. The PB others-pool must have sufficient balance; if it does not
+  (because earlier payments spent the pool down), the reversal is rejected
+  with `InsufficientFunds` and the admin can retry with a smaller amount.
+- After reversal, the funds sit in the source normal account. The admin can
+  separately call `WithdrawFromNormalAccount` to return them to the sponsor's
+  bank.

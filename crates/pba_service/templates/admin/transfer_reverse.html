@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+
+{% block title %}Reverse Transfer {{ transfer_id }} - PBA Admin{% endblock %}
+
+{% block content %}
+<h1>Reverse Transfer</h1>
+
+<p><a href="{{ prefix }}/admin/transfers/{{ transfer_id }}">&larr; Back to transfer</a></p>
+
+{% if let Some(err) = error %}
+<p id="form-error" style="color: #c62828;"><strong>Reversal failed:</strong> {{ err }}</p>
+{% endif %}
+
+<form method="post" action="{{ prefix }}/admin/transfers/{{ transfer_id }}/reverse">
+    <article>
+        <header><strong>Original transfer</strong></header>
+        <div class="grid">
+            <div>
+                <p><strong>Transfer ID:</strong> {{ transfer_id }}</p>
+                <p><strong>Source (Normal):</strong> {{ source_account_id }}</p>
+            </div>
+            <div>
+                <p><strong>Destination (PB):</strong> {{ destination_account_id }}</p>
+                <p><strong>Original amount:</strong> ₹{{ original_amount }}</p>
+            </div>
+        </div>
+    </article>
+
+    <article>
+        <header><strong>Reversal</strong></header>
+        <label>
+            Amount to reverse (in paisa)
+            <input type="number" name="amount_paisa" min="1" max="{{ original_amount_paisa }}" value="{{ original_amount_paisa }}" required>
+            <small>Up to the original amount in paisa. Reversal is rejected if the PB others-pool has less.</small>
+        </label>
+
+        <label>
+            Description (optional)
+            <input type="text" name="description" maxlength="256">
+        </label>
+
+        <button type="submit" class="outline" style="color: #c62828; border-color: #c62828;">Reverse</button>
+        <a href="{{ prefix }}/admin/transfers/{{ transfer_id }}" role="button" class="secondary outline">Cancel</a>
+    </article>
+</form>
+{% endblock %}

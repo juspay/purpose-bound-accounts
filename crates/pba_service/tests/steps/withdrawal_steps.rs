@@ -45,6 +45,7 @@ async fn attempt_withdraw(world: &mut PbaWorld, amount: i64) {
             };
             world.last_error = Some(crate::PbaError {
                 kind: kind.to_string(),
+                message: None,
             });
         }
     }
