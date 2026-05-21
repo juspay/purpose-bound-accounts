@@ -30,6 +30,7 @@ uuid = { version = "1", features = ["v4", "v7", "serde"] }
 
 [dev-dependencies]
 cucumber = "0.22"
+http-body-util = "0.1"
 pba_client = { path = "../pba_client" }
 tokio = { version = "1", features = ["macros", "rt-multi-thread"] }
 chromiumoxide = { version = "0.9" }
