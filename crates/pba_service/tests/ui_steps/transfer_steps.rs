@@ -1,4 +1,5 @@
 use cucumber::{given, then, when};
+use regex::Regex;
 use std::time::Duration;
 use tokio::time::sleep;
 
@@ -364,4 +365,175 @@ async fn then_transfer_shows_status(world: &mut UiWorld, expected: String) {
         status,
         &content[..content.len().min(2000)]
     );
+}
+
+// ── Reversal UI steps ────────────────────────────────────────────────────────
+
+#[then("the Reverse button is visible on the transfer detail page")]
+async fn then_reverse_button_visible(world: &mut UiWorld) {
+    let transfer_id = world.last_transfer_id.clone().expect("No transfer ID set");
+    let url = world.url(&format!("/admin/transfers/{}", transfer_id));
+    let page = world.ensure_page().await;
+    page.goto(url).await.expect("Failed to navigate to transfer detail");
+    sleep(Duration::from_millis(400)).await;
+
+    let page = world.ensure_page().await;
+    let content = page.content().await.expect("Failed to get page content");
+    let expected_href = format!("/admin/transfers/{}/reverse", transfer_id);
+    assert!(
+        content.contains(&expected_href),
+        "Expected Reverse button (href containing '{}') on transfer detail. Page snippet: {}",
+        expected_href,
+        &content[..content.len().min(2000)]
+    );
+}
+
+#[then("the Reverse button is not visible on the transfer detail page")]
+async fn then_reverse_button_not_visible(world: &mut UiWorld) {
+    let transfer_id = world.last_transfer_id.clone().expect("No transfer ID set");
+    let url = world.url(&format!("/admin/transfers/{}", transfer_id));
+    let page = world.ensure_page().await;
+    page.goto(url).await.expect("Failed to navigate to transfer detail");
+    sleep(Duration::from_millis(400)).await;
+
+    let page = world.ensure_page().await;
+    let content = page.content().await.expect("Failed to get page content");
+    let unexpected_href = format!("/admin/transfers/{}/reverse", transfer_id);
+    assert!(
+        !content.contains(&unexpected_href),
+        "Expected Reverse button to be ABSENT, but found href '{}' on detail page",
+        unexpected_href
+    );
+}
+
+#[when(regex = r#"^I click the Reverse button and submit the reverse form with amount (\d+)$"#)]
+async fn when_click_reverse_and_submit(world: &mut UiWorld, amount_paisa: u64) {
+    let transfer_id = world.last_transfer_id.clone().expect("No transfer ID set");
+
+    // Navigate directly to the reverse form
+    let url = world.url(&format!("/admin/transfers/{}/reverse", transfer_id));
+    let page = world.ensure_page().await;
+    page.goto(url).await.expect("Failed to navigate to reverse form");
+    sleep(Duration::from_millis(400)).await;
+
+    // Clear the pre-filled amount_paisa input and type the desired value
+    let page = world.ensure_page().await;
+    let clear_js = "document.querySelector(\"input[name='amount_paisa']\").value = '';";
+    page.evaluate(clear_js.to_string()).await.ok();
+
+    let amount_input = page
+        .find_element("input[name='amount_paisa']")
+        .await
+        .expect("Could not find amount_paisa input on reverse form");
+    amount_input.click().await.expect("Failed to click amount_paisa");
+    amount_input
+        .type_str(&amount_paisa.to_string())
+        .await
+        .expect("Failed to type amount_paisa");
+
+    let submit = page
+        .find_element("button[type='submit']")
+        .await
+        .expect("Could not find submit button on reverse form");
+    submit.click().await.expect("Failed to click submit");
+
+    // On success the server redirects to /admin/transfers/{id}.
+    // On failure it re-renders the form with an error.
+    sleep(Duration::from_millis(800)).await;
+}
+
+#[then(regex = r#"^the transfer detail page shows a "Reversed by" link$"#)]
+async fn then_reversed_by_link_visible(world: &mut UiWorld) {
+    let transfer_id = world.last_transfer_id.clone().expect("No transfer ID set");
+    let url = world.url(&format!("/admin/transfers/{}", transfer_id));
+    let page = world.ensure_page().await;
+    page.goto(url).await.expect("Failed to navigate to transfer detail");
+    sleep(Duration::from_millis(400)).await;
+
+    let page = world.ensure_page().await;
+    let content = page.content().await.expect("Failed to get page content");
+    assert!(
+        content.contains("Reversed by") || content.contains("has been reversed"),
+        "Expected 'Reversed by' / reversal section on detail page. Page snippet: {}",
+        &content[..content.len().min(2000)]
+    );
+
+    // Capture the reversal transaction ID from the /admin/transactions/{id} link.
+    let re = Regex::new(r"/admin/transactions/([0-9a-f-]{36})").unwrap();
+    if let Some(cap) = re.captures(&content) {
+        world.last_reversal_id = Some(cap[1].to_string());
+    }
+}
+
+#[when(regex = r#"^I follow the "Reversed by" link$"#)]
+async fn when_follow_reversed_by_link(world: &mut UiWorld) {
+    let reversal_id = world
+        .last_reversal_id
+        .clone()
+        .expect("No reversal ID captured (call 'shows a \"Reversed by\" link' first)");
+    // The reversal row's ID is also a valid transfer_id accepted by /admin/transfers/{id}.
+    // We navigate there so the transfer_detail template is used, which has the
+    // Reverse button and "is_reversal" checks.
+    world.last_transfer_id = Some(reversal_id.clone());
+    let url = world.url(&format!("/admin/transfers/{}", reversal_id));
+    let page = world.ensure_page().await;
+    page.goto(url).await.expect("Failed to navigate to reversal transfer detail");
+    sleep(Duration::from_millis(400)).await;
+}
+
+#[then("the transfer detail page shows that this row is a reversal")]
+async fn then_row_is_reversal(world: &mut UiWorld) {
+    let page = world.ensure_page().await;
+    let content = page.content().await.expect("Failed to get page content");
+    assert!(
+        content.contains("This row is a reversal"),
+        "Expected 'This row is a reversal' notice. Page snippet: {}",
+        &content[..content.len().min(2000)]
+    );
+}
+
+#[then("the reverse form shows an InsufficientFunds error")]
+async fn then_reverse_form_shows_insufficient_funds(world: &mut UiWorld) {
+    let page = world.ensure_page().await;
+    let content = page.content().await.expect("Failed to get page content");
+    assert!(
+        content.contains("InsufficientFunds") || content.contains("Insufficient funds"),
+        "Expected InsufficientFunds error on reverse form. Page snippet: {}",
+        &content[..content.len().min(2500)]
+    );
+}
+
+#[when(regex = r#"^the PB account spends (\d+) paisa on merchant "([^"]*)" with MCC "([^"]*)"$"#)]
+async fn when_pb_account_spends(world: &mut UiWorld, amount: u64, merchant: String, mcc: String) {
+    let account_id = world
+        .account_id
+        .clone()
+        .expect("No PB account ID set before spend step");
+
+    let url = world.url(&format!("/admin/accounts/{}/payment", account_id));
+    let page = world.ensure_page().await;
+    page.goto(url).await.expect("Failed to navigate to PB payment form");
+    sleep(Duration::from_millis(400)).await;
+
+    // Fill fields via JS (avoids interaction issues with pre-filled values)
+    let page = world.ensure_page().await;
+    let js = format!(
+        r#"
+        document.querySelector("input[name='amount']").value = '{amount}';
+        document.querySelector("input[name='merchant_id']").value = '{merchant}';
+        document.querySelector("input[name='merchant_mcc']").value = '{mcc}';
+        document.querySelector("input[name='description']").value = 'rev-ui-spend';
+        "#,
+        amount = amount,
+        merchant = merchant.replace('\'', "\\'"),
+        mcc = mcc.replace('\'', "\\'"),
+    );
+    page.evaluate(js).await.ok();
+
+    let submit = page
+        .find_element("button[type='submit']")
+        .await
+        .expect("Could not find submit button on payment form");
+    submit.click().await.expect("Failed to click submit");
+    sleep(Duration::from_millis(800)).await;
 }
