@@ -98,6 +98,7 @@ impl TransactionRow {
             tb_transfer_id: self.tb_transfer_id.parse().unwrap_or(0),
             idempotency_key: self.idempotency_key,
             correlation_id: self.correlation_id,
+            reverses_transaction_id: None,
             created_at: self.created_at,
             updated_at: self.updated_at,
         }
