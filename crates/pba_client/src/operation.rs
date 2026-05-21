@@ -75,6 +75,9 @@ pub mod post_normal_account_transfer;
 /// Types for the `PostPBAccountDeposit` operation.
 pub mod post_pb_account_deposit;
 
+/// Types for the `ReverseNormalAccountTransfer` operation.
+pub mod reverse_normal_account_transfer;
+
 /// Types for the `TransferToPBAccount` operation.
 pub mod transfer_to_pb_account;
 

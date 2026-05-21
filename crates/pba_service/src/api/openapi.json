@@ -1058,6 +1058,62 @@
                 }
             }
         },
+        "/normal-accounts/{account_id}/transfers/{transfer_id}/reverse": {
+            "post": {
+                "description": "Reverse a posted normal→PB transfer.\n\nRecords a new compensating transaction pair (PB others-pool debit + normal\naccount credit) plus a new TB transfer in the opposite direction. The\noriginal transfer rows are not mutated; the reversal links back via\n`reverses_transaction_id` on the normal-side reversal row.\n\nOnly `posted` transfers can be reversed. Pending transfers should be\ncancelled via VoidNormalAccountTransfer. At most one reversal per original\ntransfer. Both source and destination accounts must be Active. The PB\nothers-pool must have sufficient balance; if not, returns InsufficientFunds\nwith the available amount.",
+                "operationId": "ReverseNormalAccountTransfer",
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/ReverseNormalAccountTransferRequestContent"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "parameters": [
+                    {
+                        "name": "account_id",
+                        "in": "path",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "required": true
+                    },
+                    {
+                        "name": "transfer_id",
+                        "in": "path",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "ReverseNormalAccountTransfer 201 response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ReverseNormalAccountTransferResponseContent"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "AccountNotFoundError 404 response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/AccountNotFoundErrorResponseContent"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
         "/normal-accounts/{account_id}/transfers/{transfer_id}/void": {
             "post": {
                 "description": "Void a pending transfer — both legs flip to 'voided'.",
@@ -3157,6 +3213,74 @@
                 "required": [
                     "allowed_mccs",
                     "purpose_code"
+                ]
+            },
+            "ReverseNormalAccountTransferRequestContent": {
+                "type": "object",
+                "properties": {
+                    "amount": {
+                        "type": "number",
+                        "description": "Monetary amount in the smallest currency unit (e.g., paise for INR)."
+                    },
+                    "gateway_ref": {
+                        "type": "string"
+                    },
+                    "description": {
+                        "type": "string"
+                    },
+                    "idempotency_key": {
+                        "type": "string"
+                    }
+                },
+                "required": [
+                    "amount"
+                ]
+            },
+            "ReverseNormalAccountTransferResponseContent": {
+                "type": "object",
+                "properties": {
+                    "reversal_id": {
+                        "type": "string"
+                    },
+                    "original_transfer_id": {
+                        "type": "string"
+                    },
+                    "source_account_id": {
+                        "type": "string"
+                    },
+                    "destination_account_id": {
+                        "type": "string"
+                    },
+                    "amount": {
+                        "type": "number",
+                        "description": "Monetary amount in the smallest currency unit (e.g., paise for INR)."
+                    },
+                    "original_amount": {
+                        "type": "number",
+                        "description": "Monetary amount in the smallest currency unit (e.g., paise for INR)."
+                    },
+                    "status": {
+                        "type": "string"
+                    },
+                    "correlation_id": {
+                        "type": "string"
+                    },
+                    "created_at": {
+                        "type": "string",
+                        "description": "ISO 8601 date-time.",
+                        "format": "date-time"
+                    }
+                },
+                "required": [
+                    "amount",
+                    "correlation_id",
+                    "created_at",
+                    "destination_account_id",
+                    "original_amount",
+                    "original_transfer_id",
+                    "reversal_id",
+                    "source_account_id",
+                    "status"
                 ]
             },
             "Status": {

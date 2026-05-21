@@ -278,6 +278,19 @@ if builder.status.is_none() { builder.status = Some(Default::default()) }
                 builder
             }
 
+pub(crate) fn reverse_normal_account_transfer_output_output_correct_errors(mut builder: crate::operation::reverse_normal_account_transfer::builders::ReverseNormalAccountTransferOutputBuilder) -> crate::operation::reverse_normal_account_transfer::builders::ReverseNormalAccountTransferOutputBuilder {
+                if builder.reversal_id.is_none() { builder.reversal_id = Some(Default::default()) }
+if builder.original_transfer_id.is_none() { builder.original_transfer_id = Some(Default::default()) }
+if builder.source_account_id.is_none() { builder.source_account_id = Some(Default::default()) }
+if builder.destination_account_id.is_none() { builder.destination_account_id = Some(Default::default()) }
+if builder.amount.is_none() { builder.amount = Some(Default::default()) }
+if builder.original_amount.is_none() { builder.original_amount = Some(Default::default()) }
+if builder.status.is_none() { builder.status = Some(Default::default()) }
+if builder.correlation_id.is_none() { builder.correlation_id = Some(Default::default()) }
+if builder.created_at.is_none() { builder.created_at = Some(::aws_smithy_types::DateTime::from_fractional_secs(0, 0_f64)) }
+                builder
+            }
+
 pub(crate) fn transfer_to_pb_account_output_output_correct_errors(mut builder: crate::operation::transfer_to_pb_account::builders::TransferToPbAccountOutputBuilder) -> crate::operation::transfer_to_pb_account::builders::TransferToPbAccountOutputBuilder {
                 if builder.transfer_id.is_none() { builder.transfer_id = Some(Default::default()) }
 if builder.source_account_id.is_none() { builder.source_account_id = Some(Default::default()) }
