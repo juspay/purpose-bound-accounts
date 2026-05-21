@@ -163,6 +163,7 @@ impl TransferService {
                     0,
                     idempotency_key,
                     Some(legs.correlation_id),
+                    None,
                 )
                 .await?;
 
@@ -189,6 +190,7 @@ impl TransferService {
                     0,
                     None,
                     Some(legs.correlation_id),
+                    None,
                 )
                 .await?;
 

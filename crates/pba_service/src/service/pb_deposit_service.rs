@@ -123,6 +123,7 @@ impl PbDepositService {
                     0,
                     idempotency_key,
                     None,
+                    None,
                 )
                 .await?;
 
@@ -177,6 +178,7 @@ impl PbDepositService {
                     Some(resolved_funding_type),
                     0,
                     idempotency_key,
+                    None,
                     None,
                 )
                 .await?;

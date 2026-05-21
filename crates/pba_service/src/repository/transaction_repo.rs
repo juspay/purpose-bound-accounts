@@ -69,6 +69,7 @@ struct TransactionRow {
     tb_transfer_id: String,
     idempotency_key: Option<String>,
     correlation_id: Option<Uuid>,
+    reverses_transaction_id: Option<Uuid>,
     created_at: DateTime<Utc>,
     updated_at: DateTime<Utc>,
 }
@@ -98,7 +99,7 @@ impl TransactionRow {
             tb_transfer_id: self.tb_transfer_id.parse().unwrap_or(0),
             idempotency_key: self.idempotency_key,
             correlation_id: self.correlation_id,
-            reverses_transaction_id: None,
+            reverses_transaction_id: self.reverses_transaction_id,
             created_at: self.created_at,
             updated_at: self.updated_at,
         }
@@ -137,6 +138,7 @@ impl TransactionRepo {
         tb_transfer_id: u128,
         idempotency_key: Option<&str>,
         correlation_id: Option<Uuid>,
+        reverses_transaction_id: Option<Uuid>,
     ) -> Result<TransactionRecord, AppError> {
         let tb_id_str = tb_transfer_id.to_string();
         let row = sqlx::query_as::<_, TransactionRow>(
@@ -144,13 +146,13 @@ impl TransactionRepo {
             INSERT INTO transactions (id, account_id, account_kind, type, status, amount, pool, direction,
                                       source_ifsc, source_account, gateway_ref, timeout_seconds,
                                       merchant_id, merchant_mcc, description, funding_type,
-                                      tb_transfer_id, idempotency_key, correlation_id)
-            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17::numeric, $18, $19)
+                                      tb_transfer_id, idempotency_key, correlation_id, reverses_transaction_id)
+            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17::numeric, $18, $19, $20)
             RETURNING id, account_id, account_kind, type, status, amount, pool, direction,
                       source_ifsc, source_account, gateway_ref, timeout_seconds,
                       merchant_id, merchant_mcc, description, funding_type,
                       tb_transfer_id::text as tb_transfer_id, idempotency_key, correlation_id,
-                      created_at, updated_at
+                      reverses_transaction_id, created_at, updated_at
             "#,
         )
         .bind(id)
@@ -172,6 +174,7 @@ impl TransactionRepo {
         .bind(&tb_id_str)
         .bind(idempotency_key)
         .bind(correlation_id)
+        .bind(reverses_transaction_id)
         .fetch_one(tx.as_mut())
         .await
         .map_err(|e| AppError::DatabaseError(e.to_string()))?;
@@ -209,7 +212,7 @@ impl TransactionRepo {
                       source_ifsc, source_account, gateway_ref, timeout_seconds,
                       merchant_id, merchant_mcc, description, funding_type,
                       tb_transfer_id::text as tb_transfer_id, idempotency_key, correlation_id,
-                      created_at, updated_at
+                      reverses_transaction_id, created_at, updated_at
             "#,
         )
         .bind(id)
@@ -232,7 +235,7 @@ impl TransactionRepo {
                    source_ifsc, source_account, gateway_ref, timeout_seconds,
                    merchant_id, merchant_mcc, description, funding_type,
                    tb_transfer_id::text as tb_transfer_id, idempotency_key, correlation_id,
-                   created_at, updated_at
+                   reverses_transaction_id, created_at, updated_at
             FROM transactions
             WHERE id = $1 AND account_id = $2
             "#,
@@ -253,7 +256,7 @@ impl TransactionRepo {
                    source_ifsc, source_account, gateway_ref, timeout_seconds,
                    merchant_id, merchant_mcc, description, funding_type,
                    tb_transfer_id::text as tb_transfer_id, idempotency_key, correlation_id,
-                   created_at, updated_at
+                   reverses_transaction_id, created_at, updated_at
             FROM transactions
             WHERE id = $1
             "#,
@@ -278,7 +281,7 @@ impl TransactionRepo {
                    source_ifsc, source_account, gateway_ref, timeout_seconds,
                    merchant_id, merchant_mcc, description, funding_type,
                    tb_transfer_id::text as tb_transfer_id, idempotency_key, correlation_id,
-                   created_at, updated_at
+                   reverses_transaction_id, created_at, updated_at
             FROM transactions
             WHERE account_kind = $1 AND account_id = $2 AND idempotency_key = $3
             "#,
@@ -307,7 +310,7 @@ impl TransactionRepo {
                    source_ifsc, source_account, gateway_ref, timeout_seconds,
                    merchant_id, merchant_mcc, description, funding_type,
                    tb_transfer_id::text as tb_transfer_id, idempotency_key, correlation_id,
-                   created_at, updated_at
+                   reverses_transaction_id, created_at, updated_at
             FROM transactions
             WHERE account_kind = $1 AND account_id = $2
               AND ($5::timestamptz IS NULL OR created_at >= $5)
@@ -364,7 +367,7 @@ impl TransactionRepo {
                    source_ifsc, source_account, gateway_ref, timeout_seconds,
                    merchant_id, merchant_mcc, description, funding_type,
                    tb_transfer_id::text as tb_transfer_id, idempotency_key, correlation_id,
-                   created_at, updated_at
+                   reverses_transaction_id, created_at, updated_at
             FROM transactions
             WHERE ($3::timestamptz IS NULL OR created_at >= $3)
               AND ($4::timestamptz IS NULL OR created_at <= $4)
@@ -472,7 +475,7 @@ impl TransactionRepo {
                    source_ifsc, source_account, gateway_ref, timeout_seconds,
                    merchant_id, merchant_mcc, description, funding_type,
                    tb_transfer_id::text as tb_transfer_id, idempotency_key, correlation_id,
-                   created_at, updated_at
+                   reverses_transaction_id, created_at, updated_at
             FROM transactions
             WHERE account_id = $1 AND status = 'pending'
             ORDER BY created_at DESC
@@ -492,7 +495,7 @@ impl TransactionRepo {
                    source_ifsc, source_account, gateway_ref, timeout_seconds,
                    merchant_id, merchant_mcc, description, funding_type,
                    tb_transfer_id::text as tb_transfer_id, idempotency_key, correlation_id,
-                   created_at, updated_at
+                   reverses_transaction_id, created_at, updated_at
             FROM transactions
             WHERE status = 'pending'
               AND timeout_seconds IS NOT NULL
@@ -516,7 +519,7 @@ impl TransactionRepo {
                    source_ifsc, source_account, gateway_ref, timeout_seconds,
                    merchant_id, merchant_mcc, description, funding_type,
                    tb_transfer_id::text as tb_transfer_id, idempotency_key, correlation_id,
-                   created_at, updated_at
+                   reverses_transaction_id, created_at, updated_at
             FROM transactions
             WHERE correlation_id = $1
             ORDER BY created_at ASC
@@ -527,5 +530,31 @@ impl TransactionRepo {
         .await?;
 
         Ok(rows.into_iter().map(|r| r.into_domain()).collect())
+    }
+
+    /// Find the reversal row (if any) whose `reverses_transaction_id` matches the given
+    /// original transfer's source-side row id. Returns the normal-side reversal row
+    /// (the only row in a reversal pair that carries `reverses_transaction_id`).
+    #[allow(dead_code)]
+    pub async fn find_reversal_of(
+        &self,
+        original_source_id: Uuid,
+    ) -> Result<Option<TransactionRecord>, AppError> {
+        let row = sqlx::query_as::<_, TransactionRow>(
+            r#"
+            SELECT id, account_id, account_kind, type, status, amount, pool, direction,
+                   source_ifsc, source_account, gateway_ref, timeout_seconds,
+                   merchant_id, merchant_mcc, description, funding_type,
+                   tb_transfer_id::text as tb_transfer_id, idempotency_key, correlation_id,
+                   reverses_transaction_id, created_at, updated_at
+            FROM transactions
+            WHERE reverses_transaction_id = $1
+            "#,
+        )
+        .bind(original_source_id)
+        .fetch_optional(&self.pool)
+        .await?;
+
+        Ok(row.map(|r| r.into_domain()))
     }
 }

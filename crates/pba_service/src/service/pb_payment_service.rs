@@ -150,6 +150,7 @@ impl PbPaymentService {
                         0,
                         idempotency_key,
                         Some(payment_id),
+                        None,
                     )
                     .await?;
             }
@@ -183,6 +184,7 @@ impl PbPaymentService {
                         0,
                         idem_key,
                         Some(payment_id),
+                        None,
                     )
                     .await?;
             }

@@ -89,6 +89,7 @@ impl NormalDepositService {
                     0,
                     idempotency_key,
                     None,
+                    None,
                 )
                 .await?;
 
@@ -139,6 +140,7 @@ impl NormalDepositService {
                     Some("trust"),
                     0,
                     idempotency_key,
+                    None,
                     None,
                 )
                 .await?;
