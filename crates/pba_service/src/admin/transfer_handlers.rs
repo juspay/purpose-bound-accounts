@@ -274,33 +274,30 @@ pub async fn transfer_detail(
 
     let can_post_or_void = source_leg.status == TransactionStatus::Pending;
 
-    // A row is reversible when:
-    // - It is the original transfer's source-side row (kind=Normal, direction=Outbound, status=Posted)
-    // - It is not itself a reversal (reverses_transaction_id IS NULL)
-    let can_reverse = source_leg.status == TransactionStatus::Posted
-        && source_leg.direction == TransactionDirection::Outbound
-        && source_leg.reverses_transaction_id.is_none()
-        && state
-            .transaction_repo
-            .find_reversal_of(source_leg.id)
-            .await
-            .ok()
-            .flatten()
-            .is_none();
-
     let is_reversal = source_leg.reverses_transaction_id.is_some();
 
-    let reversed_by_id = if !is_reversal {
+    // Single lookup: if a row points at this source_leg.id, it's the reversal.
+    let existing_reversal = if !is_reversal {
         state
             .transaction_repo
             .find_reversal_of(source_leg.id)
             .await
             .ok()
             .flatten()
-            .map(|r| r.id.to_string())
     } else {
         None
     };
+
+    // A row is reversible when:
+    // - It is the original transfer's source-side row (kind=Normal, direction=Outbound, status=Posted)
+    // - It is not itself a reversal (reverses_transaction_id IS NULL)
+    // - No reversal of this row exists yet
+    let can_reverse = source_leg.status == TransactionStatus::Posted
+        && source_leg.direction == TransactionDirection::Outbound
+        && !is_reversal
+        && existing_reversal.is_none();
+
+    let reversed_by_id = existing_reversal.map(|r| r.id.to_string());
 
     render(TransferDetailTemplate {
         prefix: state.path_prefix.clone(),
