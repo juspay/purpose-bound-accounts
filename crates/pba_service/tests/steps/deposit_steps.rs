@@ -87,6 +87,7 @@ async fn attempt_deposit(world: &mut PbaWorld, amount: i64, ifsc: String, accoun
         Err(_) => {
             world.last_error = Some(crate::PbaError {
                 kind: "account_not_active".into(),
+                message: None,
             });
         }
     }
@@ -319,6 +320,7 @@ async fn attempt_post_deposit(world: &mut PbaWorld, deposit_id: String) {
         Err(_) => {
             world.last_error = Some(crate::PbaError {
                 kind: "deposit_error".into(),
+                message: None,
             });
         }
     }
@@ -341,6 +343,7 @@ async fn attempt_void_deposit(world: &mut PbaWorld, deposit_id: String) {
         Err(_) => {
             world.last_error = Some(crate::PbaError {
                 kind: "deposit_error".into(),
+                message: None,
             });
         }
     }
@@ -368,6 +371,7 @@ async fn attempt_post_again(world: &mut PbaWorld) {
         Err(_) => {
             world.last_error = Some(crate::PbaError {
                 kind: "deposit_not_pending".into(),
+                message: None,
             });
         }
     }
@@ -395,6 +399,7 @@ async fn attempt_void_again(world: &mut PbaWorld) {
         Err(_) => {
             world.last_error = Some(crate::PbaError {
                 kind: "deposit_not_pending".into(),
+                message: None,
             });
         }
     }
@@ -504,6 +509,7 @@ async fn attempt_deposit_without_funding_type(
         Err(_) => {
             world.last_error = Some(crate::PbaError {
                 kind: "funding_type_required".into(),
+                message: None,
             });
         }
     }
@@ -540,6 +546,7 @@ async fn attempt_deposit_with_funding_type(
         Err(e) => {
             world.last_error = Some(crate::PbaError {
                 kind: format!("{e:?}"),
+                message: None,
             });
         }
     }

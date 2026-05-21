@@ -69,6 +69,7 @@ async fn attempt_get_purpose_type(world: &mut PbaWorld, purpose_code: String) {
         Err(_) => {
             world.last_error = Some(crate::PbaError {
                 kind: "not_found".into(),
+                message: None,
             });
         }
     }
