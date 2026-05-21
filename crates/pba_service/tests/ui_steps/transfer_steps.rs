@@ -374,7 +374,9 @@ async fn then_reverse_button_visible(world: &mut UiWorld) {
     let transfer_id = world.last_transfer_id.clone().expect("No transfer ID set");
     let url = world.url(&format!("/admin/transfers/{}", transfer_id));
     let page = world.ensure_page().await;
-    page.goto(url).await.expect("Failed to navigate to transfer detail");
+    page.goto(url)
+        .await
+        .expect("Failed to navigate to transfer detail");
     sleep(Duration::from_millis(400)).await;
 
     let page = world.ensure_page().await;
@@ -393,7 +395,9 @@ async fn then_reverse_button_not_visible(world: &mut UiWorld) {
     let transfer_id = world.last_transfer_id.clone().expect("No transfer ID set");
     let url = world.url(&format!("/admin/transfers/{}", transfer_id));
     let page = world.ensure_page().await;
-    page.goto(url).await.expect("Failed to navigate to transfer detail");
+    page.goto(url)
+        .await
+        .expect("Failed to navigate to transfer detail");
     sleep(Duration::from_millis(400)).await;
 
     let page = world.ensure_page().await;
@@ -413,7 +417,9 @@ async fn when_click_reverse_and_submit(world: &mut UiWorld, amount_paisa: u64) {
     // Navigate directly to the reverse form
     let url = world.url(&format!("/admin/transfers/{}/reverse", transfer_id));
     let page = world.ensure_page().await;
-    page.goto(url).await.expect("Failed to navigate to reverse form");
+    page.goto(url)
+        .await
+        .expect("Failed to navigate to reverse form");
     sleep(Duration::from_millis(400)).await;
 
     // Clear the pre-filled amount_paisa input and type the desired value
@@ -425,7 +431,10 @@ async fn when_click_reverse_and_submit(world: &mut UiWorld, amount_paisa: u64) {
         .find_element("input[name='amount_paisa']")
         .await
         .expect("Could not find amount_paisa input on reverse form");
-    amount_input.click().await.expect("Failed to click amount_paisa");
+    amount_input
+        .click()
+        .await
+        .expect("Failed to click amount_paisa");
     amount_input
         .type_str(&amount_paisa.to_string())
         .await
@@ -447,7 +456,9 @@ async fn then_reversed_by_link_visible(world: &mut UiWorld) {
     let transfer_id = world.last_transfer_id.clone().expect("No transfer ID set");
     let url = world.url(&format!("/admin/transfers/{}", transfer_id));
     let page = world.ensure_page().await;
-    page.goto(url).await.expect("Failed to navigate to transfer detail");
+    page.goto(url)
+        .await
+        .expect("Failed to navigate to transfer detail");
     sleep(Duration::from_millis(400)).await;
 
     let page = world.ensure_page().await;
@@ -477,7 +488,9 @@ async fn when_follow_reversed_by_link(world: &mut UiWorld) {
     world.last_transfer_id = Some(reversal_id.clone());
     let url = world.url(&format!("/admin/transfers/{}", reversal_id));
     let page = world.ensure_page().await;
-    page.goto(url).await.expect("Failed to navigate to reversal transfer detail");
+    page.goto(url)
+        .await
+        .expect("Failed to navigate to reversal transfer detail");
     sleep(Duration::from_millis(400)).await;
 }
 
@@ -512,7 +525,9 @@ async fn when_pb_account_spends(world: &mut UiWorld, amount: u64, merchant: Stri
 
     let url = world.url(&format!("/admin/accounts/{}/payment", account_id));
     let page = world.ensure_page().await;
-    page.goto(url).await.expect("Failed to navigate to PB payment form");
+    page.goto(url)
+        .await
+        .expect("Failed to navigate to PB payment form");
     sleep(Duration::from_millis(400)).await;
 
     // Fill fields via JS (avoids interaction issues with pre-filled values)

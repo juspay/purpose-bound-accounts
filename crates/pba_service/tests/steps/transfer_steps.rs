@@ -593,9 +593,7 @@ async fn attempt_reverse_transfer(world: &mut PbaWorld, amount: i64) {
     reverse_transfer(world, amount).await;
 }
 
-#[when(
-    regex = r#"^I reverse (\d+) paisa from the transfer with idempotency key "([^"]*)"$"#
-)]
+#[when(regex = r#"^I reverse (\d+) paisa from the transfer with idempotency key "([^"]*)"$"#)]
 async fn reverse_transfer_with_idempotency(
     world: &mut PbaWorld,
     amount: i64,
@@ -700,9 +698,7 @@ async fn reversal_available_balance_is(world: &mut PbaWorld, expected: i64) {
     );
 }
 
-#[when(
-    regex = r#"^I switch the current normal account to a fresh holder "([^"]*)"$"#
-)]
+#[when(regex = r#"^I switch the current normal account to a fresh holder "([^"]*)"$"#)]
 async fn switch_normal_account_to_fresh_holder(world: &mut PbaWorld, holder: String) {
     let result = world
         .client
@@ -720,10 +716,7 @@ async fn treat_reversal_row_as_current_transfer(world: &mut PbaWorld) {
 }
 
 #[then(regex = r#"^the normal account has at least (\d+) transactions$"#)]
-async fn normal_account_has_at_least_n_transactions(
-    world: &mut PbaWorld,
-    min_count: usize,
-) {
+async fn normal_account_has_at_least_n_transactions(world: &mut PbaWorld, min_count: usize) {
     let account_id = world
         .last_normal_account_id
         .as_ref()
@@ -744,10 +737,7 @@ async fn normal_account_has_at_least_n_transactions(
 }
 
 #[then(regex = r#"^the PB account has at least (\d+) transactions$"#)]
-async fn pb_account_has_at_least_n_transactions(
-    world: &mut PbaWorld,
-    min_count: usize,
-) {
+async fn pb_account_has_at_least_n_transactions(world: &mut PbaWorld, min_count: usize) {
     let account_id = world.account_id.as_ref().expect("No PB account ID").clone();
     let txns = world
         .client

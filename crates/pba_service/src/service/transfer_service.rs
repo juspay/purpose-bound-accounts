@@ -478,9 +478,7 @@ impl TransferService {
 
         // Step 5: Resolve destination PB account from the original's correlation pair.
         let original_corr = original.correlation_id.ok_or_else(|| {
-            AppError::DatabaseError(
-                "original transfer row missing correlation_id".to_string(),
-            )
+            AppError::DatabaseError("original transfer row missing correlation_id".to_string())
         })?;
         let original_legs = self
             .transaction_repo
@@ -496,7 +494,10 @@ impl TransferService {
         let destination = self.pb_account_repo.get_account(destination_pb_id).await?;
 
         // Step 6: Active checks on both sides.
-        let source = self.normal_account_repo.get_account(source_normal_id).await?;
+        let source = self
+            .normal_account_repo
+            .get_account(source_normal_id)
+            .await?;
         if !source.status.is_active() {
             return Err(AppError::NormalAccountNotActive(
                 source_normal_id.to_string(),
@@ -534,7 +535,7 @@ impl TransferService {
                 None,
                 description,
                 Some("trust"),
-                0, // tb_transfer_id (immediate transfers leave this 0, matching transfer())
+                0,    // tb_transfer_id (immediate transfers leave this 0, matching transfer())
                 None, // no idempotency key on the pb-side row
                 Some(correlation_id),
                 None, // reverses_transaction_id NULL on pb-side

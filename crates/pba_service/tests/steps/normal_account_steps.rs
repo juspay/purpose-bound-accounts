@@ -131,7 +131,10 @@ async fn deposit_to_normal(world: &mut PbaWorld, amount: i64) {
         }
         Err(e) => {
             let kind = extract_normal_deposit_error_kind(&e);
-            world.last_error = Some(crate::PbaError { kind, message: None });
+            world.last_error = Some(crate::PbaError {
+                kind,
+                message: None,
+            });
         }
     }
 }
@@ -166,7 +169,10 @@ async fn deposit_to_normal_with_idempotency(
         }
         Err(e) => {
             let kind = extract_normal_deposit_error_kind(&e);
-            world.last_error = Some(crate::PbaError { kind, message: None });
+            world.last_error = Some(crate::PbaError {
+                kind,
+                message: None,
+            });
         }
     }
 }
@@ -200,7 +206,10 @@ async fn retry_deposit_with_idempotency(world: &mut PbaWorld, idempotency_key: S
         }
         Err(e) => {
             let kind = extract_normal_deposit_error_kind(&e);
-            world.last_error = Some(crate::PbaError { kind, message: None });
+            world.last_error = Some(crate::PbaError {
+                kind,
+                message: None,
+            });
         }
     }
 }
@@ -351,7 +360,10 @@ async fn withdraw_from_normal(world: &mut PbaWorld, amount: i64) {
         }
         Err(e) => {
             let kind = extract_normal_withdrawal_error_kind(&e);
-            world.last_error = Some(crate::PbaError { kind, message: None });
+            world.last_error = Some(crate::PbaError {
+                kind,
+                message: None,
+            });
         }
     }
 }

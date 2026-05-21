@@ -35,7 +35,10 @@ pub enum AppError {
     /// A reversal already exists for this original transfer.
     TransferAlreadyReversed(String),
     /// Requested reversal amount is zero or exceeds the original transfer amount.
-    ReversalAmountInvalid { requested: u64, original: u64 },
+    ReversalAmountInvalid {
+        requested: u64,
+        original: u64,
+    },
     /// Transfer rejected by TigerBeetle because debit would exceed credits (overdraft).
     /// This is retryable with a fresh balance read.
     ExceedsBalance,
@@ -113,9 +116,15 @@ impl IntoResponse for AppError {
             AppError::TrustDepositRequiresTransfer => {
                 (StatusCode::BAD_REQUEST, "TrustDepositRequiresTransfer")
             }
-            AppError::TransferNotReversible(_, _) => (StatusCode::CONFLICT, "TransferNotReversible"),
-            AppError::TransferAlreadyReversed(_) => (StatusCode::CONFLICT, "TransferAlreadyReversed"),
-            AppError::ReversalAmountInvalid { .. } => (StatusCode::BAD_REQUEST, "ReversalAmountInvalid"),
+            AppError::TransferNotReversible(_, _) => {
+                (StatusCode::CONFLICT, "TransferNotReversible")
+            }
+            AppError::TransferAlreadyReversed(_) => {
+                (StatusCode::CONFLICT, "TransferAlreadyReversed")
+            }
+            AppError::ReversalAmountInvalid { .. } => {
+                (StatusCode::BAD_REQUEST, "ReversalAmountInvalid")
+            }
             AppError::ExceedsBalance => (StatusCode::UNPROCESSABLE_ENTITY, "InsufficientFunds"),
             AppError::TigerBeetleError(_) => {
                 (StatusCode::INTERNAL_SERVER_ERROR, "TigerBeetleError")
