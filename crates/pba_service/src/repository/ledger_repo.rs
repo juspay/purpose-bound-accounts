@@ -24,6 +24,7 @@ const CODE_SENTINEL: u16 = 99;
 
 const INTERNAL_TRANSFER_CODE: u16 = 400;
 const PENDING_INTERNAL_TRANSFER_CODE: u16 = 401;
+const INTERNAL_TRANSFER_REVERSAL_CODE: u16 = 410;
 
 #[allow(dead_code)]
 #[derive(Debug, Clone, Copy)]
@@ -373,6 +374,28 @@ impl LedgerRepo {
             amount,
             PENDING_INTERNAL_TRANSFER_CODE,
             timeout_seconds,
+        )
+        .await
+    }
+
+    /// Immediate reversal of an internal transfer.
+    ///
+    /// Debits the PB others-pool, credits the source normal account. TigerBeetle's
+    /// `DEBITS_MUST_NOT_EXCEED_CREDITS` flag on the others-pool enforces that the
+    /// reversal cannot debit below zero; the caller maps `AppError::ExceedsBalance`
+    /// to `AppError::InsufficientFunds` with the observed balance.
+    #[allow(dead_code)]
+    pub async fn create_internal_transfer_reversal(
+        &self,
+        debit_pb_others_tb_id: u128,
+        credit_normal_tb_id: u128,
+        amount: u64,
+    ) -> Result<(), AppError> {
+        self.create_transfer(
+            debit_pb_others_tb_id,
+            credit_normal_tb_id,
+            amount,
+            INTERNAL_TRANSFER_REVERSAL_CODE,
         )
         .await
     }
