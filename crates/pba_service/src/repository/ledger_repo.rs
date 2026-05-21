@@ -39,7 +39,7 @@ pub struct SingleBalance {
 }
 
 fn generate_transfer_id() -> u128 {
-    u128::from_be_bytes(*Uuid::new_v4().as_bytes())
+    u128::from_be_bytes(*Uuid::now_v7().as_bytes())
 }
 
 pub struct LedgerRepo {
