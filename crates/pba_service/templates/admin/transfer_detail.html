@@ -1,90 +1,91 @@
 {% extends "base.html" %}
 
-{% block title %}Transfer {{ transfer_id }} - PBA Admin{% endblock %}
+{% block title %}Transfer {{ transfer_id }} — PBA Ledger{% endblock %}
+{% block breadcrumb %}<a href="{{ prefix }}/admin">PBA Ledger</a> <span class="sep">/</span> <a href="{{ prefix }}/admin/normal-accounts">Normal Accounts</a> <span class="sep">/</span> <a href="{{ prefix }}/admin/normal-accounts/{{ source_account_id }}" class="mono">{{ source_account_id }}</a> <span class="sep">/</span> <span class="current">Transfer</span>{% endblock %}
 
 {% block content %}
-<h1>Transfer Detail</h1>
+<div class="page-header">
+    <div>
+        <h1 class="page-title">Transfer Detail</h1>
+        <p class="page-subtitle mono">{{ transfer_id }}</p>
+    </div>
+    <div class="page-actions">
+        {% if can_post_or_void %}
+        <form method="post" action="{{ prefix }}/admin/transfers/{{ transfer_id }}/void" class="inline-form">
+            <button type="submit" class="btn-sm outline" style="color: var(--danger); border-color: var(--danger);">Void</button>
+        </form>
+        <form method="post" action="{{ prefix }}/admin/transfers/{{ transfer_id }}/post" class="inline-form">
+            <button type="submit" class="btn-sm" style="background: var(--success);">Post</button>
+        </form>
+        {% endif %}
+        {% if can_reverse %}
+        <a href="{{ prefix }}/admin/transfers/{{ transfer_id }}/reverse" role="button" class="btn-sm outline" style="color: var(--danger); border-color: var(--danger);">Reverse</a>
+        {% endif %}
+        <a href="{{ prefix }}/admin/normal-accounts/{{ source_account_id }}" role="button" class="outline">← Back to account</a>
+    </div>
+</div>
 
-<p><a href="{{ prefix }}/admin/normal-accounts/{{ source_account_id }}">&larr; Back to source account</a></p>
+<div class="grid">
+    <article class="stat-card {% if status == "posted" %}stat-success{% else if status == "pending" %}stat-warn{% else if status == "voided" %}stat-danger{% else %}stat-primary{% endif %}">
+        <p class="stat-label">Status</p>
+        <p class="stat-value" style="font-size: 1.25rem; padding-top: 0.35rem; text-transform: capitalize;">{{ status }}</p>
+        <p class="stat-hint">Transfer state</p>
+    </article>
+    <article class="stat-card stat-primary">
+        <p class="stat-label">Amount</p>
+        <p class="stat-value">₹{{ amount }}</p>
+        <p class="stat-hint">Normal → PB transfer</p>
+    </article>
+</div>
 
 <article>
-    <header><strong>Identity</strong></header>
-    <div class="grid">
-        <div>
-            <p><strong>Transfer ID:</strong> {{ transfer_id }}</p>
-            <p><strong>Correlation ID:</strong> {{ correlation_id }}</p>
+    <header>Transfer details</header>
+    <div class="grid" style="grid-template-columns: 1fr 1fr;">
+        <div class="kv">
+            <div>Transfer ID</div><div class="mono">{{ transfer_id }}</div>
+            <div>Correlation ID</div><div class="mono">{{ correlation_id }}</div>
+            <div>Status</div><div><span id="transfer-status" class="{{ status_class }}">{{ status }}</span></div>
+            <div>Amount</div><div>₹{{ amount }}</div>
+            <div>Created</div><div>{{ created_at }}</div>
         </div>
-        <div>
-            <p><strong>Status:</strong> <span id="transfer-status" class="{{ status_class }}">{{ status }}</span></p>
-            <p><strong>Amount:</strong> ₹{{ amount }}</p>
+        <div class="kv">
+            <div>Gateway Ref</div>
+            <div class="mono">{% if gateway_ref.is_empty() %}<span class="muted">—</span>{% else %}{{ gateway_ref }}{% endif %}</div>
+            <div>Description</div>
+            <div>{% if description.is_empty() %}<span class="muted">—</span>{% else %}{{ description }}{% endif %}</div>
         </div>
     </div>
 </article>
 
 <article>
-    <header><strong>Accounts</strong></header>
-    <div class="grid">
-        <div>
-            <p><strong>Source (Normal):</strong>
-                <a href="{{ prefix }}/admin/normal-accounts/{{ source_account_id }}">{{ source_account_id }}</a>
-            </p>
-            <p><strong>Source Holder:</strong> {{ source_holder_id }}</p>
+    <header>Accounts</header>
+    <div class="grid" style="grid-template-columns: 1fr 1fr;">
+        <div class="kv">
+            <div>Source (Normal)</div>
+            <div class="mono"><a href="{{ prefix }}/admin/normal-accounts/{{ source_account_id }}">{{ source_account_id }}</a></div>
+            <div>Source Holder</div><div class="mono">{{ source_holder_id }}</div>
         </div>
-        <div>
-            <p><strong>Destination (PB):</strong>
-                <a href="{{ prefix }}/admin/accounts/{{ dest_account_id }}">{{ dest_account_id }}</a>
-            </p>
-            <p><strong>Destination Holder:</strong> {{ dest_holder_id }}</p>
-            <p><strong>Purpose:</strong> {{ dest_purpose }}</p>
+        <div class="kv">
+            <div>Destination (PB)</div>
+            <div class="mono"><a href="{{ prefix }}/admin/accounts/{{ dest_account_id }}">{{ dest_account_id }}</a></div>
+            <div>Destination Holder</div><div class="mono">{{ dest_holder_id }}</div>
+            <div>Purpose</div><div><span class="badge">{{ dest_purpose }}</span></div>
         </div>
     </div>
 </article>
-
-<article>
-    <header><strong>Details</strong></header>
-    <div class="grid">
-        <div>
-            <p><strong>Gateway Ref:</strong> {{ gateway_ref }}</p>
-            <p><strong>Description:</strong> {{ description }}</p>
-        </div>
-        <div>
-            <p><strong>Created:</strong> {{ created_at }}</p>
-        </div>
-    </div>
-</article>
-
-{% if can_post_or_void %}
-<article>
-    <header><strong>Actions</strong></header>
-    <form method="post" action="{{ prefix }}/admin/transfers/{{ transfer_id }}/post" class="inline-form">
-        <button type="submit" class="outline" style="color: #2e7d32; border-color: #2e7d32;">Post</button>
-    </form>
-    <form method="post" action="{{ prefix }}/admin/transfers/{{ transfer_id }}/void" class="inline-form">
-        <button type="submit" class="outline" style="color: #c62828; border-color: #c62828;">Void</button>
-    </form>
-</article>
-{% endif %}
-
-{% if can_reverse %}
-<article>
-    <header><strong>Reversal</strong></header>
-    <p>This transfer was posted and can be reversed by an admin.</p>
-    <a href="{{ prefix }}/admin/transfers/{{ transfer_id }}/reverse" role="button" class="outline" style="color: #c62828; border-color: #c62828;">Reverse</a>
-</article>
-{% endif %}
 
 {% if let Some(rid) = reversed_by_id %}
 <article>
-    <header><strong>Reversed</strong></header>
+    <header>Reversed</header>
     <p>This transfer has been reversed:
-        <a href="{{ prefix }}/admin/transactions/{{ rid }}">{{ rid }}</a>
+        <a href="{{ prefix }}/admin/transactions/{{ rid }}" class="mono">{{ rid }}</a>
     </p>
 </article>
 {% endif %}
 
 {% if is_reversal %}
 <article>
-    <header><strong>Reversal row</strong></header>
+    <header>Reversal row</header>
     <p>This row is a reversal of a previous transfer.</p>
 </article>
 {% endif %}

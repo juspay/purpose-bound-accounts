@@ -1,29 +1,36 @@
 {% extends "base.html" %}
 
-{% block title %}Withdrawal - PBA Admin{% endblock %}
+{% block title %}Withdraw — PBA Ledger{% endblock %}
+{% block breadcrumb %}<a href="{{ prefix }}/admin">PBA Ledger</a> <span class="sep">/</span> <a href="{{ prefix }}/admin/accounts">Accounts</a> <span class="sep">/</span> <a href="{{ prefix }}/admin/accounts/{{ account_id }}" class="mono">{{ account_id|truncate(12) }}</a> <span class="sep">/</span> <span class="current">Withdraw</span>{% endblock %}
 
 {% block content %}
-<h1>Withdraw</h1>
-<p><a href="{{ prefix }}/admin/accounts/{{ account_id }}">&larr; Back to account</a></p>
+<div class="page-header">
+    <div>
+        <h1 class="page-title">Withdraw funds</h1>
+        <p class="page-subtitle">Account <span class="mono">{{ account_id|truncate(12) }}…</span> · purpose <span class="badge">{{ purpose_code }}</span>. Only the self-pool can be withdrawn.</p>
+    </div>
+    <div class="page-actions">
+        <a href="{{ prefix }}/admin/accounts/{{ account_id }}" role="button" class="outline">← Back to account</a>
+    </div>
+</div>
+
+{% if let Some(err) = error %}
+<div class="error-box" id="form-error"><strong>Error:</strong> {{ err }}</div>
+{% endif %}
 
 <article>
-    <p><strong>Account:</strong> {{ account_id }}</p>
-    <p><strong>Purpose:</strong> {{ purpose_code }}</p>
-
-    {% if let Some(err) = error %}
-    <p id="form-error" style="color: #c62828;"><strong>Error:</strong> {{ err }}</p>
-    {% endif %}
-
+    <header>Withdrawal details</header>
     <form method="post" action="{{ prefix }}/admin/accounts/{{ account_id }}/withdrawal">
-        <label>
-            Amount (paisa)
-            <input type="number" name="amount" min="1" required>
+        <label>Amount (paisa)
+            <input type="number" name="amount" min="1" required placeholder="e.g. 2500 = ₹25.00">
         </label>
-        <label>
-            Gateway Reference (optional)
-            <input type="text" name="gateway_ref" placeholder="e.g. gw-txn-12345">
+        <label>Gateway Reference (optional)
+            <input type="text" name="gateway_ref" placeholder="e.g. gw-wd-12345">
         </label>
-        <button type="submit">Withdraw</button>
+        <div class="flex-gap">
+            <button type="submit">Submit withdrawal</button>
+            <a href="{{ prefix }}/admin/accounts/{{ account_id }}" class="btn outline">Cancel</a>
+        </div>
     </form>
 </article>
 {% endblock %}

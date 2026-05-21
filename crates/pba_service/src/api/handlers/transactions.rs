@@ -14,11 +14,11 @@ pub async fn list_all_transactions(
 
     let transactions = state
         .transaction_repo
-        .list_all(offset, limit, query.from_date, query.to_date)
+        .list_all(offset, limit, query.from_date, query.to_date, None)
         .await?;
     let total = state
         .transaction_repo
-        .count_all(query.from_date, query.to_date)
+        .count_all(query.from_date, query.to_date, None)
         .await?;
 
     Ok(Json(ListTransactionsResponse {

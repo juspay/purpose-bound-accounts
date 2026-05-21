@@ -1,26 +1,33 @@
 {% extends "base.html" %}
 
-{% block title %}Withdrawal - Normal Account - PBA Admin{% endblock %}
+{% block title %}Withdrawal — PBA Ledger{% endblock %}
+{% block breadcrumb %}<a href="{{ prefix }}/admin">PBA Ledger</a> <span class="sep">/</span> <a href="{{ prefix }}/admin/normal-accounts">Normal Accounts</a> <span class="sep">/</span> <a href="{{ prefix }}/admin/normal-accounts/{{ account_id }}" class="mono">{{ account_id }}</a> <span class="sep">/</span> <span class="current">Withdraw</span>{% endblock %}
 
 {% block content %}
-<h1>Withdraw from Normal Account</h1>
-<p><a href="{{ prefix }}/admin/normal-accounts/{{ account_id }}">&larr; Back to account</a></p>
+<div class="page-header">
+    <div>
+        <h1 class="page-title">Withdraw from Normal Account</h1>
+        <p class="page-subtitle">Account <span class="mono">{{ account_id }}</span> · holder <span class="badge">{{ holder_id }}</span></p>
+    </div>
+    <div class="page-actions">
+        <a href="{{ prefix }}/admin/normal-accounts/{{ account_id }}" role="button" class="outline">← Back to account</a>
+    </div>
+</div>
+
+{% if let Some(err) = error %}
+<div class="error-box"><strong>Error:</strong> {{ err }}</div>
+{% endif %}
 
 <article>
-    <p><strong>Account:</strong> {{ account_id }}</p>
-    <p><strong>Holder:</strong> {{ holder_id }}</p>
-
-    {% if let Some(err) = error %}
-    <p id="form-error" style="color: #c62828;"><strong>Error:</strong> {{ err }}</p>
-    {% endif %}
-
+    <header>Withdrawal details</header>
     <form method="post" action="{{ prefix }}/admin/normal-accounts/{{ account_id }}/withdrawals">
         <label>
             Amount (paisa)
-            <input type="number" name="amount" min="1" required>
+            <span class="info-icon" data-info="Enter the amount in paisa (smallest currency unit). 100 paisa = ₹1.00">i</span>
+            <input type="number" name="amount" min="1" required placeholder="e.g. 10000 for ₹100.00">
         </label>
         <label>
-            Gateway Reference (optional)
+            Gateway reference <span class="muted text-small">(optional)</span>
             <input type="text" name="gateway_ref" placeholder="e.g. gw-txn-12345">
         </label>
         <button type="submit">Withdraw</button>

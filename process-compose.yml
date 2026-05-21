@@ -61,9 +61,6 @@ processes:
 
   pba-service:
     command: cargo run -p pba-service
-    environment:
-      # Auto-apply pending migrations in dev (the binary itself defaults to skipping).
-      - DB_MIGRATION_MODE=run
     depends_on:
       postgres-init:
         condition: process_completed_successfully

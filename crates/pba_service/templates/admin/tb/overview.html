@@ -1,0 +1,93 @@
+{% extends "base.html" %}
+
+{% block title %}TigerBeetle Explorer — PBA Ledger{% endblock %}
+{% block breadcrumb %}<a href="{{ prefix }}/admin">PBA Ledger</a> <span class="sep">/</span> <span class="current">TigerBeetle</span>{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div>
+        <h1 class="page-title">TigerBeetle Explorer</h1>
+        <p class="page-subtitle">Direct inspection of the underlying ledger — raw accounts, transfers, balances and cluster health.</p>
+    </div>
+</div>
+
+{% include "admin/tb/_subnav.html" %}
+
+{% if let Some(err) = error %}
+<div class="error-box"><strong>Error:</strong> {{ err }}</div>
+{% endif %}
+
+<div class="grid" style="grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));">
+    <article>
+        <header>Cluster</header>
+        <div class="kv">
+            <div>Cluster ID</div><div class="mono">{{ cluster_id }}</div>
+            <div>Addresses</div><div class="mono">{% for a in &addresses %}{{ a }}{% if !loop.last %}, {% endif %}{% endfor %}</div>
+            <div>Default ledger</div><div class="mono">{{ default_ledger }} <span class="muted">(INR paisa)</span></div>
+            <div>PBA accounts</div><div>{{ pba_accounts }} <span class="muted text-small">in Postgres</span></div>
+        </div>
+    </article>
+
+    <article>
+        <header>Quick links</header>
+        <div style="display: flex; flex-direction: column; gap: 0.375rem;">
+            <a href="{{ prefix }}/admin/tb/accounts?mode=query&ledger={{ default_ledger }}&limit=100"><span class="badge pill-muted">code: any</span> All accounts on ledger {{ default_ledger }}</a>
+            <a href="{{ prefix }}/admin/tb/accounts?mode=query&ledger={{ default_ledger }}&code=1&limit=100"><span class="badge pill-muted">code: 1</span> Self-pool accounts</a>
+            <a href="{{ prefix }}/admin/tb/accounts?mode=query&ledger={{ default_ledger }}&code=2&limit=100"><span class="badge pill-muted">code: 2</span> Others-pool accounts</a>
+            <a href="{{ prefix }}/admin/tb/transfers?mode=query&ledger={{ default_ledger }}&limit=100&reversed=on"><span class="badge pill-muted">recent</span> All transfers (newest first)</a>
+            <a href="{{ prefix }}/admin/tb/transfers?mode=query&ledger={{ default_ledger }}&code=100&limit=100&reversed=on"><span class="badge pill-muted">code: 100</span> Recent deposits</a>
+            <a href="{{ prefix }}/admin/tb/transfers?mode=query&ledger={{ default_ledger }}&code=200&limit=100&reversed=on"><span class="badge pill-muted">code: 200</span> Recent payments</a>
+            <a href="{{ prefix }}/admin/tb/transfers?mode=query&ledger={{ default_ledger }}&code=300&limit=100&reversed=on"><span class="badge pill-muted">code: 300</span> Recent withdrawals</a>
+            <a href="{{ prefix }}/admin/tb/pending?ledger={{ default_ledger }}&limit=100"><span class="badge pill-pending">pending</span> Pending transfers</a>
+        </div>
+    </article>
+</div>
+
+<article>
+    <header>Sentinel accounts</header>
+    <figure style="margin: 0;">
+    <table class="compact">
+        <thead>
+            <tr>
+                <th>Role</th>
+                <th>ID</th>
+                <th style="width: 80px;">Status</th>
+                <th style="text-align: right;">Credits posted</th>
+                <th style="text-align: right;">Debits posted</th>
+                <th style="text-align: right;">Net</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for s in &sentinel_rows %}
+            <tr>
+                <td><strong>{{ s.label }}</strong></td>
+                <td class="mono"><a href="{{ prefix }}/admin/tb/accounts/{{ s.id }}">{{ s.id }}</a></td>
+                <td>{% if s.found %}<span class="badge pill-ok">found</span>{% else %}<span class="badge pill-danger">missing</span>{% endif %}</td>
+                <td class="mono" style="text-align: right;">{{ s.credits_posted }}</td>
+                <td class="mono" style="text-align: right;">{{ s.debits_posted }}</td>
+                <td class="mono" style="text-align: right;"><strong>{{ s.balance }}</strong></td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    </figure>
+</article>
+
+<article>
+    <header>Schema reference</header>
+    <div class="grid" style="grid-template-columns: 1fr 1fr;">
+        <div class="kv">
+            <div>Account code 1</div><div>Self pool (account holder)</div>
+            <div>Account code 2</div><div>Others pool (third parties)</div>
+            <div>Account code 99</div><div>Sentinel counterparty</div>
+        </div>
+        <div class="kv">
+            <div>Transfer code 100</div><div>Deposit (direct)</div>
+            <div>Transfer code 101</div><div>Deposit (pending / post / void)</div>
+            <div>Transfer code 200</div><div>Payment to merchant</div>
+            <div>Transfer code 300</div><div>Withdrawal</div>
+            <div>Amount unit</div><div>Paisa (1 INR = 100 paisa)</div>
+        </div>
+    </div>
+</article>
+{% endblock %}

@@ -1,0 +1,170 @@
+{% extends "base.html" %}
+
+{% block title %}TB Transfers — PBA Ledger{% endblock %}
+{% block breadcrumb %}<a href="{{ prefix }}/admin">PBA Ledger</a> <span class="sep">/</span> <a href="{{ prefix }}/admin/tb">TigerBeetle</a> <span class="sep">/</span> <span class="current">Transfers</span>{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div>
+        <h1 class="page-title">TigerBeetle transfers</h1>
+        <p class="page-subtitle">Query the transfer ledger, fetch by account, or look up specific IDs.</p>
+    </div>
+</div>
+
+{% include "admin/tb/_subnav.html" %}
+
+{% if let Some(err) = error %}
+<div class="error-box"><strong>Error:</strong> {{ err }}</div>
+{% endif %}
+
+<details {% if form.mode == "query" || form.mode == "" %}open{% endif %}>
+    <summary>Query transfers</summary>
+    <article>
+        <form method="get" action="{{ prefix }}/admin/tb/transfers">
+            <input type="hidden" name="mode" value="query">
+            <div class="grid">
+                <label>
+                    Ledger
+                    <span class="info-icon" data-info="TigerBeetle ledger ID. PBA uses ledger 1 (INR paisa). Cross-ledger transfers are not allowed, so this scopes the query.">i</span>
+                    <input type="number" name="ledger" value="{% if form.ledger != "" %}{{ form.ledger }}{% else %}{{ default_ledger }}{% endif %}" placeholder="1">
+                </label>
+                <label>
+                    Code
+                    <span class="info-icon" data-info="Transfer code (0 = any). PBA codes: 100 = deposit, 101 = pending deposit, 200 = payment, 300 = withdrawal, 99 = sentinel.">i</span>
+                    <input type="number" name="code" value="{{ form.code }}" placeholder="0 = any · 100=dep · 200=pay · 300=wd">
+                </label>
+                <label>
+                    Limit
+                    <span class="info-icon info-icon--end" data-info="Maximum number of transfers to return. TigerBeetle caps this at 8190.">i</span>
+                    <input type="number" name="limit" value="{{ form.limit }}">
+                </label>
+            </div>
+            <div class="grid">
+                <label>
+                    Timestamp min (UTC)
+                    <span class="info-icon" data-info="Lower bound on transfer timestamp. Inclusive. Leave blank for no lower bound.">i</span>
+                    <input type="datetime-local" name="timestamp_min" value="{{ form.timestamp_min }}">
+                </label>
+                <label>
+                    Timestamp max (UTC)
+                    <span class="info-icon" data-info="Upper bound on transfer timestamp. Inclusive. Leave blank for no upper bound.">i</span>
+                    <input type="datetime-local" name="timestamp_max" value="{{ form.timestamp_max }}">
+                </label>
+                <label>
+                    <input type="checkbox" name="reversed" {% if form.reversed %}checked{% endif %}>
+                    <span>Reversed (newest first)</span>
+                    <span class="info-icon info-icon--end" data-info="When checked, results are returned in descending timestamp order — newest transfers first. Useful for recent activity audits.">i</span>
+                </label>
+            </div>
+            <button type="submit">Run query</button>
+        </form>
+    </article>
+</details>
+
+<details {% if form.mode == "for_account" %}open{% endif %}>
+    <summary>Transfers for a specific account</summary>
+    <article>
+        <form method="get" action="{{ prefix }}/admin/tb/transfers">
+            <input type="hidden" name="mode" value="for_account">
+            <label>
+                Account ID (UUID or u128)
+                <span class="info-icon" data-info="The TigerBeetle account ID whose transfers you want. Accepts UUID, decimal u128, or 0x-prefixed hex.">i</span>
+                <input type="text" name="account_id" value="{{ form.account_id }}" required>
+            </label>
+            <div class="grid">
+                <label>
+                    <input type="checkbox" name="include_debits" {% if form.include_debits %}checked{% endif %}>
+                    <span>Include debits</span>
+                    <span class="info-icon" data-info="Include transfers where this account is the debit (money flowing out of the account).">i</span>
+                </label>
+                <label>
+                    <input type="checkbox" name="include_credits" {% if form.include_credits %}checked{% endif %}>
+                    <span>Include credits</span>
+                    <span class="info-icon" data-info="Include transfers where this account is the credit (money flowing into the account).">i</span>
+                </label>
+                <label>
+                    <input type="checkbox" name="reversed" {% if form.reversed %}checked{% endif %}>
+                    <span>Reversed (newest first)</span>
+                    <span class="info-icon info-icon--end" data-info="Return the most recent transfers first.">i</span>
+                </label>
+            </div>
+            <div class="grid">
+                <label>
+                    Timestamp min (UTC)
+                    <span class="info-icon" data-info="Lower bound on transfer timestamp. Inclusive. Leave blank for no lower bound.">i</span>
+                    <input type="datetime-local" name="timestamp_min" value="{{ form.timestamp_min }}">
+                </label>
+                <label>
+                    Timestamp max (UTC)
+                    <span class="info-icon" data-info="Upper bound on transfer timestamp. Inclusive. Leave blank for no upper bound.">i</span>
+                    <input type="datetime-local" name="timestamp_max" value="{{ form.timestamp_max }}">
+                </label>
+                <label>
+                    Limit
+                    <span class="info-icon info-icon--end" data-info="Maximum number of transfers to return. TigerBeetle caps this at 8190.">i</span>
+                    <input type="number" name="limit" value="{{ form.limit }}">
+                </label>
+            </div>
+            <button type="submit">Fetch</button>
+        </form>
+    </article>
+</details>
+
+<details {% if form.mode == "lookup" %}open{% endif %}>
+    <summary>Lookup transfers by ID</summary>
+    <article>
+        <form method="get" action="{{ prefix }}/admin/tb/transfers">
+            <input type="hidden" name="mode" value="lookup">
+            <label>
+                IDs (comma, space or newline separated)
+                <span class="info-icon" data-info="One or more TigerBeetle transfer IDs. Accepts UUID (e.g. aaaa-...), decimal u128, or 0x-prefixed hex. Returns those exact transfers only.">i</span>
+                <textarea name="ids" rows="4">{{ form.ids }}</textarea>
+            </label>
+            <button type="submit">Lookup</button>
+        </form>
+    </article>
+</details>
+
+{% if ran_query %}
+<div class="page-header" style="margin-bottom: 0.75rem;">
+    <h2 style="margin: 0;">Results <span class="badge pill-muted">{{ results.len() }}</span></h2>
+</div>
+{% if results.is_empty() %}
+<article><p class="muted mb-0">No transfers matched.</p></article>
+{% else %}
+<figure>
+<table class="compact">
+    <thead>
+        <tr>
+            <th>Timestamp</th>
+            <th>ID</th>
+            <th>Code</th>
+            <th style="text-align: right;">Amount</th>
+            <th>Debit</th>
+            <th>Credit</th>
+            <th>Flags</th>
+            <th>Pending ID</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for t in &results %}
+        <tr>
+            <td class="text-xs muted">{{ t.timestamp }}</td>
+            <td class="mono">
+                <a href="{{ prefix }}/admin/tb/transfers/{{ t.id }}">{{ t.id }}</a>
+                {% if t.is_pending %} <span class="badge pill-pending">pending</span>{% endif %}
+            </td>
+            <td>{{ t.code }} <span class="muted text-xs">{{ t.code_label }}</span></td>
+            <td class="mono" style="text-align: right;">{{ t.amount }}</td>
+            <td class="mono"><a href="{{ prefix }}/admin/tb/accounts/{{ t.debit_id }}">{{ t.debit_id }}</a></td>
+            <td class="mono"><a href="{{ prefix }}/admin/tb/accounts/{{ t.credit_id }}">{{ t.credit_id }}</a></td>
+            <td><span class="text-xs mono">{{ t.flags }}</span></td>
+            <td class="mono text-xs">{% if t.pending_id != "" %}<a href="{{ prefix }}/admin/tb/transfers/{{ t.pending_id }}">{{ t.pending_id }}</a>{% endif %}</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+</figure>
+{% endif %}
+{% endif %}
+{% endblock %}

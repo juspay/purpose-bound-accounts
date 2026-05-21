@@ -1,13 +1,14 @@
 use askama::Template;
-use axum::extract::{Path, State};
+use axum::extract::{Path, Query, State};
 use axum::http::StatusCode;
 use axum::response::{Html, IntoResponse, Redirect, Response};
 use serde::Deserialize;
 use uuid::Uuid;
 
 use crate::domain::account::AccountStatus;
+use crate::domain::account_kind::AccountKind;
 use crate::domain::banking::{AccountNumber, Ifsc};
-use crate::domain::transaction::TransactionStatus;
+use crate::domain::transaction::{TransactionRecord, TransactionStatus};
 use crate::AppState;
 
 fn render<T: Template>(tmpl: T) -> Response {
@@ -178,18 +179,6 @@ pub async fn create_normal_account(
 // Detail page
 // ---------------------------------------------------------------------------
 
-struct NormalTxRow {
-    id: String,
-    transfer_type: String,
-    status: String,
-    status_class: String,
-    direction: String,
-    direction_class: String,
-    amount: String,
-    gateway_ref: String,
-    created_at: String,
-}
-
 #[derive(Template)]
 #[template(path = "admin/normal_account_detail.html")]
 struct NormalAccountDetailTemplate {
@@ -205,7 +194,6 @@ struct NormalAccountDetailTemplate {
     pending: String,
     created_at: String,
     updated_at: String,
-    transactions: Vec<NormalTxRow>,
 }
 
 pub async fn normal_account_detail(
@@ -242,45 +230,6 @@ pub async fn normal_account_detail(
     }
     .to_string();
 
-    let transactions = match state
-        .transaction_repo
-        .list_by_account(
-            crate::domain::account_kind::AccountKind::Normal,
-            account_id,
-            0,
-            50,
-            None,
-            None,
-        )
-        .await
-    {
-        Ok(txns) => txns
-            .into_iter()
-            .map(|t| {
-                let status_class = match t.status {
-                    TransactionStatus::Pending => "status-frozen",
-                    TransactionStatus::Posted | TransactionStatus::Settled => "status-active",
-                    TransactionStatus::Voided => "status-closed",
-                };
-                NormalTxRow {
-                    id: t.id.to_string(),
-                    transfer_type: t.type_label().to_string(),
-                    status: t.status.as_str().to_string(),
-                    status_class: status_class.to_string(),
-                    direction: t.direction.label().to_string(),
-                    direction_class: t.direction.css_class().to_string(),
-                    amount: t.amount_display(),
-                    gateway_ref: t.gateway_ref.unwrap_or_else(|| "—".to_string()),
-                    created_at: t.created_at.format("%Y-%m-%d %H:%M:%S").to_string(),
-                }
-            })
-            .collect(),
-        Err(e) => {
-            tracing::error!("Failed to list transactions for normal account: {e}");
-            vec![]
-        }
-    };
-
     render(NormalAccountDetailTemplate {
         prefix: state.path_prefix.clone(),
         id: account.id.to_string(),
@@ -294,7 +243,6 @@ pub async fn normal_account_detail(
         pending: fmt(balance.pending),
         created_at: account.created_at.format("%Y-%m-%d %H:%M:%S").to_string(),
         updated_at: account.updated_at.format("%Y-%m-%d %H:%M:%S").to_string(),
-        transactions,
     })
 }
 
@@ -505,4 +453,110 @@ pub async fn process_normal_withdrawal(
             })
         }
     }
+}
+
+// ---------------------------------------------------------------------------
+// Normal account transfers fragment (HTMX lazy-load)
+// ---------------------------------------------------------------------------
+
+#[derive(Template)]
+#[template(path = "admin/normal_transfers_fragment.html")]
+struct NormalTransfersFragmentTemplate {
+    prefix: String,
+    account_id: String,
+    transfers: Vec<NormalTransferRow>,
+    total: i64,
+    offset: i64,
+    limit: i64,
+    count: i64,
+    prev_offset: i64,
+    next_offset: i64,
+    has_next: bool,
+}
+
+struct NormalTransferRow {
+    id: String,
+    timestamp: String,
+    transfer_type: String,
+    status: String,
+    status_class: String,
+    direction: String,
+    direction_class: String,
+    amount: String,
+    gateway_ref: String,
+}
+
+#[derive(Deserialize)]
+pub struct NormalTransfersFragmentQuery {
+    offset: Option<i64>,
+    limit: Option<i64>,
+}
+
+pub async fn normal_transfers_fragment(
+    State(state): State<AppState>,
+    Path(account_id): Path<Uuid>,
+    Query(query): Query<NormalTransfersFragmentQuery>,
+) -> Response {
+    let offset = query.offset.unwrap_or(0).max(0);
+    let limit = query.limit.unwrap_or(50).clamp(1, 100);
+
+    let transactions: Vec<TransactionRecord> = match state
+        .transaction_repo
+        .list_by_account(AccountKind::Normal, account_id, offset, limit, None, None)
+        .await
+    {
+        Ok(t) => t,
+        Err(e) => {
+            tracing::error!("Failed to get normal account transactions: {e}");
+            return (StatusCode::INTERNAL_SERVER_ERROR, "Database error").into_response();
+        }
+    };
+
+    let total = match state
+        .transaction_repo
+        .count_by_account(account_id, None, None)
+        .await
+    {
+        Ok(c) => c,
+        Err(e) => {
+            tracing::error!("Failed to count normal account transactions: {e}");
+            return (StatusCode::INTERNAL_SERVER_ERROR, "Database error").into_response();
+        }
+    };
+
+    let count = transactions.len() as i64;
+    let rows: Vec<NormalTransferRow> = transactions
+        .into_iter()
+        .map(|t| {
+            let status_class = match t.status {
+                TransactionStatus::Pending => "status-frozen",
+                TransactionStatus::Posted | TransactionStatus::Settled => "status-active",
+                TransactionStatus::Voided => "status-closed",
+            };
+            NormalTransferRow {
+                id: t.id.to_string(),
+                timestamp: t.created_at.format("%Y-%m-%d %H:%M:%S").to_string(),
+                transfer_type: t.type_label().to_string(),
+                status: t.status.as_str().to_string(),
+                status_class: status_class.to_string(),
+                direction: t.direction.label().to_string(),
+                direction_class: t.direction.css_class().to_string(),
+                amount: t.amount_display(),
+                gateway_ref: t.gateway_ref.unwrap_or_else(|| "—".to_string()),
+            }
+        })
+        .collect();
+
+    render(NormalTransfersFragmentTemplate {
+        prefix: state.path_prefix.clone(),
+        account_id: account_id.to_string(),
+        transfers: rows,
+        total,
+        offset,
+        limit,
+        count,
+        prev_offset: (offset - limit).max(0),
+        next_offset: offset + limit,
+        has_next: offset + count < total,
+    })
 }

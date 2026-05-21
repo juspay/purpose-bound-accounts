@@ -402,17 +402,58 @@ fn extract_pending_deposit_id(content: &str, account_id: &str) -> Option<String>
 }
 
 /// Extract pending balance from page content.
-/// Pending amounts appear as: `+ ₹X.XX pending` inside a span after the pool label.
+/// Pending amounts appear as: `+ ₹X.XX pending` inside a span after the pool stat-card.
+/// The design system renders stat cards like:
+///   <p class="stat-label">Self pool</p>
+///   <p class="stat-value">₹0.00</p>
+///   <p class="stat-hint"><span class="badge pill-pending">+ ₹10000.00 pending</span></p>
 fn extract_pending_balance(content: &str, label: &str) -> i64 {
-    use crate::ui_steps::account_steps::parse_display_to_paisa;
+    use crate::ui_steps::account_steps::{parse_display_to_paisa, strip_html_tags};
 
+    // First try the design-system stat-card structure (case-insensitive label match).
+    let label_lower = label.to_ascii_lowercase();
+    let mut cursor = 0;
+    while cursor < content.len() {
+        let chunk = &content[cursor..];
+        let Some(rel) = chunk.find("class=\"stat-label\"") else {
+            break;
+        };
+        let after_class = &chunk[rel..];
+        let Some(gt) = after_class.find('>') else {
+            break;
+        };
+        let inner = &after_class[gt + 1..];
+        let Some(end) = inner.find("</p>") else {
+            break;
+        };
+        let actual = strip_html_tags(&inner[..end]).trim().to_ascii_lowercase();
+        if actual == label_lower {
+            // Look ahead within this stat card for the human-readable "pending"
+            // text (with leading space) — not the `pill-pending` CSS class name.
+            let after_label = &inner[end..];
+            let card_end = after_label.find("</article>").unwrap_or(after_label.len());
+            let card = &after_label[..card_end];
+            if let Some(pending_pos) = card.find(" pending") {
+                let before_pending = &card[..pending_pos];
+                if let Some(currency_pos) = before_pending.rfind('₹') {
+                    let num_str = &before_pending[currency_pos + '₹'.len_utf8()..];
+                    let trimmed = num_str.trim();
+                    if !trimmed.is_empty() {
+                        return parse_display_to_paisa(trimmed);
+                    }
+                }
+            }
+            return 0;
+        }
+        cursor += rel + gt + 1 + end + 4;
+    }
+
+    // Legacy fallback: `<label>: ... ₹X.XX ... pending`.
     let search = format!("{}:", label);
     if let Some(pos) = content.find(&search) {
         let after = &content[pos + search.len()..];
-        // Look for "pending" keyword after the label
         if let Some(pending_pos) = after.find("pending") {
             let before_pending = &after[..pending_pos];
-            // Find the last ₹ before "pending"
             if let Some(currency_pos) = before_pending.rfind('₹') {
                 let num_str = &before_pending[currency_pos + '₹'.len_utf8()..];
                 let trimmed = num_str.trim();

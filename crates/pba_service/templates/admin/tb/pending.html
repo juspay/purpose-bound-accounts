@@ -1,0 +1,93 @@
+{% extends "base.html" %}
+
+{% block title %}TB Pending — PBA Ledger{% endblock %}
+{% block breadcrumb %}<a href="{{ prefix }}/admin">PBA Ledger</a> <span class="sep">/</span> <a href="{{ prefix }}/admin/tb">TigerBeetle</a> <span class="sep">/</span> <span class="current">Pending</span>{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div>
+        <h1 class="page-title">Pending transfers</h1>
+        <p class="page-subtitle">Pending transfers reserve funds but haven't been posted or voided. Deposits use a 30-minute timeout by default.</p>
+    </div>
+</div>
+
+{% include "admin/tb/_subnav.html" %}
+
+{% if let Some(err) = error %}
+<div class="error-box"><strong>Error:</strong> {{ err }}</div>
+{% endif %}
+
+<article>
+    <header>Filter</header>
+    <form method="get" action="{{ prefix }}/admin/tb/pending">
+        <div class="grid">
+            <label>
+                Account ID (optional)
+                <span class="info-icon" data-info="Filter pending transfers to a single account. Accepts UUID, decimal u128, or 0x-prefixed hex. Leave blank to filter by ledger instead.">i</span>
+                <input type="text" name="account_id" value="{{ form.account_id }}" placeholder="UUID or u128 — leave blank to filter by ledger">
+            </label>
+            <label>
+                Ledger
+                <span class="info-icon" data-info="TigerBeetle ledger ID. PBA uses ledger 1 (INR paisa). Used when no account ID is provided.">i</span>
+                <input type="number" name="ledger" value="{% if form.ledger != "" %}{{ form.ledger }}{% else %}{{ default_ledger }}{% endif %}">
+            </label>
+            <label>
+                Limit (pre-filter)
+                <span class="info-icon info-icon--end" data-info="How many transfers to fetch from TigerBeetle before client-side filtering for PENDING state. The result count may be smaller. Cap: 8190.">i</span>
+                <input type="number" name="limit" value="{{ form.limit }}">
+            </label>
+        </div>
+        <button type="submit">Fetch pending</button>
+    </form>
+</article>
+
+{% if ran_query %}
+<div class="page-header" style="margin-bottom: 0.75rem;">
+    <h2 style="margin: 0;">Pending <span class="badge pill-pending">{{ results.len() }}</span></h2>
+</div>
+{% if results.is_empty() %}
+<article>
+    <div style="text-align: center; padding: 2rem 1rem; color: var(--text-muted);">
+        <p class="mb-0"><strong>No pending transfers.</strong></p>
+        <p class="text-small mt-1 mb-0">The fetched window had none currently in <span class="mono">PENDING</span> state.</p>
+    </div>
+</article>
+{% else %}
+<figure>
+<table class="compact">
+    <thead>
+        <tr>
+            <th>Timestamp</th>
+            <th>ID</th>
+            <th>Code</th>
+            <th style="text-align: right;">Amount</th>
+            <th>Debit</th>
+            <th>Credit</th>
+            <th style="text-align: right;">Actions</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for t in &results %}
+        <tr>
+            <td class="text-xs muted">{{ t.timestamp }}</td>
+            <td class="mono"><a href="{{ prefix }}/admin/tb/transfers/{{ t.id }}">{{ t.id }}</a></td>
+            <td>{{ t.code }} <span class="muted text-xs">{{ t.code_label }}</span></td>
+            <td class="mono" style="text-align: right;">{{ t.amount }}</td>
+            <td class="mono"><a href="{{ prefix }}/admin/tb/accounts/{{ t.debit_id }}">{{ t.debit_id }}</a></td>
+            <td class="mono"><a href="{{ prefix }}/admin/tb/accounts/{{ t.credit_id }}">{{ t.credit_id }}</a></td>
+            <td style="text-align: right;">
+                <form method="post" action="{{ prefix }}/admin/tb/pending/{{ t.id }}/post" class="inline-form" onsubmit="return confirm('Post this pending transfer?');">
+                    <button type="submit" class="btn btn-xs">Post</button>
+                </form>
+                <form method="post" action="{{ prefix }}/admin/tb/pending/{{ t.id }}/void" class="inline-form" onsubmit="return confirm('Void this pending transfer?');">
+                    <button type="submit" class="btn btn-xs btn-danger">Void</button>
+                </form>
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+</figure>
+{% endif %}
+{% endif %}
+{% endblock %}

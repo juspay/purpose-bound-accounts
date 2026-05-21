@@ -15,8 +15,6 @@ env:
   DB_USER: postgres
   DB_PASSWORD: postgres
   DB_NAME: pba_service_test
-  # Apply pending migrations on service startup (the binary defaults to skipping migrations).
-  DB_MIGRATION_MODE: run
   # Auth is disabled in CI; Keycloak will be added when auth-specific E2E tests are introduced
   AUTH_ENABLED: "false"
 
