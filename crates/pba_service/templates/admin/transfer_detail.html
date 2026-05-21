@@ -64,4 +64,28 @@
     </form>
 </article>
 {% endif %}
+
+{% if can_reverse %}
+<article>
+    <header><strong>Reversal</strong></header>
+    <p>This transfer was posted and can be reversed by an admin.</p>
+    <a href="{{ prefix }}/admin/transfers/{{ transfer_id }}/reverse" role="button" class="outline" style="color: #c62828; border-color: #c62828;">Reverse</a>
+</article>
+{% endif %}
+
+{% if let Some(rid) = reversed_by_id %}
+<article>
+    <header><strong>Reversed</strong></header>
+    <p>This transfer has been reversed:
+        <a href="{{ prefix }}/admin/transactions/{{ rid }}">{{ rid }}</a>
+    </p>
+</article>
+{% endif %}
+
+{% if is_reversal %}
+<article>
+    <header><strong>Reversal row</strong></header>
+    <p>This row is a reversal of a previous transfer.</p>
+</article>
+{% endif %}
 {% endblock %}

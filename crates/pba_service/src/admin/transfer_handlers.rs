@@ -6,7 +6,7 @@ use serde::Deserialize;
 use uuid::Uuid;
 
 use crate::domain::account_kind::AccountKind;
-use crate::domain::transaction::TransactionStatus;
+use crate::domain::transaction::{TransactionDirection, TransactionStatus};
 use crate::AppState;
 
 fn render<T: Template>(tmpl: T) -> Response {
@@ -189,6 +189,9 @@ struct TransferDetailTemplate {
     description: String,
     created_at: String,
     can_post_or_void: bool,
+    can_reverse: bool,
+    is_reversal: bool,
+    reversed_by_id: Option<String>,
 }
 
 pub async fn transfer_detail(
@@ -271,6 +274,34 @@ pub async fn transfer_detail(
 
     let can_post_or_void = source_leg.status == TransactionStatus::Pending;
 
+    // A row is reversible when:
+    // - It is the original transfer's source-side row (kind=Normal, direction=Outbound, status=Posted)
+    // - It is not itself a reversal (reverses_transaction_id IS NULL)
+    let can_reverse = source_leg.status == TransactionStatus::Posted
+        && source_leg.direction == TransactionDirection::Outbound
+        && source_leg.reverses_transaction_id.is_none()
+        && state
+            .transaction_repo
+            .find_reversal_of(source_leg.id)
+            .await
+            .ok()
+            .flatten()
+            .is_none();
+
+    let is_reversal = source_leg.reverses_transaction_id.is_some();
+
+    let reversed_by_id = if !is_reversal {
+        state
+            .transaction_repo
+            .find_reversal_of(source_leg.id)
+            .await
+            .ok()
+            .flatten()
+            .map(|r| r.id.to_string())
+    } else {
+        None
+    };
+
     render(TransferDetailTemplate {
         prefix: state.path_prefix.clone(),
         transfer_id: transfer_id.to_string(),
@@ -296,6 +327,9 @@ pub async fn transfer_detail(
             .format("%Y-%m-%d %H:%M:%S")
             .to_string(),
         can_post_or_void,
+        can_reverse,
+        is_reversal,
+        reversed_by_id,
     })
 }
 
@@ -370,6 +404,120 @@ pub async fn void_transfer(
                 &format!("/admin/transfers/{transfer_id}"),
             ))
             .into_response()
+        }
+    }
+}
+
+// ---------------------------------------------------------------------------
+// Reverse transfer
+// ---------------------------------------------------------------------------
+
+#[derive(Template)]
+#[template(path = "admin/transfer_reverse.html")]
+struct TransferReverseTemplate {
+    prefix: String,
+    transfer_id: String,
+    source_account_id: String,
+    destination_account_id: String,
+    original_amount: String,
+    original_amount_paisa: u64,
+    error: Option<String>,
+}
+
+#[derive(Deserialize)]
+pub struct ReverseTransferForm {
+    pub amount_paisa: u64,
+    pub description: Option<String>,
+}
+
+async fn build_reverse_template(
+    state: &AppState,
+    transfer_id: Uuid,
+    error: Option<String>,
+) -> Result<TransferReverseTemplate, Response> {
+    let source_row = state
+        .transaction_repo
+        .get_transaction(transfer_id)
+        .await
+        .map_err(|_| (StatusCode::NOT_FOUND, "Transfer not found").into_response())?;
+
+    let correlation_id = source_row.correlation_id.ok_or_else(|| {
+        (
+            StatusCode::INTERNAL_SERVER_ERROR,
+            "Transfer has no correlation_id",
+        )
+            .into_response()
+    })?;
+
+    let legs = state
+        .transaction_repo
+        .find_by_correlation_id(correlation_id)
+        .await
+        .map_err(|_| (StatusCode::INTERNAL_SERVER_ERROR, "Database error").into_response())?;
+
+    let dest_leg = legs
+        .iter()
+        .find(|l| l.account_kind == AccountKind::Pb)
+        .ok_or_else(|| {
+            (StatusCode::INTERNAL_SERVER_ERROR, "Destination leg missing").into_response()
+        })?;
+
+    let fmt_amount = |amt: u64| format!("{}.{:02}", amt / 100, amt % 100);
+
+    Ok(TransferReverseTemplate {
+        prefix: state.path_prefix.clone(),
+        transfer_id: transfer_id.to_string(),
+        source_account_id: source_row.account_id.to_string(),
+        destination_account_id: dest_leg.account_id.to_string(),
+        original_amount: fmt_amount(source_row.amount),
+        original_amount_paisa: source_row.amount,
+        error,
+    })
+}
+
+pub async fn reverse_transfer_form(
+    State(state): State<AppState>,
+    Path(transfer_id): Path<Uuid>,
+) -> Response {
+    match build_reverse_template(&state, transfer_id, None).await {
+        Ok(tmpl) => render(tmpl),
+        Err(resp) => resp,
+    }
+}
+
+pub async fn process_reverse_transfer(
+    State(state): State<AppState>,
+    Path(transfer_id): Path<Uuid>,
+    axum::extract::Form(form): axum::extract::Form<ReverseTransferForm>,
+) -> Response {
+    let source_row = match state.transaction_repo.get_transaction(transfer_id).await {
+        Ok(row) => row,
+        Err(_) => return (StatusCode::NOT_FOUND, "Transfer not found").into_response(),
+    };
+
+    match state
+        .transfer_service
+        .reverse_transfer(
+            source_row.account_id,
+            transfer_id,
+            form.amount_paisa,
+            None,
+            form.description.as_deref(),
+            None,
+        )
+        .await
+    {
+        Ok(_) => Redirect::to(&prefixed(
+            &state,
+            &format!("/admin/transfers/{transfer_id}"),
+        ))
+        .into_response(),
+        Err(e) => {
+            tracing::error!("Failed to reverse transfer {transfer_id}: {e}");
+            match build_reverse_template(&state, transfer_id, Some(e.to_string())).await {
+                Ok(tmpl) => render(tmpl),
+                Err(resp) => resp,
+            }
         }
     }
 }
