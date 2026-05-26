@@ -3,12 +3,14 @@ FROM lukemathwalker/cargo-chef:latest-rust-bookworm AS chef
 
 # Install Zig + libclang (required by tigerbeetle-unofficial sys crate and bindgen)
 RUN apt-get update && apt-get install -y --no-install-recommends xz-utils libclang-dev \
-    && curl -fSLO https://ziglang.org/download/0.14.1/zig-x86_64-linux-0.14.1.tar.xz \
-    && tar xf zig-x86_64-linux-0.14.1.tar.xz -C /opt \
-    && rm zig-x86_64-linux-0.14.1.tar.xz \
+    && ARCH=$(uname -m) \
+    && curl -fSLO https://ziglang.org/download/0.14.1/zig-${ARCH}-linux-0.14.1.tar.xz \
+    && tar xf zig-${ARCH}-linux-0.14.1.tar.xz -C /opt \
+    && ln -s /opt/zig-${ARCH}-linux-0.14.1 /opt/zig \
+    && rm zig-${ARCH}-linux-0.14.1.tar.xz \
     && rm -rf /var/lib/apt/lists/*
 
-ENV ZIG_PATH=/opt/zig-x86_64-linux-0.14.1/zig
+ENV ZIG_PATH=/opt/zig/zig
 WORKDIR /src
 
 # ── Stage 2: Planner — generate recipe.json ─────────────────
