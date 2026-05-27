@@ -42,6 +42,9 @@ pub struct AppState {
     pub transfer_service: Arc<TransferService>,
     pub ledger_repo: Arc<LedgerRepo>,
     pub transaction_repo: Arc<TransactionRepo>,
+    // TigerBeetle explorer (branch-only feature)
+    pub tb_cluster_id: u128,
+    pub tb_addresses: Vec<String>,
     pub auth: AuthContext,
     pub path_prefix: String,
 }
@@ -216,7 +219,7 @@ async fn main() {
     let transaction_repo = Arc::new(TransactionRepo::new(pg_pool.clone()));
     let ledger_repo = Arc::new(LedgerRepo::new(
         config.tigerbeetle_cluster_id,
-        config.tigerbeetle_addresses,
+        config.tigerbeetle_addresses.clone(),
     ));
 
     // Create sentinel TB accounts (funding source, merchant settlement, withdrawal settlement)
@@ -287,6 +290,8 @@ async fn main() {
         transfer_service,
         ledger_repo,
         transaction_repo: Arc::clone(&transaction_repo),
+        tb_cluster_id: config.tigerbeetle_cluster_id,
+        tb_addresses: config.tigerbeetle_addresses.clone(),
         auth: auth_ctx,
         path_prefix: config.path_prefix,
     };

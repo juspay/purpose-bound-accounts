@@ -1,0 +1,129 @@
+{% extends "base.html" %}
+
+{% block title %}TB Accounts — PBA Admin{% endblock %}
+{% block breadcrumb %}<a href="{{ prefix }}/admin">PBA Admin</a> <span class="sep">/</span> <a href="{{ prefix }}/admin/tb">TigerBeetle</a> <span class="sep">/</span> <span class="current">Accounts</span>{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div>
+        <h1 class="page-title">TigerBeetle accounts</h1>
+        <p class="page-subtitle">Query or look up raw TB accounts. Results show posted/pending debits &amp; credits, flags, and decoded code.</p>
+    </div>
+</div>
+
+{% include "admin/tb/_subnav.html" %}
+
+{% if let Some(err) = error %}
+<div class="error-box"><strong>Error:</strong> {{ err }}</div>
+{% endif %}
+
+<details {% if form.mode == "query" || form.mode == "" %}open{% endif %}>
+    <summary>Query accounts</summary>
+    <article>
+        <form method="get" action="{{ prefix }}/admin/tb/accounts">
+            <input type="hidden" name="mode" value="query">
+            <div class="grid">
+                <label>
+                    Ledger
+                    <span class="info-icon" data-info="TigerBeetle ledger ID. PBA uses ledger 1 (INR paisa). Cross-ledger transfers are not allowed, so this scopes the query.">i</span>
+                    <input type="number" name="ledger" value="{% if form.ledger != "" %}{{ form.ledger }}{% else %}{{ default_ledger }}{% endif %}" placeholder="1">
+                </label>
+                <label>
+                    Code
+                    <span class="info-icon" data-info="Account code (0 = any). PBA codes: 1 = self pool, 2 = others pool, 99 = sentinel (funding sources, settlement).">i</span>
+                    <input type="number" name="code" value="{{ form.code }}" placeholder="0 = any">
+                </label>
+                <label>
+                    Limit
+                    <span class="info-icon info-icon--end" data-info="Maximum number of accounts to return. TigerBeetle caps this at 8190.">i</span>
+                    <input type="number" name="limit" value="{{ form.limit }}">
+                </label>
+            </div>
+            <div class="grid">
+                <label>
+                    Timestamp min (UTC)
+                    <span class="info-icon" data-info="Lower bound on account creation time. Inclusive. Leave blank for no lower bound.">i</span>
+                    <input type="datetime-local" name="timestamp_min" value="{{ form.timestamp_min }}">
+                </label>
+                <label>
+                    Timestamp max (UTC)
+                    <span class="info-icon" data-info="Upper bound on account creation time. Inclusive. Leave blank for no upper bound.">i</span>
+                    <input type="datetime-local" name="timestamp_max" value="{{ form.timestamp_max }}">
+                </label>
+                <label>
+                    <input type="checkbox" name="reversed" {% if form.reversed %}checked{% endif %}>
+                    <span>Reversed (newest first)</span>
+                    <span class="info-icon info-icon--end" data-info="When checked, results are returned in descending timestamp order — newest accounts first. Useful for recent activity audits.">i</span>
+                </label>
+            </div>
+            <button type="submit">Run query</button>
+        </form>
+    </article>
+</details>
+
+<details {% if form.mode == "lookup" %}open{% endif %}>
+    <summary>Lookup accounts by ID</summary>
+    <article>
+        <form method="get" action="{{ prefix }}/admin/tb/accounts">
+            <input type="hidden" name="mode" value="lookup">
+            <label>
+                IDs (comma, space or newline separated)
+                <span class="info-icon" data-info="One or more TigerBeetle account IDs. Accepts UUID (e.g. aaaa-...), decimal u128 (e.g. 12345), or 0x-prefixed hex. Returns those exact accounts only.">i</span>
+                <textarea name="ids" rows="4" placeholder="aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee&#10;12345&#10;0xabc...">{{ form.ids }}</textarea>
+            </label>
+            <button type="submit">Lookup</button>
+        </form>
+    </article>
+</details>
+
+{% if ran_query %}
+<div class="page-header" style="margin-bottom: 0.75rem;">
+    <h2 style="margin: 0;">Results <span class="badge pill-muted">{{ results.len() }}</span></h2>
+</div>
+{% if results.is_empty() %}
+<article>
+    <div style="text-align: center; padding: 2rem 1rem; color: var(--text-muted);">
+        <p class="mb-0"><strong>No accounts matched.</strong></p>
+        <p class="text-small mt-1 mb-0">Try widening the filters or adjusting the timestamp range.</p>
+    </div>
+</article>
+{% else %}
+<figure>
+<table class="compact">
+    <thead>
+        <tr>
+            <th>ID</th>
+            <th>Ledger</th>
+            <th>Code</th>
+            <th>Flags</th>
+            <th style="text-align: right;">Credits posted</th>
+            <th style="text-align: right;">Debits posted</th>
+            <th style="text-align: right;">Pending C/D</th>
+            <th style="text-align: right;">Balance</th>
+            <th>Created</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for r in &results %}
+        <tr>
+            <td class="mono">
+                <a href="{{ prefix }}/admin/tb/accounts/{{ r.id }}">{{ r.id }}</a>
+                {% if let Some(s) = r.sentinel %}<br><span class="badge pill-sentinel">{{ s }}</span>{% endif %}
+                <div class="text-xs muted mono">uuid: {{ r.id_uuid }}</div>
+            </td>
+            <td class="mono">{{ r.ledger }}</td>
+            <td>{{ r.code }} <span class="muted text-xs">({{ r.code_label }})</span></td>
+            <td><span class="text-xs mono">{{ r.flags }}</span></td>
+            <td class="mono" style="text-align: right;">{{ r.credits_posted }}</td>
+            <td class="mono" style="text-align: right;">{{ r.debits_posted }}</td>
+            <td class="mono text-xs" style="text-align: right;">{{ r.credits_pending }} / {{ r.debits_pending }}</td>
+            <td class="mono" style="text-align: right;"><strong>{{ r.balance }}</strong></td>
+            <td class="text-xs muted">{{ r.timestamp }}</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+</figure>
+{% endif %}
+{% endif %}
+{% endblock %}

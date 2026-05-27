@@ -1,19 +1,29 @@
 {% extends "base.html" %}
 
-{% block title %}Normal Accounts - PBA Admin{% endblock %}
+{% block title %}Normal Accounts — PBA Admin{% endblock %}
+{% block breadcrumb %}<a href="{{ prefix }}/admin">PBA Admin</a> <span class="sep">/</span> <span class="current">Normal Accounts</span>{% endblock %}
 
 {% block content %}
-<h1>Normal Accounts</h1>
+<div class="page-header">
+    <div>
+        <h1 class="page-title">Normal Accounts</h1>
+        <p class="page-subtitle">General-purpose accounts — trust money is received here and transferred to purpose-bound accounts.</p>
+    </div>
+    <div class="page-actions">
+        <a href="#new-account" role="button" onclick="document.getElementById('new-account-panel').open=true; return true;">+ New account</a>
+    </div>
+</div>
 
-<details{% if error.is_some() || success.is_some() %} open{% endif %}>
-    <summary role="button" class="outline">Create New Normal Account</summary>
+{% if let Some(err) = error %}
+<div class="error-box"><strong>Error:</strong> {{ err }}</div>
+{% endif %}
+{% if let Some(msg) = success %}
+<div class="success-box">{{ msg }}</div>
+{% endif %}
+
+<details id="new-account-panel"{% if error.is_some() %} open{% endif %}>
+    <summary role="button" class="outline">Create Normal Account</summary>
     <article>
-        {% if let Some(err) = error %}
-        <p style="color: #c62828;"><strong>Error:</strong> {{ err }}</p>
-        {% endif %}
-        {% if let Some(msg) = success %}
-        <p style="color: #2e7d32;"><strong>{{ msg }}</strong></p>
-        {% endif %}
         <form method="post" action="{{ prefix }}/admin/normal-accounts">
             <label>
                 Holder ID
@@ -21,11 +31,11 @@
             </label>
             <div class="grid">
                 <label>
-                    Origin IFSC (optional)
+                    Origin IFSC <span class="muted text-small">(optional)</span>
                     <input type="text" name="origin_ifsc" placeholder="e.g. HDFC0001234">
                 </label>
                 <label>
-                    Origin Account Number (optional)
+                    Origin Account Number <span class="muted text-small">(optional)</span>
                     <input type="text" name="origin_account_number" placeholder="e.g. 1234567890">
                 </label>
             </div>
@@ -35,7 +45,9 @@
 </details>
 
 {% if accounts.is_empty() %}
-<p>No normal accounts found.</p>
+<article>
+    <p class="muted mb-0">No normal accounts found. Create one above.</p>
+</article>
 {% else %}
 <table>
     <thead>
@@ -45,16 +57,18 @@
             <th>Status</th>
             <th>KYC Tier</th>
             <th>Created</th>
+            <th></th>
         </tr>
     </thead>
     <tbody>
         {% for account in &accounts %}
         <tr>
-            <td><a href="{{ prefix }}/admin/normal-accounts/{{ account.id }}">{{ account.id|truncate(8) }}</a></td>
-            <td>{{ account.holder_id|truncate(8) }}</td>
+            <td class="mono"><a href="{{ prefix }}/admin/normal-accounts/{{ account.id }}">{{ account.id }}</a></td>
+            <td>{{ account.holder_id }}</td>
             <td class="{{ account.status_class }}">{{ account.status }}</td>
             <td>{{ account.kyc_tier }}</td>
             <td>{{ account.created_at }}</td>
+            <td><a href="{{ prefix }}/admin/normal-accounts/{{ account.id }}" class="btn btn-sm outline">Open →</a></td>
         </tr>
         {% endfor %}
     </tbody>

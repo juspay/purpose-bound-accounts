@@ -1,109 +1,135 @@
 {% extends "base.html" %}
 
-{% block title %}Account {{ id }} - PBA Admin{% endblock %}
+{% block title %}Account {{ id|truncate(8) }} — PBA Admin{% endblock %}
+{% block breadcrumb %}<a href="{{ prefix }}/admin">PBA Admin</a> <span class="sep">/</span> <a href="{{ prefix }}/admin/accounts">Accounts</a> <span class="sep">/</span> <span class="current mono">{{ id|truncate(12) }}</span>{% endblock %}
 
 {% block content %}
-<h1>Account Detail</h1>
+<div class="page-header">
+    <div>
+        <h1 class="page-title">Account detail</h1>
+        <p class="page-subtitle mono">{{ id }}</p>
+    </div>
+    <div class="page-actions">
+        {% if status == "active" %}
+        <a href="{{ prefix }}/admin/accounts/{{ id }}/deposit" role="button" class="outline">Deposit</a>
+        <a href="{{ prefix }}/admin/accounts/{{ id }}/payment" role="button" class="outline">Pay merchant</a>
+        <a href="{{ prefix }}/admin/accounts/{{ id }}/withdrawal" role="button">Withdraw</a>
+        {% endif %}
+    </div>
+</div>
 
-<article>
-    <div class="grid">
-        <div>
-            <p><strong>Account ID:</strong> {{ id }}</p>
-            <p><strong>Holder ID:</strong> {{ holder_id }}</p>
-            <p><strong>Purpose:</strong> {{ purpose_code }}</p>
-            <p>
-                <strong>Status:</strong> <span class="{{ status_class }}">{{ status }}</span>
-                {% if status != "closed" %}
-                &nbsp;
+<div class="grid">
+    <article class="stat-card stat-success">
+        <p class="stat-label">Self pool</p>
+        <p class="stat-value">₹{{ self_balance }}</p>
+        {% if pending_self != "0.00" %}
+        <p class="stat-hint"><span class="badge pill-pending">+ ₹{{ pending_self }} pending</span></p>
+        {% else %}
+        <p class="stat-hint">Withdrawable funds</p>
+        {% endif %}
+    </article>
+    <article class="stat-card stat-primary">
+        <p class="stat-label">Others pool</p>
+        <p class="stat-value">₹{{ others_balance }}</p>
+        {% if pending_others != "0.00" %}
+        <p class="stat-hint"><span class="badge pill-pending">+ ₹{{ pending_others }} pending</span></p>
+        {% else %}
+        <p class="stat-hint">Purpose-restricted funds</p>
+        {% endif %}
+    </article>
+    <article class="stat-card">
+        <p class="stat-label">Total balance</p>
+        <p class="stat-value">₹{{ total_balance }}</p>
+        <p class="stat-hint">Self + Others posted</p>
+    </article>
+    <article class="stat-card">
+        <p class="stat-label">Status</p>
+        <p class="stat-value {{ status_class }}" style="font-size: 1.125rem; padding-top: 0.5rem; text-transform: capitalize;">{{ status }}</p>
+        <p class="stat-hint">
+            {% if status != "closed" %}
                 {% if status == "active" %}
                 <form method="post" action="{{ prefix }}/admin/accounts/{{ id }}/status" class="inline-form">
                     <input type="hidden" name="status" value="frozen">
-                    <button type="submit" class="outline secondary" style="padding: 0.25rem 0.75rem; font-size: 0.85rem;">Freeze</button>
+                    <button type="submit" class="btn btn-xs secondary">Freeze</button>
                 </form>
                 <form method="post" action="{{ prefix }}/admin/accounts/{{ id }}/status" class="inline-form">
                     <input type="hidden" name="status" value="closed">
-                    <button type="submit" class="outline" style="padding: 0.25rem 0.75rem; font-size: 0.85rem; color: #c62828; border-color: #c62828;">Close</button>
+                    <button type="submit" class="btn btn-xs btn-danger">Close</button>
                 </form>
                 {% else if status == "frozen" %}
                 <form method="post" action="{{ prefix }}/admin/accounts/{{ id }}/status" class="inline-form">
                     <input type="hidden" name="status" value="active">
-                    <button type="submit" class="outline" style="padding: 0.25rem 0.75rem; font-size: 0.85rem; color: #2e7d32; border-color: #2e7d32;">Activate</button>
+                    <button type="submit" class="btn btn-xs">Activate</button>
                 </form>
                 <form method="post" action="{{ prefix }}/admin/accounts/{{ id }}/status" class="inline-form">
                     <input type="hidden" name="status" value="closed">
-                    <button type="submit" class="outline" style="padding: 0.25rem 0.75rem; font-size: 0.85rem; color: #c62828; border-color: #c62828;">Close</button>
+                    <button type="submit" class="btn btn-xs btn-danger">Close</button>
                 </form>
                 {% endif %}
-                {% endif %}
-            </p>
-        </div>
-        <div>
-            <p><strong>Origin IFSC:</strong> {{ origin_ifsc }}</p>
-            <p><strong>Origin Account:</strong> {{ origin_account_number }}</p>
-            <p><strong>VPA:</strong> {{ vpa }}</p>
-        </div>
-    </div>
+            {% endif %}
+        </p>
+    </article>
+</div>
 
-    <div class="grid">
-        <div>
-            <p><strong>Self Pool:</strong> ₹{{ self_balance }}{% if pending_self != "0.00" %} <span style="color: #b45309;">+ ₹{{ pending_self }} pending</span>{% endif %}</p>
-            <p><strong>Others Pool:</strong> ₹{{ others_balance }}{% if pending_others != "0.00" %} <span style="color: #b45309;">+ ₹{{ pending_others }} pending</span>{% endif %}</p>
-            <p><strong>Total Balance:</strong> ₹{{ total_balance }}</p>
+<article>
+    <header>Account metadata</header>
+    <div class="grid" style="grid-template-columns: 1fr 1fr;">
+        <div class="kv">
+            <div>Account ID</div><div class="mono">{{ id }}</div>
+            <div>Holder ID</div><div class="mono">{{ holder_id }}</div>
+            <div>Purpose</div><div><span class="badge">{{ purpose_code }}</span></div>
+            <div>VPA</div><div class="mono">{{ vpa }}</div>
         </div>
-        <div>
-            <p><strong>Created:</strong> {{ created_at }}</p>
-            <p><strong>Updated:</strong> {{ updated_at }}</p>
+        <div class="kv">
+            <div>Origin IFSC</div><div class="mono">{{ origin_ifsc }}</div>
+            <div>Origin account</div><div class="mono">{{ origin_account_number }}</div>
+            <div>Created</div><div>{{ created_at }}</div>
+            <div>Updated</div><div>{{ updated_at }}</div>
         </div>
     </div>
-
-    {% if status == "active" %}
-    <div>
-        <a href="{{ prefix }}/admin/accounts/{{ id }}/deposit" role="button" class="outline">Deposit</a>
-        <a href="{{ prefix }}/admin/accounts/{{ id }}/payment" role="button" class="outline">Make Payment</a>
-        <a href="{{ prefix }}/admin/accounts/{{ id }}/withdrawal" role="button" class="outline">Withdraw</a>
-    </div>
-    {% endif %}
 </article>
 
 {% if !pending_deposits.is_empty() %}
-<h2>Pending Deposits</h2>
+<h2>Pending deposits <span class="badge pill-pending" style="vertical-align: middle;">{{ pending_deposits.len() }}</span></h2>
+<figure>
 <table>
     <thead>
         <tr>
-            <th>Deposit ID</th>
-            <th>Amount (INR)</th>
+            <th>Deposit</th>
+            <th>Amount</th>
             <th>Pool</th>
             <th>Source</th>
-            <th>Gateway Ref</th>
+            <th>Gateway ref</th>
             <th>Created</th>
-            <th>Actions</th>
+            <th style="text-align: right;">Actions</th>
         </tr>
     </thead>
     <tbody>
         {% for dep in &pending_deposits %}
         <tr>
-            <td>{{ dep.id|truncate(8) }}</td>
-            <td>₹{{ dep.amount }}</td>
-            <td>{{ dep.pool }}</td>
-            <td>{{ dep.source }}</td>
-            <td>{{ dep.gateway_ref }}</td>
-            <td>{{ dep.created_at }}</td>
-            <td>
+            <td class="mono text-small" title="{{ dep.id }}">{{ dep.id }}</td>
+            <td class="mono">₹{{ dep.amount }}</td>
+            <td class="text-small">{{ dep.pool }}</td>
+            <td class="text-small">{{ dep.source }}</td>
+            <td class="text-small mono">{{ dep.gateway_ref }}</td>
+            <td class="text-small muted">{{ dep.created_at }}</td>
+            <td style="text-align: right;">
                 <form method="post" action="{{ prefix }}/admin/accounts/{{ id }}/deposits/{{ dep.id }}/post" class="inline-form">
-                    <button type="submit" class="outline" style="padding: 0.25rem 0.75rem; font-size: 0.85rem; color: #2e7d32; border-color: #2e7d32;">Post</button>
+                    <button type="submit" class="btn btn-xs">Post</button>
                 </form>
                 <form method="post" action="{{ prefix }}/admin/accounts/{{ id }}/deposits/{{ dep.id }}/void" class="inline-form">
-                    <button type="submit" class="outline" style="padding: 0.25rem 0.75rem; font-size: 0.85rem; color: #c62828; border-color: #c62828;">Void</button>
+                    <button type="submit" class="btn btn-xs btn-danger">Void</button>
                 </form>
             </td>
         </tr>
         {% endfor %}
     </tbody>
 </table>
+</figure>
 {% endif %}
 
-<h2>Transaction History</h2>
+<h2>Transaction history</h2>
 <div id="transfers" hx-get="{{ prefix }}/admin/accounts/{{ id }}/transfers" hx-trigger="load" hx-swap="innerHTML">
-    <p aria-busy="true">Loading transfers...</p>
+    <article><p class="muted" aria-busy="true">Loading transfers…</p></article>
 </div>
 {% endblock %}

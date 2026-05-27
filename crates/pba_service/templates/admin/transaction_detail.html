@@ -1,104 +1,103 @@
 {% extends "base.html" %}
 
-{% block title %}Transaction {{ id_short }} - PBA Admin{% endblock %}
+{% block title %}Transaction {{ id_short }} — PBA Admin{% endblock %}
+{% block breadcrumb %}<a href="{{ prefix }}/admin">PBA Admin</a> <span class="sep">/</span> <a href="{{ prefix }}/admin/transactions">Transactions</a> <span class="sep">/</span> <span class="current mono">{{ id_short }}</span>{% endblock %}
 
 {% block content %}
-<h1>Transaction {{ id_short }}</h1>
+<div class="page-header">
+    <div>
+        <h1 class="page-title">Transaction detail</h1>
+        <p class="page-subtitle mono">{{ id }}</p>
+    </div>
+    <div class="page-actions">
+        <a href="{{ prefix }}/admin/transactions" role="button" class="outline">← All transactions</a>
+        {% if can_post_or_void %}
+        <form method="post" action="{{ prefix }}/admin/transactions/{{ id }}/post" class="inline-form" onsubmit="return confirm('Post this pending transaction? Funds will be committed.');">
+            <button type="submit">Post</button>
+        </form>
+        <form method="post" action="{{ prefix }}/admin/transactions/{{ id }}/void" class="inline-form" onsubmit="return confirm('Void this pending transaction? Reserved funds will be released.');">
+            <button type="submit" class="btn-danger">Void</button>
+        </form>
+        {% endif %}
+    </div>
+</div>
 
-<p><a href="{{ prefix }}/admin/transactions" role="button" class="outline">&larr; Back to all transactions</a></p>
+<div class="grid">
+    <article class="stat-card">
+        <p class="stat-label">Amount</p>
+        <p class="stat-value">₹{{ amount }}</p>
+        <p class="stat-hint">{{ transaction_type_label }}</p>
+    </article>
+    <article class="stat-card">
+        <p class="stat-label">Status</p>
+        <p class="stat-value {{ status_class }}" style="font-size: 1.125rem; padding-top: 0.5rem; text-transform: capitalize;">{{ status }}</p>
+        <p class="stat-hint {{ direction_class }}" style="text-transform: capitalize;">{{ direction }}</p>
+    </article>
+    <article class="stat-card">
+        <p class="stat-label">Pool</p>
+        <p class="stat-value" style="font-size: 1.125rem; padding-top: 0.5rem; text-transform: capitalize;">{{ pool }}</p>
+        <p class="stat-hint">Funding: {{ funding_type }}</p>
+    </article>
+    <article class="stat-card">
+        <p class="stat-label">Created</p>
+        <p class="stat-value" style="font-size: 0.95rem; padding-top: 0.5rem;">{{ created_at }}</p>
+        <p class="stat-hint">Updated {{ updated_at }}</p>
+    </article>
+</div>
 
 <article>
-    <header><strong>Identity</strong></header>
-    <div class="grid">
-        <div>
-            <p><strong>Transaction ID:</strong> {{ id }}</p>
-            <p><strong>Account ID:</strong> <a href="{{ prefix }}/admin/accounts/{{ account_id }}">{{ account_id }}</a></p>
-            <p><strong>Holder ID:</strong> {{ holder_id }}</p>
-            <p><strong>Purpose:</strong> {{ purpose_code }}</p>
+    <header>Identity</header>
+    <div class="grid" style="grid-template-columns: 1fr 1fr;">
+        <div class="kv">
+            <div><strong>Transaction ID:</strong></div><div class="mono">{{ id }}</div>
+            <div><strong>Type:</strong></div><div>{{ transaction_type_label }}</div>
+            <div><strong>Status:</strong></div><div><span class="{{ status_class }}">{{ status }}</span></div>
+            <div><strong>Account kind:</strong></div><div><span class="badge{% if account_kind_label == "Normal" %} pill-pending{% else %} pill-sentinel{% endif %}">{{ account_kind_label }}</span></div>
+            <div><strong>Account:</strong></div><div class="mono"><a href="{{ prefix }}{{ account_href }}">{{ account_id }}</a></div>
+            <div><strong>Holder:</strong></div><div class="mono">{{ holder_id }}</div>
+            {% if account_kind_label != "Normal" %}<div><strong>Purpose:</strong></div><div><span class="badge">{{ purpose_code }}</span></div>{% endif %}
         </div>
-        <div>
-            <p><strong>TigerBeetle Transfer ID:</strong> {{ tb_transfer_id }}</p>
-            <p><strong>Idempotency Key:</strong> {{ idempotency_key }}</p>
+        <div class="kv">
+            <div><strong>TB transfer ID:</strong></div><div class="mono">{{ tb_transfer_id }}</div>
+            <div><strong>Idempotency key:</strong></div><div class="mono">{{ idempotency_key }}</div>
         </div>
     </div>
-</article>
-
-<article>
-    <header><strong>Classification</strong></header>
-    <div class="grid">
-        <div>
-            <p><strong>Type:</strong> {{ transaction_type_label }}</p>
-            <p><strong>Status:</strong> <span class="{{ status_class }}">{{ status }}</span></p>
-            <p><strong>Direction:</strong> <span class="{{ direction_class }}">{{ direction }}</span></p>
-        </div>
-        <div>
-            <p><strong>Pool:</strong> {{ pool }}</p>
-            <p><strong>Funding Type:</strong> {{ funding_type }}</p>
-        </div>
-    </div>
-</article>
-
-<article>
-    <header><strong>Amount</strong></header>
-    <p style="font-size: 1.5rem;"><strong>₹{{ amount }}</strong></p>
 </article>
 
 {% if is_deposit %}
 <article>
-    <header><strong>Source</strong></header>
-    <div class="grid">
-        <div>
-            <p><strong>Source IFSC:</strong> {{ source_ifsc }}</p>
-            <p><strong>Source Account:</strong> {{ source_account }}</p>
+    <header>Source</header>
+    <div class="grid" style="grid-template-columns: 1fr 1fr;">
+        <div class="kv">
+            <div>Source IFSC</div><div class="mono">{{ source_ifsc }}</div>
+            <div>Source account</div><div class="mono">{{ source_account }}</div>
         </div>
-        <div>
-            <p><strong>Gateway Ref:</strong> {{ gateway_ref }}</p>
+        <div class="kv">
+            <div>Gateway ref</div><div class="mono">{{ gateway_ref }}</div>
+            <div>Timeout</div><div class="mono">{{ timeout_seconds }} seconds</div>
         </div>
     </div>
 </article>
 {% else if is_payment %}
 <article>
-    <header><strong>Merchant</strong></header>
-    <div class="grid">
-        <div>
-            <p><strong>Merchant ID:</strong> {{ merchant_id }}</p>
-            <p><strong>Merchant MCC:</strong> {{ merchant_mcc }}</p>
+    <header>Merchant</header>
+    <div class="grid" style="grid-template-columns: 1fr 1fr;">
+        <div class="kv">
+            <div>Merchant ID</div><div class="mono">{{ merchant_id }}</div>
+            <div>Merchant MCC</div><div class="mono">{{ merchant_mcc }}</div>
         </div>
-        <div>
-            <p><strong>Description:</strong> {{ description }}</p>
-            <p><strong>Gateway Ref:</strong> {{ gateway_ref }}</p>
+        <div class="kv">
+            <div>Description</div><div>{{ description }}</div>
+            <div><strong>Gateway Ref:</strong></div><div class="mono">{{ gateway_ref }}</div>
         </div>
     </div>
 </article>
 {% else if is_withdrawal %}
 <article>
     <header><strong>Reference</strong></header>
-    <p><strong>Gateway Ref:</strong> {{ gateway_ref }}</p>
-</article>
-{% endif %}
-
-<article>
-    <header><strong>Timing</strong></header>
-    <div class="grid">
-        <div>
-            <p><strong>Created:</strong> {{ created_at }}</p>
-            <p><strong>Updated:</strong> {{ updated_at }}</p>
-        </div>
-        <div>
-            <p><strong>Timeout (seconds):</strong> {{ timeout_seconds }}</p>
-        </div>
+    <div class="kv">
+        <div><strong>Gateway Ref:</strong></div><div class="mono">{{ gateway_ref }}</div>
     </div>
-</article>
-
-{% if can_post_or_void %}
-<article>
-    <header><strong>Actions</strong></header>
-    <form method="post" action="{{ prefix }}/admin/transactions/{{ id }}/post" class="inline-form">
-        <button type="submit" class="outline" style="color: #2e7d32; border-color: #2e7d32;">Post</button>
-    </form>
-    <form method="post" action="{{ prefix }}/admin/transactions/{{ id }}/void" class="inline-form">
-        <button type="submit" class="outline" style="color: #c62828; border-color: #c62828;">Void</button>
-    </form>
 </article>
 {% endif %}
 {% endblock %}

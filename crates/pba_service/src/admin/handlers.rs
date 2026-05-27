@@ -41,17 +41,21 @@ pub async fn login_page(State(state): State<AppState>) -> impl IntoResponse {
 struct DashboardTemplate {
     prefix: String,
     total_accounts: i64,
-    active_accounts: i64,
-    frozen_accounts: i64,
-    closed_accounts: i64,
+    total_pb_accounts: i64,
+    active_pb_accounts: i64,
+    frozen_pb_accounts: i64,
+    closed_pb_accounts: i64,
+    total_normal_accounts: i64,
+    active_normal_accounts: i64,
+    frozen_normal_accounts: i64,
     purpose_counts: Vec<(String, i64)>,
 }
 
 pub async fn dashboard(State(state): State<AppState>) -> Response {
-    let status_counts = match state.pb_account_repo.count_accounts_by_status().await {
+    let pb_status_counts = match state.pb_account_repo.count_accounts_by_status().await {
         Ok(c) => c,
         Err(e) => {
-            tracing::error!("Failed to count accounts: {e}");
+            tracing::error!("Failed to count pb accounts: {e}");
             return (StatusCode::INTERNAL_SERVER_ERROR, "Database error").into_response();
         }
     };
@@ -64,24 +68,48 @@ pub async fn dashboard(State(state): State<AppState>) -> Response {
         }
     };
 
-    let mut active = 0i64;
-    let mut frozen = 0i64;
-    let mut closed = 0i64;
-    for (status, count) in &status_counts {
+    let normal_status_counts = match state.normal_account_repo.count_accounts_by_status().await {
+        Ok(c) => c,
+        Err(e) => {
+            tracing::error!("Failed to count normal accounts: {e}");
+            return (StatusCode::INTERNAL_SERVER_ERROR, "Database error").into_response();
+        }
+    };
+
+    let mut pb_active = 0i64;
+    let mut pb_frozen = 0i64;
+    let mut pb_closed = 0i64;
+    for (status, count) in &pb_status_counts {
         match status.as_str() {
-            "active" => active = *count,
-            "frozen" => frozen = *count,
-            "closed" => closed = *count,
+            "active" => pb_active = *count,
+            "frozen" => pb_frozen = *count,
+            "closed" => pb_closed = *count,
             _ => {}
         }
     }
 
+    let mut normal_active = 0i64;
+    let mut normal_frozen = 0i64;
+    for (status, count) in &normal_status_counts {
+        match status.as_str() {
+            "active" => normal_active = *count,
+            "frozen" => normal_frozen = *count,
+            _ => {}
+        }
+    }
+
+    let total_pb = pb_active + pb_frozen + pb_closed;
+    let total_normal = normal_active + normal_frozen;
     render(DashboardTemplate {
         prefix: state.path_prefix.clone(),
-        total_accounts: active + frozen + closed,
-        active_accounts: active,
-        frozen_accounts: frozen,
-        closed_accounts: closed,
+        total_accounts: total_pb + total_normal,
+        total_pb_accounts: total_pb,
+        active_pb_accounts: pb_active,
+        frozen_pb_accounts: pb_frozen,
+        closed_pb_accounts: pb_closed,
+        total_normal_accounts: total_normal,
+        active_normal_accounts: normal_active,
+        frozen_normal_accounts: normal_frozen,
         purpose_counts,
     })
 }
@@ -724,13 +752,16 @@ struct TransactionsPageTemplate {
     prev_offset: i64,
     next_offset: i64,
     has_next: bool,
+    active_kind: String,
 }
 
 struct AllTransactionRow {
     id: String,
     timestamp: String,
     account_id: String,
-    account_id_short: String,
+    account_kind: String,
+    account_kind_class: String,
+    account_href: String,
     transfer_type: String,
     status: String,
     status_class: String,
@@ -745,6 +776,7 @@ struct AllTransactionRow {
 pub struct TransactionsPageQuery {
     offset: Option<i64>,
     limit: Option<i64>,
+    kind: Option<String>,
 }
 
 pub async fn transactions_page(
@@ -753,6 +785,12 @@ pub async fn transactions_page(
 ) -> Response {
     let offset = query.offset.unwrap_or(0).max(0);
     let limit = query.limit.unwrap_or(50).clamp(1, 100);
+    let kind_filter = match query.kind.as_deref() {
+        Some("pb") => Some(crate::domain::account_kind::AccountKind::Pb),
+        Some("normal") => Some(crate::domain::account_kind::AccountKind::Normal),
+        _ => None,
+    };
+    let active_kind = query.kind.clone().unwrap_or_else(|| "all".to_string());
 
     let pool_summary = match state.transaction_repo.pool_summary().await {
         Ok(s) => s,
@@ -764,7 +802,7 @@ pub async fn transactions_page(
 
     let transactions = match state
         .transaction_repo
-        .list_all(offset, limit, None, None)
+        .list_all(offset, limit, None, None, kind_filter)
         .await
     {
         Ok(t) => t,
@@ -774,7 +812,11 @@ pub async fn transactions_page(
         }
     };
 
-    let total = match state.transaction_repo.count_all(None, None).await {
+    let total = match state
+        .transaction_repo
+        .count_all(None, None, kind_filter)
+        .await
+    {
         Ok(c) => c,
         Err(e) => {
             tracing::error!("Failed to count transactions: {e}");
@@ -796,11 +838,27 @@ pub async fn transactions_page(
                 TransactionStatus::Posted | TransactionStatus::Settled => "status-active",
                 TransactionStatus::Voided => "status-closed",
             };
+            let is_normal = t.account_kind == crate::domain::account_kind::AccountKind::Normal;
+            let account_href = if is_normal {
+                format!("/admin/normal-accounts/{}", t.account_id)
+            } else {
+                format!("/admin/accounts/{}", t.account_id)
+            };
             AllTransactionRow {
                 id: t.id.to_string(),
                 timestamp: t.created_at.format("%Y-%m-%d %H:%M:%S").to_string(),
                 account_id: t.account_id.to_string(),
-                account_id_short: t.account_id.to_string()[..8].to_string(),
+                account_kind: if is_normal {
+                    "Normal".to_string()
+                } else {
+                    "PB".to_string()
+                },
+                account_kind_class: if is_normal {
+                    "badge pill-pending".to_string()
+                } else {
+                    "badge pill-sentinel".to_string()
+                },
+                account_href,
                 transfer_type: t.type_label().to_string(),
                 status: t.status.as_str().to_string(),
                 status_class: status_class.to_string(),
@@ -830,6 +888,7 @@ pub async fn transactions_page(
         prev_offset: (offset - limit).max(0),
         next_offset: offset + limit,
         has_next: offset + count < total,
+        active_kind,
     })
 }
 
@@ -964,6 +1023,8 @@ struct TransactionDetailTemplate {
     id: String,
     id_short: String,
     account_id: String,
+    account_href: String,
+    account_kind_label: String,
     holder_id: String,
     purpose_code: String,
     tb_transfer_id: String,
@@ -1007,12 +1068,35 @@ pub async fn transaction_detail(
     };
 
     let dash = "—".to_string();
+    let is_normal_txn = txn.account_kind == crate::domain::account_kind::AccountKind::Normal;
+    let account_href = if is_normal_txn {
+        format!("/admin/normal-accounts/{}", txn.account_id)
+    } else {
+        format!("/admin/accounts/{}", txn.account_id)
+    };
+    let account_kind_label = if is_normal_txn {
+        "Normal".to_string()
+    } else {
+        "PB".to_string()
+    };
 
-    let (holder_id, purpose_code) = match state.pb_account_repo.get_account(txn.account_id).await {
-        Ok(a) => (a.holder_id, a.purpose_code),
-        Err(e) => {
-            tracing::warn!("Failed to load parent account for transaction {transaction_id}: {e}");
-            (dash.clone(), dash.clone())
+    let (holder_id, purpose_code) = if is_normal_txn {
+        match state.normal_account_repo.get_account(txn.account_id).await {
+            Ok(a) => (a.holder_id, dash.clone()),
+            Err(e) => {
+                tracing::warn!(
+                    "Failed to load normal account for transaction {transaction_id}: {e}"
+                );
+                (dash.clone(), dash.clone())
+            }
+        }
+    } else {
+        match state.pb_account_repo.get_account(txn.account_id).await {
+            Ok(a) => (a.holder_id, a.purpose_code),
+            Err(e) => {
+                tracing::warn!("Failed to load pb account for transaction {transaction_id}: {e}");
+                (dash.clone(), dash.clone())
+            }
         }
     };
 
@@ -1079,6 +1163,8 @@ pub async fn transaction_detail(
         id: id_str,
         id_short,
         account_id,
+        account_href,
+        account_kind_label,
         holder_id,
         purpose_code,
         tb_transfer_id,
@@ -1162,6 +1248,8 @@ mod tests {
             id: "11111111-1111-1111-1111-111111111111".to_string(),
             id_short: "11111111".to_string(),
             account_id: "22222222-2222-2222-2222-222222222222".to_string(),
+            account_href: "/admin/accounts/22222222-2222-2222-2222-222222222222".to_string(),
+            account_kind_label: "PB".to_string(),
             holder_id: "holder-xyz".to_string(),
             purpose_code: "health".to_string(),
             tb_transfer_id: "9999999999".to_string(),
@@ -1196,6 +1284,8 @@ mod tests {
             id: "33333333-3333-3333-3333-333333333333".to_string(),
             id_short: "33333333".to_string(),
             account_id: "22222222-2222-2222-2222-222222222222".to_string(),
+            account_href: "/admin/accounts/22222222-2222-2222-2222-222222222222".to_string(),
+            account_kind_label: "PB".to_string(),
             holder_id: "holder-xyz".to_string(),
             purpose_code: "health".to_string(),
             tb_transfer_id: "8888888888".to_string(),
@@ -1230,6 +1320,8 @@ mod tests {
             id: "44444444-4444-4444-4444-444444444444".to_string(),
             id_short: "44444444".to_string(),
             account_id: "22222222-2222-2222-2222-222222222222".to_string(),
+            account_href: "/admin/accounts/22222222-2222-2222-2222-222222222222".to_string(),
+            account_kind_label: "PB".to_string(),
             holder_id: "holder-xyz".to_string(),
             purpose_code: "health".to_string(),
             tb_transfer_id: "7777777777".to_string(),

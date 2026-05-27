@@ -1,8 +1,9 @@
 mod handlers;
 mod normal_handlers;
+mod tb;
 mod transfer_handlers;
 
-use axum::routing::get;
+use axum::routing::{get, post};
 use axum::Router;
 
 use crate::auth::oidc;
@@ -111,7 +112,8 @@ pub fn create_router() -> Router<AppState> {
         )
         .route(
             "/admin/normal-accounts/{account_id}/transfers",
-            axum::routing::post(transfer_handlers::process_normal_transfer),
+            get(normal_handlers::normal_transfers_fragment)
+                .post(transfer_handlers::process_normal_transfer),
         )
         .route(
             "/admin/transfers/{transfer_id}",
@@ -130,4 +132,34 @@ pub fn create_router() -> Router<AppState> {
             get(transfer_handlers::reverse_transfer_form)
                 .post(transfer_handlers::process_reverse_transfer),
         )
+        // Static assets (self-hosted so admin UI works offline / on locked-down networks).
+        .route("/admin/static/htmx.min.js", get(serve_htmx))
+        // TigerBeetle explorer
+        .route("/admin/tb", get(tb::overview))
+        .route("/admin/tb/accounts", get(tb::accounts_page))
+        .route("/admin/tb/accounts/{id}", get(tb::account_detail))
+        .route("/admin/tb/transfers", get(tb::transfers_page))
+        .route("/admin/tb/transfers/{id}", get(tb::transfer_detail))
+        .route("/admin/tb/pending", get(tb::pending_page))
+        .route("/admin/tb/pending/{id}/post", post(tb::pending_post))
+        .route("/admin/tb/pending/{id}/void", post(tb::pending_void))
+        .route("/admin/tb/decoder", get(tb::decoder))
+}
+
+const HTMX_JS: &str = include_str!("../static/htmx.min.js");
+
+async fn serve_htmx() -> axum::response::Response {
+    use axum::http::header;
+    use axum::response::IntoResponse;
+    (
+        [
+            (
+                header::CONTENT_TYPE,
+                "application/javascript; charset=utf-8",
+            ),
+            (header::CACHE_CONTROL, "public, max-age=31536000, immutable"),
+        ],
+        HTMX_JS,
+    )
+        .into_response()
 }

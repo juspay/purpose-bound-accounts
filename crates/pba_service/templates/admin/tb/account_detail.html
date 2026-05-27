@@ -1,0 +1,133 @@
+{% extends "base.html" %}
+
+{% block title %}TB Account {{ account.id }} — PBA Admin{% endblock %}
+{% block breadcrumb %}<a href="{{ prefix }}/admin">PBA Admin</a> <span class="sep">/</span> <a href="{{ prefix }}/admin/tb">TigerBeetle</a> <span class="sep">/</span> <a href="{{ prefix }}/admin/tb/accounts">Accounts</a> <span class="sep">/</span> <span class="current mono">{{ account.id }}</span>{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div>
+        <h1 class="page-title">TB account</h1>
+        <p class="page-subtitle mono">
+            {{ account.id }}
+            {% if let Some(s) = account.sentinel %}<span class="badge pill-sentinel" style="margin-left: 0.5rem;">{{ s }}</span>{% endif %}
+        </p>
+    </div>
+    <div class="page-actions">
+        <a href="{{ prefix }}/admin/tb/transfers?mode=for_account&account_id={{ account.id }}&limit=200&reversed=on&include_debits=on&include_credits=on" role="button" class="outline">All transfers →</a>
+    </div>
+</div>
+
+{% include "admin/tb/_subnav.html" %}
+
+{% if let Some(err) = error %}
+<div class="error-box"><strong>Error:</strong> {{ err }}</div>
+{% endif %}
+
+<div class="grid" style="grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));">
+    <article class="stat-card stat-primary">
+        <p class="stat-label">Credits posted</p>
+        <p class="stat-value">{{ account.credits_posted }}</p>
+        <p class="stat-hint">Pending: {{ account.credits_pending }}</p>
+    </article>
+    <article class="stat-card stat-warn">
+        <p class="stat-label">Debits posted</p>
+        <p class="stat-value">{{ account.debits_posted }}</p>
+        <p class="stat-hint">Pending: {{ account.debits_pending }}</p>
+    </article>
+    <article class="stat-card stat-success">
+        <p class="stat-label">Net balance</p>
+        <p class="stat-value">{{ account.balance }}</p>
+        <p class="stat-hint">credits − debits (posted)</p>
+    </article>
+    <article class="stat-card">
+        <p class="stat-label">Code</p>
+        <p class="stat-value" style="font-size: 1.25rem;">{{ account.code }}</p>
+        <p class="stat-hint">{{ account.code_label }}</p>
+    </article>
+</div>
+
+<article>
+    <header>Account metadata</header>
+    <div class="grid" style="grid-template-columns: 1fr 1fr;">
+        <div class="kv">
+            <div>ID (u128)</div><div class="mono truncate">{{ account.id }}</div>
+            <div>ID (UUID)</div><div class="mono">{{ account.id_uuid }}</div>
+            <div>Ledger</div><div class="mono">{{ account.ledger }}</div>
+            <div>Code</div><div>{{ account.code }} <span class="muted">({{ account.code_label }})</span></div>
+            <div>Flags</div><div><span class="mono">{{ account.flags }}</span> <span class="text-xs muted">(bits: {{ account.flags_bits }})</span></div>
+            <div>Created</div><div>{{ account.timestamp }}</div>
+        </div>
+    </div>
+</article>
+
+<h2>Recent transfers <span class="badge pill-muted">{{ transfers.len() }}</span></h2>
+{% if transfers.is_empty() %}
+<article><p class="muted mb-0">No transfers for this account.</p></article>
+{% else %}
+<figure>
+<table class="compact">
+    <thead>
+        <tr>
+            <th>Timestamp</th>
+            <th>ID</th>
+            <th>Code</th>
+            <th style="text-align: right;">Amount</th>
+            <th>Debit</th>
+            <th>Credit</th>
+            <th>Flags</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for t in &transfers %}
+        <tr>
+            <td class="text-xs muted">{{ t.timestamp }}</td>
+            <td class="mono">
+                <a href="{{ prefix }}/admin/tb/transfers/{{ t.id }}">{{ t.id }}</a>
+                {% if t.is_pending %} <span class="badge pill-pending">pending</span>{% endif %}
+            </td>
+            <td>{{ t.code }} <span class="muted text-xs">{{ t.code_label }}</span></td>
+            <td class="mono" style="text-align: right;">{{ t.amount }}</td>
+            <td class="mono"><a href="{{ prefix }}/admin/tb/accounts/{{ t.debit_id }}">{{ t.debit_id }}</a></td>
+            <td class="mono"><a href="{{ prefix }}/admin/tb/accounts/{{ t.credit_id }}">{{ t.credit_id }}</a></td>
+            <td><span class="text-xs mono">{{ t.flags }}</span></td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+</figure>
+{% endif %}
+
+<h2>Balance history <span class="badge pill-muted">{{ balance_history.len() }}</span></h2>
+{% if balance_history.is_empty() %}
+<article>
+    <p class="muted mb-0">No balance history available. Only accounts created with the <span class="mono">HISTORY</span> flag record per-transfer snapshots — pool accounts have it, sentinels do not.</p>
+</article>
+{% else %}
+<figure>
+<table class="compact">
+    <thead>
+        <tr>
+            <th>Timestamp</th>
+            <th style="text-align: right;">Credits posted</th>
+            <th style="text-align: right;">Debits posted</th>
+            <th style="text-align: right;">Credits pending</th>
+            <th style="text-align: right;">Debits pending</th>
+            <th style="text-align: right;">Balance</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for b in &balance_history %}
+        <tr>
+            <td class="text-xs muted">{{ b.timestamp }}</td>
+            <td class="mono" style="text-align: right;">{{ b.credits_posted }}</td>
+            <td class="mono" style="text-align: right;">{{ b.debits_posted }}</td>
+            <td class="mono" style="text-align: right;">{{ b.credits_pending }}</td>
+            <td class="mono" style="text-align: right;">{{ b.debits_pending }}</td>
+            <td class="mono" style="text-align: right;"><strong>{{ b.balance }}</strong></td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+</figure>
+{% endif %}
+{% endblock %}

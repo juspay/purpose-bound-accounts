@@ -1,13 +1,21 @@
 {% extends "base.html" %}
 
-{% block title %}System Accounts - PBA Admin{% endblock %}
+{% block title %}System Accounts — PBA Admin{% endblock %}
+{% block breadcrumb %}<a href="{{ prefix }}/admin">PBA Admin</a> <span class="sep">/</span> <span class="current">System Accounts</span>{% endblock %}
 
 {% block content %}
-<h1>System Accounts</h1>
+<div class="page-header">
+    <div>
+        <h1 class="page-title">System Accounts</h1>
+        <p class="page-subtitle">Internal sentinel accounts and pool balances managed by the ledger.</p>
+    </div>
+</div>
 
-<h2>Sentinel Accounts (TigerBeetle)</h2>
+<h2>Sentinel Accounts <span class="muted text-small">(TigerBeetle)</span></h2>
 {% if sentinel_accounts.is_empty() %}
-<p>No sentinel accounts found.</p>
+<article>
+    <p class="muted mb-0">No sentinel accounts found.</p>
+</article>
 {% else %}
 <table>
     <thead>
@@ -37,7 +45,7 @@
 </table>
 {% endif %}
 
-<h2>PBA Pool Balances (Postgres)</h2>
+<h2>PBA Pool Balances <span class="muted text-small">(Postgres)</span></h2>
 <table>
     <thead>
         <tr>

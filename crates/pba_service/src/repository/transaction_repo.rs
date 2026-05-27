@@ -360,6 +360,7 @@ impl TransactionRepo {
         limit: i64,
         from_date: Option<DateTime<Utc>>,
         to_date: Option<DateTime<Utc>>,
+        kind: Option<crate::domain::account_kind::AccountKind>,
     ) -> Result<Vec<TransactionRecord>, AppError> {
         let rows = sqlx::query_as::<_, TransactionRow>(
             r#"
@@ -371,6 +372,7 @@ impl TransactionRepo {
             FROM transactions
             WHERE ($3::timestamptz IS NULL OR created_at >= $3)
               AND ($4::timestamptz IS NULL OR created_at <= $4)
+              AND ($5::text IS NULL OR account_kind = $5)
             ORDER BY created_at DESC, id DESC
             LIMIT $1 OFFSET $2
             "#,
@@ -379,6 +381,7 @@ impl TransactionRepo {
         .bind(offset)
         .bind(from_date)
         .bind(to_date)
+        .bind(kind.as_ref().map(|k| k.as_str()))
         .fetch_all(&self.pool)
         .await?;
 
@@ -389,16 +392,19 @@ impl TransactionRepo {
         &self,
         from_date: Option<DateTime<Utc>>,
         to_date: Option<DateTime<Utc>>,
+        kind: Option<crate::domain::account_kind::AccountKind>,
     ) -> Result<i64, AppError> {
         let row: (i64,) = sqlx::query_as(
             r#"
             SELECT COUNT(*) FROM transactions
             WHERE ($1::timestamptz IS NULL OR created_at >= $1)
               AND ($2::timestamptz IS NULL OR created_at <= $2)
+              AND ($3::text IS NULL OR account_kind = $3)
             "#,
         )
         .bind(from_date)
         .bind(to_date)
+        .bind(kind.as_ref().map(|k| k.as_str()))
         .fetch_one(&self.pool)
         .await?;
 

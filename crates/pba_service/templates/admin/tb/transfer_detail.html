@@ -1,0 +1,76 @@
+{% extends "base.html" %}
+
+{% block title %}TB Transfer {{ t.id }} — PBA Admin{% endblock %}
+{% block breadcrumb %}<a href="{{ prefix }}/admin">PBA Admin</a> <span class="sep">/</span> <a href="{{ prefix }}/admin/tb">TigerBeetle</a> <span class="sep">/</span> <a href="{{ prefix }}/admin/tb/transfers">Transfers</a> <span class="sep">/</span> <span class="current mono">{{ t.id }}</span>{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div>
+        <h1 class="page-title">Transfer detail</h1>
+        <p class="page-subtitle mono">
+            {{ t.id }}
+            {% if t.is_pending %}<span class="badge pill-pending" style="margin-left: 0.5rem;">pending</span>{% endif %}
+        </p>
+    </div>
+    {% if t.is_pending %}
+    <div class="page-actions">
+        <form method="post" action="{{ prefix }}/admin/tb/pending/{{ t.id }}/post" class="inline-form" onsubmit="return confirm('Post this pending transfer? This will commit the funds.');">
+            <button type="submit">Post (commit)</button>
+        </form>
+        <form method="post" action="{{ prefix }}/admin/tb/pending/{{ t.id }}/void" class="inline-form" onsubmit="return confirm('Void this pending transfer? This will release the reserved funds.');">
+            <button type="submit" class="btn-danger">Void</button>
+        </form>
+    </div>
+    {% endif %}
+</div>
+
+{% include "admin/tb/_subnav.html" %}
+
+<div class="grid" style="grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));">
+    <article class="stat-card stat-primary">
+        <p class="stat-label">Amount</p>
+        <p class="stat-value">₹{{ t.amount }}</p>
+        <p class="stat-hint">Ledger {{ t.ledger }} · paisa</p>
+    </article>
+    <article class="stat-card">
+        <p class="stat-label">Type</p>
+        <p class="stat-value" style="font-size: 1.25rem;">{{ t.code }}</p>
+        <p class="stat-hint">{{ t.code_label }}</p>
+    </article>
+    <article class="stat-card">
+        <p class="stat-label">Status</p>
+        <p class="stat-value {% if t.is_pending %}stat-warn{% else %}stat-success{% endif %}" style="font-size: 1.125rem; padding-top: 0.5rem;">
+            {% if t.is_pending %}Pending{% else %}Posted{% endif %}
+        </p>
+        <p class="stat-hint">{% if t.timeout > 0 %}Timeout: {{ t.timeout }}s{% else %}No timeout{% endif %}</p>
+    </article>
+</div>
+
+<article>
+    <header>Transfer metadata</header>
+    <div class="grid" style="grid-template-columns: 1fr 1fr;">
+        <div class="kv">
+            <div>ID (u128)</div><div class="mono">{{ t.id }}</div>
+            <div>ID (UUID)</div><div class="mono">{{ t.id_uuid }}</div>
+            <div>Timestamp</div><div>{{ t.timestamp }}</div>
+            <div>Ledger</div><div class="mono">{{ t.ledger }}</div>
+            <div>Code</div><div>{{ t.code }} <span class="muted">({{ t.code_label }})</span></div>
+            <div>Flags</div><div class="mono">{{ t.flags }} <span class="text-xs muted">(bits: {{ t.flags_bits }})</span></div>
+        </div>
+        <div class="kv">
+            <div>Debit account</div>
+            <div class="mono">
+                <a href="{{ prefix }}/admin/tb/accounts/{{ t.debit_id }}">{{ t.debit_id }}</a>
+                {% if let Some(s) = t.debit_sentinel %}<span class="badge pill-sentinel">{{ s }}</span>{% endif %}
+            </div>
+            <div>Credit account</div>
+            <div class="mono">
+                <a href="{{ prefix }}/admin/tb/accounts/{{ t.credit_id }}">{{ t.credit_id }}</a>
+                {% if let Some(s) = t.credit_sentinel %}<span class="badge pill-sentinel">{{ s }}</span>{% endif %}
+            </div>
+            <div>Pending ID</div><div class="mono">{% if t.pending_id != "" %}<a href="{{ prefix }}/admin/tb/transfers/{{ t.pending_id }}">{{ t.pending_id }}</a>{% else %}<span class="muted">—</span>{% endif %}</div>
+            <div>Timeout</div><div class="mono">{{ t.timeout }} seconds</div>
+        </div>
+    </div>
+</article>
+{% endblock %}

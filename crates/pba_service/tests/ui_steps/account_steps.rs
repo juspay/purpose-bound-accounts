@@ -22,33 +22,62 @@ pub fn parse_display_to_paisa(s: &str) -> i64 {
     }
 }
 
-/// Find `"Label: ₹X.XX"` in page content and return value in paisa.
-pub fn extract_balance(content: &str, label: &str) -> i64 {
-    // Look for pattern: label followed by optional currency symbol and number
-    let search = format!("{}:", label);
-    if let Some(pos) = content.find(&search) {
-        let after = &content[pos + search.len()..];
-        // Skip whitespace / HTML tags
-        let stripped = strip_html_tags(after);
-        let trimmed = stripped.trim();
-        // Skip any non-digit prefix (e.g. ₹ symbol)
-        let start = trimmed
-            .find(|c: char| c.is_ascii_digit())
-            .unwrap_or(trimmed.len());
-        let rest = &trimmed[start..];
-        // Take up to first non-numeric (excluding '.')
-        let end = rest
-            .find(|c: char| !c.is_ascii_digit() && c != '.')
-            .unwrap_or(rest.len());
-        let num_str = &rest[..end];
-        if !num_str.is_empty() {
-            return parse_display_to_paisa(num_str);
+/// Extract the contents of a stat-card by label, e.g. "Self pool" -> "₹50.00".
+/// New template structure:
+///   <p class="stat-label">LABEL</p>
+///   <p class="stat-value">VALUE</p>
+pub fn extract_stat_value(content: &str, label: &str) -> Option<String> {
+    // Match the label tag, allowing for casing differences in the test (e.g. "Self Pool" vs "Self pool").
+    let label_lower = label.to_ascii_lowercase();
+    let mut start = 0;
+    while start < content.len() {
+        let chunk = &content[start..];
+        let pos = chunk.find("class=\"stat-label\"")?;
+        let after_class = &chunk[pos..];
+        let gt = after_class.find('>')?;
+        let inner = &after_class[gt + 1..];
+        let end = inner.find("</p>")?;
+        let actual_label = strip_html_tags(&inner[..end]).trim().to_ascii_lowercase();
+        if actual_label == label_lower {
+            // Find the next stat-value
+            let after_label = &inner[end..];
+            let val_pos = after_label.find("class=\"stat-value")?;
+            let after_val = &after_label[val_pos..];
+            let vgt = after_val.find('>')?;
+            let val_inner = &after_val[vgt + 1..];
+            let vend = val_inner.find("</p>")?;
+            return Some(strip_html_tags(&val_inner[..vend]).trim().to_string());
         }
+        start += pos + gt + 1 + end + 4; // advance past this label-value block
     }
-    0
+    None
 }
 
-fn strip_html_tags(s: &str) -> String {
+/// Find a balance label like "Self pool" / "Others pool" / "Total balance" in
+/// the new design-system stat cards and return the value in paisa.
+pub fn extract_balance(content: &str, label: &str) -> i64 {
+    let raw = match extract_stat_value(content, label) {
+        Some(v) => v,
+        None => return 0,
+    };
+    // Strip ₹ and anything non-numeric except '.'
+    let trimmed = raw.trim();
+    let start = trimmed
+        .find(|c: char| c.is_ascii_digit())
+        .unwrap_or(trimmed.len());
+    let rest = &trimmed[start..];
+    let end = rest
+        .find(|c: char| !c.is_ascii_digit() && c != '.')
+        .unwrap_or(rest.len());
+    let num = &rest[..end];
+    if num.is_empty() {
+        0
+    } else {
+        parse_display_to_paisa(num)
+    }
+}
+
+pub fn strip_html_tags(s: &str) -> String {
     let mut out = String::new();
     let mut in_tag = false;
     for c in s.chars() {
@@ -227,22 +256,9 @@ async fn submit_status_change(world: &mut UiWorld, status_value: &str) {
 }
 
 fn extract_status_from_content(content: &str) -> Option<String> {
-    // Look for: <strong>Status:</strong> <span ...>STATUS</span>
-    let marker = "Status:</strong>";
-    if let Some(pos) = content.find(marker) {
-        let after = &content[pos + marker.len()..];
-        // Find the span content
-        if let Some(span_start) = after.find("<span") {
-            let span_content = &after[span_start..];
-            if let Some(gt) = span_content.find('>') {
-                let inner = &span_content[gt + 1..];
-                if let Some(end) = inner.find("</span>") {
-                    return Some(inner[..end].trim().to_string());
-                }
-            }
-        }
-    }
-    None
+    // New template uses a stat card: <p class="stat-label">Status</p>
+    //                                <p class="stat-value status-X ...">STATUS</p>
+    extract_stat_value(content, "Status").map(|s| s.to_ascii_lowercase())
 }
 
 // ---------------------------------------------------------------------------
@@ -409,16 +425,13 @@ async fn then_account_purpose(world: &mut UiWorld, expected: String) {
     let page = world.ensure_page().await;
     let content = page.content().await.expect("Failed to get page content");
 
-    // Look for: <strong>Purpose:</strong> {purpose_code}
-    let marker = "Purpose:</strong>";
+    // New kv grid: <div>Purpose</div><div><span class="badge">CODE</span></div>
+    let marker = "<div>Purpose</div>";
     let found = if let Some(pos) = content.find(marker) {
         let after = &content[pos + marker.len()..];
-        let stripped = strip_html_tags(after);
-        let trimmed = stripped.trim();
-        let end = trimmed
-            .find(|c: char| c == '<' || c == '\n')
-            .unwrap_or(trimmed.len());
-        trimmed[..end].trim().to_string()
+        // Take up to the next closing </div>
+        let end = after.find("</div>").unwrap_or(after.len());
+        strip_html_tags(&after[..end]).trim().to_string()
     } else {
         String::new()
     };
@@ -459,17 +472,13 @@ async fn visit_dashboard(world: &mut UiWorld) {
 async fn dashboard_total(world: &mut UiWorld, min: i64) {
     let page = world.ensure_page().await;
     let content = page.content().await.unwrap();
-    // Find the total accounts stat card — first <h2> in the stat cards
-    let re = regex::Regex::new(r"<h2>(\d+)</h2>").unwrap();
-    if let Some(cap) = re.captures(&content) {
-        let total: i64 = cap[1].parse().unwrap_or(0);
-        assert!(
-            total >= min,
-            "Expected at least {min} total accounts, got {total}"
-        );
-    } else {
-        panic!("Could not find total accounts on dashboard");
-    }
+    let value = extract_stat_value(&content, "Total accounts")
+        .expect("Could not find 'Total accounts' stat card on dashboard");
+    let total: i64 = value.trim().parse().unwrap_or(0);
+    assert!(
+        total >= min,
+        "Expected at least {min} total accounts, got {total}"
+    );
 }
 
 #[when(regex = r#"^I view the account detail$"#)]
@@ -517,8 +526,9 @@ async fn tx_history_loads(world: &mut UiWorld) {
     // Wait for HTMX to load the transfers fragment
     tokio::time::sleep(std::time::Duration::from_secs(2)).await;
     let content = page.content().await.unwrap();
+    // New design system uses unicode horizontal ellipsis (…) instead of "..."
     assert!(
-        !content.contains("Loading transfers..."),
+        !content.contains("Loading transfers...") && !content.contains("Loading transfers…"),
         "Transaction history should have finished loading"
     );
 }

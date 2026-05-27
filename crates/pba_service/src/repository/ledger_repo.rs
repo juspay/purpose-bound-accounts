@@ -1,4 +1,9 @@
+use std::time::{Duration, SystemTime};
+
+use chrono::{DateTime, Utc};
+
 use crate::domain::pool::PoolBalance;
+use crate::domain::tb_explorer::{TbAccountView, TbBalanceView, TbTransferView};
 use crate::error::AppError;
 use tb::account::Flags as AccountFlags;
 use tb::error::CreateTransferErrorKind;
@@ -15,7 +20,7 @@ pub const TRUST_FUNDING_SOURCE_TB_ID: u128 = u128::MAX - 13;
 pub const THIRD_PARTY_FUNDING_SOURCE_TB_ID: u128 = u128::MAX - 14;
 
 /// Ledger ID for Indian Rupee. All amounts are in paisa (1 INR = 100 paisa).
-const LEDGER_INR_PAISA: u32 = 1;
+pub const LEDGER_INR_PAISA: u32 = 1;
 const CODE_SELF_POOL: u16 = 1;
 const CODE_OTHERS_POOL: u16 = 2;
 #[allow(dead_code)]
@@ -328,6 +333,8 @@ impl LedgerRepo {
         Ok(())
     }
 
+    // ----- Normal account methods -----
+
     #[allow(dead_code)]
     pub async fn create_normal_account(&self, tb_account_id: u128) -> Result<(), AppError> {
         let account = tb::Account::new(tb_account_id, LEDGER_INR_PAISA, CODE_NORMAL_POOL)
@@ -423,6 +430,184 @@ impl LedgerRepo {
 
         Ok(SingleBalance { posted, pending })
     }
+
+    // ----- Explorer methods (read-only queries for /admin/tb) -----
+
+    pub async fn explorer_lookup_accounts(
+        &self,
+        ids: Vec<u128>,
+    ) -> Result<Vec<TbAccountView>, AppError> {
+        if ids.is_empty() {
+            return Ok(Vec::new());
+        }
+        let accounts =
+            self.client.lookup_accounts(ids).await.map_err(|e| {
+                AppError::TigerBeetleError(format!("lookup_accounts failed: {e:?}"))
+            })?;
+        Ok(accounts.iter().map(TbAccountView::from_account).collect())
+    }
+
+    pub async fn explorer_lookup_transfers(
+        &self,
+        ids: Vec<u128>,
+    ) -> Result<Vec<TbTransferView>, AppError> {
+        if ids.is_empty() {
+            return Ok(Vec::new());
+        }
+        let transfers =
+            self.client.lookup_transfers(ids).await.map_err(|e| {
+                AppError::TigerBeetleError(format!("lookup_transfers failed: {e:?}"))
+            })?;
+        Ok(transfers
+            .iter()
+            .map(TbTransferView::from_transfer)
+            .collect())
+    }
+
+    #[allow(clippy::too_many_arguments)]
+    pub async fn explorer_query_accounts(
+        &self,
+        ledger: u32,
+        code: u16,
+        timestamp_min: Option<DateTime<Utc>>,
+        timestamp_max: Option<DateTime<Utc>>,
+        limit: u32,
+        reversed: bool,
+    ) -> Result<Vec<TbAccountView>, AppError> {
+        let limit = limit.clamp(1, 8190);
+        let mut filter = tb::core::query_filter::QueryFilter::new(limit)
+            .with_ledger(ledger)
+            .with_code(code);
+        if let Some(ts) = timestamp_min.and_then(datetime_to_system_time) {
+            filter = filter.with_timestamp_min(ts);
+        }
+        if let Some(ts) = timestamp_max.and_then(datetime_to_system_time) {
+            filter = filter.with_timestamp_max(ts);
+        }
+        if reversed {
+            filter = filter.with_flags(tb::core::query_filter::Flags::REVERSED);
+        }
+        let accounts = self
+            .client
+            .query_accounts(Box::new(filter))
+            .await
+            .map_err(|e| AppError::TigerBeetleError(format!("query_accounts failed: {e:?}")))?;
+        Ok(accounts.iter().map(TbAccountView::from_account).collect())
+    }
+
+    #[allow(clippy::too_many_arguments)]
+    pub async fn explorer_query_transfers(
+        &self,
+        ledger: u32,
+        code: u16,
+        timestamp_min: Option<DateTime<Utc>>,
+        timestamp_max: Option<DateTime<Utc>>,
+        limit: u32,
+        reversed: bool,
+    ) -> Result<Vec<TbTransferView>, AppError> {
+        let limit = limit.clamp(1, 8190);
+        let mut filter = tb::core::query_filter::QueryFilter::new(limit)
+            .with_ledger(ledger)
+            .with_code(code);
+        if let Some(ts) = timestamp_min.and_then(datetime_to_system_time) {
+            filter = filter.with_timestamp_min(ts);
+        }
+        if let Some(ts) = timestamp_max.and_then(datetime_to_system_time) {
+            filter = filter.with_timestamp_max(ts);
+        }
+        if reversed {
+            filter = filter.with_flags(tb::core::query_filter::Flags::REVERSED);
+        }
+        let transfers = self
+            .client
+            .query_transfers(Box::new(filter))
+            .await
+            .map_err(|e| AppError::TigerBeetleError(format!("query_transfers failed: {e:?}")))?;
+        Ok(transfers
+            .iter()
+            .map(TbTransferView::from_transfer)
+            .collect())
+    }
+
+    #[allow(clippy::too_many_arguments)]
+    pub async fn explorer_account_transfers(
+        &self,
+        account_id: u128,
+        include_debits: bool,
+        include_credits: bool,
+        reversed: bool,
+        timestamp_min: Option<DateTime<Utc>>,
+        timestamp_max: Option<DateTime<Utc>>,
+        limit: u32,
+    ) -> Result<Vec<TbTransferView>, AppError> {
+        let limit = limit.clamp(1, 8190);
+        let mut flags = tb::account::FilterFlags::empty();
+        if include_debits {
+            flags |= tb::account::FilterFlags::DEBITS;
+        }
+        if include_credits {
+            flags |= tb::account::FilterFlags::CREDITS;
+        }
+        if reversed {
+            flags |= tb::account::FilterFlags::REVERSED;
+        }
+        let mut filter = tb::account::Filter::new(account_id, limit).with_flags(flags);
+        if let Some(ts) = timestamp_min.and_then(datetime_to_system_time) {
+            filter = filter.with_timestamp_min(ts);
+        }
+        if let Some(ts) = timestamp_max.and_then(datetime_to_system_time) {
+            filter = filter.with_timestamp_max(ts);
+        }
+        let transfers = self
+            .client
+            .get_account_transfers(Box::new(filter))
+            .await
+            .map_err(|e| {
+                AppError::TigerBeetleError(format!("get_account_transfers failed: {e:?}"))
+            })?;
+        Ok(transfers
+            .iter()
+            .map(TbTransferView::from_transfer)
+            .collect())
+    }
+
+    pub async fn explorer_account_balances(
+        &self,
+        account_id: u128,
+        reversed: bool,
+        timestamp_min: Option<DateTime<Utc>>,
+        timestamp_max: Option<DateTime<Utc>>,
+        limit: u32,
+    ) -> Result<Vec<TbBalanceView>, AppError> {
+        let limit = limit.clamp(1, 8190);
+        let mut flags = tb::account::FilterFlags::DEBITS | tb::account::FilterFlags::CREDITS;
+        if reversed {
+            flags |= tb::account::FilterFlags::REVERSED;
+        }
+        let mut filter = tb::account::Filter::new(account_id, limit).with_flags(flags);
+        if let Some(ts) = timestamp_min.and_then(datetime_to_system_time) {
+            filter = filter.with_timestamp_min(ts);
+        }
+        if let Some(ts) = timestamp_max.and_then(datetime_to_system_time) {
+            filter = filter.with_timestamp_max(ts);
+        }
+        let balances = self
+            .client
+            .get_account_balances(Box::new(filter))
+            .await
+            .map_err(|e| {
+                AppError::TigerBeetleError(format!("get_account_balances failed: {e:?}"))
+            })?;
+        Ok(balances.iter().map(TbBalanceView::from_balance).collect())
+    }
+}
+
+fn datetime_to_system_time(dt: DateTime<Utc>) -> Option<SystemTime> {
+    let nanos: u128 = (dt.timestamp() as i128 * 1_000_000_000
+        + dt.timestamp_subsec_nanos() as i128)
+        .try_into()
+        .ok()?;
+    Some(SystemTime::UNIX_EPOCH + Duration::from_nanos(nanos.try_into().ok()?))
 }
 
 /// Classify a TigerBeetle transfer error into an appropriate AppError.

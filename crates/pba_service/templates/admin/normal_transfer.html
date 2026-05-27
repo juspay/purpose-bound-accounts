@@ -1,47 +1,59 @@
 {% extends "base.html" %}
 
-{% block title %}Transfer to PB - Normal Account - PBA Admin{% endblock %}
+{% block title %}Transfer to PB — PBA Admin{% endblock %}
+{% block breadcrumb %}<a href="{{ prefix }}/admin">PBA Admin</a> <span class="sep">/</span> <a href="{{ prefix }}/admin/normal-accounts">Normal Accounts</a> <span class="sep">/</span> <a href="{{ prefix }}/admin/normal-accounts/{{ account_id }}" class="mono">{{ account_id }}</a> <span class="sep">/</span> <span class="current">Transfer to PB</span>{% endblock %}
 
 {% block content %}
-<h1>Transfer to Purpose-Bound Account</h1>
-<p><a href="{{ prefix }}/admin/normal-accounts/{{ account_id }}">&larr; Back to account</a></p>
+<div class="page-header">
+    <div>
+        <h1 class="page-title">Transfer to Purpose-Bound Account</h1>
+        <p class="page-subtitle">Move funds from normal account <span class="mono">{{ account_id }}</span> into a purpose-bound account.</p>
+    </div>
+    <div class="page-actions">
+        <a href="{{ prefix }}/admin/normal-accounts/{{ account_id }}" role="button" class="outline">← Back to account</a>
+    </div>
+</div>
+
+{% if let Some(err) = error %}
+<div class="error-box"><strong>Error:</strong> {{ err }}</div>
+{% endif %}
 
 <article>
-    <p><strong>Source Account:</strong> {{ account_id }}</p>
-    <p><strong>Holder:</strong> {{ holder_id }}</p>
+    <header>Transfer details</header>
 
-    {% if let Some(err) = error %}
-    <p id="form-error" style="color: #c62828;"><strong>Error:</strong> {{ err }}</p>
-    {% endif %}
+    <div class="info-box" style="margin-bottom: 1rem;">
+        <strong>Source:</strong> Normal account <span class="mono">{{ account_id }}</span> · holder <strong>{{ holder_id }}</strong>
+    </div>
 
     <form method="post" action="{{ prefix }}/admin/normal-accounts/{{ account_id }}/transfers">
         <label>
             Destination PB Account
             <select name="destination_pb_account_id" required>
-                <option value="">— Select a PB account —</option>
+                <option value="">— Select a purpose-bound account —</option>
                 {% for acct in &pb_accounts %}
-                <option value="{{ acct.id }}">{{ acct.holder_id }} / {{ acct.purpose_code }} ({{ acct.id }})</option>
+                <option value="{{ acct.id }}">{{ acct.holder_id }} · {{ acct.purpose_code }} ({{ acct.id }})</option>
                 {% endfor %}
             </select>
         </label>
         <label>
             Amount (paisa)
-            <input type="number" name="amount" min="1" required>
+            <span class="info-icon" data-info="Enter the amount in paisa (smallest currency unit). 100 paisa = ₹1.00">i</span>
+            <input type="number" name="amount" min="1" required placeholder="e.g. 10000 for ₹100.00">
         </label>
         <label>
             <input type="checkbox" name="pending" value="true">
-            Pending (two-phase transfer — must be posted or voided later)
+            Pending transfer — must be posted or voided later
         </label>
         <label>
-            Gateway Reference (optional)
-            <input type="text" name="gateway_ref" placeholder="e.g. gw-txn-12345">
-        </label>
-        <label>
-            Timeout Seconds (optional, only used for pending transfers)
+            Timeout seconds <span class="muted text-small">(optional, pending transfers only)</span>
             <input type="number" name="timeout_seconds" min="1" placeholder="e.g. 3600">
         </label>
         <label>
-            Description (optional)
+            Gateway reference <span class="muted text-small">(optional)</span>
+            <input type="text" name="gateway_ref" placeholder="e.g. gw-txn-12345">
+        </label>
+        <label>
+            Description <span class="muted text-small">(optional)</span>
             <textarea name="description" maxlength="256" placeholder="Transfer description..."></textarea>
         </label>
         <button type="submit">Initiate Transfer</button>
