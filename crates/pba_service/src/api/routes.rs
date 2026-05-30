@@ -51,6 +51,10 @@ pub fn protected_router() -> Router<AppState> {
             post(handlers::pb::make_payment),
         )
         .route(
+            "/pb-accounts/{account_id}/payments/{payment_id}/refund",
+            post(handlers::pb::refund_payment),
+        )
+        .route(
             "/pb-accounts/{account_id}/withdrawals",
             post(handlers::pb::withdraw),
         )
@@ -142,6 +146,10 @@ pub fn protected_router() -> Router<AppState> {
         .route(
             "/accounts/{account_id}/payments",
             post(handlers::pb::make_payment),
+        )
+        .route(
+            "/accounts/{account_id}/payments/{payment_id}/refund",
+            post(handlers::pb::refund_payment),
         )
         .route(
             "/accounts/{account_id}/withdrawals",

@@ -2,7 +2,12 @@ use axum::extract::{Path, State};
 use axum::Json;
 use uuid::Uuid;
 
-use crate::api::dto::*;
+use crate::api::dto::{
+    AccountResponse, BalanceResponse, CreateAccountRequest, DepositRequest, DepositResponse,
+    ListPurposeTypesResponse, ListTransactionsQuery, ListTransactionsResponse, PaymentRequest,
+    PaymentResponse, PurposeTypeResponse, RefundPaymentRequest, RefundResponse, UpdateStatusRequest,
+    VoidDepositRequest, WithdrawalRequest, WithdrawalResponse,
+};
 use crate::domain::account::AccountStatus;
 use crate::domain::banking::{AccountNumber, Ifsc};
 use crate::error::AppError;
@@ -187,6 +192,26 @@ pub async fn make_payment(
             gateway_ref: result.gateway_ref,
         }),
     ))
+}
+
+pub async fn refund_payment(
+    State(state): State<AppState>,
+    Path((account_id, payment_id)): Path<(Uuid, Uuid)>,
+    Json(req): Json<RefundPaymentRequest>,
+) -> Result<(axum::http::StatusCode, Json<RefundResponse>), AppError> {
+    let result = state
+        .pb_payment_service
+        .refund_payment(
+            account_id,
+            payment_id,
+            req.amount,
+            req.description.as_deref(),
+            req.gateway_ref.as_deref(),
+            req.idempotency_key.as_deref(),
+        )
+        .await?;
+
+    Ok((axum::http::StatusCode::CREATED, Json(result.into())))
 }
 
 // ── Withdrawal ──
