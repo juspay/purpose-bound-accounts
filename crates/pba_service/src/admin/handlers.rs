@@ -3,6 +3,7 @@ use axum::extract::{Path, State};
 use axum::http::StatusCode;
 use axum::response::{Html, IntoResponse, Redirect, Response};
 use serde::Deserialize;
+use std::collections::BTreeMap;
 use uuid::Uuid;
 
 use crate::domain::banking::{AccountNumber, Ifsc};
@@ -1182,26 +1183,45 @@ pub async fn transaction_detail(
         if is_payment && !is_refund {
             // Original payment — load its rows + each row's refunds.
             let correlation_id = txn.correlation_id.unwrap_or(txn.id);
-            let originals = state
+            let originals = match state
                 .transaction_repo
                 .find_by_correlation_id(correlation_id)
                 .await
-                .unwrap_or_default();
+            {
+                Ok(rows) => rows,
+                Err(e) => {
+                    tracing::warn!(
+                        transaction_id = %txn.id,
+                        error = %e,
+                        "Failed to load refund history for payment detail; rendering without history"
+                    );
+                    Vec::new()
+                }
+            };
 
             let mut total_original = 0u64;
             let mut total_refunded = 0u64;
             // Group refund rows by their own correlation_id, accumulate self/others amounts.
-            use std::collections::BTreeMap;
             let mut by_corr: BTreeMap<Uuid, (chrono::DateTime<chrono::Utc>, u64, u64)> =
                 BTreeMap::new();
 
             for o in &originals {
                 total_original += o.amount;
-                let refs = state
+                let refs = match state
                     .transaction_repo
                     .find_refunds_of(o.id)
                     .await
-                    .unwrap_or_default();
+                {
+                    Ok(rows) => rows,
+                    Err(e) => {
+                        tracing::warn!(
+                            transaction_id = %txn.id,
+                            error = %e,
+                            "Failed to load refund history for payment detail; rendering without history"
+                        );
+                        Vec::new()
+                    }
+                };
                 for r in refs {
                     total_refunded += r.amount;
                     let cid = r.correlation_id.unwrap_or(r.id);
@@ -1377,7 +1397,7 @@ async fn build_refund_template(
     }
 
     // Validate account_id matches.
-    if originals.iter().any(|r| r.account_id != account_id) {
+    if !originals.iter().all(|r| r.account_id == account_id) {
         return Err((StatusCode::NOT_FOUND, "Payment not found for that account").into_response());
     }
 
@@ -1436,9 +1456,9 @@ pub async fn process_refund_payment(
         )
         .await
     {
-        Ok(_) => Redirect::to(&format!(
-            "{}/admin/transactions/{}",
-            state.path_prefix, payment_id
+        Ok(_) => Redirect::to(&prefixed(
+            &state,
+            &format!("/admin/transactions/{payment_id}"),
         ))
         .into_response(),
         Err(e) => {
