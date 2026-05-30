@@ -290,6 +290,8 @@ impl PbPaymentService {
                     .find_by_correlation_id(original_payment_id_resolved)
                     .await?;
                 let original_amount: u64 = originals.iter().map(|r| r.amount).sum();
+                // `originals.len()` is 1 or 2 for payments written by make_payment
+                // (others-pool row, optional self-pool row).
                 let mut total_refunded: u64 = 0;
                 for o in &originals {
                     total_refunded += self.transaction_repo.sum_refunds_of(o.id).await?;
@@ -394,6 +396,9 @@ impl PbPaymentService {
         let take_self = amount.min(self_remaining);
         let take_others = amount - take_self;
 
+        let original_amount: u64 = original_rows.iter().map(|r| r.amount).sum();
+        let remaining_refundable = total_remaining - amount;
+
         // Step 7: insert refund rows in one PG transaction.
         let refund_correlation_id = Uuid::now_v7();
         let mut tx = self.transaction_repo.pool().begin().await?;
@@ -485,9 +490,6 @@ impl PbPaymentService {
         // See plan Task 6b note.
 
         tx.commit().await?;
-
-        let original_amount: u64 = original_rows.iter().map(|r| r.amount).sum();
-        let remaining_refundable = total_remaining - amount;
 
         tracing::info!(
             refund_id = %refund_correlation_id,
