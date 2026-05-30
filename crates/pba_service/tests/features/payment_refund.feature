@@ -84,6 +84,7 @@ Feature: Refund of PB → merchant payments
     And the remaining refundable amount is 15000
     When I attempt to refund 16000 paisa from the last payment
     Then the refund fails with "RefundAmountInvalid"
+    And the refund error remaining field is 15000
 
   # ── Scenario 7: Reject amount = 0 ─────────────────────────────────────────
 
@@ -107,7 +108,7 @@ Feature: Refund of PB → merchant payments
     And I refund 10000 paisa from the last payment
     Then the refund is successful
     When I attempt to refund 1000 paisa from the last refund
-    Then the refund fails with "RefundNotRefundable"
+    Then the refund fails with "RefundNotRefundable" reason "is_itself_a_refund"
 
   # ── Scenario 9: Reject when frozen; succeed after reactivate ──────────────
 
@@ -147,4 +148,4 @@ Feature: Refund of PB → merchant payments
     When I transfer 10000 paisa from the normal account to the PB account
     And I pay 10000 to merchant "HOSP11" with MCC "8062" described as "wrong-account test"
     When I attempt to refund 10000 paisa from the last payment under a different PB account
-    Then the refund fails with "TransactionNotFound"
+    Then the refund fails with "RefundNotRefundable" reason "wrong_account"
