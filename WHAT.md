@@ -60,3 +60,30 @@ Constraints:
 - After reversal, the funds sit in the source normal account. The admin can
   separately call `WithdrawFromNormalAccount` to return them to the sponsor's
   bank.
+
+## Refunding a PB → merchant payment
+
+Settled PB payments can be refunded by an admin in whole or in part. Each
+refund is recorded as a new compensating transaction (1 or 2 rows
+mirroring the payment's pool split) plus matching TigerBeetle transfers
+in the opposite direction (debit the merchant settlement sentinel, credit
+the PB pool). Original payment rows are never mutated; each refund row
+links back via `reverses_transaction_id`.
+
+- Multiple partial refunds are allowed per payment; the sum must not
+  exceed the original payment amount.
+- Refund credits self-pool first up to that pool's remaining-unrefunded
+  amount, then others-pool. This restores the holder's self-pool
+  flexibility first.
+- The PB account must be Active to accept a refund. Refund rows
+  themselves cannot be refunded.
+- Refunds are admin-only via
+  `POST /pb-accounts/{id}/payments/{id}/refund` and via the Refund
+  button on the admin transaction-detail page.
+
+The MCC is not re-validated on refund — the original payment already
+passed MCC validation, and a refund restores state rather than
+authorising new spend. The merchant settlement sentinel has no balance
+constraint at TigerBeetle, so refunds never fail with `InsufficientFunds`;
+over-amount cases are caught with `RefundAmountInvalid` before TigerBeetle
+is touched.
