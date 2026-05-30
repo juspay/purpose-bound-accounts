@@ -39,6 +39,13 @@ pub enum AppError {
         requested: u64,
         original: u64,
     },
+    /// A payment cannot be refunded. `reason` is one of: not_settled,
+    /// is_itself_a_refund, wrong_type, wrong_account.
+    RefundNotRefundable(String, String),
+    /// Refund amount is invalid (0 or exceeds remaining).
+    RefundAmountInvalid { requested: u64, remaining: u64 },
+    /// Payment has already been fully refunded (sum of refunds == original).
+    PaymentFullyRefunded(String),
     /// Transfer rejected by TigerBeetle because debit would exceed credits (overdraft).
     /// This is retryable with a fresh balance read.
     ExceedsBalance,
@@ -88,6 +95,16 @@ impl std::fmt::Display for AppError {
                 f,
                 "Reversal amount {requested} is invalid for original transfer of {original}"
             ),
+            Self::RefundNotRefundable(id, reason) => {
+                write!(f, "Payment {id} cannot be refunded: {reason}")
+            }
+            Self::RefundAmountInvalid { requested, remaining } => write!(
+                f,
+                "Refund amount invalid: requested {requested}, remaining refundable {remaining}"
+            ),
+            Self::PaymentFullyRefunded(id) => {
+                write!(f, "Payment {id} has already been fully refunded")
+            }
             Self::ExceedsBalance => write!(f, "Transfer exceeds available balance"),
             Self::TigerBeetleError(msg) => write!(f, "TigerBeetle error: {msg}"),
             Self::DatabaseError(msg) => write!(f, "Database error: {msg}"),
@@ -125,6 +142,9 @@ impl IntoResponse for AppError {
             AppError::ReversalAmountInvalid { .. } => {
                 (StatusCode::BAD_REQUEST, "ReversalAmountInvalid")
             }
+            AppError::RefundNotRefundable(_, _) => (StatusCode::CONFLICT, "RefundNotRefundable"),
+            AppError::RefundAmountInvalid { .. } => (StatusCode::BAD_REQUEST, "RefundAmountInvalid"),
+            AppError::PaymentFullyRefunded(_) => (StatusCode::CONFLICT, "PaymentFullyRefunded"),
             AppError::ExceedsBalance => (StatusCode::UNPROCESSABLE_ENTITY, "InsufficientFunds"),
             AppError::TigerBeetleError(_) => {
                 (StatusCode::INTERNAL_SERVER_ERROR, "TigerBeetleError")
@@ -200,5 +220,40 @@ mod reversal_error_tests {
         let msg = body["message"].as_str().unwrap();
         assert!(msg.contains("1500"));
         assert!(msg.contains("1000"));
+    }
+
+    #[tokio::test]
+    async fn refund_not_refundable_error_response() {
+        let err = AppError::RefundNotRefundable("abc".into(), "is_itself_a_refund".into());
+        let resp = err.into_response();
+        assert_eq!(resp.status(), axum::http::StatusCode::CONFLICT);
+        let body = body_json(resp).await;
+        assert_eq!(body["error"], "RefundNotRefundable");
+        assert!(body["message"].as_str().unwrap().contains("abc"));
+    }
+
+    #[tokio::test]
+    async fn refund_amount_invalid_error_response() {
+        let err = AppError::RefundAmountInvalid {
+            requested: 1500,
+            remaining: 1000,
+        };
+        let resp = err.into_response();
+        assert_eq!(resp.status(), axum::http::StatusCode::BAD_REQUEST);
+        let body = body_json(resp).await;
+        assert_eq!(body["error"], "RefundAmountInvalid");
+        let msg = body["message"].as_str().unwrap();
+        assert!(msg.contains("1500"));
+        assert!(msg.contains("1000"));
+    }
+
+    #[tokio::test]
+    async fn payment_fully_refunded_error_response() {
+        let err = AppError::PaymentFullyRefunded("xyz".into());
+        let resp = err.into_response();
+        assert_eq!(resp.status(), axum::http::StatusCode::CONFLICT);
+        let body = body_json(resp).await;
+        assert_eq!(body["error"], "PaymentFullyRefunded");
+        assert!(body["message"].as_str().unwrap().contains("xyz"));
     }
 }
