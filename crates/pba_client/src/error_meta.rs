@@ -599,6 +599,27 @@ impl From<crate::operation::post_pb_account_deposit::PostPBAccountDepositError> 
         }
     }
 }
+impl<R> From<::aws_smithy_runtime_api::client::result::SdkError<crate::operation::refund_pb_account_payment::RefundPBAccountPaymentError, R>> for Error where R: Send + Sync + std::fmt::Debug + 'static {
+    fn from(err: ::aws_smithy_runtime_api::client::result::SdkError<crate::operation::refund_pb_account_payment::RefundPBAccountPaymentError, R>) -> Self {
+        match err {
+            ::aws_smithy_runtime_api::client::result::SdkError::ServiceError(context) => Self::from(context.into_err()),
+            _ => Error::Unhandled(
+                                        crate::error::sealed_unhandled::Unhandled {
+                                            meta: ::aws_smithy_types::error::metadata::ProvideErrorMetadata::meta(&err).clone(),
+                                            source: err.into(),
+                                        }
+                                    ),
+        }
+    }
+}
+impl From<crate::operation::refund_pb_account_payment::RefundPBAccountPaymentError> for Error {
+    fn from(err: crate::operation::refund_pb_account_payment::RefundPBAccountPaymentError) -> Self {
+        match err {
+            crate::operation::refund_pb_account_payment::RefundPBAccountPaymentError::AccountNotFoundError(inner) => Error::AccountNotFoundError(inner),
+            crate::operation::refund_pb_account_payment::RefundPBAccountPaymentError::Unhandled(inner) => Error::Unhandled(inner),
+        }
+    }
+}
 impl<R> From<::aws_smithy_runtime_api::client::result::SdkError<crate::operation::reverse_normal_account_transfer::ReverseNormalAccountTransferError, R>> for Error where R: Send + Sync + std::fmt::Debug + 'static {
     fn from(err: ::aws_smithy_runtime_api::client::result::SdkError<crate::operation::reverse_normal_account_transfer::ReverseNormalAccountTransferError, R>) -> Self {
         match err {
