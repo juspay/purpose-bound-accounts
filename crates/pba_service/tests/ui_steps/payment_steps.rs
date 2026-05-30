@@ -530,11 +530,14 @@ async fn when_click_refund_and_submit(world: &mut UiWorld, amount_paisa: u64) {
 
     // Clear pre-filled amount and type the requested value
     let page = world.ensure_page().await;
-    let _ = page
-        .evaluate(
-            "document.querySelector(\"input[name='amount_paisa']\").value = '';".to_string(),
-        )
-        .await;
+    let prep_js = r#"
+    var inp = document.querySelector("input[name='amount_paisa']");
+    if (inp) {
+        inp.removeAttribute('max');
+        inp.value = '';
+    }
+"#;
+    let _ = page.evaluate(prep_js.to_string()).await;
 
     let amount_input = page
         .find_element("input[name='amount_paisa']")
@@ -634,9 +637,10 @@ async fn then_refund_history_entry(world: &mut UiWorld, paisa: i64) {
         &content[..content.len().min(2000)]
     );
     let display = format!("{}.{:02}", paisa / 100, paisa % 100);
+    let needle = format!("<td>₹{}</td>", display);
     assert!(
-        content.contains(&display),
-        "Expected refund history to show ₹{} total. Page snippet: {}",
+        content.contains(&needle),
+        "Expected refund history to show <td>₹{}</td> total. Page snippet: {}",
         display,
         &content[..content.len().min(2000)]
     );
