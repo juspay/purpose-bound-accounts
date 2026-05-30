@@ -30,6 +30,7 @@ const CODE_SENTINEL: u16 = 99;
 const INTERNAL_TRANSFER_CODE: u16 = 400;
 const PENDING_INTERNAL_TRANSFER_CODE: u16 = 401;
 const INTERNAL_TRANSFER_REVERSAL_CODE: u16 = 410;
+pub const PAYMENT_REFUND_CODE: u16 = 210;
 
 #[allow(dead_code)]
 #[derive(Debug, Clone, Copy)]
@@ -405,6 +406,67 @@ impl LedgerRepo {
             INTERNAL_TRANSFER_REVERSAL_CODE,
         )
         .await
+    }
+
+    /// Single-leg payment refund — debit MERCHANT_SETTLEMENT_TB_ID, credit one
+    /// pool of the PB account. Used when only one of `take_self` / `take_others`
+    /// is non-zero.
+    ///
+    /// The merchant sentinel has no balance constraint (only `LINKED` flag), so
+    /// debiting it is unconstrained — over-amount cases are caught upstream in
+    /// `pb_payment_service::refund_payment` step 4 as `RefundAmountInvalid`.
+    pub async fn create_payment_refund(
+        &self,
+        credit_pb_pool_tb_id: u128,
+        amount: u64,
+    ) -> Result<(), AppError> {
+        self.create_transfer(
+            MERCHANT_SETTLEMENT_TB_ID,
+            credit_pb_pool_tb_id,
+            amount,
+            PAYMENT_REFUND_CODE,
+        )
+        .await
+    }
+
+    /// Linked two-leg payment refund — debit MERCHANT_SETTLEMENT_TB_ID twice,
+    /// credit the self-pool and the others-pool. Both transfers land atomically
+    /// via TB's LINKED flag. Used when both `take_self` and `take_others` are
+    /// non-zero.
+    pub async fn create_payment_refund_split(
+        &self,
+        credit_pb_self_tb_id: u128,
+        credit_pb_others_tb_id: u128,
+        amount_self: u64,
+        amount_others: u64,
+    ) -> Result<(), AppError> {
+        let transfer1 = tb::Transfer::new(generate_transfer_id())
+            .with_debit_account_id(MERCHANT_SETTLEMENT_TB_ID)
+            .with_credit_account_id(credit_pb_self_tb_id)
+            .with_amount(amount_self as u128)
+            .with_ledger(LEDGER_INR_PAISA)
+            .with_code(PAYMENT_REFUND_CODE)
+            .with_flags(TransferFlags::LINKED);
+
+        let transfer2 = tb::Transfer::new(generate_transfer_id())
+            .with_debit_account_id(MERCHANT_SETTLEMENT_TB_ID)
+            .with_credit_account_id(credit_pb_others_tb_id)
+            .with_amount(amount_others as u128)
+            .with_ledger(LEDGER_INR_PAISA)
+            .with_code(PAYMENT_REFUND_CODE);
+
+        self.client
+            .create_transfers(vec![transfer1, transfer2])
+            .await
+            .map_err(|e| classify_transfer_error(e, "create_payment_refund_split"))?;
+
+        tracing::info!(
+            credit_self = %credit_pb_self_tb_id,
+            credit_others = %credit_pb_others_tb_id,
+            amount_self, amount_others, code = PAYMENT_REFUND_CODE,
+            "Created linked payment-refund TB transfers"
+        );
+        Ok(())
     }
 
     #[allow(dead_code)]
