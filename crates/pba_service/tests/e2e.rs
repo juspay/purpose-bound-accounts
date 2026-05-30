@@ -85,6 +85,16 @@ pub struct PbaWorld {
     last_reversal_correlation_id: Option<String>,
     /// Last reversal's original_amount (echoes the original transfer's amount)
     last_reversal_original_amount: Option<i64>,
+    /// Last refund correlation_id
+    last_refund_correlation_id: Option<String>,
+    /// Last refund's amount_to_self
+    last_refund_amount_to_self: Option<i64>,
+    /// Last refund's amount_to_others
+    last_refund_amount_to_others: Option<i64>,
+    /// Last refund's remaining_refundable (after this refund)
+    last_refund_remaining: Option<i64>,
+    /// Previous refund correlation_id (snapshot used by idempotency-replay assertion)
+    previous_refund_correlation_id: Option<String>,
 }
 
 #[derive(Debug, Clone)]
@@ -166,6 +176,11 @@ impl Default for PbaWorld {
             last_reversal_status: None,
             last_reversal_correlation_id: None,
             last_reversal_original_amount: None,
+            last_refund_correlation_id: None,
+            last_refund_amount_to_self: None,
+            last_refund_amount_to_others: None,
+            last_refund_remaining: None,
+            previous_refund_correlation_id: None,
         }
     }
 }
