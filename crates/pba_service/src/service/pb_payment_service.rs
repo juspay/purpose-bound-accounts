@@ -274,17 +274,11 @@ impl PbPaymentService {
                     .first()
                     .and_then(|r| r.reverses_transaction_id)
                     .ok_or_else(|| {
-                        AppError::DatabaseError(
-                            "refund row missing reverses_transaction_id".into(),
-                        )
+                        AppError::DatabaseError("refund row missing reverses_transaction_id".into())
                     })?;
-                let original_row = self
-                    .transaction_repo
-                    .get_transaction(reverses_id)
-                    .await?;
-                let original_payment_id_resolved = original_row
-                    .correlation_id
-                    .unwrap_or(original_row.id);
+                let original_row = self.transaction_repo.get_transaction(reverses_id).await?;
+                let original_payment_id_resolved =
+                    original_row.correlation_id.unwrap_or(original_row.id);
                 let originals = self
                     .transaction_repo
                     .find_by_correlation_id(original_payment_id_resolved)
@@ -360,15 +354,15 @@ impl PbPaymentService {
 
         // Step 3: per-pool remaining.
         let self_remaining = match p_self {
-            Some(r) => r.amount.saturating_sub(
-                self.transaction_repo.sum_refunds_of(r.id).await?,
-            ),
+            Some(r) => r
+                .amount
+                .saturating_sub(self.transaction_repo.sum_refunds_of(r.id).await?),
             None => 0,
         };
         let others_remaining = match p_others {
-            Some(r) => r.amount.saturating_sub(
-                self.transaction_repo.sum_refunds_of(r.id).await?,
-            ),
+            Some(r) => r
+                .amount
+                .saturating_sub(self.transaction_repo.sum_refunds_of(r.id).await?),
             None => 0,
         };
         let total_remaining = self_remaining + others_remaining;

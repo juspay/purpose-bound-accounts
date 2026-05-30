@@ -401,9 +401,7 @@ async fn attempt_refund_last_payment(world: &mut PbaWorld, amount: i64) {
     refund_last_payment(world, amount).await;
 }
 
-#[when(
-    regex = r#"^I refund (\d+) paisa from the last payment with idempotency key "([^"]*)"$"#
-)]
+#[when(regex = r#"^I refund (\d+) paisa from the last payment with idempotency key "([^"]*)"$"#)]
 async fn refund_with_idem(world: &mut PbaWorld, amount: i64, key: String) {
     world.previous_refund_correlation_id = world.last_refund_correlation_id.take();
 
@@ -536,11 +534,7 @@ async fn refund_fails(world: &mut PbaWorld, expected_kind: String) {
 }
 
 #[then(regex = r#"^the refund fails with "([^"]*)" reason "([^"]*)"$"#)]
-async fn refund_fails_with_reason(
-    world: &mut PbaWorld,
-    expected_kind: String,
-    reason: String,
-) {
+async fn refund_fails_with_reason(world: &mut PbaWorld, expected_kind: String, reason: String) {
     let err = world.last_error.as_ref().expect("expected an error");
     assert_eq!(err.kind, expected_kind);
     let msg = err.message.as_deref().unwrap_or("");

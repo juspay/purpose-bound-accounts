@@ -468,7 +468,10 @@ async fn goto_last_payment_detail(world: &mut UiWorld) {
     sleep(Duration::from_millis(400)).await;
 
     let page = world.ensure_page().await;
-    let content = page.content().await.expect("Failed to read transfers fragment content");
+    let content = page
+        .content()
+        .await
+        .expect("Failed to read transfers fragment content");
 
     // Find the most recent /admin/transactions/{uuid} link (table is newest-first).
     let re = Regex::new(r"/admin/transactions/([0-9a-f-]{36})").unwrap();
@@ -606,8 +609,7 @@ async fn then_refund_button_absent(world: &mut UiWorld) {
     let page = world.ensure_page().await;
     let content = page.content().await.expect("Failed to read page content");
     // Look for any /refund href under /admin/accounts/.../payments/.../refund
-    let re =
-        Regex::new(r"/admin/accounts/[0-9a-f-]{36}/payments/[0-9a-f-]{36}/refund").unwrap();
+    let re = Regex::new(r"/admin/accounts/[0-9a-f-]{36}/payments/[0-9a-f-]{36}/refund").unwrap();
     assert!(
         !re.is_match(&content),
         "Expected Refund button to be ABSENT, but found one. Page snippet: {}",

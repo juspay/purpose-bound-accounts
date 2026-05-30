@@ -43,7 +43,10 @@ pub enum AppError {
     /// is_itself_a_refund, wrong_type, wrong_account.
     RefundNotRefundable(String, String),
     /// Refund amount is invalid (0 or exceeds remaining).
-    RefundAmountInvalid { requested: u64, remaining: u64 },
+    RefundAmountInvalid {
+        requested: u64,
+        remaining: u64,
+    },
     /// Payment has already been fully refunded (sum of refunds == original).
     PaymentFullyRefunded(String),
     /// Transfer rejected by TigerBeetle because debit would exceed credits (overdraft).
@@ -143,7 +146,9 @@ impl IntoResponse for AppError {
                 (StatusCode::BAD_REQUEST, "ReversalAmountInvalid")
             }
             AppError::RefundNotRefundable(_, _) => (StatusCode::CONFLICT, "RefundNotRefundable"),
-            AppError::RefundAmountInvalid { .. } => (StatusCode::BAD_REQUEST, "RefundAmountInvalid"),
+            AppError::RefundAmountInvalid { .. } => {
+                (StatusCode::BAD_REQUEST, "RefundAmountInvalid")
+            }
             AppError::PaymentFullyRefunded(_) => (StatusCode::CONFLICT, "PaymentFullyRefunded"),
             AppError::ExceedsBalance => (StatusCode::UNPROCESSABLE_ENTITY, "InsufficientFunds"),
             AppError::TigerBeetleError(_) => {

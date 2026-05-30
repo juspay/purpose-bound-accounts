@@ -1207,11 +1207,7 @@ pub async fn transaction_detail(
 
             for o in &originals {
                 total_original += o.amount;
-                let refs = match state
-                    .transaction_repo
-                    .find_refunds_of(o.id)
-                    .await
-                {
+                let refs = match state.transaction_repo.find_refunds_of(o.id).await {
                     Ok(rows) => rows,
                     Err(e) => {
                         tracing::warn!(
@@ -1463,8 +1459,7 @@ pub async fn process_refund_payment(
         .into_response(),
         Err(e) => {
             tracing::error!("Failed to refund payment {payment_id}: {e}");
-            match build_refund_template(&state, account_id, payment_id, Some(e.to_string())).await
-            {
+            match build_refund_template(&state, account_id, payment_id, Some(e.to_string())).await {
                 Ok(tmpl) => render(tmpl),
                 Err(resp) => resp,
             }

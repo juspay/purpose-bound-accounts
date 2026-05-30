@@ -594,10 +594,7 @@ impl TransactionRepo {
     /// Sum the `amount` of every row whose `reverses_transaction_id` matches.
     /// Type-agnostic. Used by `pb_payment_service::refund_payment` to compute
     /// per-pool remaining-unrefunded. Returns 0 when no rows match.
-    pub async fn sum_refunds_of(
-        &self,
-        original_row_id: Uuid,
-    ) -> Result<u64, AppError> {
+    pub async fn sum_refunds_of(&self, original_row_id: Uuid) -> Result<u64, AppError> {
         let row: (Option<i64>,) = sqlx::query_as(
             r#"SELECT COALESCE(SUM(amount), 0)::bigint
                FROM transactions
