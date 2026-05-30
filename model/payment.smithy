@@ -136,3 +136,78 @@ structure InsufficientFundsError {
     @required
     message: String
 }
+
+/// Refund a previously settled PB→merchant payment.
+///
+/// Records a new compensating transaction (1 or 2 rows mirroring the
+/// payment's pool split) plus matching TB transfer(s) in the opposite
+/// direction. Original payment rows are not mutated; each refund row
+/// links back via `reverses_transaction_id`.
+///
+/// Multiple partial refunds are allowed per payment; the sum must not
+/// exceed the original payment amount. Refund credits self-pool first up
+/// to that pool's remaining-unrefunded amount, then others-pool. The PB
+/// account must be Active. Refunds cannot themselves be refunded.
+@http(
+    method: "POST",
+    uri: "/pb-accounts/{account_id}/payments/{payment_id}/refund",
+    code: 201
+)
+operation RefundPBAccountPayment {
+    input := {
+        @required
+        @httpLabel
+        account_id: String
+
+        @required
+        @httpLabel
+        payment_id: String
+
+        @required
+        amount: Money
+
+        description: String
+
+        gateway_ref: String
+
+        idempotency_key: String
+    }
+    output := with [RefundResponseMixin] {}
+    errors: [AccountNotFoundError]
+}
+
+@mixin
+structure RefundResponseMixin {
+    @required
+    refund_id: String
+
+    @required
+    original_payment_id: String
+
+    @required
+    account_id: String
+
+    @required
+    amount: Money
+
+    @required
+    amount_to_self: Money
+
+    @required
+    amount_to_others: Money
+
+    @required
+    original_amount: Money
+
+    @required
+    remaining_refundable: Money
+
+    @required
+    status: String
+
+    @required
+    correlation_id: String
+
+    @required
+    created_at: DateTime
+}
