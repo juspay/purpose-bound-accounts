@@ -397,8 +397,11 @@ impl PbPaymentService {
         let refund_correlation_id = Uuid::now_v7();
         let mut tx = self.transaction_repo.pool().begin().await?;
 
+        // Primary leg gets row_id == refund_correlation_id (mirrors make_payment's
+        // payment_id pattern so /admin/transactions/{correlation_id} resolves to a
+        // real row). Secondary leg gets a fresh id.
         if take_self > 0 {
-            let row_id = Uuid::now_v7();
+            let row_id = refund_correlation_id;
             let p_self_row = p_self.expect("take_self>0 requires p_self");
             self.transaction_repo
                 .insert_in_tx(
@@ -428,7 +431,11 @@ impl PbPaymentService {
         }
 
         if take_others > 0 {
-            let row_id = Uuid::now_v7();
+            let row_id = if take_self > 0 {
+                Uuid::now_v7()
+            } else {
+                refund_correlation_id
+            };
             let p_others_row = p_others.expect("take_others>0 requires p_others");
             // idempotency_key lives on the primary row (self if present, else others).
             let idem = if take_self > 0 { None } else { idempotency_key };
