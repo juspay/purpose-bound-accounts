@@ -467,9 +467,16 @@ async fn goto_last_payment_detail(world: &mut UiWorld) {
             let account_id = world.account_id.clone().expect("No account ID");
             let fragment_url = world.url(&format!("/admin/accounts/{}/transfers", account_id));
             let page = world.ensure_page().await;
-            page.goto(fragment_url).await.expect("Failed to navigate to transfers fragment");
+            page.goto(fragment_url)
+                .await
+                .expect("Failed to navigate to transfers fragment");
             sleep(Duration::from_millis(400)).await;
-            let content = world.ensure_page().await.content().await.expect("Failed to read transfers fragment content");
+            let content = world
+                .ensure_page()
+                .await
+                .content()
+                .await
+                .expect("Failed to read transfers fragment content");
             let re = Regex::new(r"/admin/transactions/([0-9a-f-]{36})").unwrap();
             let id = re
                 .captures(&content)
@@ -482,7 +489,9 @@ async fn goto_last_payment_detail(world: &mut UiWorld) {
 
     let detail_url = world.url(&format!("/admin/transactions/{}", payment_id));
     let page = world.ensure_page().await;
-    page.goto(detail_url).await.expect("Failed to navigate to txn detail");
+    page.goto(detail_url)
+        .await
+        .expect("Failed to navigate to txn detail");
     sleep(Duration::from_millis(400)).await;
 }
 
