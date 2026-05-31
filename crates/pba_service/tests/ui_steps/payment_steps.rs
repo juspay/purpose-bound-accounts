@@ -457,36 +457,32 @@ async fn then_payment_rejected_not_active(world: &mut UiWorld) {
 /// rather than the main account detail page, which lazy-loads the table via HTMX
 /// and would have no transaction links in its initial HTML.
 async fn goto_last_payment_detail(world: &mut UiWorld) {
-    let account_id = world.account_id.clone().expect("No account ID");
-
-    // The transfers fragment endpoint returns the table HTML synchronously.
-    let fragment_url = world.url(&format!("/admin/accounts/{}/transfers", account_id));
-    let page = world.ensure_page().await;
-    page.goto(fragment_url)
-        .await
-        .expect("Failed to navigate to account transfers fragment");
-    sleep(Duration::from_millis(400)).await;
-
-    let page = world.ensure_page().await;
-    let content = page
-        .content()
-        .await
-        .expect("Failed to read transfers fragment content");
-
-    // Find the most recent /admin/transactions/{uuid} link (table is newest-first).
-    let re = Regex::new(r"/admin/transactions/([0-9a-f-]{36})").unwrap();
-    let payment_id = re
-        .captures(&content)
-        .map(|c| c[1].to_string())
-        .expect("No transaction link found on account transfers fragment page");
-
-    world.last_payment_id = Some(payment_id.clone());
+    // If we've already captured the payment id earlier in the scenario, reuse it.
+    // After a refund, the most-recent transaction on the account is the refund row,
+    // not the original payment — re-discovery would clobber the payment id with a
+    // refund-row id.
+    let payment_id = match world.last_payment_id.clone() {
+        Some(id) => id,
+        None => {
+            let account_id = world.account_id.clone().expect("No account ID");
+            let fragment_url = world.url(&format!("/admin/accounts/{}/transfers", account_id));
+            let page = world.ensure_page().await;
+            page.goto(fragment_url).await.expect("Failed to navigate to transfers fragment");
+            sleep(Duration::from_millis(400)).await;
+            let content = world.ensure_page().await.content().await.expect("Failed to read transfers fragment content");
+            let re = Regex::new(r"/admin/transactions/([0-9a-f-]{36})").unwrap();
+            let id = re
+                .captures(&content)
+                .map(|c| c[1].to_string())
+                .expect("No transaction link found on account detail page");
+            world.last_payment_id = Some(id.clone());
+            id
+        }
+    };
 
     let detail_url = world.url(&format!("/admin/transactions/{}", payment_id));
     let page = world.ensure_page().await;
-    page.goto(detail_url)
-        .await
-        .expect("Failed to navigate to txn detail");
+    page.goto(detail_url).await.expect("Failed to navigate to txn detail");
     sleep(Duration::from_millis(400)).await;
 }
 
