@@ -42,6 +42,22 @@ The API is defined using [Smithy](https://smithy.io/) models under `model/`. A g
 
 ## Dev Setup
 
+### First-time setup (TL;DR)
+
+```bash
+git clone <repo-url> && cd purpose-bound-accounts
+
+nix develop            # 1. enter the dev shell (Rust, Postgres, TigerBeetle, just, ...)
+cp .env.example .env   # 2. create your local config from the template
+just run               # 3. start Postgres + TigerBeetle + the app
+```
+
+Then open the **Admin Dashboard** at <http://localhost:3030/admin>.
+
+The default `.env` runs with auth disabled (`AUTH_ENABLED=false`), so no
+Keycloak/OIDC provider is needed to get started. The sections below explain
+each piece in more detail.
+
 ### Prerequisites
 
 The easiest way to get all dependencies is via [Nix](https://nixos.org/):
@@ -50,13 +66,34 @@ The easiest way to get all dependencies is via [Nix](https://nixos.org/):
 nix develop
 ```
 
-This provides Rust, PostgreSQL 16, TigerBeetle, Zig 0.14, just, sqlx-cli, cargo-watch, and Smithy CLI.
+This provides Rust 1.94, PostgreSQL 16, TigerBeetle, Zig 0.14, just, sqlx-cli,
+cargo-watch, cocogitto, process-compose, and the Smithy CLI — no other system
+setup required.
 
-Alternatively, install manually via Homebrew:
+If you use [direnv](https://direnv.net/), run `direnv allow` once; the dev
+shell and your `.env` then load automatically whenever you `cd` into the repo.
+
+Alternatively, install manually via Homebrew (macOS):
 
 ```bash
 just install-deps
 ```
+
+> **Docker is _not_ required** for the default dev flow. It is only needed if
+> you opt in to running Keycloak — see [Authentication](#authentication).
+
+### Configure your environment
+
+The service reads configuration from a `.env` file. It is git-ignored, so each
+clone needs its own — create one from the template:
+
+```bash
+cp .env.example .env
+```
+
+The defaults work out of the box for local development. The full list of
+variables is in [Configuration](#configuration); the key one for first-time
+setup is `AUTH_ENABLED=false`, which lets you run without an OIDC provider.
 
 ### Development workflow
 
@@ -128,19 +165,45 @@ just smithy-build       # regenerate the Rust client SDK
 
 ## Authentication
 
-PBA uses Keycloak for authentication. `just run` starts Keycloak alongside other services.
+**Local dev runs with auth disabled.** The `.env.example` template sets
+`AUTH_ENABLED=false`, and the dev stack does **not** start an OIDC provider, so
+`just run` leaves the Admin UI and API open — just navigate to
+`http://localhost:3030/admin`.
 
-**Admin UI:** Navigate to `http://localhost:3030/admin` — you'll be redirected to Keycloak to log in.
-Default credentials: `admin@pba.local` / `admin`
+### Enabling Keycloak (optional)
 
-**API access:** Use the `Authorization` header with a base64-encoded `client_id:client_secret`:
+Keycloak is **not** bundled in the dev stack. To test the real OIDC login flow
+locally, run it standalone (requires Docker), then point the service at it:
+
+1. Start Keycloak with the bundled realm:
+
+   ```bash
+   docker run --rm --name pba-keycloak \
+     -p 8180:8080 -m 2g \
+     -v "$(pwd)/keycloak/realm-export.json:/opt/keycloak/data/import/realm-export.json:ro" \
+     -e KC_BOOTSTRAP_ADMIN_USERNAME=admin \
+     -e KC_BOOTSTRAP_ADMIN_PASSWORD=admin \
+     -e JAVA_OPTS_KC_HEAP="-XX:MaxRAMPercentage=50 -Xms256m -Xmx1024m -XX:UseSVE=0" \
+     quay.io/keycloak/keycloak:26.0 \
+     start-dev --import-realm
+   ```
+
+   > `-XX:UseSVE=0` works around a JVM crash on Apple Silicon (M-series); the
+   > heap flags and `-m 2g` keep Keycloak from starving the rest of the stack.
+
+2. Set `AUTH_ENABLED=true` in your `.env`.
+3. `just run` (or `just run-service`) — the service now uses Keycloak for auth.
+
+**Admin UI:** Navigate to `http://localhost:3030/admin` — you'll be redirected
+to Keycloak to log in. Default credentials: `admin@pba.local` / `admin`
+
+**API access:** Use the `Authorization` header with a base64-encoded
+`client_id:client_secret`:
 
 ```bash
 API_KEY=$(echo -n "pba-api:pba-api-secret" | base64)
 curl -H "Authorization: ApiKey $API_KEY" http://localhost:3030/purpose-types
 ```
-
-**Disable auth (development):** Set `AUTH_ENABLED=false` in your `.env` file.
 
 ## Configuration
 
@@ -158,10 +221,10 @@ Environment variables (loaded from `.env`):
 | `HOST` | `0.0.0.0` | Bind address |
 | `PORT` | `3030` | HTTP port |
 | `RUST_LOG` | `pba_service=debug,tower_http=info` | Log level (`tower_http=info` enables per-request access logs) |
-| `OIDC_ISSUER_URL` | `http://localhost:8180/realms/pba` | OIDC provider issuer URL (discovery via `.well-known/openid-configuration`) |
-| `OIDC_CLIENT_ID` | `pba-admin` | OIDC client ID for admin UI login flow |
+| `OIDC_ISSUER_URL` | `http://localhost:8180/realms/pba` | OIDC provider issuer URL (only used when `AUTH_ENABLED=true`) |
+| `OIDC_CLIENT_ID` | `pba-admin` | OIDC client ID for admin UI login flow (only used when `AUTH_ENABLED=true`) |
 | `COOKIE_SECRET` | _(dev default)_ | 32+ byte secret for session cookie signing |
-| `AUTH_ENABLED` | `true` | Set to `false` to disable auth |
+| `AUTH_ENABLED` | `true` (code) / `false` (dev `.env`) | Set to `false` to disable auth. `.env.example` ships with `false` for local dev |
 | `PATH_PREFIX` | _(empty)_ | URL prefix for reverse proxy / ingress (e.g., `/pba`) |
 
 ## Available just targets

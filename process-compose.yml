@@ -26,6 +26,10 @@ processes:
       restart: "no"
 
   keycloak:
+    # Disabled by default — dev runs with AUTH_ENABLED=false, so no OIDC provider
+    # is needed. Set this to false (and re-add the keycloak dependency under
+    # pba-service) to test the Keycloak login flow.
+    disabled: true
     command: |
       docker run --rm --name pba-keycloak \
         -p 8180:8080 \
@@ -68,8 +72,6 @@ processes:
       postgres-init:
         condition: process_completed_successfully
       tigerbeetle:
-        condition: process_healthy
-      keycloak:
         condition: process_healthy
     readiness_probe:
       http_get:
