@@ -138,7 +138,71 @@ async fn create_pending_transfer(world: &mut PbaWorld, amount: i64, timeout: i32
     }
 }
 
+// ── Initiate pending transfer (no explicit timeout) ───────────────────────────
+
+#[when(
+    regex = r#"^I initiate a pending transfer of (\d+) paisa from the normal account to the PB account$"#
+)]
+async fn initiate_pending_transfer(world: &mut PbaWorld, amount: i64) {
+    let normal_account_id = world
+        .last_normal_account_id
+        .as_ref()
+        .expect("No normal account ID")
+        .clone();
+    let pb_account_id = world.account_id.as_ref().expect("No PB account ID").clone();
+    let result = world
+        .client
+        .transfer_to_pb_account()
+        .account_id(&normal_account_id)
+        .destination_pb_account_id(&pb_account_id)
+        .amount(amount)
+        .pending(true)
+        .send()
+        .await;
+    match result {
+        Ok(output) => {
+            world.last_transfer_id = Some(output.transfer_id().to_string());
+            world.last_transfer_status = Some(output.status().to_string());
+            world.last_transfer_correlation_id = Some(output.correlation_id().to_string());
+            world.last_error = None;
+        }
+        Err(e) => panic!("Pending transfer initiation failed: {e:?}"),
+    }
+}
+
 // ── Post / void transfer ──────────────────────────────────────────────────────
+
+#[when("I post the pending transfer")]
+async fn post_pending_transfer(world: &mut PbaWorld) {
+    let normal_account_id = world
+        .last_normal_account_id
+        .as_ref()
+        .expect("No normal account ID")
+        .clone();
+    let transfer_id = world
+        .last_transfer_id
+        .as_ref()
+        .expect("No transfer ID")
+        .clone();
+    let result = world
+        .client
+        .post_normal_account_transfer()
+        .account_id(&normal_account_id)
+        .transfer_id(&transfer_id)
+        .send()
+        .await;
+    match result {
+        Ok(output) => {
+            world.last_transfer_status = Some(output.status().to_string());
+            world.last_error = None;
+        }
+        Err(e) => {
+            let kind = extract_transfer_error_kind(&e);
+            let message = extract_transfer_error_message(&e);
+            world.last_error = Some(crate::PbaError { kind, message });
+        }
+    }
+}
 
 #[when("I post the transfer")]
 async fn post_transfer(world: &mut PbaWorld) {
@@ -312,6 +376,24 @@ async fn transfer_fails_with(world: &mut PbaWorld, expected_kind: String) {
         "expected error containing '{}' but got '{}'",
         expected_kind,
         err.kind
+    );
+}
+
+#[then("the second post is a no-op")]
+async fn second_post_is_no_op(world: &mut PbaWorld) {
+    assert!(
+        world.last_error.is_none(),
+        "expected second post to be a no-op (no error) but got {:?}",
+        world.last_error
+    );
+    let status = world
+        .last_transfer_status
+        .as_deref()
+        .expect("No transfer status recorded after second post");
+    assert_eq!(
+        status, "posted",
+        "expected second post to return status 'posted' but got '{}'",
+        status
     );
 }
 
@@ -535,6 +617,7 @@ where
         "TransferAlreadyReversed",
         "ReversalAmountInvalid",
         "TransactionNotFound",
+        "TransactionNotPending",
     ] {
         if s.contains(code) {
             return code.to_string();

@@ -274,8 +274,29 @@ impl TransferService {
             .transaction_repo
             .get_by_id(transfer_id, source_normal_id)
             .await?;
-        if source_row.status != TransactionStatus::Pending {
-            return Err(AppError::TransactionNotPending(transfer_id.to_string()));
+        match source_row.status {
+            TransactionStatus::Pending => {} // proceed
+            TransactionStatus::Posted => {
+                // Idempotent: return the existing posted snapshot.
+                let correlation_id = source_row.correlation_id.ok_or_else(|| {
+                    AppError::DatabaseError(
+                        "transfer source row missing correlation_id".to_string(),
+                    )
+                })?;
+                let legs = self
+                    .transaction_repo
+                    .find_by_correlation_id(correlation_id)
+                    .await?;
+                let dest_id = legs
+                    .iter()
+                    .find(|l| l.account_kind == AccountKind::Pb)
+                    .map(|l| l.account_id)
+                    .ok_or_else(|| {
+                        AppError::DatabaseError("transfer missing pb leg".to_string())
+                    })?;
+                return Ok(self.legs_to_result(&legs, source_normal_id, dest_id));
+            }
+            _ => return Err(AppError::TransactionNotPending(transfer_id.to_string())),
         }
         if source_row.transaction_type != TransactionType::Transfer {
             return Err(AppError::TransactionNotPending(transfer_id.to_string()));
