@@ -26,6 +26,14 @@
     </div>
 </div>
 
+{% if refund_load_failed %}
+<article style="border-left: 4px solid var(--pico-color-amber-500); padding: 1rem;">
+    <strong>Refund data unavailable.</strong>
+    The database query for this payment's refund history failed; the remaining-refundable amount and refund history are not shown,
+    and the Refund button has been hidden to prevent acting on stale data. Retry by reloading the page.
+</article>
+{% endif %}
+
 <div class="grid">
     <article class="stat-card">
         <p class="stat-label">Amount</p>
