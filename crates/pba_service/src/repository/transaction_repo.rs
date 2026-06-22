@@ -555,6 +555,7 @@ impl TransactionRepo {
                    reverses_transaction_id, created_at, updated_at
             FROM transactions
             WHERE reverses_transaction_id = $1
+              AND status IN ('pending', 'posted')
             "#,
         )
         .bind(original_source_id)
