@@ -119,7 +119,9 @@ pub fn protected_router() -> Router<AppState> {
         );
 
     // Legacy /accounts/* aliases — same handlers as /pb-accounts/* but with
-    // Deprecation/Sunset response headers attached via middleware.
+    // Deprecation/Sunset response headers attached via middleware. New endpoints
+    // (e.g. refund_payment) are intentionally not mirrored here: the legacy
+    // surface is shrinking, not growing.
     let legacy = Router::new()
         .route("/accounts", post(handlers::pb::create_account))
         .route("/accounts/{account_id}", get(handlers::pb::get_account))
