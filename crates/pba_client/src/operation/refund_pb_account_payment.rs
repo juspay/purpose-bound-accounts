@@ -205,6 +205,12 @@ builder
 pub enum RefundPBAccountPaymentError {
     #[allow(missing_docs)] // documentation missing in model
     AccountNotFoundError(crate::types::error::AccountNotFoundError),
+    #[allow(missing_docs)] // documentation missing in model
+    RefundNotRefundableError(crate::types::error::RefundNotRefundableError),
+    #[allow(missing_docs)] // documentation missing in model
+    RefundAmountInvalidError(crate::types::error::RefundAmountInvalidError),
+    #[allow(missing_docs)] // documentation missing in model
+    PaymentFullyRefundedError(crate::types::error::PaymentFullyRefundedError),
     /// An unexpected error occurred (e.g., invalid JSON returned by the service or an unknown error code).
                     #[deprecated(note = "Matching `Unhandled` directly is not forwards compatible. Instead, match using a \
     variable wildcard pattern and check `.code()`:
@@ -231,6 +237,9 @@ impl RefundPBAccountPaymentError {
     pub fn meta(&self) -> &::aws_smithy_types::error::ErrorMetadata {
         match self {
             Self::AccountNotFoundError(e) => ::aws_smithy_types::error::metadata::ProvideErrorMetadata::meta(e),
+            Self::RefundNotRefundableError(e) => ::aws_smithy_types::error::metadata::ProvideErrorMetadata::meta(e),
+            Self::RefundAmountInvalidError(e) => ::aws_smithy_types::error::metadata::ProvideErrorMetadata::meta(e),
+            Self::PaymentFullyRefundedError(e) => ::aws_smithy_types::error::metadata::ProvideErrorMetadata::meta(e),
             Self::Unhandled(e) => &e.meta,
         }
     }
@@ -238,11 +247,32 @@ impl RefundPBAccountPaymentError {
     pub fn is_account_not_found_error(&self) -> bool {
         matches!(self, Self::AccountNotFoundError(_))
     }
+    /// Returns `true` if the error kind is `RefundPBAccountPaymentError::RefundNotRefundableError`.
+    pub fn is_refund_not_refundable_error(&self) -> bool {
+        matches!(self, Self::RefundNotRefundableError(_))
+    }
+    /// Returns `true` if the error kind is `RefundPBAccountPaymentError::RefundAmountInvalidError`.
+    pub fn is_refund_amount_invalid_error(&self) -> bool {
+        matches!(self, Self::RefundAmountInvalidError(_))
+    }
+    /// Returns `true` if the error kind is `RefundPBAccountPaymentError::PaymentFullyRefundedError`.
+    pub fn is_payment_fully_refunded_error(&self) -> bool {
+        matches!(self, Self::PaymentFullyRefundedError(_))
+    }
 }
 impl ::std::error::Error for RefundPBAccountPaymentError {
     fn source(&self) -> ::std::option::Option<&(dyn ::std::error::Error + 'static)> {
         match self {
             Self::AccountNotFoundError(_inner) =>
+            ::std::option::Option::Some(_inner)
+            ,
+            Self::RefundNotRefundableError(_inner) =>
+            ::std::option::Option::Some(_inner)
+            ,
+            Self::RefundAmountInvalidError(_inner) =>
+            ::std::option::Option::Some(_inner)
+            ,
+            Self::PaymentFullyRefundedError(_inner) =>
             ::std::option::Option::Some(_inner)
             ,
             Self::Unhandled(_inner) => {
@@ -255,6 +285,15 @@ impl ::std::fmt::Display for RefundPBAccountPaymentError {
     fn fmt(&self, f: &mut ::std::fmt::Formatter<'_>) -> ::std::fmt::Result {
         match self {
             Self::AccountNotFoundError(_inner) =>
+            _inner.fmt(f)
+            ,
+            Self::RefundNotRefundableError(_inner) =>
+            _inner.fmt(f)
+            ,
+            Self::RefundAmountInvalidError(_inner) =>
+            _inner.fmt(f)
+            ,
+            Self::PaymentFullyRefundedError(_inner) =>
             _inner.fmt(f)
             ,
             Self::Unhandled(_inner) => {
@@ -279,6 +318,15 @@ impl ::aws_smithy_types::error::metadata::ProvideErrorMetadata for RefundPBAccou
     fn meta(&self) -> &::aws_smithy_types::error::ErrorMetadata {
         match self {
             Self::AccountNotFoundError(_inner) =>
+            ::aws_smithy_types::error::metadata::ProvideErrorMetadata::meta(_inner)
+            ,
+            Self::RefundNotRefundableError(_inner) =>
+            ::aws_smithy_types::error::metadata::ProvideErrorMetadata::meta(_inner)
+            ,
+            Self::RefundAmountInvalidError(_inner) =>
+            ::aws_smithy_types::error::metadata::ProvideErrorMetadata::meta(_inner)
+            ,
+            Self::PaymentFullyRefundedError(_inner) =>
             ::aws_smithy_types::error::metadata::ProvideErrorMetadata::meta(_inner)
             ,
             Self::Unhandled(_inner) => {

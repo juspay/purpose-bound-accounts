@@ -16,7 +16,13 @@ pub enum Error {
     #[allow(missing_docs)] // documentation missing in model
     InvalidMccError(crate::types::error::InvalidMccError),
     #[allow(missing_docs)] // documentation missing in model
+    PaymentFullyRefundedError(crate::types::error::PaymentFullyRefundedError),
+    #[allow(missing_docs)] // documentation missing in model
     PurposeTypeNotFoundError(crate::types::error::PurposeTypeNotFoundError),
+    #[allow(missing_docs)] // documentation missing in model
+    RefundAmountInvalidError(crate::types::error::RefundAmountInvalidError),
+    #[allow(missing_docs)] // documentation missing in model
+    RefundNotRefundableError(crate::types::error::RefundNotRefundableError),
     /// An unexpected error occurred (e.g., invalid JSON returned by the service or an unknown error code).
     #[deprecated(note = "Matching `Unhandled` directly is not forwards compatible. Instead, match using a \
     variable wildcard pattern and check `.code()`:
@@ -35,7 +41,10 @@ impl ::std::fmt::Display for Error {
             Error::DepositNotPendingError(inner) => inner.fmt(f),
             Error::InsufficientFundsError(inner) => inner.fmt(f),
             Error::InvalidMccError(inner) => inner.fmt(f),
+            Error::PaymentFullyRefundedError(inner) => inner.fmt(f),
             Error::PurposeTypeNotFoundError(inner) => inner.fmt(f),
+            Error::RefundAmountInvalidError(inner) => inner.fmt(f),
+            Error::RefundNotRefundableError(inner) => inner.fmt(f),
             Error::Unhandled(_) => if let ::std::option::Option::Some(code) = ::aws_smithy_types::error::metadata::ProvideErrorMetadata::code(self) {
                                         write!(f, "unhandled error ({code})")
                                     } else {
@@ -58,7 +67,10 @@ Self::DepositNotFoundError(inner) => inner.meta(),
 Self::DepositNotPendingError(inner) => inner.meta(),
 Self::InsufficientFundsError(inner) => inner.meta(),
 Self::InvalidMccError(inner) => inner.meta(),
+Self::PaymentFullyRefundedError(inner) => inner.meta(),
 Self::PurposeTypeNotFoundError(inner) => inner.meta(),
+Self::RefundAmountInvalidError(inner) => inner.meta(),
+Self::RefundNotRefundableError(inner) => inner.meta(),
                         Self::Unhandled(inner) => &inner.meta,
                     }
                 }
@@ -616,6 +628,9 @@ impl From<crate::operation::refund_pb_account_payment::RefundPBAccountPaymentErr
     fn from(err: crate::operation::refund_pb_account_payment::RefundPBAccountPaymentError) -> Self {
         match err {
             crate::operation::refund_pb_account_payment::RefundPBAccountPaymentError::AccountNotFoundError(inner) => Error::AccountNotFoundError(inner),
+            crate::operation::refund_pb_account_payment::RefundPBAccountPaymentError::RefundNotRefundableError(inner) => Error::RefundNotRefundableError(inner),
+            crate::operation::refund_pb_account_payment::RefundPBAccountPaymentError::RefundAmountInvalidError(inner) => Error::RefundAmountInvalidError(inner),
+            crate::operation::refund_pb_account_payment::RefundPBAccountPaymentError::PaymentFullyRefundedError(inner) => Error::PaymentFullyRefundedError(inner),
             crate::operation::refund_pb_account_payment::RefundPBAccountPaymentError::Unhandled(inner) => Error::Unhandled(inner),
         }
     }
@@ -893,7 +908,10 @@ impl ::std::error::Error for Error {
             Error::DepositNotPendingError(inner) => inner.source(),
             Error::InsufficientFundsError(inner) => inner.source(),
             Error::InvalidMccError(inner) => inner.source(),
+            Error::PaymentFullyRefundedError(inner) => inner.source(),
             Error::PurposeTypeNotFoundError(inner) => inner.source(),
+            Error::RefundAmountInvalidError(inner) => inner.source(),
+            Error::RefundNotRefundableError(inner) => inner.source(),
             Error::Unhandled(inner) => ::std::option::Option::Some(&*inner.source)
         }
     }

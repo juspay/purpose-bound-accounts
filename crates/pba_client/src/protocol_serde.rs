@@ -125,7 +125,13 @@ pub(crate) mod shape_make_payment_input;
 
 pub(crate) mod shape_make_pb_account_payment_input;
 
+pub(crate) mod shape_payment_fully_refunded_error;
+
 pub(crate) mod shape_purpose_type_not_found_error;
+
+pub(crate) mod shape_refund_amount_invalid_error;
+
+pub(crate) mod shape_refund_not_refundable_error;
 
 pub(crate) mod shape_refund_pb_account_payment_input;
 

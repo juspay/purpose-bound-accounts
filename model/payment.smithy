@@ -173,7 +173,39 @@ operation RefundPBAccountPayment {
         idempotency_key: String
     }
     output := with [RefundResponseMixin] {}
-    errors: [AccountNotFoundError]
+    errors: [
+        AccountNotFoundError,
+        RefundNotRefundableError,
+        RefundAmountInvalidError,
+        PaymentFullyRefundedError,
+    ]
+}
+
+@error("client")
+@httpError(409)
+structure RefundNotRefundableError {
+    @required
+    error: String
+    @required
+    message: String
+}
+
+@error("client")
+@httpError(400)
+structure RefundAmountInvalidError {
+    @required
+    error: String
+    @required
+    message: String
+}
+
+@error("client")
+@httpError(409)
+structure PaymentFullyRefundedError {
+    @required
+    error: String
+    @required
+    message: String
 }
 
 @mixin

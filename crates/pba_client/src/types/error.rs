@@ -13,6 +13,12 @@ pub use crate::types::error::_deposit_not_found_error::DepositNotFoundError;
 
 pub use crate::types::error::_invalid_mcc_error::InvalidMccError;
 
+pub use crate::types::error::_payment_fully_refunded_error::PaymentFullyRefundedError;
+
+pub use crate::types::error::_refund_amount_invalid_error::RefundAmountInvalidError;
+
+pub use crate::types::error::_refund_not_refundable_error::RefundNotRefundableError;
+
 mod _account_not_active_error;
 
 mod _account_not_found_error;
@@ -25,7 +31,13 @@ mod _insufficient_funds_error;
 
 mod _invalid_mcc_error;
 
+mod _payment_fully_refunded_error;
+
 mod _purpose_type_not_found_error;
+
+mod _refund_amount_invalid_error;
+
+mod _refund_not_refundable_error;
 
 /// Builders
 pub mod builders;

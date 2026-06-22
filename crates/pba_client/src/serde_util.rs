@@ -278,6 +278,24 @@ if builder.status.is_none() { builder.status = Some(Default::default()) }
                 builder
             }
 
+pub(crate) fn refund_not_refundable_error_correct_errors(mut builder: crate::types::error::builders::RefundNotRefundableErrorBuilder) -> crate::types::error::builders::RefundNotRefundableErrorBuilder {
+                if builder.error.is_none() { builder.error = Some(Default::default()) }
+if builder.message.is_none() { builder.message = Some(Default::default()) }
+                builder
+            }
+
+pub(crate) fn refund_amount_invalid_error_correct_errors(mut builder: crate::types::error::builders::RefundAmountInvalidErrorBuilder) -> crate::types::error::builders::RefundAmountInvalidErrorBuilder {
+                if builder.error.is_none() { builder.error = Some(Default::default()) }
+if builder.message.is_none() { builder.message = Some(Default::default()) }
+                builder
+            }
+
+pub(crate) fn payment_fully_refunded_error_correct_errors(mut builder: crate::types::error::builders::PaymentFullyRefundedErrorBuilder) -> crate::types::error::builders::PaymentFullyRefundedErrorBuilder {
+                if builder.error.is_none() { builder.error = Some(Default::default()) }
+if builder.message.is_none() { builder.message = Some(Default::default()) }
+                builder
+            }
+
 pub(crate) fn refund_pb_account_payment_output_output_correct_errors(mut builder: crate::operation::refund_pb_account_payment::builders::RefundPbAccountPaymentOutputBuilder) -> crate::operation::refund_pb_account_payment::builders::RefundPbAccountPaymentOutputBuilder {
                 if builder.refund_id.is_none() { builder.refund_id = Some(Default::default()) }
 if builder.original_payment_id.is_none() { builder.original_payment_id = Some(Default::default()) }

@@ -1632,12 +1632,32 @@
                             }
                         }
                     },
+                    "400": {
+                        "description": "RefundAmountInvalidError 400 response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/RefundAmountInvalidErrorResponseContent"
+                                }
+                            }
+                        }
+                    },
                     "404": {
                         "description": "AccountNotFoundError 404 response",
                         "content": {
                             "application/json": {
                                 "schema": {
                                     "$ref": "#/components/schemas/AccountNotFoundErrorResponseContent"
+                                }
+                            }
+                        }
+                    },
+                    "409": {
+                        "description": "PaymentFullyRefundedError 409 response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/PaymentFullyRefundedErrorResponseContent"
                                 }
                             }
                         }
@@ -3088,6 +3108,21 @@
                     "updated_at"
                 ]
             },
+            "PaymentFullyRefundedErrorResponseContent": {
+                "type": "object",
+                "properties": {
+                    "error": {
+                        "type": "string"
+                    },
+                    "message": {
+                        "type": "string"
+                    }
+                },
+                "required": [
+                    "error",
+                    "message"
+                ]
+            },
             "PoolType": {
                 "type": "string",
                 "description": "Pool type indicating the source of funds.",
@@ -3269,6 +3304,21 @@
                 "required": [
                     "allowed_mccs",
                     "purpose_code"
+                ]
+            },
+            "RefundAmountInvalidErrorResponseContent": {
+                "type": "object",
+                "properties": {
+                    "error": {
+                        "type": "string"
+                    },
+                    "message": {
+                        "type": "string"
+                    }
+                },
+                "required": [
+                    "error",
+                    "message"
                 ]
             },
             "RefundPBAccountPaymentRequestContent": {

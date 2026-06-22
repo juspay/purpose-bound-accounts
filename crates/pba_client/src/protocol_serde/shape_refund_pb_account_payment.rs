@@ -24,6 +24,45 @@ pub fn de_refund_pb_account_payment_http_error(_response_status: u16, _response_
             ;
             tmp
         }),
+        "RefundNotRefundableError" => crate::operation::refund_pb_account_payment::RefundPBAccountPaymentError::RefundNotRefundableError({
+            #[allow(unused_mut)]
+            let mut tmp =
+                 {
+                    #[allow(unused_mut)]
+                    let mut output = crate::types::error::builders::RefundNotRefundableErrorBuilder::default();
+                    output = crate::protocol_serde::shape_refund_not_refundable_error::de_refund_not_refundable_error_json_err(_response_body, output).map_err(crate::operation::refund_pb_account_payment::RefundPBAccountPaymentError::unhandled)?;
+                    let output = output.meta(generic);
+                    crate::serde_util::refund_not_refundable_error_correct_errors(output).build().map_err(crate::operation::refund_pb_account_payment::RefundPBAccountPaymentError::unhandled)?
+                }
+            ;
+            tmp
+        }),
+        "RefundAmountInvalidError" => crate::operation::refund_pb_account_payment::RefundPBAccountPaymentError::RefundAmountInvalidError({
+            #[allow(unused_mut)]
+            let mut tmp =
+                 {
+                    #[allow(unused_mut)]
+                    let mut output = crate::types::error::builders::RefundAmountInvalidErrorBuilder::default();
+                    output = crate::protocol_serde::shape_refund_amount_invalid_error::de_refund_amount_invalid_error_json_err(_response_body, output).map_err(crate::operation::refund_pb_account_payment::RefundPBAccountPaymentError::unhandled)?;
+                    let output = output.meta(generic);
+                    crate::serde_util::refund_amount_invalid_error_correct_errors(output).build().map_err(crate::operation::refund_pb_account_payment::RefundPBAccountPaymentError::unhandled)?
+                }
+            ;
+            tmp
+        }),
+        "PaymentFullyRefundedError" => crate::operation::refund_pb_account_payment::RefundPBAccountPaymentError::PaymentFullyRefundedError({
+            #[allow(unused_mut)]
+            let mut tmp =
+                 {
+                    #[allow(unused_mut)]
+                    let mut output = crate::types::error::builders::PaymentFullyRefundedErrorBuilder::default();
+                    output = crate::protocol_serde::shape_payment_fully_refunded_error::de_payment_fully_refunded_error_json_err(_response_body, output).map_err(crate::operation::refund_pb_account_payment::RefundPBAccountPaymentError::unhandled)?;
+                    let output = output.meta(generic);
+                    crate::serde_util::payment_fully_refunded_error_correct_errors(output).build().map_err(crate::operation::refund_pb_account_payment::RefundPBAccountPaymentError::unhandled)?
+                }
+            ;
+            tmp
+        }),
         _ => crate::operation::refund_pb_account_payment::RefundPBAccountPaymentError::generic(generic)
     })
 }
