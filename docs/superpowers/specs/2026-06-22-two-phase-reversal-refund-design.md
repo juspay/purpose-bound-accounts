@@ -45,11 +45,10 @@ caller-initiated).
 
 - **External gateway integration.** Post/void are caller-initiated, not
   triggered by webhook callbacks or other external signals.
-- **Automatic expiration logic** beyond what TB's pending-transfer timeout
-  already provides. The existing `deposit_timeout` worker may grow to cover
-  pending reversals/refunds in a follow-up; this spec only ensures the
-  `timeout_seconds` column is populated correctly so a future worker has the
-  data it needs.
+- **External gateway integration** beyond TB's pending-transfer timeout.
+  See "Background expiry" below — the existing poller already covers the DB
+  side for any pending row type, so this is a non-goal only in the sense that
+  no new worker is built; coverage is automatic.
 - **Partial post or partial void.** Once initiated as pending, a refund or
   reversal posts or voids in full. Splitting a pending refund into two posts
   is not supported.
@@ -80,6 +79,38 @@ budget:
 - Voiding a pending refund or reversal restores the budget. The next initiate
   call sees the freed capacity.
 
+## Background expiry
+
+The existing `run_deposit_timeout_poller` in `service/deposit_timeout.rs` is
+already row-type agnostic:
+
+- `transaction_repo::find_timed_out_pending()` selects any row where
+  `status='pending' AND timeout_seconds IS NOT NULL AND now() > created_at +
+  timeout_seconds`. No filter on `transaction_type` or row shape.
+- The void path updates `WHERE correlation_id = $1 AND status = 'pending'`,
+  also generic.
+
+Pending refund (`type='payment'`) and pending reversal (`type='transfer'`
+with `reverses_transaction_id` set) rows inherit expiry the moment we
+populate `timeout_seconds` on them — which the initiate flow already does.
+TigerBeetle's own pending-transfer timeout voids the TB transfer
+independently; the poller keeps the DB rows in sync.
+
+Two small touch-ups land in this PR for accuracy, not functionality:
+
+1. **Rename** `run_deposit_timeout_poller` → `run_pending_timeout_poller` and
+   its log messages ("Pending deposit timed out" → "Pending transaction timed
+   out").
+2. **Test coverage**: one timeout-expiry scenario per new feature file
+   asserting that an aged-out pending refund/reversal becomes Voided and
+   restores its reservation (remaining-refundable for refund;
+   reversal-eligibility for the original transfer).
+
+The reservation-restore guarantee (refund remaining goes back up, reversal
+eligibility returns) follows automatically from the widened
+`sum_refunds_of` / `find_reversal_of` status filters — voided rows are
+excluded.
+
 ## Scope (high level)
 
 | Area | Change |
@@ -91,7 +122,8 @@ budget:
 | Repository | `transaction_repo`: widen `sum_refunds_of(_in_tx)` and `find_reversal_of` status filters. `ledger_repo`: three new TB helpers for pending refund single-leg, pending refund split (LINKED), pending reversal. |
 | Service | `transfer_service::reverse_transfer` gains `pending` + `timeout_seconds`. `pb_payment_service::refund_payment` gains the same. New `post_refund` and `void_refund` methods on `pb_payment_service`. |
 | Admin UI | "Hold as pending" mode on both initiate forms. Post/Void buttons on pending refund detail pages (reversal detail page inherits buttons from existing transfer detail page if its predicate already allows reversal rows). Status column on refund-history table gains Pending/Voided. |
-| Tests | Two new Cucumber API features, two new UI features, concurrency assertion that pending refunds reserve remaining, ledger unit tests for the new TB helpers. |
+| Worker | Rename `run_deposit_timeout_poller` → `run_pending_timeout_poller`; update log strings. No logic change. |
+| Tests | Two new Cucumber API features, two new UI features, concurrency assertion that pending refunds reserve remaining, timeout-expiry scenarios for both halves, ledger unit tests for the new TB helpers. |
 
 ## Architecture
 
@@ -108,6 +140,7 @@ crates/pba_service/src/
 │   ├── ledger_repo.rs                     (three new pending TB helpers)
 │   └── transaction_repo.rs                (status-aware sum_refunds_of / find_reversal_of)
 ├── service/
+│   ├── deposit_timeout.rs                 (rename to pending_timeout; log strings)
 │   ├── pb_payment_service.rs              (pending refund initiate + post_refund + void_refund)
 │   └── transfer_service.rs                (pending reversal initiate; post/void unchanged)
 └── templates/admin/
@@ -346,14 +379,16 @@ column.
 
 ### Cucumber API features
 
-- New `tests/features/transfer_reversal_two_phase.feature` (~6 scenarios):
+- New `tests/features/transfer_reversal_two_phase.feature` (~7 scenarios):
   1. Pending reversal then post — normal balance credited only after post.
   2. Pending reversal then void — no balance change, original re-reversible.
   3. Pending reversal blocks a second reversal attempt.
   4. Post on an already-posted reversal is idempotent.
   5. Void on an already-voided reversal is idempotent.
   6. Mixed-direction post-then-void rejected with `TransactionNotPending`.
-- New `tests/features/payment_refund_two_phase.feature` (~8 scenarios):
+  7. Pending reversal with short timeout ages out → background poller voids,
+     original transfer re-reversible.
+- New `tests/features/payment_refund_two_phase.feature` (~9 scenarios):
   1. Pending single-pool refund then post.
   2. Pending split refund then post (LINKED TB legs resolve atomically).
   3. Pending refund then void — remaining refundable restored.
@@ -362,6 +397,8 @@ column.
   6. Void idempotency.
   7. Post on a non-existent refund id → 404.
   8. Full lifecycle: pay → pending refund → void → new pending refund → post.
+  9. Pending refund with short timeout ages out → background poller voids,
+     remaining refundable restored.
 - Extend `payment_refund.feature` and `transfer_reversal.feature` (existing)
   with one scenario each asserting that `pending=false` default behavior is
   unchanged.
@@ -404,8 +441,9 @@ on all commits.
 ## Out of scope (explicit non-deliverables)
 
 - Webhook callbacks driving post/void.
-- Background expiry of pending refunds/reversals (will be a follow-up if the
-  product asks for it).
 - Self-serve (non-admin) post/void.
 - Partial post or partial void.
 - Schema migrations.
+- New timeout worker. Background expiry is in scope but achieved entirely by
+  populating `timeout_seconds` on the new pending rows and renaming the
+  existing poller; no new worker logic.
