@@ -149,3 +149,13 @@ Feature: Refund of PB → merchant payments
     And I pay 10000 to merchant "HOSP11" with MCC "8062" described as "wrong-account test"
     When I attempt to refund 10000 paisa from the last payment under a different PB account
     Then the refund fails with "RefundNotRefundable" reason "wrong_account"
+
+  # ── Scenario 12: Concurrent refunds must not over-refund ─────────────────
+
+  @api
+  Scenario: Concurrent refunds do not over-refund the original payment
+    Given a "health" account exists for holder "rf-s12-lyn" with origin IFSC "HDFC0030012" and account number "9030012001"
+    And the account has 5000 in self-pool and 5000 in others-pool
+    When I pay 1000 to merchant "HOSP12" with MCC "8062" described as "concurrent refund base"
+    And 5 concurrent refunds of 300 paisa each are attempted on the last payment
+    Then the total refunded amount across all refunds is at most 1000 paisa

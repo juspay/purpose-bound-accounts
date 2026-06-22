@@ -308,10 +308,14 @@ impl PbPaymentService {
             }
         }
 
-        // Step 2: load original payment rows.
+        // Step 2: open a PG transaction up front and load the original payment
+        // rows under `SELECT … FOR UPDATE`. The lock is held until commit (after
+        // the TB transfer below), so a concurrent refund of the same payment
+        // blocks here instead of racing the remaining-amount check.
+        let mut tx = self.transaction_repo.pool().begin().await?;
         let original_rows = self
             .transaction_repo
-            .find_by_correlation_id(original_payment_id)
+            .find_by_correlation_id_for_update(&mut tx, original_payment_id)
             .await?;
         if original_rows.is_empty() {
             return Err(AppError::TransactionNotFound(
@@ -352,17 +356,22 @@ impl PbPaymentService {
             .iter()
             .find(|r| r.pool.as_deref() == Some("others"));
 
-        // Step 3: per-pool remaining.
+        // Step 3: per-pool remaining (reads run inside the locked transaction so
+        // they observe every committed refund against these original rows).
         let self_remaining = match p_self {
-            Some(r) => r
-                .amount
-                .saturating_sub(self.transaction_repo.sum_refunds_of(r.id).await?),
+            Some(r) => r.amount.saturating_sub(
+                self.transaction_repo
+                    .sum_refunds_of_in_tx(&mut tx, r.id)
+                    .await?,
+            ),
             None => 0,
         };
         let others_remaining = match p_others {
-            Some(r) => r
-                .amount
-                .saturating_sub(self.transaction_repo.sum_refunds_of(r.id).await?),
+            Some(r) => r.amount.saturating_sub(
+                self.transaction_repo
+                    .sum_refunds_of_in_tx(&mut tx, r.id)
+                    .await?,
+            ),
             None => 0,
         };
         let total_remaining = self_remaining + others_remaining;
@@ -393,9 +402,8 @@ impl PbPaymentService {
         let original_amount: u64 = original_rows.iter().map(|r| r.amount).sum();
         let remaining_refundable = total_remaining - amount;
 
-        // Step 7: insert refund rows in one PG transaction.
+        // Step 7: insert refund rows in the locked transaction.
         let refund_correlation_id = Uuid::now_v7();
-        let mut tx = self.transaction_repo.pool().begin().await?;
 
         // Primary leg gets row_id == refund_correlation_id (mirrors make_payment's
         // payment_id pattern so /admin/transactions/{correlation_id} resolves to a

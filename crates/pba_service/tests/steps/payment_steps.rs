@@ -499,6 +499,61 @@ async fn attempt_refund_wrong_account(world: &mut PbaWorld, amount: i64) {
     }
 }
 
+#[when(
+    regex = r#"^(\d+) concurrent refunds of (\d+) paisa each are attempted on the last payment$"#
+)]
+async fn concurrent_refunds(world: &mut PbaWorld, count: usize, amount: i64) {
+    let account_id = world.account_id.clone().expect("No account ID");
+    let payment_id = world
+        .last_payment
+        .as_ref()
+        .expect("No prior payment")
+        .payment_id
+        .clone();
+    let client = world.client.clone();
+
+    let futures: Vec<_> = (0..count)
+        .map(|_| {
+            let client = client.clone();
+            let account_id = account_id.clone();
+            let payment_id = payment_id.clone();
+            async move {
+                client
+                    .refund_pb_account_payment()
+                    .account_id(&account_id)
+                    .payment_id(&payment_id)
+                    .amount(amount)
+                    .send()
+                    .await
+            }
+        })
+        .collect();
+
+    let results = join_all(futures).await;
+    let mut successes = 0usize;
+    let mut total_refunded = 0i64;
+    for r in &results {
+        if let Ok(out) = r {
+            successes += 1;
+            total_refunded += out.amount();
+        }
+    }
+    world.concurrent_successes = Some(successes);
+    world.concurrent_failures = Some(results.len() - successes);
+    world.concurrent_refund_total_amount = Some(total_refunded);
+}
+
+#[then(regex = r#"^the total refunded amount across all refunds is at most (\d+) paisa$"#)]
+async fn total_refunded_at_most(world: &mut PbaWorld, max: i64) {
+    let t = world
+        .concurrent_refund_total_amount
+        .expect("No total refunded value");
+    assert!(
+        t <= max,
+        "Expected total refunded ≤ {max} paisa, got {t} — concurrent refunds exceeded original payment"
+    );
+}
+
 #[then(regex = r#"^the refund is successful$"#)]
 async fn refund_success(world: &mut PbaWorld) {
     assert!(
