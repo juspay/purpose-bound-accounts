@@ -3,6 +3,7 @@ use axum::extract::{Path, State};
 use axum::http::StatusCode;
 use axum::response::{Html, IntoResponse, Redirect, Response};
 use serde::Deserialize;
+use std::collections::BTreeMap;
 use uuid::Uuid;
 
 use crate::domain::banking::{AccountNumber, Ifsc};
@@ -1016,6 +1017,15 @@ pub async fn purpose_types_page(State(state): State<AppState>) -> Response {
     })
 }
 
+struct RefundHistoryRow {
+    correlation_id: String,
+    correlation_id_short: String,
+    created_at: String,
+    amount_to_self_display: String,
+    amount_to_others_display: String,
+    total_display: String,
+}
+
 #[derive(Template)]
 #[template(path = "admin/transaction_detail.html")]
 struct TransactionDetailTemplate {
@@ -1050,6 +1060,15 @@ struct TransactionDetailTemplate {
     is_payment: bool,
     is_withdrawal: bool,
     can_post_or_void: bool,
+    // Refund-related (Payment rows only)
+    can_refund: bool,
+    is_refund: bool,
+    refund_history: Vec<RefundHistoryRow>,
+    remaining_refundable_display: String,
+    refund_of_payment_id: String,
+    /// Set when refund-row DB queries fail; the template shows a banner and
+    /// hides the Refund button so the admin doesn't act on a wrong remaining.
+    refund_load_failed: bool,
 }
 
 pub async fn transaction_detail(
@@ -1158,6 +1177,116 @@ pub async fn transaction_detail(
         .map(|s| s.to_string())
         .unwrap_or_else(|| dash.clone());
 
+    // Refund-related fields (Payment rows only).
+    let is_refund = is_payment && txn.reverses_transaction_id.is_some();
+
+    let fmt_paisa = |a: u64| format!("{}.{:02}", a / 100, a % 100);
+
+    let (
+        can_refund,
+        refund_history,
+        remaining_refundable_paisa,
+        refund_of_payment_id,
+        refund_load_failed,
+    ) = if is_payment && !is_refund {
+        // Original payment — load its rows + each row's refunds. If any read
+        // fails the remaining-refundable figure would be unsafe to display, so
+        // we surface the failure to the template rather than guess.
+        let correlation_id = txn.correlation_id.unwrap_or(txn.id);
+        match state
+            .transaction_repo
+            .find_by_correlation_id(correlation_id)
+            .await
+        {
+            Ok(originals) => {
+                let mut total_original = 0u64;
+                let mut total_refunded = 0u64;
+                let mut by_corr: BTreeMap<Uuid, (chrono::DateTime<chrono::Utc>, u64, u64)> =
+                    BTreeMap::new();
+                let mut load_failed = false;
+
+                for o in &originals {
+                    total_original += o.amount;
+                    match state.transaction_repo.find_refunds_of(o.id).await {
+                        Ok(refs) => {
+                            for r in refs {
+                                total_refunded += r.amount;
+                                let cid = r.correlation_id.unwrap_or(r.id);
+                                let entry = by_corr.entry(cid).or_insert((r.created_at, 0, 0));
+                                if r.created_at < entry.0 {
+                                    entry.0 = r.created_at;
+                                }
+                                match r.pool.as_deref() {
+                                    Some("self") => entry.1 += r.amount,
+                                    Some("others") => entry.2 += r.amount,
+                                    _ => {}
+                                }
+                            }
+                        }
+                        Err(e) => {
+                            tracing::warn!(
+                                transaction_id = %txn.id,
+                                original_row_id = %o.id,
+                                error = %e,
+                                "Failed to load refunds for original payment row"
+                            );
+                            load_failed = true;
+                        }
+                    }
+                }
+
+                if load_failed {
+                    (false, Vec::new(), 0, String::new(), true)
+                } else {
+                    let remaining = total_original.saturating_sub(total_refunded);
+                    let history: Vec<RefundHistoryRow> = by_corr
+                        .into_iter()
+                        .map(|(cid, (ts, to_self, to_others))| {
+                            let cid_str = cid.to_string();
+                            let cid_short = cid_str.chars().take(8).collect::<String>();
+                            RefundHistoryRow {
+                                correlation_id: cid_str,
+                                correlation_id_short: cid_short,
+                                created_at: ts.format("%Y-%m-%d %H:%M:%S").to_string(),
+                                amount_to_self_display: fmt_paisa(to_self),
+                                amount_to_others_display: fmt_paisa(to_others),
+                                total_display: fmt_paisa(to_self + to_others),
+                            }
+                        })
+                        .collect();
+
+                    (remaining > 0, history, remaining, String::new(), false)
+                }
+            }
+            Err(e) => {
+                tracing::warn!(
+                    transaction_id = %txn.id,
+                    error = %e,
+                    "Failed to load original payment rows for refund history"
+                );
+                (false, Vec::new(), 0, String::new(), true)
+            }
+        }
+    } else if is_refund {
+        // Refund row — resolve link back to the original payment id.
+        let original_payment_id = match txn.reverses_transaction_id {
+            Some(id) => state
+                .transaction_repo
+                .get_transaction(id)
+                .await
+                .ok()
+                .and_then(|r| r.correlation_id)
+                .map(|c| c.to_string())
+                .unwrap_or_default(),
+            None => String::new(),
+        };
+        (false, Vec::new(), 0, original_payment_id, false)
+    } else {
+        (false, Vec::new(), 0, String::new(), false)
+    };
+
+    let remaining_refundable_display = fmt_paisa(remaining_refundable_paisa);
+
     render(TransactionDetailTemplate {
         prefix: state.path_prefix.clone(),
         id: id_str,
@@ -1190,6 +1319,12 @@ pub async fn transaction_detail(
         is_payment,
         is_withdrawal,
         can_post_or_void,
+        can_refund,
+        is_refund,
+        refund_history,
+        remaining_refundable_display,
+        refund_of_payment_id,
+        refund_load_failed,
     })
 }
 
@@ -1237,6 +1372,118 @@ pub async fn void_transaction(
     .into_response()
 }
 
+// ─── Refund payment handlers ──────────────────────────────────────────────────
+
+#[derive(Template)]
+#[template(path = "admin/payment_refund.html")]
+struct PaymentRefundTemplate {
+    prefix: String,
+    account_id: String,
+    payment_id: String,
+    payment_id_short: String,
+    original_amount_display: String,
+    remaining_refundable_paisa: u64,
+    remaining_refundable_display: String,
+    error: Option<String>,
+}
+
+#[derive(Deserialize)]
+pub struct RefundPaymentForm {
+    pub amount_paisa: u64,
+    pub description: Option<String>,
+}
+
+async fn build_refund_template(
+    state: &AppState,
+    account_id: Uuid,
+    payment_id: Uuid,
+    error: Option<String>,
+) -> Result<PaymentRefundTemplate, Response> {
+    // Load original payment rows.
+    let originals = state
+        .transaction_repo
+        .find_by_correlation_id(payment_id)
+        .await
+        .map_err(|_| (StatusCode::INTERNAL_SERVER_ERROR, "Database error").into_response())?;
+    if originals.is_empty() {
+        return Err((StatusCode::NOT_FOUND, "Payment not found").into_response());
+    }
+
+    // Validate account_id matches.
+    if !originals.iter().all(|r| r.account_id == account_id) {
+        return Err((StatusCode::NOT_FOUND, "Payment not found for that account").into_response());
+    }
+
+    let mut total_original = 0u64;
+    let mut total_refunded = 0u64;
+    for o in &originals {
+        total_original += o.amount;
+        total_refunded += state
+            .transaction_repo
+            .sum_refunds_of(o.id)
+            .await
+            .map_err(|_| (StatusCode::INTERNAL_SERVER_ERROR, "Database error").into_response())?;
+    }
+    let remaining = total_original.saturating_sub(total_refunded);
+
+    let fmt = |a: u64| format!("{}.{:02}", a / 100, a % 100);
+    let payment_id_str = payment_id.to_string();
+    let payment_id_short: String = payment_id_str.chars().take(8).collect();
+
+    Ok(PaymentRefundTemplate {
+        prefix: state.path_prefix.clone(),
+        account_id: account_id.to_string(),
+        payment_id: payment_id_str,
+        payment_id_short,
+        original_amount_display: fmt(total_original),
+        remaining_refundable_paisa: remaining,
+        remaining_refundable_display: fmt(remaining),
+        error,
+    })
+}
+
+pub async fn refund_payment_form(
+    State(state): State<AppState>,
+    Path((account_id, payment_id)): Path<(Uuid, Uuid)>,
+) -> Response {
+    match build_refund_template(&state, account_id, payment_id, None).await {
+        Ok(tmpl) => render(tmpl),
+        Err(resp) => resp,
+    }
+}
+
+pub async fn process_refund_payment(
+    State(state): State<AppState>,
+    Path((account_id, payment_id)): Path<(Uuid, Uuid)>,
+    axum::extract::Form(form): axum::extract::Form<RefundPaymentForm>,
+) -> Response {
+    match state
+        .pb_payment_service
+        .refund_payment(
+            account_id,
+            payment_id,
+            form.amount_paisa,
+            form.description.as_deref(),
+            None,
+            None,
+        )
+        .await
+    {
+        Ok(_) => Redirect::to(&prefixed(
+            &state,
+            &format!("/admin/transactions/{payment_id}"),
+        ))
+        .into_response(),
+        Err(e) => {
+            tracing::error!("Failed to refund payment {payment_id}: {e}");
+            match build_refund_template(&state, account_id, payment_id, Some(e.to_string())).await {
+                Ok(tmpl) => render(tmpl),
+                Err(resp) => resp,
+            }
+        }
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -1275,6 +1522,12 @@ mod tests {
             is_payment: false,
             is_withdrawal: false,
             can_post_or_void: true,
+            can_refund: false,
+            is_refund: false,
+            refund_history: vec![],
+            remaining_refundable_display: "0.00".to_string(),
+            refund_of_payment_id: String::new(),
+            refund_load_failed: false,
         }
     }
 
@@ -1311,6 +1564,12 @@ mod tests {
             is_payment: true,
             is_withdrawal: false,
             can_post_or_void: false,
+            can_refund: true,
+            is_refund: false,
+            refund_history: vec![],
+            remaining_refundable_display: "12.34".to_string(),
+            refund_of_payment_id: String::new(),
+            refund_load_failed: false,
         }
     }
 
@@ -1347,6 +1606,12 @@ mod tests {
             is_payment: false,
             is_withdrawal: true,
             can_post_or_void: false,
+            can_refund: false,
+            is_refund: false,
+            refund_history: vec![],
+            remaining_refundable_display: "0.00".to_string(),
+            refund_of_payment_id: String::new(),
+            refund_load_failed: false,
         }
     }
 

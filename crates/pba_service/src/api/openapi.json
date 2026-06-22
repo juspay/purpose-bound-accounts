@@ -1589,6 +1589,82 @@
                 }
             }
         },
+        "/pb-accounts/{account_id}/payments/{payment_id}/refund": {
+            "post": {
+                "description": "Refund a previously settled PB→merchant payment.\n\nRecords a new compensating transaction (1 or 2 rows mirroring the\npayment's pool split) plus matching TB transfer(s) in the opposite\ndirection. Original payment rows are not mutated; each refund row\nlinks back via `reverses_transaction_id`.\n\nMultiple partial refunds are allowed per payment; the sum must not\nexceed the original payment amount. Refund credits self-pool first up\nto that pool's remaining-unrefunded amount, then others-pool. The PB\naccount must be Active. Refunds cannot themselves be refunded.",
+                "operationId": "RefundPBAccountPayment",
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/RefundPBAccountPaymentRequestContent"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "parameters": [
+                    {
+                        "name": "account_id",
+                        "in": "path",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "required": true
+                    },
+                    {
+                        "name": "payment_id",
+                        "in": "path",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "RefundPBAccountPayment 201 response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/RefundPBAccountPaymentResponseContent"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "RefundAmountInvalidError 400 response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/RefundAmountInvalidErrorResponseContent"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "AccountNotFoundError 404 response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/AccountNotFoundErrorResponseContent"
+                                }
+                            }
+                        }
+                    },
+                    "409": {
+                        "description": "PaymentFullyRefundedError 409 response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/PaymentFullyRefundedErrorResponseContent"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
         "/pb-accounts/{account_id}/status": {
             "patch": {
                 "description": "Update account status (freeze, close, reactivate).",
@@ -3032,6 +3108,21 @@
                     "updated_at"
                 ]
             },
+            "PaymentFullyRefundedErrorResponseContent": {
+                "type": "object",
+                "properties": {
+                    "error": {
+                        "type": "string"
+                    },
+                    "message": {
+                        "type": "string"
+                    }
+                },
+                "required": [
+                    "error",
+                    "message"
+                ]
+            },
             "PoolType": {
                 "type": "string",
                 "description": "Pool type indicating the source of funds.",
@@ -3213,6 +3304,100 @@
                 "required": [
                     "allowed_mccs",
                     "purpose_code"
+                ]
+            },
+            "RefundAmountInvalidErrorResponseContent": {
+                "type": "object",
+                "properties": {
+                    "error": {
+                        "type": "string"
+                    },
+                    "message": {
+                        "type": "string"
+                    }
+                },
+                "required": [
+                    "error",
+                    "message"
+                ]
+            },
+            "RefundPBAccountPaymentRequestContent": {
+                "type": "object",
+                "properties": {
+                    "amount": {
+                        "type": "number",
+                        "description": "Monetary amount in the smallest currency unit (e.g., paise for INR)."
+                    },
+                    "description": {
+                        "type": "string"
+                    },
+                    "gateway_ref": {
+                        "type": "string"
+                    },
+                    "idempotency_key": {
+                        "type": "string"
+                    }
+                },
+                "required": [
+                    "amount"
+                ]
+            },
+            "RefundPBAccountPaymentResponseContent": {
+                "type": "object",
+                "properties": {
+                    "refund_id": {
+                        "type": "string"
+                    },
+                    "original_payment_id": {
+                        "type": "string"
+                    },
+                    "account_id": {
+                        "type": "string"
+                    },
+                    "amount": {
+                        "type": "number",
+                        "description": "Monetary amount in the smallest currency unit (e.g., paise for INR)."
+                    },
+                    "amount_to_self": {
+                        "type": "number",
+                        "description": "Monetary amount in the smallest currency unit (e.g., paise for INR)."
+                    },
+                    "amount_to_others": {
+                        "type": "number",
+                        "description": "Monetary amount in the smallest currency unit (e.g., paise for INR)."
+                    },
+                    "original_amount": {
+                        "type": "number",
+                        "description": "Monetary amount in the smallest currency unit (e.g., paise for INR)."
+                    },
+                    "remaining_refundable": {
+                        "type": "number",
+                        "description": "Monetary amount in the smallest currency unit (e.g., paise for INR)."
+                    },
+                    "status": {
+                        "type": "string"
+                    },
+                    "correlation_id": {
+                        "type": "string"
+                    },
+                    "created_at": {
+                        "type": "string",
+                        "description": "ISO 8601 date-time.",
+                        "format": "date-time"
+                    }
+                },
+                "required": [
+                    "account_id",
+                    "amount",
+                    "amount_to_others",
+                    "amount_to_self",
+                    "correlation_id",
+                    "created_at",
+                    "original_amount",
+                    "original_payment_id",
+                    "refund_id",
+                    "remaining_refundable",
+                    "status"
                 ]
             },
             "ReverseNormalAccountTransferRequestContent": {

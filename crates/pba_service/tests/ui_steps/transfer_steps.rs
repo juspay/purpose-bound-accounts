@@ -516,6 +516,82 @@ async fn then_reverse_form_shows_insufficient_funds(world: &mut UiWorld) {
     );
 }
 
+/// Combined step: navigate to the normal account's transfer form, select the
+/// first PB account in the dropdown, fill the amount, and submit. Restores
+/// `world.account_id` to the PB account id stored in it before the normal
+/// account was created (the PB account was created first in refund scenarios).
+///
+/// This step assumes the dropdown on the transfer form contains exactly one
+/// real PB account for the holder.
+#[when(regex = r#"^I transfer (\d+) paisa from the normal account to the PB account$"#)]
+async fn when_transfer_to_pb_account(world: &mut UiWorld, amount: u64) {
+    let normal_account_id = world
+        .last_normal_account_id
+        .clone()
+        .expect("No normal account ID for transfer step");
+
+    let url = world.url(&format!(
+        "/admin/normal-accounts/{}/transfer",
+        normal_account_id
+    ));
+    let page = world.ensure_page().await;
+    page.goto(url)
+        .await
+        .expect("Failed to navigate to transfer form");
+    sleep(Duration::from_millis(400)).await;
+
+    // Select the first (only) real PB account option in the dropdown using JS
+    let page = world.ensure_page().await;
+    let js = r#"
+        const sel = document.querySelector("select[name='destination_pb_account_id']");
+        const opts = Array.from(sel.options).filter(o => o.value !== '');
+        if (opts.length > 0) { sel.value = opts[0].value; }
+    "#;
+    page.evaluate(js.to_string())
+        .await
+        .expect("Failed to select PB account in dropdown");
+
+    let amount_input = page
+        .find_element("input[name='amount']")
+        .await
+        .expect("Could not find amount input");
+    amount_input.click().await.expect("Failed to click amount");
+    amount_input
+        .type_str(&amount.to_string())
+        .await
+        .expect("Failed to type amount");
+
+    let submit = page
+        .find_element("button[type='submit']")
+        .await
+        .expect("Could not find submit button");
+    submit.click().await.expect("Failed to click submit");
+
+    // Wait for redirect to /admin/transfers/{id}
+    for _ in 0..20 {
+        sleep(Duration::from_millis(500)).await;
+        let page = world.ensure_page().await;
+        let current_url = page
+            .url()
+            .await
+            .expect("Failed to get URL")
+            .unwrap_or_default();
+        if let Some(transfer_id) = extract_transfer_id_from_url(&current_url) {
+            world.last_transfer_id = Some(transfer_id);
+            return;
+        }
+    }
+
+    let page = world.ensure_page().await;
+    let current_url = page.url().await.unwrap_or_default().unwrap_or_default();
+    let content = page.content().await.unwrap_or_default();
+    panic!(
+        "Transfer did not redirect to detail page. URL: {}. Content: {}",
+        current_url,
+        &content[..content.len().min(800)]
+    );
+}
+
 #[when(regex = r#"^the PB account spends (\d+) paisa on merchant "([^"]*)" with MCC "([^"]*)"$"#)]
 async fn when_pb_account_spends(world: &mut UiWorld, amount: u64, merchant: String, mcc: String) {
     let account_id = world

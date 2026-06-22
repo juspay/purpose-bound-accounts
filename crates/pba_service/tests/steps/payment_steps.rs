@@ -339,6 +339,295 @@ async fn list_transactions_for_current_account(world: &mut PbaWorld) {
     );
 }
 
+// ── Refund step bindings ──────────────────────────────────────────────────────
+
+// Helper: extract PascalCase error kind from the SDK error Debug string.
+fn classify_refund_error(err_str: &str) -> &'static str {
+    if err_str.contains("RefundNotRefundable") {
+        "RefundNotRefundable"
+    } else if err_str.contains("RefundAmountInvalid") {
+        "RefundAmountInvalid"
+    } else if err_str.contains("PaymentFullyRefunded") {
+        "PaymentFullyRefunded"
+    } else if err_str.contains("PbAccountNotActive") {
+        "PbAccountNotActive"
+    } else if err_str.contains("TransactionNotFound") {
+        "TransactionNotFound"
+    } else {
+        "unknown"
+    }
+}
+
+#[when(regex = r#"^I refund (\d+) paisa from the last payment$"#)]
+async fn refund_last_payment(world: &mut PbaWorld, amount: i64) {
+    // Save previous correlation for idempotency-replay assertion.
+    world.previous_refund_correlation_id = world.last_refund_correlation_id.take();
+
+    let account_id = world.account_id.as_ref().expect("No account ID").clone();
+    let payment_id = world
+        .last_payment
+        .as_ref()
+        .expect("No prior payment")
+        .payment_id
+        .clone();
+    let result = world
+        .client
+        .refund_pb_account_payment()
+        .account_id(account_id)
+        .payment_id(payment_id)
+        .amount(amount)
+        .send()
+        .await;
+    match result {
+        Ok(output) => {
+            world.last_refund_correlation_id = Some(output.correlation_id().to_string());
+            world.last_refund_amount_to_self = Some(output.amount_to_self());
+            world.last_refund_amount_to_others = Some(output.amount_to_others());
+            world.last_refund_remaining = Some(output.remaining_refundable());
+            world.last_error = None;
+        }
+        Err(e) => {
+            let s = format!("{e:?}");
+            world.last_error = Some(crate::PbaError {
+                kind: classify_refund_error(&s).to_string(),
+                message: Some(s),
+            });
+        }
+    }
+}
+
+#[when(regex = r#"^I attempt to refund (\d+) paisa from the last payment$"#)]
+async fn attempt_refund_last_payment(world: &mut PbaWorld, amount: i64) {
+    refund_last_payment(world, amount).await;
+}
+
+#[when(regex = r#"^I refund (\d+) paisa from the last payment with idempotency key "([^"]*)"$"#)]
+async fn refund_with_idem(world: &mut PbaWorld, amount: i64, key: String) {
+    world.previous_refund_correlation_id = world.last_refund_correlation_id.take();
+
+    let account_id = world.account_id.as_ref().expect("No account ID").clone();
+    let payment_id = world
+        .last_payment
+        .as_ref()
+        .expect("No prior payment")
+        .payment_id
+        .clone();
+    let result = world
+        .client
+        .refund_pb_account_payment()
+        .account_id(account_id)
+        .payment_id(payment_id)
+        .amount(amount)
+        .idempotency_key(key)
+        .send()
+        .await;
+    match result {
+        Ok(output) => {
+            world.last_refund_correlation_id = Some(output.correlation_id().to_string());
+            world.last_refund_amount_to_self = Some(output.amount_to_self());
+            world.last_refund_amount_to_others = Some(output.amount_to_others());
+            world.last_refund_remaining = Some(output.remaining_refundable());
+            world.last_error = None;
+        }
+        Err(e) => {
+            let s = format!("{e:?}");
+            world.last_error = Some(crate::PbaError {
+                kind: classify_refund_error(&s).to_string(),
+                message: Some(s),
+            });
+        }
+    }
+}
+
+#[when(regex = r#"^I attempt to refund (\d+) paisa from the last refund$"#)]
+async fn attempt_refund_last_refund(world: &mut PbaWorld, amount: i64) {
+    let account_id = world.account_id.as_ref().expect("No account ID").clone();
+    let refund_id = world
+        .last_refund_correlation_id
+        .as_ref()
+        .expect("No prior refund")
+        .clone();
+    let result = world
+        .client
+        .refund_pb_account_payment()
+        .account_id(account_id)
+        .payment_id(refund_id) // refund's correlation_id, not a real payment
+        .amount(amount)
+        .send()
+        .await;
+    match result {
+        Ok(_) => panic!("expected refund-of-refund to fail"),
+        Err(e) => {
+            let s = format!("{e:?}");
+            world.last_error = Some(crate::PbaError {
+                kind: classify_refund_error(&s).to_string(),
+                message: Some(s),
+            });
+        }
+    }
+}
+
+#[when(
+    regex = r#"^I attempt to refund (\d+) paisa from the last payment under a different PB account$"#
+)]
+async fn attempt_refund_wrong_account(world: &mut PbaWorld, amount: i64) {
+    let payment_id = world
+        .last_payment
+        .as_ref()
+        .expect("No prior payment")
+        .payment_id
+        .clone();
+    // Use a freshly minted (and unused) UUID as the wrong account id.
+    let wrong_account = uuid::Uuid::now_v7().to_string();
+    let result = world
+        .client
+        .refund_pb_account_payment()
+        .account_id(wrong_account)
+        .payment_id(payment_id)
+        .amount(amount)
+        .send()
+        .await;
+    match result {
+        Ok(_) => panic!("expected refund with wrong account to fail"),
+        Err(e) => {
+            let s = format!("{e:?}");
+            world.last_error = Some(crate::PbaError {
+                kind: classify_refund_error(&s).to_string(),
+                message: Some(s),
+            });
+        }
+    }
+}
+
+#[when(
+    regex = r#"^(\d+) concurrent refunds of (\d+) paisa each are attempted on the last payment$"#
+)]
+async fn concurrent_refunds(world: &mut PbaWorld, count: usize, amount: i64) {
+    let account_id = world.account_id.clone().expect("No account ID");
+    let payment_id = world
+        .last_payment
+        .as_ref()
+        .expect("No prior payment")
+        .payment_id
+        .clone();
+    let client = world.client.clone();
+
+    let futures: Vec<_> = (0..count)
+        .map(|_| {
+            let client = client.clone();
+            let account_id = account_id.clone();
+            let payment_id = payment_id.clone();
+            async move {
+                client
+                    .refund_pb_account_payment()
+                    .account_id(&account_id)
+                    .payment_id(&payment_id)
+                    .amount(amount)
+                    .send()
+                    .await
+            }
+        })
+        .collect();
+
+    let results = join_all(futures).await;
+    let mut successes = 0usize;
+    let mut total_refunded = 0i64;
+    for r in &results {
+        if let Ok(out) = r {
+            successes += 1;
+            total_refunded += out.amount();
+        }
+    }
+    world.concurrent_successes = Some(successes);
+    world.concurrent_failures = Some(results.len() - successes);
+    world.concurrent_refund_total_amount = Some(total_refunded);
+}
+
+#[then(regex = r#"^the total refunded amount across all refunds is at most (\d+) paisa$"#)]
+async fn total_refunded_at_most(world: &mut PbaWorld, max: i64) {
+    let t = world
+        .concurrent_refund_total_amount
+        .expect("No total refunded value");
+    assert!(
+        t <= max,
+        "Expected total refunded ≤ {max} paisa, got {t} — concurrent refunds exceeded original payment"
+    );
+}
+
+#[then(regex = r#"^the refund is successful$"#)]
+async fn refund_success(world: &mut PbaWorld) {
+    assert!(
+        world.last_error.is_none(),
+        "unexpected error: {:?}",
+        world.last_error
+    );
+    assert!(
+        world.last_refund_correlation_id.is_some(),
+        "no refund correlation id"
+    );
+}
+
+#[then(regex = r#"^the refund credited (\d+) to self and (\d+) to others$"#)]
+async fn refund_split(world: &mut PbaWorld, to_self: i64, to_others: i64) {
+    assert_eq!(world.last_refund_amount_to_self, Some(to_self));
+    assert_eq!(world.last_refund_amount_to_others, Some(to_others));
+}
+
+#[then(regex = r#"^the remaining refundable amount is (\d+)$"#)]
+async fn remaining_is(world: &mut PbaWorld, expected: i64) {
+    assert_eq!(world.last_refund_remaining, Some(expected));
+}
+
+#[then(regex = r#"^the refund fails with "([^"]*)"$"#)]
+async fn refund_fails(world: &mut PbaWorld, expected_kind: String) {
+    let err = world.last_error.as_ref().expect("expected an error");
+    assert_eq!(
+        err.kind, expected_kind,
+        "got error message: {:?}",
+        err.message
+    );
+}
+
+#[then(regex = r#"^the refund fails with "([^"]*)" reason "([^"]*)"$"#)]
+async fn refund_fails_with_reason(world: &mut PbaWorld, expected_kind: String, reason: String) {
+    let err = world.last_error.as_ref().expect("expected an error");
+    assert_eq!(err.kind, expected_kind);
+    let msg = err.message.as_deref().unwrap_or("");
+    assert!(
+        msg.contains(&reason),
+        "expected reason '{reason}' in message {msg:?}"
+    );
+}
+
+#[then(regex = r#"^the refund error remaining field is (\d+)$"#)]
+async fn refund_error_remaining(world: &mut PbaWorld, expected: i64) {
+    let err = world.last_error.as_ref().expect("expected an error");
+    let msg = err.message.as_deref().unwrap_or("");
+    let needle = format!("remaining refundable {expected}");
+    assert!(
+        msg.contains(&needle),
+        "expected '{needle}' in message {msg:?}"
+    );
+}
+
+#[then(regex = r#"^both refunds share the same correlation_id$"#)]
+async fn refunds_share_correlation(world: &mut PbaWorld) {
+    let curr = world
+        .last_refund_correlation_id
+        .as_ref()
+        .expect("no current refund");
+    let prev = world
+        .previous_refund_correlation_id
+        .as_ref()
+        .expect("no previous refund");
+    assert_eq!(
+        curr, prev,
+        "idempotency replay produced a different correlation_id"
+    );
+}
+
+// ── End of refund step bindings ───────────────────────────────────────────────
+
 #[then("the payment legs share correlation_id equal to the payment_id")]
 async fn payment_legs_share_correlation_id(world: &mut PbaWorld) {
     let payment = world.last_payment.as_ref().expect("No payment result");

@@ -563,4 +563,94 @@ impl TransactionRepo {
 
         Ok(row.map(|r| r.into_domain()))
     }
+
+    /// Return every refund row (or, in general, every row whose
+    /// `reverses_transaction_id` matches `original_row_id`). Used by payment
+    /// refund history and by `sum_refunds_of` consumers that want the rows
+    /// themselves. Type-agnostic — works for transfer reversal too.
+    pub async fn find_refunds_of(
+        &self,
+        original_row_id: Uuid,
+    ) -> Result<Vec<TransactionRecord>, AppError> {
+        let rows = sqlx::query_as::<_, TransactionRow>(
+            r#"
+            SELECT id, account_id, account_kind, type, status, amount, pool, direction,
+                   source_ifsc, source_account, gateway_ref, timeout_seconds,
+                   merchant_id, merchant_mcc, description, funding_type,
+                   tb_transfer_id::text as tb_transfer_id, idempotency_key, correlation_id,
+                   reverses_transaction_id, created_at, updated_at
+            FROM transactions
+            WHERE reverses_transaction_id = $1
+            ORDER BY created_at ASC, id ASC
+            "#,
+        )
+        .bind(original_row_id)
+        .fetch_all(&self.pool)
+        .await?;
+
+        Ok(rows.into_iter().map(|r| r.into_domain()).collect())
+    }
+
+    /// Sum the `amount` of every row whose `reverses_transaction_id` matches.
+    /// Type-agnostic. Used by `pb_payment_service::refund_payment` to compute
+    /// per-pool remaining-unrefunded. Returns 0 when no rows match.
+    pub async fn sum_refunds_of(&self, original_row_id: Uuid) -> Result<u64, AppError> {
+        let row: (Option<i64>,) = sqlx::query_as(
+            r#"SELECT COALESCE(SUM(amount), 0)::bigint
+               FROM transactions
+               WHERE reverses_transaction_id = $1"#,
+        )
+        .bind(original_row_id)
+        .fetch_one(&self.pool)
+        .await?;
+
+        Ok(row.0.unwrap_or(0) as u64)
+    }
+
+    /// Locked variant of `find_by_correlation_id` — issues `SELECT … FOR UPDATE`
+    /// inside the supplied transaction. Concurrent callers block until this
+    /// transaction commits or rolls back, serialising refund/reversal flows.
+    pub async fn find_by_correlation_id_for_update(
+        &self,
+        tx: &mut PgTransaction<'_, Postgres>,
+        correlation_id: Uuid,
+    ) -> Result<Vec<TransactionRecord>, AppError> {
+        let rows = sqlx::query_as::<_, TransactionRow>(
+            r#"
+            SELECT id, account_id, account_kind, type, status, amount, pool, direction,
+                   source_ifsc, source_account, gateway_ref, timeout_seconds,
+                   merchant_id, merchant_mcc, description, funding_type,
+                   tb_transfer_id::text as tb_transfer_id, idempotency_key, correlation_id,
+                   reverses_transaction_id, created_at, updated_at
+            FROM transactions
+            WHERE correlation_id = $1
+            ORDER BY created_at ASC
+            FOR UPDATE
+            "#,
+        )
+        .bind(correlation_id)
+        .fetch_all(&mut **tx)
+        .await?;
+
+        Ok(rows.into_iter().map(|r| r.into_domain()).collect())
+    }
+
+    /// Locked variant of `sum_refunds_of` — runs inside the supplied transaction
+    /// so reads see the same snapshot as the caller's `FOR UPDATE` lock.
+    pub async fn sum_refunds_of_in_tx(
+        &self,
+        tx: &mut PgTransaction<'_, Postgres>,
+        original_row_id: Uuid,
+    ) -> Result<u64, AppError> {
+        let row: (Option<i64>,) = sqlx::query_as(
+            r#"SELECT COALESCE(SUM(amount), 0)::bigint
+               FROM transactions
+               WHERE reverses_transaction_id = $1"#,
+        )
+        .bind(original_row_id)
+        .fetch_one(&mut **tx)
+        .await?;
+
+        Ok(row.0.unwrap_or(0) as u64)
+    }
 }

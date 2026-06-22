@@ -37,6 +37,7 @@ PostgreSQL (account metadata)  +  TigerBeetle (ledger / balances)
 | `POST` | `/accounts/{id}/payments` | Pay a merchant (MCC-validated, others-first splitting) |
 | `POST` | `/accounts/{id}/withdrawals` | Withdraw from self-pool only |
 | `POST` | `/normal-accounts/{id}/transfers/{id}/reverse` | Reverse a posted transfer (admin) |
+| `POST` | `/pb-accounts/{id}/payments/{id}/refund` | Refund a settled PB payment in whole or in part; multiple partials allowed (admin) |
 
 The API is defined using [Smithy](https://smithy.io/) models under `model/`. A generated Rust client SDK lives at `crates/pba_client/`.
 

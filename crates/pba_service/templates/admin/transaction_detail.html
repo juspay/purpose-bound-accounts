@@ -19,8 +19,20 @@
             <button type="submit" class="btn-danger">Void</button>
         </form>
         {% endif %}
+        {% if can_refund %}
+        <a href="{{ prefix }}/admin/accounts/{{ account_id }}/payments/{{ id }}/refund"
+           role="button" class="btn-danger">Refund (₹{{ remaining_refundable_display }} remaining)</a>
+        {% endif %}
     </div>
 </div>
+
+{% if refund_load_failed %}
+<article style="border-left: 4px solid var(--pico-color-amber-500); padding: 1rem;">
+    <strong>Refund data unavailable.</strong>
+    The database query for this payment's refund history failed; the remaining-refundable amount and refund history are not shown,
+    and the Refund button has been hidden to prevent acting on stale data. Retry by reloading the page.
+</article>
+{% endif %}
 
 <div class="grid">
     <article class="stat-card">
@@ -98,6 +110,37 @@
     <div class="kv">
         <div><strong>Gateway Ref:</strong></div><div class="mono">{{ gateway_ref }}</div>
     </div>
+</article>
+{% endif %}
+
+{% if is_refund %}
+<article>
+    <header>Refund of payment</header>
+    <p>This row is part of a refund of
+        <a href="{{ prefix }}/admin/transactions/{{ refund_of_payment_id }}" class="mono">{{ refund_of_payment_id }}</a>.
+    </p>
+</article>
+{% endif %}
+
+{% if !refund_history.is_empty() %}
+<article>
+    <header>Refund history — ₹{{ remaining_refundable_display }} remaining</header>
+    <table>
+        <thead>
+            <tr><th>When</th><th>To self</th><th>To others</th><th>Total</th><th>Refund id</th></tr>
+        </thead>
+        <tbody>
+            {% for r in refund_history %}
+            <tr>
+                <td>{{ r.created_at }}</td>
+                <td>₹{{ r.amount_to_self_display }}</td>
+                <td>₹{{ r.amount_to_others_display }}</td>
+                <td>₹{{ r.total_display }}</td>
+                <td><a href="{{ prefix }}/admin/transactions/{{ r.correlation_id }}" class="mono">{{ r.correlation_id_short }}</a></td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
 </article>
 {% endif %}
 {% endblock %}

@@ -132,6 +132,10 @@ pub fn create_router() -> Router<AppState> {
             get(transfer_handlers::reverse_transfer_form)
                 .post(transfer_handlers::process_reverse_transfer),
         )
+        .route(
+            "/admin/accounts/{account_id}/payments/{payment_id}/refund",
+            get(handlers::refund_payment_form).post(handlers::process_refund_payment),
+        )
         // Static assets (self-hosted so admin UI works offline / on locked-down networks).
         .route("/admin/static/htmx.min.js", get(serve_htmx))
         // TigerBeetle explorer

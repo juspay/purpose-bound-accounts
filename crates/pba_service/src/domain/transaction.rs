@@ -132,6 +132,7 @@ impl TransactionRecord {
             (TransactionType::Deposit, TransactionStatus::Pending) => "Deposit (Pending)",
             (TransactionType::Deposit, TransactionStatus::Posted) => "Deposit",
             (TransactionType::Deposit, TransactionStatus::Voided) => "Deposit (Voided)",
+            (TransactionType::Payment, _) if self.reverses_transaction_id.is_some() => "Refund",
             (TransactionType::Payment, _) => "Payment",
             (TransactionType::Withdrawal, _) => "Withdrawal",
             (TransactionType::Transfer, _) if self.reverses_transaction_id.is_some() => "Reversal",
@@ -196,5 +197,17 @@ mod tests {
     fn transfer_label_when_reverses_transaction_id_is_none() {
         let r = make(TransactionType::Transfer, None);
         assert_eq!(r.type_label(), "Transfer");
+    }
+
+    #[test]
+    fn type_label_renders_refund_for_payment_with_reverses_link() {
+        let r = make(TransactionType::Payment, Some(Uuid::now_v7()));
+        assert_eq!(r.type_label(), "Refund");
+    }
+
+    #[test]
+    fn type_label_renders_payment_when_no_reverses_link() {
+        let r = make(TransactionType::Payment, None);
+        assert_eq!(r.type_label(), "Payment");
     }
 }

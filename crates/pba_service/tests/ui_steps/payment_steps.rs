@@ -1,4 +1,5 @@
 use cucumber::{then, when};
+use regex::Regex;
 use std::time::Duration;
 use tokio::time::sleep;
 
@@ -440,5 +441,239 @@ async fn then_payment_rejected_not_active(world: &mut UiWorld) {
         err.kind, "account_not_active",
         "Expected account_not_active but got: {}",
         err.kind
+    );
+}
+
+// ---------------------------------------------------------------------------
+// Refund UI helpers
+// ---------------------------------------------------------------------------
+
+/// Navigate to the account's PB-account transfers fragment and extract the most
+/// recent payment txn id from the rendered table. Stores it in
+/// world.last_payment_id and navigates to /admin/transactions/{id}.
+///
+/// We fetch /admin/accounts/{id}/transfers directly (the HTMX fragment endpoint
+/// returns real HTML with /admin/transactions/{uuid} links ordered newest-first)
+/// rather than the main account detail page, which lazy-loads the table via HTMX
+/// and would have no transaction links in its initial HTML.
+async fn goto_last_payment_detail(world: &mut UiWorld) {
+    // If we've already captured the payment id earlier in the scenario, reuse it.
+    // After a refund, the most-recent transaction on the account is the refund row,
+    // not the original payment — re-discovery would clobber the payment id with a
+    // refund-row id.
+    let payment_id = match world.last_payment_id.clone() {
+        Some(id) => id,
+        None => {
+            let account_id = world.account_id.clone().expect("No account ID");
+            let fragment_url = world.url(&format!("/admin/accounts/{}/transfers", account_id));
+            let page = world.ensure_page().await;
+            page.goto(fragment_url)
+                .await
+                .expect("Failed to navigate to transfers fragment");
+            sleep(Duration::from_millis(400)).await;
+            let content = world
+                .ensure_page()
+                .await
+                .content()
+                .await
+                .expect("Failed to read transfers fragment content");
+            let re = Regex::new(r"/admin/transactions/([0-9a-f-]{36})").unwrap();
+            let id = re
+                .captures(&content)
+                .map(|c| c[1].to_string())
+                .expect("No transaction link found on account detail page");
+            world.last_payment_id = Some(id.clone());
+            id
+        }
+    };
+
+    let detail_url = world.url(&format!("/admin/transactions/{}", payment_id));
+    let page = world.ensure_page().await;
+    page.goto(detail_url)
+        .await
+        .expect("Failed to navigate to txn detail");
+    sleep(Duration::from_millis(400)).await;
+}
+
+async fn goto_last_refund_detail(world: &mut UiWorld) {
+    let refund_id = world.last_refund_id.clone().expect("No refund ID captured");
+    let url = world.url(&format!("/admin/transactions/{}", refund_id));
+    let page = world.ensure_page().await;
+    page.goto(url)
+        .await
+        .expect("Failed to navigate to refund detail");
+    sleep(Duration::from_millis(400)).await;
+}
+
+// ---------------------------------------------------------------------------
+// Refund when steps
+// ---------------------------------------------------------------------------
+
+#[when("I visit the transaction detail page for the last payment")]
+async fn when_visit_last_payment_detail(world: &mut UiWorld) {
+    goto_last_payment_detail(world).await;
+}
+
+#[when("I visit the transaction detail page for the last refund")]
+async fn when_visit_last_refund_detail(world: &mut UiWorld) {
+    goto_last_refund_detail(world).await;
+}
+
+#[when(regex = r#"^I click the Refund button and submit the refund form with amount (\d+)$"#)]
+async fn when_click_refund_and_submit(world: &mut UiWorld, amount_paisa: u64) {
+    let account_id = world.account_id.clone().expect("No account ID");
+    let payment_id = world.last_payment_id.clone().expect(
+        "No payment ID — call 'I visit the transaction detail page for the last payment' first",
+    );
+
+    let url = world.url(&format!(
+        "/admin/accounts/{}/payments/{}/refund",
+        account_id, payment_id
+    ));
+    let page = world.ensure_page().await;
+    page.goto(url)
+        .await
+        .expect("Failed to navigate to refund form");
+    sleep(Duration::from_millis(400)).await;
+
+    // Clear pre-filled amount and type the requested value
+    let page = world.ensure_page().await;
+    let prep_js = r#"
+    var inp = document.querySelector("input[name='amount_paisa']");
+    if (inp) {
+        inp.removeAttribute('max');
+        inp.value = '';
+    }
+"#;
+    let _ = page.evaluate(prep_js.to_string()).await;
+
+    let amount_input = page
+        .find_element("input[name='amount_paisa']")
+        .await
+        .expect("Could not find amount_paisa input on refund form");
+    amount_input
+        .click()
+        .await
+        .expect("Failed to click amount_paisa");
+    amount_input
+        .type_str(&amount_paisa.to_string())
+        .await
+        .expect("Failed to type amount_paisa");
+
+    let submit = page
+        .find_element("button[type='submit']")
+        .await
+        .expect("Could not find submit button on refund form");
+    submit.click().await.expect("Failed to click submit");
+
+    sleep(Duration::from_millis(800)).await;
+
+    // On success, the server redirects to /admin/transactions/{payment_id} and the
+    // refund-history block on that page contains a link to the new refund correlation_id.
+    // Capture the refund correlation_id from any /admin/transactions/{uuid} link on the
+    // post-submit page that isn't the payment id itself.
+    let page = world.ensure_page().await;
+    let content = page
+        .content()
+        .await
+        .expect("Failed to read content after refund submit");
+    let re = Regex::new(r"/admin/transactions/([0-9a-f-]{36})").unwrap();
+    for cap in re.captures_iter(&content) {
+        let candidate = cap[1].to_string();
+        if Some(candidate.clone()) != world.last_payment_id {
+            world.last_refund_id = Some(candidate);
+            break;
+        }
+    }
+}
+
+// ---------------------------------------------------------------------------
+// Refund then steps
+// ---------------------------------------------------------------------------
+
+#[then("the page shows a Refund button")]
+async fn then_refund_button_visible(world: &mut UiWorld) {
+    let account_id = world.account_id.clone().expect("No account ID");
+    let payment_id = world.last_payment_id.clone().expect("No payment ID");
+    let expected_href = format!(
+        "/admin/accounts/{}/payments/{}/refund",
+        account_id, payment_id
+    );
+    let page = world.ensure_page().await;
+    let content = page.content().await.expect("Failed to read page content");
+    assert!(
+        content.contains(&expected_href),
+        "Expected Refund button (href containing '{}'). Page snippet: {}",
+        expected_href,
+        &content[..content.len().min(2000)]
+    );
+}
+
+#[then("the page does not show a Refund button")]
+async fn then_refund_button_absent(world: &mut UiWorld) {
+    let page = world.ensure_page().await;
+    let content = page.content().await.expect("Failed to read page content");
+    // Look for any /refund href under /admin/accounts/.../payments/.../refund
+    let re = Regex::new(r"/admin/accounts/[0-9a-f-]{36}/payments/[0-9a-f-]{36}/refund").unwrap();
+    assert!(
+        !re.is_match(&content),
+        "Expected Refund button to be ABSENT, but found one. Page snippet: {}",
+        &content[..content.len().min(2000)]
+    );
+}
+
+#[then(regex = r#"^the page shows "([^"]*)"$"#)]
+async fn then_page_shows_text(world: &mut UiWorld, text: String) {
+    let page = world.ensure_page().await;
+    let content = page.content().await.expect("Failed to read page content");
+    assert!(
+        content.contains(&text),
+        "Expected page to contain '{}'. Page snippet: {}",
+        text,
+        &content[..content.len().min(2000)]
+    );
+}
+
+#[then(regex = r#"^the page shows a refund history entry for (\d+) paisa total$"#)]
+async fn then_refund_history_entry(world: &mut UiWorld, paisa: i64) {
+    let page = world.ensure_page().await;
+    let content = page.content().await.expect("Failed to read page content");
+    assert!(
+        content.contains("Refund history"),
+        "Expected 'Refund history' section. Page snippet: {}",
+        &content[..content.len().min(2000)]
+    );
+    let display = format!("{}.{:02}", paisa / 100, paisa % 100);
+    let needle = format!("<td>₹{}</td>", display);
+    assert!(
+        content.contains(&needle),
+        "Expected refund history to show <td>₹{}</td> total. Page snippet: {}",
+        display,
+        &content[..content.len().min(2000)]
+    );
+}
+
+#[then(regex = r#"^the refund form shows an error containing "([^"]*)"$"#)]
+async fn then_refund_form_shows_error(world: &mut UiWorld, needle: String) {
+    let page = world.ensure_page().await;
+    let content = page.content().await.expect("Failed to read page content");
+    assert!(
+        content.contains("Refund failed") && content.contains(&needle),
+        "Expected refund form error containing '{}'. Page snippet: {}",
+        needle,
+        &content[..content.len().min(3000)]
+    );
+}
+
+#[then(regex = r#"^the remaining refundable on the payment page shows (\d+) paisa$"#)]
+async fn then_remaining_refundable_display(world: &mut UiWorld, paisa: i64) {
+    let page = world.ensure_page().await;
+    let content = page.content().await.expect("Failed to read page content");
+    let display = format!("₹{}.{:02} remaining", paisa / 100, paisa % 100);
+    assert!(
+        content.contains(&display),
+        "Expected payment detail to show '{}'. Page snippet: {}",
+        display,
+        &content[..content.len().min(2000)]
     );
 }

@@ -429,3 +429,46 @@ impl From<crate::service::transfer_service::ReversalResult> for ReversalResponse
         }
     }
 }
+
+// ── Payment Refund ──
+
+#[derive(Debug, Deserialize)]
+pub struct RefundPaymentRequest {
+    pub amount: u64,
+    pub description: Option<String>,
+    pub gateway_ref: Option<String>,
+    pub idempotency_key: Option<String>,
+}
+
+#[derive(Debug, Serialize)]
+pub struct RefundResponse {
+    pub refund_id: Uuid,
+    pub original_payment_id: Uuid,
+    pub account_id: Uuid,
+    pub amount: u64,
+    pub amount_to_self: u64,
+    pub amount_to_others: u64,
+    pub original_amount: u64,
+    pub remaining_refundable: u64,
+    pub status: String,
+    pub correlation_id: Uuid,
+    pub created_at: chrono::DateTime<chrono::Utc>,
+}
+
+impl From<crate::service::pb_payment_service::RefundResult> for RefundResponse {
+    fn from(r: crate::service::pb_payment_service::RefundResult) -> Self {
+        Self {
+            refund_id: r.refund_id,
+            original_payment_id: r.original_payment_id,
+            account_id: r.account_id,
+            amount: r.amount,
+            amount_to_self: r.amount_to_self,
+            amount_to_others: r.amount_to_others,
+            original_amount: r.original_amount,
+            remaining_refundable: r.remaining_refundable,
+            status: r.status.as_str().to_string(),
+            correlation_id: r.correlation_id,
+            created_at: r.created_at,
+        }
+    }
+}
