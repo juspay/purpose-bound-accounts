@@ -56,10 +56,12 @@ caller-initiated).
   `transaction_type='payment'`; pending reversal rows stay
   `transaction_type='transfer'`. Same `reverses_transaction_id` linkage. The
   `status` column carries the lifecycle state.
-- **Schema migrations.** All required columns already exist
-  (`status`, `timeout_seconds`, `tb_transfer_id`, `reverses_transaction_id`).
-  The partial unique index from PR #38 is verified during implementation but
-  not expected to change.
+- **Schema changes beyond one index rebuild.** All required columns already
+  exist (`status`, `timeout_seconds`, `tb_transfer_id`,
+  `reverses_transaction_id`). One small migration is needed to widen the
+  reversal-uniqueness partial index from `WHERE type='transfer'` to also
+  exclude voided rows (`status != 'voided'`), so a voided pending reversal
+  does not permanently block re-reversal. No column adds, no data backfills.
 - **Sponsor-self-serve post/void.** Admin-only for this iteration, consistent
   with the existing reversal/refund posture.
 
@@ -115,7 +117,7 @@ excluded.
 
 | Area | Change |
 |---|---|
-| Schema | None expected. Verify PR #38's partial unique index covers pending rows during plan execution. |
+| Schema | One small index migration to widen the reversal-uniqueness partial index — exclude voided rows so re-reversal is possible after a void. |
 | Smithy | Two new operations (`PostPBAccountRefund`, `VoidPBAccountRefund`). Extend `ReverseNormalAccountTransfer` and `RefundPBAccountPayment` inputs with optional `pending` + `timeout_seconds`. |
 | Routes | Two new routes (`POST /pb-accounts/{id}/refunds/{id}/post`, `POST /pb-accounts/{id}/refunds/{id}/void`). No new routes for reversal — the existing `/transfers/{id}/post|void` handlers already accept pending reversal rows. |
 | Domain | None. Reversal rows remain `transaction_type='transfer'`; refund rows remain `transaction_type='payment'`. |
@@ -321,23 +323,28 @@ Both methods take `(pb_account_id, refund_id)` and follow the same skeleton:
 
 ### `ledger_repo`
 
-Three new helpers; signatures mirror their non-pending counterparts plus a
+Two new helpers; signatures mirror their non-pending counterparts plus a
 `timeout` parameter, and they return the TB-generated transfer id(s):
 
-- `create_pending_internal_transfer_reversal(debit_pb_tb, credit_normal_tb,
-  amount, timeout) -> u128`.
 - `create_pending_payment_refund(credit_pb_pool_tb, amount, timeout) -> u128`.
 - `create_pending_payment_refund_split(credit_pb_self_tb, credit_pb_others_tb,
   amount_self, amount_others, timeout) -> (u128, u128)`. Both transfers carry
   the `LINKED` flag plus `pending`; the second leg is the un-linked terminator
   of the chain per TB semantics.
 
-Existing `post_pending_transfer(tb_id)` and `void_pending_transfer(tb_id)` are
-already generic and reused for all post/void paths.
+Pending reversal does **not** get a dedicated helper — the existing
+`create_pending_transfer(debit, credit, amount, code, timeout)` is already
+generic; reversal callers pass `INTERNAL_TRANSFER_REVERSAL_CODE` directly.
 
-The reversal helper may collapse into the existing
-`create_pending_internal_transfer` if the only difference is the transfer
-code (210 vs 410). Decision deferred to the plan.
+Existing `post_pending_transfer(tb_id)` and `void_pending_transfer(tb_id)`
+are already generic and reused for all post/void paths. For LINKED-pending
+refund splits, `post_refund` and `void_refund` iterate each leg's stored
+`tb_transfer_id` and call them in sequence. TB does not chain post/void
+across a LINKED creation — each pending id is resolved independently. If
+the first call succeeds and the second fails, the next post/void retry
+finishes the job (post_pending_transfer is naturally idempotent against an
+already-posted id at the TB layer; the service layer must tolerate the
+"already resolved" error or check status first).
 
 ## Admin UI
 
@@ -426,24 +433,28 @@ on all commits.
 
 ## Open items resolved during plan
 
-- TB LINKED post/void semantics: confirm whether resolving the head of the
-  link automatically resolves the tail (in which case `post_refund` only
-  needs to call `post_pending_transfer` once per refund correlation, not per
-  leg). If not, the loop posts each leg.
-- Idempotent post/void behavior on already-resolved rows: confirm
-  `post_transfer` returns 200 no-op rather than an error, and mirror it.
-- `find_reversal_of` widening interaction with the PR #38 partial unique
-  index — verify the index does not need to widen too (current scope:
-  `WHERE type='transfer'`, no status filter; expected fine).
-- Whether `create_pending_internal_transfer_reversal` collapses into the
-  existing `create_pending_internal_transfer` by parameterizing the code.
+All open items from earlier drafts are now resolved:
+
+- **TB LINKED post/void**: Each pending TB transfer in a LINKED-create chain
+  is resolved independently at post/void time. `post_refund`/`void_refund`
+  iterate each leg.
+- **post_transfer / void_transfer idempotency**: Verified non-idempotent
+  today (rejects `TransactionNotPending` on already-resolved rows). This PR
+  adds the same-direction no-op behavior to both methods so refund and
+  reversal share posture.
+- **Partial unique index**: Current `WHERE type='transfer'` filter would
+  permanently block re-reversal after a voided reversal. One small
+  migration widens it to `WHERE type='transfer' AND status != 'voided'`.
+- **Reversal TB helper**: Collapses — `create_pending_transfer` already
+  takes the code as a parameter, so pending reversal calls it with
+  `INTERNAL_TRANSFER_REVERSAL_CODE`. No new helper needed for the reversal
+  half.
 
 ## Out of scope (explicit non-deliverables)
 
 - Webhook callbacks driving post/void.
 - Self-serve (non-admin) post/void.
 - Partial post or partial void.
-- Schema migrations.
 - New timeout worker. Background expiry is in scope but achieved entirely by
   populating `timeout_seconds` on the new pending rows and renaming the
   existing poller; no new worker logic.
