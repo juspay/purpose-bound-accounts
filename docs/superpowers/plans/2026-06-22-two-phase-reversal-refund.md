@@ -2165,7 +2165,18 @@ pub async fn admin_post_refund(
     }
 }
 
-pub async fn admin_void_refund(...) { /* mirrors */ }
+pub async fn admin_void_refund(
+    State(state): State<AppState>,
+    Path((account_id, refund_id)): Path<(Uuid, Uuid)>,
+) -> Result<Redirect, impl IntoResponse> {
+    match state.pb_payment_service.void_refund(account_id, refund_id).await {
+        Ok(_) => Ok(Redirect::to(&format!(
+            "{}/admin/transactions/{}",
+            state.path_prefix, refund_id
+        ))),
+        Err(e) => Err((StatusCode::BAD_REQUEST, format!("void failed: {e:?}")).into_response()),
+    }
+}
 ```
 
 - [ ] **Step 2: Register routes**
