@@ -1298,9 +1298,105 @@ git commit -m "test(e2e): pending refund reserves remaining-refundable"
   - `pub async fn post_refund(&self, pb_account_id: Uuid, refund_id: Uuid) -> Result<RefundResult, AppError>` — flips all rows in the refund correlation from Pending → Settled, calls `post_pending_transfer` per leg, idempotent on already-Settled.
   - `pub async fn void_refund(&self, pb_account_id: Uuid, refund_id: Uuid) -> Result<RefundResult, AppError>` — same shape, Pending → Voided, `void_pending_transfer` per leg, idempotent on already-Voided.
 
-- [ ] **Step 1: Add `post_refund`**
+- [ ] **Step 1: Add a private `RefundResolution` enum and the shared helper**
 
-After `refund_payment`, add:
+After `refund_payment`, add a private enum and a `resolve_refund` helper. The two public methods (post + void) become thin wrappers — no duplication.
+
+```rust
+enum RefundResolution {
+    Post,
+    Void,
+}
+
+impl RefundResolution {
+    fn target(&self) -> TransactionStatus {
+        match self {
+            Self::Post => TransactionStatus::Settled,
+            Self::Void => TransactionStatus::Voided,
+        }
+    }
+
+    fn target_sql(&self) -> &'static str {
+        match self {
+            Self::Post => "settled",
+            Self::Void => "voided",
+        }
+    }
+}
+
+impl PbPaymentService {
+    async fn resolve_refund(
+        &self,
+        pb_account_id: Uuid,
+        refund_id: Uuid,
+        direction: RefundResolution,
+    ) -> Result<RefundResult, AppError> {
+        let rows = self
+            .transaction_repo
+            .find_by_correlation_id(refund_id)
+            .await?;
+        if rows.is_empty() {
+            return Err(AppError::TransactionNotFound(refund_id.to_string()));
+        }
+        for r in &rows {
+            if r.account_kind != crate::domain::account_kind::AccountKind::Pb
+                || r.account_id != pb_account_id
+                || r.transaction_type != TransactionType::Payment
+                || r.reverses_transaction_id.is_none()
+            {
+                return Err(AppError::TransactionNotFound(refund_id.to_string()));
+            }
+        }
+
+        // Idempotent same-direction no-op
+        if rows.iter().all(|r| r.status == direction.target()) {
+            return self.build_refund_result_from_rows(pb_account_id, refund_id, &rows).await;
+        }
+        if rows.iter().any(|r| r.status != TransactionStatus::Pending) {
+            return Err(AppError::TransactionNotPending(refund_id.to_string()));
+        }
+
+        // Per-leg TB resolution. Tolerate already-resolved errors from the TB
+        // layer in case a LINKED chain auto-resolves the tail.
+        for r in &rows {
+            if r.tb_transfer_id != 0 {
+                let res = match direction {
+                    RefundResolution::Post => {
+                        self.ledger_repo.post_pending_transfer(r.tb_transfer_id).await
+                    }
+                    RefundResolution::Void => {
+                        self.ledger_repo.void_pending_transfer(r.tb_transfer_id).await
+                    }
+                };
+                if let Err(e) = res {
+                    if !format!("{e:?}").contains("already_") {
+                        return Err(e);
+                    }
+                }
+            }
+        }
+
+        sqlx::query(
+            r#"UPDATE transactions
+               SET status = $1, updated_at = now()
+               WHERE correlation_id = $2 AND status = 'pending'"#,
+        )
+        .bind(direction.target_sql())
+        .bind(refund_id)
+        .execute(self.transaction_repo.pool())
+        .await
+        .map_err(|e| AppError::DatabaseError(e.to_string()))?;
+
+        let updated = self
+            .transaction_repo
+            .find_by_correlation_id(refund_id)
+            .await?;
+        self.build_refund_result_from_rows(pb_account_id, refund_id, &updated).await
+    }
+}
+```
+
+- [ ] **Step 2: Add the public wrappers**
 
 ```rust
 pub async fn post_refund(
@@ -1308,128 +1404,17 @@ pub async fn post_refund(
     pb_account_id: Uuid,
     refund_id: Uuid,
 ) -> Result<RefundResult, AppError> {
-    let rows = self
-        .transaction_repo
-        .find_by_correlation_id(refund_id)
-        .await?;
-    if rows.is_empty() {
-        return Err(AppError::TransactionNotFound(refund_id.to_string()));
-    }
-    for r in &rows {
-        if r.account_kind != crate::domain::account_kind::AccountKind::Pb
-            || r.account_id != pb_account_id
-            || r.transaction_type != TransactionType::Payment
-            || r.reverses_transaction_id.is_none()
-        {
-            return Err(AppError::TransactionNotFound(refund_id.to_string()));
-        }
-    }
-
-    // Idempotent same-direction no-op
-    if rows.iter().all(|r| r.status == TransactionStatus::Settled) {
-        return self.build_refund_result_from_rows(pb_account_id, refund_id, &rows).await;
-    }
-    if rows.iter().any(|r| r.status != TransactionStatus::Pending) {
-        return Err(AppError::TransactionNotPending(refund_id.to_string()));
-    }
-
-    // Per-leg TB post
-    for r in &rows {
-        if r.tb_transfer_id != 0 {
-            self.ledger_repo
-                .post_pending_transfer(r.tb_transfer_id)
-                .await
-                .or_else(|e| {
-                    // Tolerate already-resolved at the TB layer (LINKED chain
-                    // post may auto-resolve the tail, depending on TB version).
-                    if format!("{e:?}").contains("already_") {
-                        Ok(())
-                    } else {
-                        Err(e)
-                    }
-                })?;
-        }
-    }
-
-    sqlx::query(
-        r#"UPDATE transactions
-           SET status = 'settled', updated_at = now()
-           WHERE correlation_id = $1 AND status = 'pending'"#,
-    )
-    .bind(refund_id)
-    .execute(self.transaction_repo.pool())
-    .await
-    .map_err(|e| AppError::DatabaseError(e.to_string()))?;
-
-    let updated = self
-        .transaction_repo
-        .find_by_correlation_id(refund_id)
-        .await?;
-    self.build_refund_result_from_rows(pb_account_id, refund_id, &updated).await
+    self.resolve_refund(pb_account_id, refund_id, RefundResolution::Post)
+        .await
 }
-```
 
-- [ ] **Step 2: Add `void_refund` (same shape, void/`Voided`)**
-
-```rust
 pub async fn void_refund(
     &self,
     pb_account_id: Uuid,
     refund_id: Uuid,
 ) -> Result<RefundResult, AppError> {
-    let rows = self
-        .transaction_repo
-        .find_by_correlation_id(refund_id)
-        .await?;
-    if rows.is_empty() {
-        return Err(AppError::TransactionNotFound(refund_id.to_string()));
-    }
-    for r in &rows {
-        if r.account_kind != crate::domain::account_kind::AccountKind::Pb
-            || r.account_id != pb_account_id
-            || r.transaction_type != TransactionType::Payment
-            || r.reverses_transaction_id.is_none()
-        {
-            return Err(AppError::TransactionNotFound(refund_id.to_string()));
-        }
-    }
-    if rows.iter().all(|r| r.status == TransactionStatus::Voided) {
-        return self.build_refund_result_from_rows(pb_account_id, refund_id, &rows).await;
-    }
-    if rows.iter().any(|r| r.status != TransactionStatus::Pending) {
-        return Err(AppError::TransactionNotPending(refund_id.to_string()));
-    }
-
-    for r in &rows {
-        if r.tb_transfer_id != 0 {
-            self.ledger_repo
-                .void_pending_transfer(r.tb_transfer_id)
-                .await
-                .or_else(|e| {
-                    if format!("{e:?}").contains("already_") {
-                        Ok(())
-                    } else {
-                        Err(e)
-                    }
-                })?;
-        }
-    }
-
-    sqlx::query(
-        r#"UPDATE transactions
-           SET status = 'voided', updated_at = now()
-           WHERE correlation_id = $1 AND status = 'pending'"#,
-    )
-    .bind(refund_id)
-    .execute(self.transaction_repo.pool())
-    .await
-    .map_err(|e| AppError::DatabaseError(e.to_string()))?;
-
-    let updated = self
-        .transaction_repo
-        .find_by_correlation_id(refund_id)
-        .await?;
-    self.build_refund_result_from_rows(pb_account_id, refund_id, &updated).await
+    self.resolve_refund(pb_account_id, refund_id, RefundResolution::Void)
+        .await
 }
 ```
 
