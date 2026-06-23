@@ -95,7 +95,11 @@ operation ReverseNormalAccountTransfer {
         @required
         amount: Money
 
+        pending: Boolean
+
         gateway_ref: String
+
+        timeout_seconds: Integer
 
         description: String
 

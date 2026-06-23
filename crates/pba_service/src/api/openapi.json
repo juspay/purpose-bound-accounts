@@ -3407,8 +3407,14 @@
                         "type": "number",
                         "description": "Monetary amount in the smallest currency unit (e.g., paise for INR)."
                     },
+                    "pending": {
+                        "type": "boolean"
+                    },
                     "gateway_ref": {
                         "type": "string"
+                    },
+                    "timeout_seconds": {
+                        "type": "number"
                     },
                     "description": {
                         "type": "string"
