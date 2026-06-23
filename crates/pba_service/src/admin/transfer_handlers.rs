@@ -498,6 +498,8 @@ pub async fn process_reverse_transfer(
             source_row.account_id,
             transfer_id,
             form.amount_paisa,
+            false,
+            None,
             None,
             form.description.as_deref(),
             None,

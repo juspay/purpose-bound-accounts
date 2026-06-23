@@ -85,6 +85,8 @@ pub async fn reverse_transfer(
             source_id,
             transfer_id,
             req.amount,
+            false,
+            None,
             req.gateway_ref.as_deref(),
             req.description.as_deref(),
             req.idempotency_key.as_deref(),
