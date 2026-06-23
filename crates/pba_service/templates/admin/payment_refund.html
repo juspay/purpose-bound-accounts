@@ -39,6 +39,17 @@
             <input type="text" name="description" maxlength="256">
         </label>
 
+        <fieldset>
+            <legend>Mode</legend>
+            <label><input type="radio" name="mode" value="settle" checked> Settle now</label>
+            <label><input type="radio" name="mode" value="pending"> Hold as pending</label>
+        </fieldset>
+
+        <label>
+            Timeout (seconds, optional)
+            <input type="number" name="timeout_seconds" min="1" placeholder="default">
+        </label>
+
         <button type="submit" class="outline" style="color: #c62828; border-color: #c62828;">Refund</button>
         <a href="{{ prefix }}/admin/transactions/{{ payment_id }}" role="button" class="secondary outline">Cancel</a>
     </article>

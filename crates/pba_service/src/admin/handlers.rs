@@ -1391,6 +1391,10 @@ struct PaymentRefundTemplate {
 pub struct RefundPaymentForm {
     pub amount_paisa: u64,
     pub description: Option<String>,
+    #[serde(default)]
+    pub mode: Option<String>,
+    #[serde(default)]
+    pub timeout_seconds: Option<u32>,
 }
 
 async fn build_refund_template(
@@ -1457,14 +1461,15 @@ pub async fn process_refund_payment(
     Path((account_id, payment_id)): Path<(Uuid, Uuid)>,
     axum::extract::Form(form): axum::extract::Form<RefundPaymentForm>,
 ) -> Response {
+    let is_pending = form.mode.as_deref() == Some("pending");
     match state
         .pb_payment_service
         .refund_payment(
             account_id,
             payment_id,
             form.amount_paisa,
-            false,
-            None,
+            is_pending,
+            form.timeout_seconds,
             form.description.as_deref(),
             None,
             None,

@@ -425,6 +425,10 @@ struct TransferReverseTemplate {
 pub struct ReverseTransferForm {
     pub amount_paisa: u64,
     pub description: Option<String>,
+    #[serde(default)]
+    pub mode: Option<String>,
+    #[serde(default)]
+    pub timeout_seconds: Option<u32>,
 }
 
 async fn build_reverse_template(
@@ -492,14 +496,15 @@ pub async fn process_reverse_transfer(
         Err(_) => return (StatusCode::NOT_FOUND, "Transfer not found").into_response(),
     };
 
+    let is_pending = form.mode.as_deref() == Some("pending");
     match state
         .transfer_service
         .reverse_transfer(
             source_row.account_id,
             transfer_id,
             form.amount_paisa,
-            false,
-            None,
+            is_pending,
+            form.timeout_seconds,
             None,
             form.description.as_deref(),
             None,
