@@ -119,6 +119,16 @@
     <p>This row is part of a refund of
         <a href="{{ prefix }}/admin/transactions/{{ refund_of_payment_id }}" class="mono">{{ refund_of_payment_id }}</a>.
     </p>
+    {% if is_pending_refund %}
+    <div class="row" style="margin-top: 1rem; gap: 0.5rem;">
+        <form method="post" action="{{ prefix }}/admin/accounts/{{ account_id }}/refunds/{{ id }}/post" class="inline-form" onsubmit="return confirm('Post this pending refund? Funds will be committed.');">
+            <button type="submit">Post refund</button>
+        </form>
+        <form method="post" action="{{ prefix }}/admin/accounts/{{ account_id }}/refunds/{{ id }}/void" class="inline-form" onsubmit="return confirm('Void this pending refund? Reserved funds will be released.');">
+            <button type="submit" class="btn-danger">Void refund</button>
+        </form>
+    </div>
+    {% endif %}
 </article>
 {% endif %}
 
@@ -127,15 +137,22 @@
     <header>Refund history — ₹{{ remaining_refundable_display }} remaining</header>
     <table>
         <thead>
-            <tr><th>When</th><th>To self</th><th>To others</th><th>Total</th><th>Refund id</th></tr>
+            <tr><th>When</th><th>To self</th><th>To others</th><th>Total</th><th>Status</th><th>Refund id</th></tr>
         </thead>
         <tbody>
             {% for r in refund_history %}
             <tr>
                 <td>{{ r.created_at }}</td>
+                {% if r.is_voided %}
+                <td><s>₹{{ r.amount_to_self_display }}</s></td>
+                <td><s>₹{{ r.amount_to_others_display }}</s></td>
+                <td><s>₹{{ r.total_display }}</s></td>
+                {% else %}
                 <td>₹{{ r.amount_to_self_display }}</td>
                 <td>₹{{ r.amount_to_others_display }}</td>
                 <td>₹{{ r.total_display }}</td>
+                {% endif %}
+                <td style="text-transform: capitalize;">{{ r.status }}</td>
                 <td><a href="{{ prefix }}/admin/transactions/{{ r.correlation_id }}" class="mono">{{ r.correlation_id_short }}</a></td>
             </tr>
             {% endfor %}

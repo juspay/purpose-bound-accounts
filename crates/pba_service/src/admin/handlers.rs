@@ -1024,6 +1024,8 @@ struct RefundHistoryRow {
     amount_to_self_display: String,
     amount_to_others_display: String,
     total_display: String,
+    status: String,
+    is_voided: bool,
 }
 
 #[derive(Template)]
@@ -1063,6 +1065,7 @@ struct TransactionDetailTemplate {
     // Refund-related (Payment rows only)
     can_refund: bool,
     is_refund: bool,
+    is_pending_refund: bool,
     refund_history: Vec<RefundHistoryRow>,
     remaining_refundable_display: String,
     refund_of_payment_id: String,
@@ -1138,6 +1141,7 @@ pub async fn transaction_detail(
     let can_post_or_void = matches!(
         txn.transaction_type,
         crate::domain::transaction::TransactionType::Deposit
+            | crate::domain::transaction::TransactionType::Transfer
     ) && matches!(txn.status, TransactionStatus::Pending);
 
     // Collect all non-ownership-taking fields first
@@ -1179,6 +1183,7 @@ pub async fn transaction_detail(
 
     // Refund-related fields (Payment rows only).
     let is_refund = is_payment && txn.reverses_transaction_id.is_some();
+    let is_pending_refund = is_refund && matches!(txn.status, TransactionStatus::Pending);
 
     let fmt_paisa = |a: u64| format!("{}.{:02}", a / 100, a % 100);
 
@@ -1201,8 +1206,11 @@ pub async fn transaction_detail(
             Ok(originals) => {
                 let mut total_original = 0u64;
                 let mut total_refunded = 0u64;
-                let mut by_corr: BTreeMap<Uuid, (chrono::DateTime<chrono::Utc>, u64, u64)> =
-                    BTreeMap::new();
+                // (earliest_ts, amount_to_self, amount_to_others, status)
+                let mut by_corr: BTreeMap<
+                    Uuid,
+                    (chrono::DateTime<chrono::Utc>, u64, u64, TransactionStatus),
+                > = BTreeMap::new();
                 let mut load_failed = false;
 
                 for o in &originals {
@@ -1212,7 +1220,8 @@ pub async fn transaction_detail(
                             for r in refs {
                                 total_refunded += r.amount;
                                 let cid = r.correlation_id.unwrap_or(r.id);
-                                let entry = by_corr.entry(cid).or_insert((r.created_at, 0, 0));
+                                let entry =
+                                    by_corr.entry(cid).or_insert((r.created_at, 0, 0, r.status));
                                 if r.created_at < entry.0 {
                                     entry.0 = r.created_at;
                                 }
@@ -1241,9 +1250,10 @@ pub async fn transaction_detail(
                     let remaining = total_original.saturating_sub(total_refunded);
                     let history: Vec<RefundHistoryRow> = by_corr
                         .into_iter()
-                        .map(|(cid, (ts, to_self, to_others))| {
+                        .map(|(cid, (ts, to_self, to_others, row_status))| {
                             let cid_str = cid.to_string();
                             let cid_short = cid_str.chars().take(8).collect::<String>();
+                            let is_voided = matches!(row_status, TransactionStatus::Voided);
                             RefundHistoryRow {
                                 correlation_id: cid_str,
                                 correlation_id_short: cid_short,
@@ -1251,6 +1261,8 @@ pub async fn transaction_detail(
                                 amount_to_self_display: fmt_paisa(to_self),
                                 amount_to_others_display: fmt_paisa(to_others),
                                 total_display: fmt_paisa(to_self + to_others),
+                                status: row_status.as_str().to_string(),
+                                is_voided,
                             }
                         })
                         .collect();
@@ -1321,6 +1333,7 @@ pub async fn transaction_detail(
         can_post_or_void,
         can_refund,
         is_refund,
+        is_pending_refund,
         refund_history,
         remaining_refundable_display,
         refund_of_payment_id,
@@ -1531,6 +1544,7 @@ mod tests {
             can_post_or_void: true,
             can_refund: false,
             is_refund: false,
+            is_pending_refund: false,
             refund_history: vec![],
             remaining_refundable_display: "0.00".to_string(),
             refund_of_payment_id: String::new(),
@@ -1573,6 +1587,7 @@ mod tests {
             can_post_or_void: false,
             can_refund: true,
             is_refund: false,
+            is_pending_refund: false,
             refund_history: vec![],
             remaining_refundable_display: "12.34".to_string(),
             refund_of_payment_id: String::new(),
@@ -1615,6 +1630,7 @@ mod tests {
             can_post_or_void: false,
             can_refund: false,
             is_refund: false,
+            is_pending_refund: false,
             refund_history: vec![],
             remaining_refundable_display: "0.00".to_string(),
             refund_of_payment_id: String::new(),
