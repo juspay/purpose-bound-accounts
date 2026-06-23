@@ -10,7 +10,11 @@ pub struct ReverseNormalAccountTransferInput  {
     /// Monetary amount in the smallest currency unit (e.g., paise for INR).
     pub amount: ::std::option::Option<i64>,
     #[allow(missing_docs)] // documentation missing in model
+    pub pending: ::std::option::Option<bool>,
+    #[allow(missing_docs)] // documentation missing in model
     pub gateway_ref: ::std::option::Option<::std::string::String>,
+    #[allow(missing_docs)] // documentation missing in model
+    pub timeout_seconds: ::std::option::Option<i32>,
     #[allow(missing_docs)] // documentation missing in model
     pub description: ::std::option::Option<::std::string::String>,
     #[allow(missing_docs)] // documentation missing in model
@@ -30,8 +34,16 @@ impl  ReverseNormalAccountTransferInput  {
         self.amount
     }
     #[allow(missing_docs)] // documentation missing in model
+    pub fn pending(&self) -> ::std::option::Option<bool> {
+        self.pending
+    }
+    #[allow(missing_docs)] // documentation missing in model
     pub fn gateway_ref(&self) -> ::std::option::Option<&str> {
         self.gateway_ref.as_deref()
+    }
+    #[allow(missing_docs)] // documentation missing in model
+    pub fn timeout_seconds(&self) -> ::std::option::Option<i32> {
+        self.timeout_seconds
     }
     #[allow(missing_docs)] // documentation missing in model
     pub fn description(&self) -> ::std::option::Option<&str> {
@@ -56,7 +68,9 @@ pub struct ReverseNormalAccountTransferInputBuilder {
     pub(crate) account_id: ::std::option::Option<::std::string::String>,
     pub(crate) transfer_id: ::std::option::Option<::std::string::String>,
     pub(crate) amount: ::std::option::Option<i64>,
+    pub(crate) pending: ::std::option::Option<bool>,
     pub(crate) gateway_ref: ::std::option::Option<::std::string::String>,
+    pub(crate) timeout_seconds: ::std::option::Option<i32>,
     pub(crate) description: ::std::option::Option<::std::string::String>,
     pub(crate) idempotency_key: ::std::option::Option<::std::string::String>,
 }
@@ -104,6 +118,19 @@ impl ReverseNormalAccountTransferInputBuilder {
         &self.amount
     }
     #[allow(missing_docs)] // documentation missing in model
+    pub fn pending(mut self, input: bool) -> Self {
+        self.pending = ::std::option::Option::Some(input);
+        self
+    }
+    #[allow(missing_docs)] // documentation missing in model
+    pub fn set_pending(mut self, input: ::std::option::Option<bool>) -> Self {
+        self.pending = input; self
+    }
+    #[allow(missing_docs)] // documentation missing in model
+    pub fn get_pending(&self) -> &::std::option::Option<bool> {
+        &self.pending
+    }
+    #[allow(missing_docs)] // documentation missing in model
     pub fn gateway_ref(mut self, input: impl ::std::convert::Into<::std::string::String>) -> Self {
         self.gateway_ref = ::std::option::Option::Some(input.into());
         self
@@ -115,6 +142,19 @@ impl ReverseNormalAccountTransferInputBuilder {
     #[allow(missing_docs)] // documentation missing in model
     pub fn get_gateway_ref(&self) -> &::std::option::Option<::std::string::String> {
         &self.gateway_ref
+    }
+    #[allow(missing_docs)] // documentation missing in model
+    pub fn timeout_seconds(mut self, input: i32) -> Self {
+        self.timeout_seconds = ::std::option::Option::Some(input);
+        self
+    }
+    #[allow(missing_docs)] // documentation missing in model
+    pub fn set_timeout_seconds(mut self, input: ::std::option::Option<i32>) -> Self {
+        self.timeout_seconds = input; self
+    }
+    #[allow(missing_docs)] // documentation missing in model
+    pub fn get_timeout_seconds(&self) -> &::std::option::Option<i32> {
+        &self.timeout_seconds
     }
     #[allow(missing_docs)] // documentation missing in model
     pub fn description(mut self, input: impl ::std::convert::Into<::std::string::String>) -> Self {
@@ -152,7 +192,11 @@ impl ReverseNormalAccountTransferInputBuilder {
                 ,
                 amount: self.amount
                 ,
+                pending: self.pending
+                ,
                 gateway_ref: self.gateway_ref
+                ,
+                timeout_seconds: self.timeout_seconds
                 ,
                 description: self.description
                 ,

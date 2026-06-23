@@ -555,6 +555,7 @@ impl TransactionRepo {
                    reverses_transaction_id, created_at, updated_at
             FROM transactions
             WHERE reverses_transaction_id = $1
+              AND status IN ('pending', 'posted')
             "#,
         )
         .bind(original_source_id)
@@ -598,7 +599,8 @@ impl TransactionRepo {
         let row: (Option<i64>,) = sqlx::query_as(
             r#"SELECT COALESCE(SUM(amount), 0)::bigint
                FROM transactions
-               WHERE reverses_transaction_id = $1"#,
+               WHERE reverses_transaction_id = $1
+                 AND status IN ('pending', 'settled')"#,
         )
         .bind(original_row_id)
         .fetch_one(&self.pool)
@@ -645,7 +647,8 @@ impl TransactionRepo {
         let row: (Option<i64>,) = sqlx::query_as(
             r#"SELECT COALESCE(SUM(amount), 0)::bigint
                FROM transactions
-               WHERE reverses_transaction_id = $1"#,
+               WHERE reverses_transaction_id = $1
+                 AND status IN ('pending', 'settled')"#,
         )
         .bind(original_row_id)
         .fetch_one(&mut **tx)

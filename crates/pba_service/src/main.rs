@@ -237,12 +237,13 @@ async fn main() {
         Arc::clone(&pb_account_repo),
         Arc::clone(&ledger_repo),
         Arc::clone(&transaction_repo),
-        config.deposit_timeout_seconds,
+        config.default_pending_timeout_seconds,
     ));
     let pb_payment_service = Arc::new(PbPaymentService::new(
         Arc::clone(&pb_account_repo),
         Arc::clone(&ledger_repo),
         Arc::clone(&transaction_repo),
+        config.default_pending_timeout_seconds,
     ));
     let pb_withdrawal_service = Arc::new(PbWithdrawalService::new(
         Arc::clone(&pb_account_repo),
@@ -260,7 +261,7 @@ async fn main() {
         Arc::clone(&normal_account_repo),
         Arc::clone(&ledger_repo),
         Arc::clone(&transaction_repo),
-        config.deposit_timeout_seconds,
+        config.default_pending_timeout_seconds,
     ));
     let normal_withdrawal_service = Arc::new(NormalWithdrawalService::new(
         Arc::clone(&normal_account_repo),
@@ -272,7 +273,7 @@ async fn main() {
         Arc::clone(&pb_account_repo),
         Arc::clone(&ledger_repo),
         Arc::clone(&transaction_repo),
-        config.deposit_timeout_seconds,
+        config.default_pending_timeout_seconds,
     ));
 
     let path_prefix = config.path_prefix.clone();
@@ -296,10 +297,10 @@ async fn main() {
         path_prefix: config.path_prefix,
     };
 
-    // Spawn background deposit timeout poller
-    tokio::spawn(service::deposit_timeout::run_deposit_timeout_poller(
+    // Spawn background pending-transaction timeout poller
+    tokio::spawn(service::pending_timeout::run_pending_timeout_poller(
         Arc::clone(&transaction_repo),
-        config.deposit_poller_interval_seconds,
+        config.pending_poller_interval_seconds,
     ));
 
     use axum::Router;

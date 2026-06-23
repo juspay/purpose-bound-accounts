@@ -9,7 +9,7 @@ use crate::domain::transaction::{
 };
 use crate::domain::transfer::TransferLegs;
 use crate::error::AppError;
-use crate::repository::ledger_repo::LedgerRepo;
+use crate::repository::ledger_repo::{LedgerRepo, INTERNAL_TRANSFER_REVERSAL_CODE};
 use crate::repository::normal_account_repo::NormalAccountRepo;
 use crate::repository::pb_account_repo::PbAccountRepo;
 use crate::repository::transaction_repo::TransactionRepo;
@@ -274,8 +274,29 @@ impl TransferService {
             .transaction_repo
             .get_by_id(transfer_id, source_normal_id)
             .await?;
-        if source_row.status != TransactionStatus::Pending {
-            return Err(AppError::TransactionNotPending(transfer_id.to_string()));
+        match source_row.status {
+            TransactionStatus::Pending => {} // proceed
+            TransactionStatus::Posted => {
+                // Idempotent: return the existing posted snapshot.
+                let correlation_id = source_row.correlation_id.ok_or_else(|| {
+                    AppError::DatabaseError(
+                        "transfer source row missing correlation_id".to_string(),
+                    )
+                })?;
+                let legs = self
+                    .transaction_repo
+                    .find_by_correlation_id(correlation_id)
+                    .await?;
+                let dest_id = legs
+                    .iter()
+                    .find(|l| l.account_kind == AccountKind::Pb)
+                    .map(|l| l.account_id)
+                    .ok_or_else(|| {
+                        AppError::DatabaseError("transfer missing pb leg".to_string())
+                    })?;
+                return Ok(self.legs_to_result(&legs, source_normal_id, dest_id));
+            }
+            _ => return Err(AppError::TransactionNotPending(transfer_id.to_string())),
         }
         if source_row.transaction_type != TransactionType::Transfer {
             return Err(AppError::TransactionNotPending(transfer_id.to_string()));
@@ -320,8 +341,28 @@ impl TransferService {
             .transaction_repo
             .get_by_id(transfer_id, source_normal_id)
             .await?;
-        if source_row.status != TransactionStatus::Pending {
-            return Err(AppError::TransactionNotPending(transfer_id.to_string()));
+        match source_row.status {
+            TransactionStatus::Pending => {} // proceed
+            TransactionStatus::Voided => {
+                let correlation_id = source_row.correlation_id.ok_or_else(|| {
+                    AppError::DatabaseError(
+                        "transfer source row missing correlation_id".to_string(),
+                    )
+                })?;
+                let legs = self
+                    .transaction_repo
+                    .find_by_correlation_id(correlation_id)
+                    .await?;
+                let dest_id = legs
+                    .iter()
+                    .find(|l| l.account_kind == AccountKind::Pb)
+                    .map(|l| l.account_id)
+                    .ok_or_else(|| {
+                        AppError::DatabaseError("transfer missing pb leg".to_string())
+                    })?;
+                return Ok(self.legs_to_result(&legs, source_normal_id, dest_id));
+            }
+            _ => return Err(AppError::TransactionNotPending(transfer_id.to_string())),
         }
         if source_row.transaction_type != TransactionType::Transfer {
             return Err(AppError::TransactionNotPending(transfer_id.to_string()));
@@ -387,11 +428,14 @@ impl TransferService {
 
     #[allow(clippy::too_many_arguments)]
     #[allow(dead_code)]
+    #[allow(clippy::too_many_arguments)]
     pub async fn reverse_transfer(
         &self,
         source_normal_id: Uuid,
         original_transfer_id: Uuid,
         amount: u64,
+        pending: bool,
+        timeout_seconds: Option<u32>,
         gateway_ref: Option<&str>,
         description: Option<&str>,
         idempotency_key: Option<&str>,
@@ -513,6 +557,17 @@ impl TransferService {
         let normal_side_id = legs.destination_txn_id;
         let correlation_id = legs.correlation_id;
 
+        let row_status = if pending {
+            TransactionStatus::Pending
+        } else {
+            TransactionStatus::Posted
+        };
+        let timeout = if pending {
+            Some(timeout_seconds.unwrap_or(self.default_timeout_seconds))
+        } else {
+            None
+        };
+
         let mut tx = self.transaction_repo.pool().begin().await?;
 
         // PB-side debit row.
@@ -523,19 +578,19 @@ impl TransferService {
                 destination_pb_id,
                 AccountKind::Pb,
                 TransactionType::Transfer,
-                TransactionStatus::Posted,
+                row_status,
                 amount,
                 Some("others"),
                 TransactionDirection::Outbound,
                 None,
                 None,
                 gateway_ref,
-                None, // no timeout — reversal is immediate
+                timeout,
                 None,
                 None,
                 description,
                 Some("trust"),
-                0,    // tb_transfer_id (immediate transfers leave this 0, matching transfer())
+                0,    // tb_transfer_id (filled in below when pending)
                 None, // no idempotency key on the pb-side row
                 Some(correlation_id),
                 None, // reverses_transaction_id NULL on pb-side
@@ -550,14 +605,14 @@ impl TransferService {
                 source_normal_id,
                 AccountKind::Normal,
                 TransactionType::Transfer,
-                TransactionStatus::Posted,
+                row_status,
                 amount,
                 None,
                 TransactionDirection::Inbound,
                 None,
                 None,
                 gateway_ref,
-                None,
+                timeout,
                 None,
                 None,
                 description,
@@ -570,17 +625,44 @@ impl TransferService {
             .await?;
 
         // Step 8: Execute the TB transfer (code 410).
-        let tb_result = self
-            .ledger_repo
-            .create_internal_transfer_reversal(
-                destination.tb_others_account_id,
-                source.tb_account_id,
-                amount,
-            )
-            .await;
+        let tb_result = if pending {
+            self.ledger_repo
+                .create_pending_transfer(
+                    destination.tb_others_account_id,
+                    source.tb_account_id,
+                    amount,
+                    INTERNAL_TRANSFER_REVERSAL_CODE,
+                    timeout.expect("timeout populated when pending=true"),
+                )
+                .await
+                .map(Some)
+        } else {
+            self.ledger_repo
+                .create_internal_transfer_reversal(
+                    destination.tb_others_account_id,
+                    source.tb_account_id,
+                    amount,
+                )
+                .await
+                .map(|_| None)
+        };
 
         match tb_result {
-            Ok(()) => {
+            Ok(maybe_tb_id) => {
+                if let Some(tb_transfer_id) = maybe_tb_id {
+                    if tb_transfer_id != 0 {
+                        sqlx::query(
+                            r#"UPDATE transactions
+                               SET tb_transfer_id = $1::numeric, updated_at = now()
+                               WHERE correlation_id = $2"#,
+                        )
+                        .bind(tb_transfer_id.to_string())
+                        .bind(correlation_id)
+                        .execute(&mut *tx)
+                        .await
+                        .map_err(|e| AppError::DatabaseError(e.to_string()))?;
+                    }
+                }
                 tx.commit().await?;
                 let updated_legs = self
                     .transaction_repo

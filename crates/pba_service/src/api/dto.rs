@@ -398,6 +398,10 @@ pub struct ReverseTransferRequest {
     pub gateway_ref: Option<String>,
     pub description: Option<String>,
     pub idempotency_key: Option<String>,
+    #[serde(default)]
+    pub pending: bool,
+    #[serde(default)]
+    pub timeout_seconds: Option<u32>,
 }
 
 #[allow(dead_code)]
@@ -432,12 +436,24 @@ impl From<crate::service::transfer_service::ReversalResult> for ReversalResponse
 
 // ── Payment Refund ──
 
+#[allow(dead_code)]
+#[derive(Debug, Deserialize)]
+pub struct PostRefundRequest;
+
+#[allow(dead_code)]
+#[derive(Debug, Deserialize)]
+pub struct VoidRefundRequest;
+
 #[derive(Debug, Deserialize)]
 pub struct RefundPaymentRequest {
     pub amount: u64,
     pub description: Option<String>,
     pub gateway_ref: Option<String>,
     pub idempotency_key: Option<String>,
+    #[serde(default)]
+    pub pending: bool,
+    #[serde(default)]
+    pub timeout_seconds: Option<u32>,
 }
 
 #[derive(Debug, Serialize)]

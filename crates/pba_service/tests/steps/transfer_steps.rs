@@ -138,7 +138,71 @@ async fn create_pending_transfer(world: &mut PbaWorld, amount: i64, timeout: i32
     }
 }
 
+// ── Initiate pending transfer (no explicit timeout) ───────────────────────────
+
+#[when(
+    regex = r#"^I initiate a pending transfer of (\d+) paisa from the normal account to the PB account$"#
+)]
+async fn initiate_pending_transfer(world: &mut PbaWorld, amount: i64) {
+    let normal_account_id = world
+        .last_normal_account_id
+        .as_ref()
+        .expect("No normal account ID")
+        .clone();
+    let pb_account_id = world.account_id.as_ref().expect("No PB account ID").clone();
+    let result = world
+        .client
+        .transfer_to_pb_account()
+        .account_id(&normal_account_id)
+        .destination_pb_account_id(&pb_account_id)
+        .amount(amount)
+        .pending(true)
+        .send()
+        .await;
+    match result {
+        Ok(output) => {
+            world.last_transfer_id = Some(output.transfer_id().to_string());
+            world.last_transfer_status = Some(output.status().to_string());
+            world.last_transfer_correlation_id = Some(output.correlation_id().to_string());
+            world.last_error = None;
+        }
+        Err(e) => panic!("Pending transfer initiation failed: {e:?}"),
+    }
+}
+
 // ── Post / void transfer ──────────────────────────────────────────────────────
+
+#[when("I post the pending transfer")]
+async fn post_pending_transfer(world: &mut PbaWorld) {
+    let normal_account_id = world
+        .last_normal_account_id
+        .as_ref()
+        .expect("No normal account ID")
+        .clone();
+    let transfer_id = world
+        .last_transfer_id
+        .as_ref()
+        .expect("No transfer ID")
+        .clone();
+    let result = world
+        .client
+        .post_normal_account_transfer()
+        .account_id(&normal_account_id)
+        .transfer_id(&transfer_id)
+        .send()
+        .await;
+    match result {
+        Ok(output) => {
+            world.last_transfer_status = Some(output.status().to_string());
+            world.last_error = None;
+        }
+        Err(e) => {
+            let kind = extract_transfer_error_kind(&e);
+            let message = extract_transfer_error_message(&e);
+            world.last_error = Some(crate::PbaError { kind, message });
+        }
+    }
+}
 
 #[when("I post the transfer")]
 async fn post_transfer(world: &mut PbaWorld) {
@@ -165,6 +229,38 @@ async fn post_transfer(world: &mut PbaWorld) {
             world.last_error = None;
         }
         Err(e) => panic!("Post transfer failed: {e:?}"),
+    }
+}
+
+#[when("I void the pending transfer")]
+async fn void_pending_transfer(world: &mut PbaWorld) {
+    let normal_account_id = world
+        .last_normal_account_id
+        .as_ref()
+        .expect("No normal account ID")
+        .clone();
+    let transfer_id = world
+        .last_transfer_id
+        .as_ref()
+        .expect("No transfer ID")
+        .clone();
+    let result = world
+        .client
+        .void_normal_account_transfer()
+        .account_id(&normal_account_id)
+        .transfer_id(&transfer_id)
+        .send()
+        .await;
+    match result {
+        Ok(output) => {
+            world.last_transfer_status = Some(output.status().to_string());
+            world.last_error = None;
+        }
+        Err(e) => {
+            let kind = extract_transfer_error_kind(&e);
+            let message = extract_transfer_error_message(&e);
+            world.last_error = Some(crate::PbaError { kind, message });
+        }
     }
 }
 
@@ -312,6 +408,42 @@ async fn transfer_fails_with(world: &mut PbaWorld, expected_kind: String) {
         "expected error containing '{}' but got '{}'",
         expected_kind,
         err.kind
+    );
+}
+
+#[then("the second post is a no-op")]
+async fn second_post_is_no_op(world: &mut PbaWorld) {
+    assert!(
+        world.last_error.is_none(),
+        "expected second post to be a no-op (no error) but got {:?}",
+        world.last_error
+    );
+    let status = world
+        .last_transfer_status
+        .as_deref()
+        .expect("No transfer status recorded after second post");
+    assert_eq!(
+        status, "posted",
+        "expected second post to return status 'posted' but got '{}'",
+        status
+    );
+}
+
+#[then("the second void is a no-op")]
+async fn second_void_is_no_op(world: &mut PbaWorld) {
+    assert!(
+        world.last_error.is_none(),
+        "expected second void to be a no-op (no error) but got {:?}",
+        world.last_error
+    );
+    let status = world
+        .last_transfer_status
+        .as_deref()
+        .expect("No transfer status recorded after second void");
+    assert_eq!(
+        status, "voided",
+        "expected second void to return status 'voided' but got '{}'",
+        status
     );
 }
 
@@ -535,6 +667,7 @@ where
         "TransferAlreadyReversed",
         "ReversalAmountInvalid",
         "TransactionNotFound",
+        "TransactionNotPending",
     ] {
         if s.contains(code) {
             return code.to_string();
@@ -764,4 +897,212 @@ async fn reactivate_pb_account(world: &mut PbaWorld) {
         .send()
         .await
         .expect("Failed to reactivate PB account");
+}
+
+// ── Two-phase reversal steps ──────────────────────────────────────────────────
+
+#[when(regex = r#"^I initiate a pending reversal of (\d+) paisa on the last transfer$"#)]
+async fn initiate_pending_reversal(world: &mut PbaWorld, amount: i64) {
+    let normal_id = world
+        .last_normal_account_id
+        .clone()
+        .expect("no normal account");
+    let transfer_id = world.last_transfer_id.clone().expect("no transfer");
+    let result = world
+        .client
+        .reverse_normal_account_transfer()
+        .account_id(&normal_id)
+        .transfer_id(&transfer_id)
+        .amount(amount)
+        .pending(true)
+        .send()
+        .await;
+    match result {
+        Ok(out) => {
+            world.last_reversal_id = Some(out.reversal_id().to_string());
+            world.last_reversal_correlation_id = Some(out.correlation_id().to_string());
+            world.last_reversal_status = Some(out.status().to_string());
+            world.last_error = None;
+        }
+        Err(e) => {
+            let kind = extract_transfer_error_kind(&e);
+            let message = extract_transfer_error_message(&e);
+            world.last_error = Some(crate::PbaError { kind, message });
+        }
+    }
+}
+
+#[when(regex = r#"^I post the pending reversal$"#)]
+async fn post_pending_reversal(world: &mut PbaWorld) {
+    let normal_id = world
+        .last_normal_account_id
+        .clone()
+        .expect("no normal account");
+    let reversal_id = world.last_reversal_id.clone().expect("no reversal");
+    let result = world
+        .client
+        .post_normal_account_transfer()
+        .account_id(&normal_id)
+        .transfer_id(&reversal_id)
+        .send()
+        .await;
+    match result {
+        Ok(out) => {
+            world.last_reversal_status = Some(out.status().to_string());
+            world.last_error = None;
+        }
+        Err(e) => panic!("post pending reversal failed: {e:?}"),
+    }
+}
+
+#[when(regex = r#"^I void the pending reversal$"#)]
+async fn void_pending_reversal(world: &mut PbaWorld) {
+    let normal_id = world
+        .last_normal_account_id
+        .clone()
+        .expect("no normal account");
+    let reversal_id = world.last_reversal_id.clone().expect("no reversal");
+    let result = world
+        .client
+        .void_normal_account_transfer()
+        .account_id(&normal_id)
+        .transfer_id(&reversal_id)
+        .send()
+        .await;
+    match result {
+        Ok(out) => {
+            world.last_reversal_status = Some(out.status().to_string());
+            world.last_error = None;
+        }
+        Err(e) => panic!("void pending reversal failed: {e:?}"),
+    }
+}
+
+#[when(regex = r#"^I initiate a reversal of (\d+) paisa on the last transfer$"#)]
+async fn initiate_reversal_on_last_transfer(world: &mut PbaWorld, amount: i64) {
+    reverse_transfer(world, amount).await;
+}
+
+#[when(regex = r#"^I attempt a reversal of (\d+) paisa on the last transfer$"#)]
+async fn attempt_reversal_on_last_transfer(world: &mut PbaWorld, amount: i64) {
+    reverse_transfer(world, amount).await;
+}
+
+#[when(regex = r#"^I attempt to void the reversal$"#)]
+async fn attempt_void_reversal(world: &mut PbaWorld) {
+    let normal_id = world
+        .last_normal_account_id
+        .clone()
+        .expect("no normal account");
+    let reversal_id = world.last_reversal_id.clone().expect("no reversal");
+    let result = world
+        .client
+        .void_normal_account_transfer()
+        .account_id(&normal_id)
+        .transfer_id(&reversal_id)
+        .send()
+        .await;
+    match result {
+        Ok(_) => panic!("void should have failed but succeeded"),
+        Err(e) => {
+            let kind = extract_transfer_error_kind(&e);
+            let message = extract_transfer_error_message(&e);
+            world.last_error = Some(crate::PbaError { kind, message });
+        }
+    }
+}
+
+#[then(regex = r#"^the reversal status is "([^"]*)"$"#)]
+async fn reversal_status_is(world: &mut PbaWorld, expected: String) {
+    assert_eq!(
+        world.last_reversal_status.as_deref(),
+        Some(expected.as_str()),
+        "reversal status mismatch: expected '{}' but got '{:?}'",
+        expected,
+        world.last_reversal_status
+    );
+}
+
+#[then(regex = r#"^the operation fails with "([^"]*)"$"#)]
+async fn operation_fails_with(world: &mut PbaWorld, kind: String) {
+    let e = world.last_error.as_ref().expect("no error captured");
+    assert_eq!(
+        e.kind, kind,
+        "expected error kind '{}' but got '{}'",
+        kind, e.kind
+    );
+}
+
+// ── Two-phase reversal timeout steps ─────────────────────────────────────────
+
+#[when(
+    regex = r#"^I initiate a pending reversal of (\d+) paisa on the last transfer with timeout (\d+) seconds?$"#
+)]
+async fn initiate_pending_reversal_with_timeout(
+    world: &mut PbaWorld,
+    amount: i64,
+    timeout_seconds: i32,
+) {
+    let normal_id = world
+        .last_normal_account_id
+        .clone()
+        .expect("no normal account");
+    let transfer_id = world.last_transfer_id.clone().expect("no transfer");
+    let result = world
+        .client
+        .reverse_normal_account_transfer()
+        .account_id(&normal_id)
+        .transfer_id(&transfer_id)
+        .amount(amount)
+        .pending(true)
+        .timeout_seconds(timeout_seconds)
+        .send()
+        .await;
+    match result {
+        Ok(out) => {
+            world.last_reversal_id = Some(out.reversal_id().to_string());
+            world.last_reversal_correlation_id = Some(out.correlation_id().to_string());
+            world.last_reversal_status = Some(out.status().to_string());
+            world.last_error = None;
+        }
+        Err(e) => {
+            let kind = extract_transfer_error_kind(&e);
+            let message = extract_transfer_error_message(&e);
+            world.last_error = Some(crate::PbaError { kind, message });
+        }
+    }
+}
+
+#[then(regex = r#"^the last reversal has status "([^"]*)"$"#)]
+async fn last_reversal_has_status(world: &mut PbaWorld, expected: String) {
+    let normal_id = world
+        .last_normal_account_id
+        .clone()
+        .expect("no normal account");
+    let reversal_id = world.last_reversal_id.clone().expect("no reversal id");
+
+    // Fetch the reversal's current status from the normal-account transaction list.
+    let txns = world
+        .client
+        .list_normal_account_transactions()
+        .account_id(&normal_id)
+        .send()
+        .await
+        .expect("Failed to list normal account transactions");
+
+    let reversal_txn = txns
+        .transactions()
+        .iter()
+        .find(|t| t.id() == reversal_id.as_str())
+        .unwrap_or_else(|| panic!("No transaction found with id '{reversal_id}'"));
+
+    assert_eq!(
+        reversal_txn.status().as_str(),
+        expected.as_str(),
+        "Reversal status mismatch: expected '{}' but got '{}'",
+        expected,
+        reversal_txn.status().as_str()
+    );
+
+    world.last_reversal_status = Some(reversal_txn.status().as_str().to_string());
 }

@@ -171,6 +171,10 @@ operation RefundPBAccountPayment {
         gateway_ref: String
 
         idempotency_key: String
+
+        pending: Boolean
+
+        timeout_seconds: Integer
     }
     output := with [RefundResponseMixin] {}
     errors: [
@@ -202,6 +206,54 @@ structure RefundAmountInvalidError {
 @error("client")
 @httpError(409)
 structure PaymentFullyRefundedError {
+    @required
+    error: String
+    @required
+    message: String
+}
+
+@http(method: "POST", uri: "/pb-accounts/{account_id}/refunds/{refund_id}/post", code: 200)
+operation PostPBAccountRefund {
+    input := {
+        @required
+        @httpLabel
+        account_id: String
+
+        @required
+        @httpLabel
+        refund_id: String
+    }
+    output := with [RefundResponseMixin] {}
+    errors: [AccountNotFoundError, TransactionNotFoundError, TransactionNotPendingError]
+}
+
+@http(method: "POST", uri: "/pb-accounts/{account_id}/refunds/{refund_id}/void", code: 200)
+operation VoidPBAccountRefund {
+    input := {
+        @required
+        @httpLabel
+        account_id: String
+
+        @required
+        @httpLabel
+        refund_id: String
+    }
+    output := with [RefundResponseMixin] {}
+    errors: [AccountNotFoundError, TransactionNotFoundError, TransactionNotPendingError]
+}
+
+@error("client")
+@httpError(404)
+structure TransactionNotFoundError {
+    @required
+    error: String
+    @required
+    message: String
+}
+
+@error("client")
+@httpError(409)
+structure TransactionNotPendingError {
     @required
     error: String
     @required

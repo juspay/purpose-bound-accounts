@@ -29,7 +29,7 @@ const CODE_SENTINEL: u16 = 99;
 
 const INTERNAL_TRANSFER_CODE: u16 = 400;
 const PENDING_INTERNAL_TRANSFER_CODE: u16 = 401;
-const INTERNAL_TRANSFER_REVERSAL_CODE: u16 = 410;
+pub const INTERNAL_TRANSFER_REVERSAL_CODE: u16 = 410;
 pub const PAYMENT_REFUND_CODE: u16 = 210;
 
 #[allow(dead_code)]
@@ -309,9 +309,7 @@ impl LedgerRepo {
         self.client
             .create_transfers(vec![transfer])
             .await
-            .map_err(|e| {
-                AppError::TigerBeetleError(format!("post_pending_transfer failed: {e:?}"))
-            })?;
+            .map_err(|e| classify_pending_resolution_error(e, "post_pending_transfer"))?;
 
         tracing::info!(pending_id = %pending_id, "Posted pending TB transfer");
         Ok(())
@@ -326,9 +324,7 @@ impl LedgerRepo {
         self.client
             .create_transfers(vec![transfer])
             .await
-            .map_err(|e| {
-                AppError::TigerBeetleError(format!("void_pending_transfer failed: {e:?}"))
-            })?;
+            .map_err(|e| classify_pending_resolution_error(e, "void_pending_transfer"))?;
 
         tracing::info!(pending_id = %pending_id, "Voided pending TB transfer");
         Ok(())
@@ -467,6 +463,75 @@ impl LedgerRepo {
             "Created linked payment-refund TB transfers"
         );
         Ok(())
+    }
+
+    /// Pending single-leg payment refund — pending TB transfer debiting the
+    /// merchant sentinel, crediting one PB pool. Returns the TB transfer ID for
+    /// later post/void.
+    pub async fn create_pending_payment_refund(
+        &self,
+        credit_pb_pool_tb_id: u128,
+        amount: u64,
+        timeout_seconds: u32,
+    ) -> Result<u128, AppError> {
+        self.create_pending_transfer(
+            MERCHANT_SETTLEMENT_TB_ID,
+            credit_pb_pool_tb_id,
+            amount,
+            PAYMENT_REFUND_CODE,
+            timeout_seconds,
+        )
+        .await
+    }
+
+    /// Pending two-leg payment refund — two LINKED pending TB transfers debiting
+    /// the merchant sentinel, crediting self-pool and others-pool. Returns
+    /// (tb_transfer_id_self, tb_transfer_id_others) so the service can persist
+    /// both ids on their corresponding rows.
+    pub async fn create_pending_payment_refund_split(
+        &self,
+        credit_pb_self_tb_id: u128,
+        credit_pb_others_tb_id: u128,
+        amount_self: u64,
+        amount_others: u64,
+        timeout_seconds: u32,
+    ) -> Result<(u128, u128), AppError> {
+        let id_self = generate_transfer_id();
+        let id_others = generate_transfer_id();
+
+        let transfer1 = tb::Transfer::new(id_self)
+            .with_debit_account_id(MERCHANT_SETTLEMENT_TB_ID)
+            .with_credit_account_id(credit_pb_self_tb_id)
+            .with_amount(amount_self as u128)
+            .with_ledger(LEDGER_INR_PAISA)
+            .with_code(PAYMENT_REFUND_CODE)
+            .with_flags(TransferFlags::PENDING | TransferFlags::LINKED)
+            .with_timeout(timeout_seconds);
+
+        let transfer2 = tb::Transfer::new(id_others)
+            .with_debit_account_id(MERCHANT_SETTLEMENT_TB_ID)
+            .with_credit_account_id(credit_pb_others_tb_id)
+            .with_amount(amount_others as u128)
+            .with_ledger(LEDGER_INR_PAISA)
+            .with_code(PAYMENT_REFUND_CODE)
+            .with_flags(TransferFlags::PENDING)
+            .with_timeout(timeout_seconds);
+
+        self.client
+            .create_transfers(vec![transfer1, transfer2])
+            .await
+            .map_err(|e| classify_transfer_error(e, "create_pending_payment_refund_split"))?;
+
+        tracing::info!(
+            credit_self = %credit_pb_self_tb_id,
+            credit_others = %credit_pb_others_tb_id,
+            amount_self, amount_others, code = PAYMENT_REFUND_CODE,
+            timeout = timeout_seconds,
+            id_self = %id_self,
+            id_others = %id_others,
+            "Created pending LINKED payment-refund TB transfers"
+        );
+        Ok((id_self, id_others))
     }
 
     #[allow(dead_code)]
@@ -670,6 +735,29 @@ fn datetime_to_system_time(dt: DateTime<Utc>) -> Option<SystemTime> {
         .try_into()
         .ok()?;
     Some(SystemTime::UNIX_EPOCH + Duration::from_nanos(nanos.try_into().ok()?))
+}
+
+/// Classify a TigerBeetle error from post/void pending into an appropriate AppError.
+/// Returns `TbPendingAlreadyResolved` when the pending transfer was already posted
+/// or voided (safe to tolerate on idempotent retries). All other errors become the
+/// generic `TigerBeetleError`.
+fn classify_pending_resolution_error(
+    e: tb::error::CreateTransfersError,
+    context: &str,
+) -> AppError {
+    if let tb::error::CreateTransfersError::Api(ref api_err) = e {
+        let already_resolved = api_err.as_slice().iter().any(|individual| {
+            matches!(
+                individual.kind(),
+                CreateTransferErrorKind::PendingTransferAlreadyPosted
+                    | CreateTransferErrorKind::PendingTransferAlreadyVoided
+            )
+        });
+        if already_resolved {
+            return AppError::TbPendingAlreadyResolved;
+        }
+    }
+    AppError::TigerBeetleError(format!("{context} failed: {e:?}"))
 }
 
 /// Classify a TigerBeetle transfer error into an appropriate AppError.

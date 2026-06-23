@@ -205,6 +205,8 @@ pub async fn refund_payment(
             account_id,
             payment_id,
             req.amount,
+            req.pending,
+            req.timeout_seconds,
             req.description.as_deref(),
             req.gateway_ref.as_deref(),
             req.idempotency_key.as_deref(),
@@ -212,6 +214,28 @@ pub async fn refund_payment(
         .await?;
 
     Ok((axum::http::StatusCode::CREATED, Json(result.into())))
+}
+
+pub async fn post_refund(
+    State(state): State<AppState>,
+    Path((account_id, refund_id)): Path<(Uuid, Uuid)>,
+) -> Result<(axum::http::StatusCode, Json<RefundResponse>), AppError> {
+    let result = state
+        .pb_payment_service
+        .post_refund(account_id, refund_id)
+        .await?;
+    Ok((axum::http::StatusCode::OK, Json(result.into())))
+}
+
+pub async fn void_refund(
+    State(state): State<AppState>,
+    Path((account_id, refund_id)): Path<(Uuid, Uuid)>,
+) -> Result<(axum::http::StatusCode, Json<RefundResponse>), AppError> {
+    let result = state
+        .pb_payment_service
+        .void_refund(account_id, refund_id)
+        .await?;
+    Ok((axum::http::StatusCode::OK, Json(result.into())))
 }
 
 // ── Withdrawal ──

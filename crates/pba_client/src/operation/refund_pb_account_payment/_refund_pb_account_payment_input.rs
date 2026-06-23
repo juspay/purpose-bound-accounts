@@ -15,6 +15,10 @@ pub struct RefundPbAccountPaymentInput  {
     pub gateway_ref: ::std::option::Option<::std::string::String>,
     #[allow(missing_docs)] // documentation missing in model
     pub idempotency_key: ::std::option::Option<::std::string::String>,
+    #[allow(missing_docs)] // documentation missing in model
+    pub pending: ::std::option::Option<bool>,
+    #[allow(missing_docs)] // documentation missing in model
+    pub timeout_seconds: ::std::option::Option<i32>,
 }
 impl  RefundPbAccountPaymentInput  {
     #[allow(missing_docs)] // documentation missing in model
@@ -41,6 +45,14 @@ impl  RefundPbAccountPaymentInput  {
     pub fn idempotency_key(&self) -> ::std::option::Option<&str> {
         self.idempotency_key.as_deref()
     }
+    #[allow(missing_docs)] // documentation missing in model
+    pub fn pending(&self) -> ::std::option::Option<bool> {
+        self.pending
+    }
+    #[allow(missing_docs)] // documentation missing in model
+    pub fn timeout_seconds(&self) -> ::std::option::Option<i32> {
+        self.timeout_seconds
+    }
 }
 impl RefundPbAccountPaymentInput {
     /// Creates a new builder-style object to manufacture [`RefundPbAccountPaymentInput`](crate::operation::refund_pb_account_payment::RefundPbAccountPaymentInput).
@@ -59,6 +71,8 @@ pub struct RefundPbAccountPaymentInputBuilder {
     pub(crate) description: ::std::option::Option<::std::string::String>,
     pub(crate) gateway_ref: ::std::option::Option<::std::string::String>,
     pub(crate) idempotency_key: ::std::option::Option<::std::string::String>,
+    pub(crate) pending: ::std::option::Option<bool>,
+    pub(crate) timeout_seconds: ::std::option::Option<i32>,
 }
 impl RefundPbAccountPaymentInputBuilder {
     #[allow(missing_docs)] // documentation missing in model
@@ -142,6 +156,32 @@ impl RefundPbAccountPaymentInputBuilder {
     pub fn get_idempotency_key(&self) -> &::std::option::Option<::std::string::String> {
         &self.idempotency_key
     }
+    #[allow(missing_docs)] // documentation missing in model
+    pub fn pending(mut self, input: bool) -> Self {
+        self.pending = ::std::option::Option::Some(input);
+        self
+    }
+    #[allow(missing_docs)] // documentation missing in model
+    pub fn set_pending(mut self, input: ::std::option::Option<bool>) -> Self {
+        self.pending = input; self
+    }
+    #[allow(missing_docs)] // documentation missing in model
+    pub fn get_pending(&self) -> &::std::option::Option<bool> {
+        &self.pending
+    }
+    #[allow(missing_docs)] // documentation missing in model
+    pub fn timeout_seconds(mut self, input: i32) -> Self {
+        self.timeout_seconds = ::std::option::Option::Some(input);
+        self
+    }
+    #[allow(missing_docs)] // documentation missing in model
+    pub fn set_timeout_seconds(mut self, input: ::std::option::Option<i32>) -> Self {
+        self.timeout_seconds = input; self
+    }
+    #[allow(missing_docs)] // documentation missing in model
+    pub fn get_timeout_seconds(&self) -> &::std::option::Option<i32> {
+        &self.timeout_seconds
+    }
     /// Consumes the builder and constructs a [`RefundPbAccountPaymentInput`](crate::operation::refund_pb_account_payment::RefundPbAccountPaymentInput).
     pub fn build(self) -> ::std::result::Result<crate::operation::refund_pb_account_payment::RefundPbAccountPaymentInput, ::aws_smithy_types::error::operation::BuildError> {
         ::std::result::Result::Ok(
@@ -157,6 +197,10 @@ impl RefundPbAccountPaymentInputBuilder {
                 gateway_ref: self.gateway_ref
                 ,
                 idempotency_key: self.idempotency_key
+                ,
+                pending: self.pending
+                ,
+                timeout_seconds: self.timeout_seconds
                 ,
             }
         )

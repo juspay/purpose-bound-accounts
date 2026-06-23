@@ -19,8 +19,8 @@ pub struct AppConfig {
     pub tigerbeetle_cluster_id: u128,
     pub host: String,
     pub port: u16,
-    pub deposit_timeout_seconds: u32,
-    pub deposit_poller_interval_seconds: u64,
+    pub default_pending_timeout_seconds: u32,
+    pub pending_poller_interval_seconds: u64,
     pub oidc_issuer_url: String,
     pub oidc_client_id: String,
     pub cookie_secret: String,
@@ -67,14 +67,18 @@ impl AppConfig {
             .unwrap_or_else(|_| "3000".to_string())
             .parse()
             .expect("PORT must be a valid u16");
-        let deposit_timeout_seconds: u32 = std::env::var("DEPOSIT_TIMEOUT_SECONDS")
+        let default_pending_timeout_seconds: u32 = std::env::var("PENDING_TIMEOUT_SECONDS")
             .unwrap_or_else(|_| "1800".to_string())
             .parse()
-            .expect("DEPOSIT_TIMEOUT_SECONDS must be a valid u32");
-        let deposit_poller_interval_seconds: u64 = std::env::var("DEPOSIT_POLLER_INTERVAL_SECONDS")
+            .expect("PENDING_TIMEOUT_SECONDS must be a valid u32");
+        let pending_poller_interval_seconds: u64 = std::env::var("PENDING_POLLER_INTERVAL_SECONDS")
             .unwrap_or_else(|_| "60".to_string())
             .parse()
-            .expect("DEPOSIT_POLLER_INTERVAL_SECONDS must be a valid u64");
+            .expect("PENDING_POLLER_INTERVAL_SECONDS must be a valid u64");
+        assert!(
+            pending_poller_interval_seconds > 0,
+            "PENDING_POLLER_INTERVAL_SECONDS must be greater than 0"
+        );
 
         let oidc_issuer_url = std::env::var("OIDC_ISSUER_URL")
             .unwrap_or_else(|_| "http://localhost:8180/realms/pba".to_string());
@@ -119,8 +123,8 @@ impl AppConfig {
             tigerbeetle_cluster_id: tb_cluster_id,
             host,
             port,
-            deposit_timeout_seconds,
-            deposit_poller_interval_seconds,
+            default_pending_timeout_seconds,
+            pending_poller_interval_seconds,
             oidc_issuer_url,
             oidc_client_id,
             cookie_secret,

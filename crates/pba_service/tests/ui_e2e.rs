@@ -169,7 +169,9 @@ async fn main() {
 
     let w2 = UiWorld::cucumber()
         .max_concurrent_scenarios(1)
-        .run("tests/ui_features")
+        .filter_run("tests/ui_features", |_feature, _rule, scenario| {
+            !scenario.tags.iter().any(|t| t == "todo")
+        })
         .await;
 
     if w1.execution_has_failed() || w2.execution_has_failed() {

@@ -17,6 +17,8 @@ service PurposeBoundAccountService {
         VoidPBAccountDeposit
         MakePBAccountPayment
         RefundPBAccountPayment
+        PostPBAccountRefund
+        VoidPBAccountRefund
         WithdrawFromPBAccount
         ListPBAccountTransactions
 

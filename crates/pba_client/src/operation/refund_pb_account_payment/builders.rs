@@ -180,5 +180,33 @@ impl RefundPBAccountPaymentFluentBuilder {
     pub fn get_idempotency_key(&self) -> &::std::option::Option<::std::string::String> {
                     self.inner.get_idempotency_key()
                 }
+    #[allow(missing_docs)] // documentation missing in model
+    pub fn pending(mut self, input: bool) -> Self {
+                    self.inner = self.inner.pending(input);
+                    self
+                }
+    #[allow(missing_docs)] // documentation missing in model
+    pub fn set_pending(mut self, input: ::std::option::Option<bool>) -> Self {
+                    self.inner = self.inner.set_pending(input);
+                    self
+                }
+    #[allow(missing_docs)] // documentation missing in model
+    pub fn get_pending(&self) -> &::std::option::Option<bool> {
+                    self.inner.get_pending()
+                }
+    #[allow(missing_docs)] // documentation missing in model
+    pub fn timeout_seconds(mut self, input: i32) -> Self {
+                    self.inner = self.inner.timeout_seconds(input);
+                    self
+                }
+    #[allow(missing_docs)] // documentation missing in model
+    pub fn set_timeout_seconds(mut self, input: ::std::option::Option<i32>) -> Self {
+                    self.inner = self.inner.set_timeout_seconds(input);
+                    self
+                }
+    #[allow(missing_docs)] // documentation missing in model
+    pub fn get_timeout_seconds(&self) -> &::std::option::Option<i32> {
+                    self.inner.get_timeout_seconds()
+                }
 }
 

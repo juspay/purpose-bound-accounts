@@ -15,6 +15,12 @@ pub fn ser_refund_pb_account_payment_input_input(
     if let Some(var_4) = &input.idempotency_key {
         object.key("idempotency_key").string(var_4.as_str());
     }
+    if let Some(var_5) = &input.pending {
+        object.key("pending").boolean(*var_5);
+    }
+    if let Some(var_6) = &input.timeout_seconds {
+        object.key("timeout_seconds").number(#[allow(clippy::useless_conversion)]::aws_smithy_types::Number::NegInt((*var_6).into()));
+    }
     Ok(())
 }
 

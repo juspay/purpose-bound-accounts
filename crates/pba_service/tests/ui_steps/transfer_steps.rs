@@ -628,3 +628,153 @@ async fn when_pb_account_spends(world: &mut UiWorld, amount: u64, merchant: Stri
     submit.click().await.expect("Failed to click submit");
     sleep(Duration::from_millis(800)).await;
 }
+
+// ---------------------------------------------------------------------------
+// Two-phase transfer reversal UI steps
+// ---------------------------------------------------------------------------
+
+/// Navigate to the reverse form for the currently tracked transfer.
+#[when("I open the reverse form for that transfer")]
+async fn when_open_reverse_form(world: &mut UiWorld) {
+    let transfer_id = world
+        .last_transfer_id
+        .clone()
+        .expect("No transfer ID — land on transfer detail first");
+    let url = world.url(&format!("/admin/transfers/{}/reverse", transfer_id));
+    let page = world.ensure_page().await;
+    page.goto(url)
+        .await
+        .expect("Failed to navigate to reverse form");
+    sleep(Duration::from_millis(400)).await;
+}
+
+/// Submit the reverse form with whatever values are currently set (caller
+/// selects mode and fills amount before calling this step).
+///
+/// After success the server redirects to `/admin/transfers/{original_id}`.
+/// We then extract the reversal's transfer ID from the "Reversed by" section
+/// on that page and update `last_transfer_id` to point at the reversal so
+/// subsequent status-check steps operate on the right row.
+#[when("I submit the reverse form")]
+async fn when_submit_reverse_form(world: &mut UiWorld) {
+    let page = world.ensure_page().await;
+    let submit = page
+        .find_element("button[type='submit']")
+        .await
+        .expect("Could not find submit button on reverse form");
+    submit.click().await.expect("Failed to click submit");
+    sleep(Duration::from_millis(1000)).await;
+
+    // Wait for the redirect to the original transfer detail page.
+    for _ in 0..20 {
+        sleep(Duration::from_millis(300)).await;
+        let page = world.ensure_page().await;
+        let current_url = page
+            .url()
+            .await
+            .expect("Failed to get URL")
+            .unwrap_or_default();
+        if extract_transfer_id_from_url(&current_url).is_some() {
+            break;
+        }
+    }
+
+    // Save the original transfer ID in last_reversal_id so we can return to
+    // it later (e.g. to verify re-reversal is unlocked after voiding).
+    let original_id = world.last_transfer_id.clone().unwrap_or_default();
+    world.last_reversal_id = Some(original_id.clone());
+
+    // The original transfer page now shows a "Reversed by" link pointing to
+    // the reversal's transaction ID via /admin/transactions/{rid}.
+    // Extract it and store in last_transfer_id so status-check steps work.
+    let content = world
+        .ensure_page()
+        .await
+        .content()
+        .await
+        .expect("Failed to read page after reverse form submit");
+
+    let re_txn = Regex::new(r"/admin/transactions/([0-9a-f-]{36})").unwrap();
+    let reversal_id = re_txn
+        .captures_iter(&content)
+        .map(|c| c[1].to_string())
+        .find(|id| id != &original_id);
+
+    if let Some(rid) = reversal_id {
+        world.last_transfer_id = Some(rid);
+    } else {
+        // Fall back: check /admin/transfers/{uuid} links
+        let re_tr = Regex::new(r"/admin/transfers/([0-9a-f-]{36})").unwrap();
+        let reversal_tr = re_tr
+            .captures_iter(&content)
+            .map(|c| c[1].to_string())
+            .find(|id| id != &original_id);
+        if let Some(rid) = reversal_tr {
+            world.last_transfer_id = Some(rid);
+        } else {
+            let page = world.ensure_page().await;
+            let url = page.url().await.unwrap_or_default().unwrap_or_default();
+            panic!(
+                "Could not find reversal transfer ID after submitting reverse form. \
+                 Original transfer: {}. Current URL: {}. Content snippet: {}",
+                original_id,
+                url,
+                &content[..content.len().min(800)]
+            );
+        }
+    }
+}
+
+/// Assert the Post button (form action ending `/post`) is visible on the
+/// current transfer detail page.
+#[then("the Post transfer button is visible on the detail page")]
+async fn then_post_transfer_button_visible(world: &mut UiWorld) {
+    let page = world.ensure_page().await;
+    let content = page.content().await.expect("Failed to read page content");
+    assert!(
+        content.contains("/post"),
+        "Expected Post transfer button to be visible. Page snippet: {}",
+        &content[..content.len().min(2000)]
+    );
+}
+
+/// Assert the Void button (form action ending `/void`) is visible.
+#[then("the Void transfer button is visible on the detail page")]
+async fn then_void_transfer_button_visible(world: &mut UiWorld) {
+    let page = world.ensure_page().await;
+    let content = page.content().await.expect("Failed to read page content");
+    assert!(
+        content.contains("/void"),
+        "Expected Void transfer button to be visible. Page snippet: {}",
+        &content[..content.len().min(2000)]
+    );
+}
+
+/// After voiding a pending reversal, navigate back to the original transfer
+/// and assert its Reverse button is present again (can_reverse is true).
+#[then("the original transfer is reversible again")]
+async fn then_original_transfer_reversible(world: &mut UiWorld) {
+    // last_reversal_id was set by when_submit_reverse_form to the original
+    // transfer ID before it was overwritten by the reversal ID.
+    let original_id = world
+        .last_reversal_id
+        .clone()
+        .expect("No original transfer ID stored — was when_submit_reverse_form called?");
+
+    let url = world.url(&format!("/admin/transfers/{}", original_id));
+    let page = world.ensure_page().await;
+    page.goto(url)
+        .await
+        .expect("Failed to navigate to original transfer detail");
+    sleep(Duration::from_millis(400)).await;
+
+    let page = world.ensure_page().await;
+    let content = page.content().await.expect("Failed to read page content");
+    let expected_href = format!("/admin/transfers/{}/reverse", original_id);
+    assert!(
+        content.contains(&expected_href),
+        "Expected Reverse button on original transfer after voiding the pending reversal. \
+         Page snippet: {}",
+        &content[..content.len().min(2000)]
+    );
+}

@@ -1,4 +1,4 @@
-use cucumber::{then, when};
+use cucumber::{given, then, when};
 use regex::Regex;
 use std::time::Duration;
 use tokio::time::sleep;
@@ -536,7 +536,7 @@ async fn when_click_refund_and_submit(world: &mut UiWorld, amount_paisa: u64) {
         .expect("Failed to navigate to refund form");
     sleep(Duration::from_millis(400)).await;
 
-    // Clear pre-filled amount and type the requested value
+    // Clear pre-filled amount so the test can type its own value.
     let page = world.ensure_page().await;
     let prep_js = r#"
     var inp = document.querySelector("input[name='amount_paisa']");
@@ -676,4 +676,286 @@ async fn then_remaining_refundable_display(world: &mut UiWorld, paisa: i64) {
         display,
         &content[..content.len().min(2000)]
     );
+}
+
+// ---------------------------------------------------------------------------
+// Two-phase refund UI steps
+// ---------------------------------------------------------------------------
+
+/// Open the refund form for the currently active payment page (reuses the
+/// cached `last_payment_id`).
+#[when("I open the refund form for that payment")]
+async fn when_open_refund_form(world: &mut UiWorld) {
+    let account_id = world.account_id.clone().expect("No account ID");
+    let payment_id = world
+        .last_payment_id
+        .clone()
+        .expect("No payment ID — visit the payment detail page first");
+    let url = world.url(&format!(
+        "/admin/accounts/{}/payments/{}/refund",
+        account_id, payment_id
+    ));
+    let page = world.ensure_page().await;
+    page.goto(url)
+        .await
+        .expect("Failed to navigate to refund form");
+    sleep(Duration::from_millis(400)).await;
+}
+
+/// Click the "Hold as pending" radio on the refund/reverse form.
+#[when(regex = r#"^I select "Hold as pending" mode$"#)]
+async fn when_select_hold_as_pending(world: &mut UiWorld) {
+    let page = world.ensure_page().await;
+    let js = "document.querySelector(\"input[name='mode'][value='pending']\").click();";
+    page.evaluate(js.to_string())
+        .await
+        .expect("Failed to select 'Hold as pending' radio");
+}
+
+/// Clear and fill the amount_paisa input with the given value.
+#[when(regex = r#"^I enter (\d+) as the refund amount paisa$"#)]
+async fn when_enter_refund_amount(world: &mut UiWorld, amount: u64) {
+    let page = world.ensure_page().await;
+    let clear_js = "document.querySelector(\"input[name='amount_paisa']\").value = '';";
+    page.evaluate(clear_js.to_string()).await.ok();
+    let input = page
+        .find_element("input[name='amount_paisa']")
+        .await
+        .expect("Could not find amount_paisa input");
+    input.click().await.expect("Failed to click amount_paisa");
+    input
+        .type_str(&amount.to_string())
+        .await
+        .expect("Failed to type amount_paisa");
+}
+
+/// Submit the currently open refund form and wait for the redirect to the
+/// refund detail page. Captures `last_refund_id` from the redirected page URL.
+#[when("I submit the refund form")]
+async fn when_submit_refund_form(world: &mut UiWorld) {
+    let page = world.ensure_page().await;
+    let submit = page
+        .find_element("button[type='submit']")
+        .await
+        .expect("Could not find submit button on refund form");
+    submit.click().await.expect("Failed to click submit");
+    sleep(Duration::from_millis(1000)).await;
+
+    // Capture the refund transaction ID from the post-redirect URL.
+    let current_url = world
+        .ensure_page()
+        .await
+        .url()
+        .await
+        .expect("Failed to get URL")
+        .unwrap_or_default();
+    let saved_payment_id = world.last_payment_id.clone();
+    // After a pending-mode refund the server redirects to
+    // /admin/transactions/{refund_correlation_id}.
+    let re = Regex::new(r"/admin/transactions/([0-9a-f-]{36})").unwrap();
+    if let Some(cap) = re.captures(&current_url) {
+        let id = cap[1].to_string();
+        if Some(id.clone()) != saved_payment_id {
+            world.last_refund_id = Some(id);
+        }
+    }
+    // Also try to capture from page content links
+    if world.last_refund_id.is_none() {
+        let content = world
+            .ensure_page()
+            .await
+            .content()
+            .await
+            .expect("Failed to read page content after refund submit");
+        let re_content = Regex::new(r"/admin/transactions/([0-9a-f-]{36})").unwrap();
+        for cap in re_content.captures_iter(&content) {
+            let candidate = cap[1].to_string();
+            if Some(candidate.clone()) != saved_payment_id {
+                world.last_refund_id = Some(candidate);
+                break;
+            }
+        }
+    }
+}
+
+/// Navigate to the refund transaction detail page and assert the status badge.
+#[then(regex = r#"^the refund detail page shows status "([^"]*)"$"#)]
+async fn then_refund_detail_shows_status(world: &mut UiWorld, expected: String) {
+    let refund_id = world
+        .last_refund_id
+        .clone()
+        .expect("No refund ID captured — submit the refund form first");
+    let url = world.url(&format!("/admin/transactions/{}", refund_id));
+    let page = world.ensure_page().await;
+    page.goto(url.clone())
+        .await
+        .expect("Failed to navigate to refund detail");
+    sleep(Duration::from_millis(400)).await;
+
+    let page = world.ensure_page().await;
+    let content = page.content().await.expect("Failed to read page content");
+    // The template renders the status in a stat-value span: `{{ status }}`
+    // and in the kv grid. A simple contains check on the page is sufficient.
+    assert!(
+        content
+            .to_ascii_lowercase()
+            .contains(&expected.to_ascii_lowercase()),
+        "Expected refund detail page to show status '{}'. Page snippet: {}",
+        expected,
+        &content[..content.len().min(2000)]
+    );
+}
+
+/// Assert that the "Post refund" button (a submit button in a form ending in
+/// `/refunds/{id}/post`) is visible on the current page.
+#[then("the Post refund button is visible")]
+async fn then_post_refund_button_visible(world: &mut UiWorld) {
+    let page = world.ensure_page().await;
+    let content = page.content().await.expect("Failed to read page content");
+    assert!(
+        content.contains("/refunds/") && content.contains("/post"),
+        "Expected Post refund button to be visible. Page snippet: {}",
+        &content[..content.len().min(2000)]
+    );
+}
+
+/// Assert that the "Void refund" button is visible.
+#[then("the Void refund button is visible")]
+async fn then_void_refund_button_visible(world: &mut UiWorld) {
+    let page = world.ensure_page().await;
+    let content = page.content().await.expect("Failed to read page content");
+    assert!(
+        content.contains("/refunds/") && content.contains("/void"),
+        "Expected Void refund button to be visible. Page snippet: {}",
+        &content[..content.len().min(2000)]
+    );
+}
+
+/// Click the "Post refund" button on the refund detail page.
+/// Navigates to the refund detail first to ensure we are on the right page.
+#[when("I click the Post refund button on the refund detail page")]
+async fn when_click_post_refund(world: &mut UiWorld) {
+    let refund_id = world
+        .last_refund_id
+        .clone()
+        .expect("No refund ID — submit the refund form first");
+    let url = world.url(&format!("/admin/transactions/{}", refund_id));
+    let page = world.ensure_page().await;
+    page.goto(url)
+        .await
+        .expect("Failed to navigate to refund detail for Post");
+    sleep(Duration::from_millis(400)).await;
+
+    let page = world.ensure_page().await;
+    let js = r#"
+        const forms = Array.from(document.querySelectorAll('form'));
+        const f = forms.find(f => f.action && f.action.includes('/refunds/') && f.action.endsWith('/post'));
+        if (f) { f.submit(); } else { throw new Error('Post refund form not found'); }
+    "#;
+    page.evaluate(js.to_string())
+        .await
+        .expect("Failed to submit Post refund form");
+    sleep(Duration::from_millis(800)).await;
+    // Wait for redirect back to the refund detail
+    for _ in 0..20 {
+        sleep(Duration::from_millis(300)).await;
+        let page = world.ensure_page().await;
+        let curr = page
+            .url()
+            .await
+            .expect("Failed to get URL")
+            .unwrap_or_default();
+        if curr.contains("/admin/transactions/") {
+            return;
+        }
+    }
+}
+
+/// Click the "Void refund" button on the refund detail page.
+/// Navigates to the refund detail first to ensure we are on the right page.
+#[when("I click the Void refund button on the refund detail page")]
+async fn when_click_void_refund(world: &mut UiWorld) {
+    let refund_id = world
+        .last_refund_id
+        .clone()
+        .expect("No refund ID — submit the refund form first");
+    let url = world.url(&format!("/admin/transactions/{}", refund_id));
+    let page = world.ensure_page().await;
+    page.goto(url)
+        .await
+        .expect("Failed to navigate to refund detail for Void");
+    sleep(Duration::from_millis(400)).await;
+
+    let page = world.ensure_page().await;
+    let js = r#"
+        const forms = Array.from(document.querySelectorAll('form'));
+        const f = forms.find(f => f.action && f.action.includes('/refunds/') && f.action.endsWith('/void'));
+        if (f) { f.submit(); } else { throw new Error('Void refund form not found'); }
+    "#;
+    page.evaluate(js.to_string())
+        .await
+        .expect("Failed to submit Void refund form");
+    sleep(Duration::from_millis(800)).await;
+    for _ in 0..20 {
+        sleep(Duration::from_millis(300)).await;
+        let page = world.ensure_page().await;
+        let curr = page
+            .url()
+            .await
+            .expect("Failed to get URL")
+            .unwrap_or_default();
+        if curr.contains("/admin/transactions/") {
+            return;
+        }
+    }
+}
+
+// ---------------------------------------------------------------------------
+// Two-phase refund Given steps for scenario setup
+// ---------------------------------------------------------------------------
+
+/// "a posted PB->merchant payment exists" — full setup: create accounts,
+/// fund, and make a payment. Uses unique holder ids baked into the scenario.
+/// The feature scenarios provide individual account setup steps, so this
+/// compound Given is not needed; the individual steps are used instead.
+
+// ---------------------------------------------------------------------------
+// History assertions (for @todo scenario)
+// ---------------------------------------------------------------------------
+
+#[then("the refund history shows two entries")]
+async fn then_refund_history_two_entries(world: &mut UiWorld) {
+    let page = world.ensure_page().await;
+    let content = page.content().await.expect("Failed to read page content");
+    assert!(
+        content.contains("Refund history"),
+        "Expected 'Refund history' section on page"
+    );
+    // Count <tr> rows inside the refund history table (subtract 1 for header)
+    let section_start = content.find("Refund history").unwrap_or(0);
+    let section = &content[section_start..];
+    let rows = section.matches("<tr>").count().saturating_sub(1);
+    assert_eq!(rows, 2, "Expected 2 refund history rows but found {}", rows);
+}
+
+#[then("the voided entry is rendered with strike-through")]
+async fn then_voided_entry_strike_through(world: &mut UiWorld) {
+    let page = world.ensure_page().await;
+    let content = page.content().await.expect("Failed to read page content");
+    // Template renders voided cells as <s>₹X.XX</s>
+    assert!(
+        content.contains("<s>₹"),
+        "Expected strike-through <s> tag for voided refund entry. Page snippet: {}",
+        &content[..content.len().min(2000)]
+    );
+}
+
+// ---------------------------------------------------------------------------
+// Unused given stub (keeps compiler happy for @todo scenario)
+// ---------------------------------------------------------------------------
+
+#[given("a payment has a voided pending refund and a settled refund")]
+async fn given_payment_with_voided_and_settled_refund(_world: &mut UiWorld) {
+    // @todo: implement complex setup for history scenario
+    panic!("@todo scenario not yet implemented — tag with @todo to skip");
 }

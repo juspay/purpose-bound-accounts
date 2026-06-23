@@ -13,6 +13,10 @@ pub use crate::types::error::_deposit_not_found_error::DepositNotFoundErrorBuild
 
 pub use crate::types::error::_invalid_mcc_error::InvalidMccErrorBuilder;
 
+pub use crate::types::error::_transaction_not_pending_error::TransactionNotPendingErrorBuilder;
+
+pub use crate::types::error::_transaction_not_found_error::TransactionNotFoundErrorBuilder;
+
 pub use crate::types::error::_payment_fully_refunded_error::PaymentFullyRefundedErrorBuilder;
 
 pub use crate::types::error::_refund_amount_invalid_error::RefundAmountInvalidErrorBuilder;

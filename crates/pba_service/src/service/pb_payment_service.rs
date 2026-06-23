@@ -2,7 +2,9 @@ use std::sync::Arc;
 use uuid::Uuid;
 
 use crate::domain::pool::PaymentSplit;
-use crate::domain::transaction::{TransactionDirection, TransactionStatus, TransactionType};
+use crate::domain::transaction::{
+    TransactionDirection, TransactionRecord, TransactionStatus, TransactionType,
+};
 use crate::error::AppError;
 use crate::repository::ledger_repo::{LedgerRepo, MERCHANT_SETTLEMENT_TB_ID};
 use crate::repository::pb_account_repo::PbAccountRepo;
@@ -11,10 +13,32 @@ use crate::repository::transaction_repo::TransactionRepo;
 const PAYMENT_TRANSFER_CODE: u16 = 200;
 const MAX_SPLIT_RETRIES: u32 = 3;
 
+enum RefundResolution {
+    Post,
+    Void,
+}
+
+impl RefundResolution {
+    fn target(&self) -> TransactionStatus {
+        match self {
+            Self::Post => TransactionStatus::Settled,
+            Self::Void => TransactionStatus::Voided,
+        }
+    }
+
+    fn target_sql(&self) -> &'static str {
+        match self {
+            Self::Post => "settled",
+            Self::Void => "voided",
+        }
+    }
+}
+
 pub struct PbPaymentService {
     pub account_repo: Arc<PbAccountRepo>,
     pub ledger_repo: Arc<LedgerRepo>,
     pub transaction_repo: Arc<TransactionRepo>,
+    pub default_timeout_seconds: u32,
 }
 
 impl PbPaymentService {
@@ -22,11 +46,13 @@ impl PbPaymentService {
         account_repo: Arc<PbAccountRepo>,
         ledger_repo: Arc<LedgerRepo>,
         transaction_repo: Arc<TransactionRepo>,
+        default_timeout_seconds: u32,
     ) -> Self {
         Self {
             account_repo,
             ledger_repo,
             transaction_repo,
+            default_timeout_seconds,
         }
     }
 
@@ -237,6 +263,8 @@ impl PbPaymentService {
         pb_account_id: Uuid,
         original_payment_id: Uuid,
         amount: u64,
+        pending: bool,
+        timeout_seconds: Option<u32>,
         description: Option<&str>,
         gateway_ref: Option<&str>,
         idempotency_key: Option<&str>,
@@ -395,6 +423,18 @@ impl PbPaymentService {
             return Err(AppError::PbAccountNotActive(pb_account_id.to_string()));
         }
 
+        // Step 2 (extended): compute row status and timeout once.
+        let row_status = if pending {
+            TransactionStatus::Pending
+        } else {
+            TransactionStatus::Settled
+        };
+        let timeout = if pending {
+            Some(timeout_seconds.unwrap_or(self.default_timeout_seconds))
+        } else {
+            None
+        };
+
         // Step 6: allocate self-first.
         let take_self = amount.min(self_remaining);
         let take_others = amount - take_self;
@@ -418,14 +458,14 @@ impl PbPaymentService {
                     pb_account_id,
                     crate::domain::account_kind::AccountKind::Pb,
                     TransactionType::Payment,
-                    TransactionStatus::Settled,
+                    row_status,
                     take_self,
                     Some("self"),
                     TransactionDirection::Inbound,
                     None,
                     None,
                     gateway_ref,
-                    None,
+                    timeout,
                     p_self_row.merchant_id.as_deref(),
                     p_self_row.merchant_mcc.as_deref(),
                     description,
@@ -454,14 +494,14 @@ impl PbPaymentService {
                     pb_account_id,
                     crate::domain::account_kind::AccountKind::Pb,
                     TransactionType::Payment,
-                    TransactionStatus::Settled,
+                    row_status,
                     take_others,
                     Some("others"),
                     TransactionDirection::Inbound,
                     None,
                     None,
                     gateway_ref,
-                    None,
+                    timeout,
                     p_others_row.merchant_id.as_deref(),
                     p_others_row.merchant_mcc.as_deref(),
                     description,
@@ -475,28 +515,92 @@ impl PbPaymentService {
         }
 
         // Step 8: TB transfer(s).
-        if take_self > 0 && take_others > 0 {
-            self.ledger_repo
-                .create_payment_refund_split(
-                    account.tb_self_account_id,
-                    account.tb_others_account_id,
-                    take_self,
-                    take_others,
-                )
-                .await?;
-        } else if take_self > 0 {
-            self.ledger_repo
-                .create_payment_refund(account.tb_self_account_id, take_self)
-                .await?;
-        } else {
-            self.ledger_repo
-                .create_payment_refund(account.tb_others_account_id, take_others)
-                .await?;
-        }
+        let (tb_self_id, tb_others_id): (Option<u128>, Option<u128>) =
+            if take_self > 0 && take_others > 0 {
+                if pending {
+                    let (s, o) = self
+                        .ledger_repo
+                        .create_pending_payment_refund_split(
+                            account.tb_self_account_id,
+                            account.tb_others_account_id,
+                            take_self,
+                            take_others,
+                            timeout.expect("timeout populated when pending=true"),
+                        )
+                        .await?;
+                    (Some(s), Some(o))
+                } else {
+                    self.ledger_repo
+                        .create_payment_refund_split(
+                            account.tb_self_account_id,
+                            account.tb_others_account_id,
+                            take_self,
+                            take_others,
+                        )
+                        .await?;
+                    (None, None)
+                }
+            } else if take_self > 0 {
+                if pending {
+                    let id = self
+                        .ledger_repo
+                        .create_pending_payment_refund(
+                            account.tb_self_account_id,
+                            take_self,
+                            timeout.expect("timeout populated when pending=true"),
+                        )
+                        .await?;
+                    (Some(id), None)
+                } else {
+                    self.ledger_repo
+                        .create_payment_refund(account.tb_self_account_id, take_self)
+                        .await?;
+                    (None, None)
+                }
+            } else if pending {
+                let id = self
+                    .ledger_repo
+                    .create_pending_payment_refund(
+                        account.tb_others_account_id,
+                        take_others,
+                        timeout.expect("timeout populated when pending=true"),
+                    )
+                    .await?;
+                (None, Some(id))
+            } else {
+                self.ledger_repo
+                    .create_payment_refund(account.tb_others_account_id, take_others)
+                    .await?;
+                (None, None)
+            };
 
-        // Step 9 deferred: tb_transfer_id propagation matches make_payment's posture
-        // (rows carry tb_transfer_id=0; the existing helpers don't surface TB ids).
-        // See plan Task 6b note.
+        // Step 4 (brief): persist returned TB ids when pending.
+        if pending {
+            if let Some(tb_id) = tb_self_id {
+                sqlx::query(
+                    r#"UPDATE transactions
+                       SET tb_transfer_id = $1::numeric, updated_at = now()
+                       WHERE correlation_id = $2 AND pool = 'self'"#,
+                )
+                .bind(tb_id.to_string())
+                .bind(refund_correlation_id)
+                .execute(&mut *tx)
+                .await
+                .map_err(|e| AppError::DatabaseError(e.to_string()))?;
+            }
+            if let Some(tb_id) = tb_others_id {
+                sqlx::query(
+                    r#"UPDATE transactions
+                       SET tb_transfer_id = $1::numeric, updated_at = now()
+                       WHERE correlation_id = $2 AND pool = 'others'"#,
+                )
+                .bind(tb_id.to_string())
+                .bind(refund_correlation_id)
+                .execute(&mut *tx)
+                .await
+                .map_err(|e| AppError::DatabaseError(e.to_string()))?;
+            }
+        }
 
         tx.commit().await?;
 
@@ -520,9 +624,178 @@ impl PbPaymentService {
             amount_to_others: take_others,
             original_amount,
             remaining_refundable,
-            status: TransactionStatus::Settled,
+            status: row_status,
             correlation_id: refund_correlation_id,
             created_at: chrono::Utc::now(),
+        })
+    }
+
+    pub async fn post_refund(
+        &self,
+        pb_account_id: Uuid,
+        refund_id: Uuid,
+    ) -> Result<RefundResult, AppError> {
+        self.resolve_refund(pb_account_id, refund_id, RefundResolution::Post)
+            .await
+    }
+
+    pub async fn void_refund(
+        &self,
+        pb_account_id: Uuid,
+        refund_id: Uuid,
+    ) -> Result<RefundResult, AppError> {
+        self.resolve_refund(pb_account_id, refund_id, RefundResolution::Void)
+            .await
+    }
+
+    async fn resolve_refund(
+        &self,
+        pb_account_id: Uuid,
+        refund_id: Uuid,
+        direction: RefundResolution,
+    ) -> Result<RefundResult, AppError> {
+        // Begin a transaction and lock the refund rows so concurrent post/void
+        // calls on the same refund serialise here.
+        let mut tx = self.transaction_repo.pool().begin().await?;
+        let rows = self
+            .transaction_repo
+            .find_by_correlation_id_for_update(&mut tx, refund_id)
+            .await?;
+        if rows.is_empty() {
+            return Err(AppError::TransactionNotFound(refund_id.to_string()));
+        }
+        for r in &rows {
+            if r.account_kind != crate::domain::account_kind::AccountKind::Pb
+                || r.account_id != pb_account_id
+                || r.transaction_type != TransactionType::Payment
+                || r.reverses_transaction_id.is_none()
+            {
+                return Err(AppError::TransactionNotFound(refund_id.to_string()));
+            }
+        }
+
+        // Idempotent same-direction no-op
+        if rows.iter().all(|r| r.status == direction.target()) {
+            // Commit to release the lock, then rebuild result from pool.
+            tx.commit().await?;
+            let updated = self
+                .transaction_repo
+                .find_by_correlation_id(refund_id)
+                .await?;
+            return self
+                .build_refund_result_from_rows(pb_account_id, refund_id, &updated)
+                .await;
+        }
+        if rows.iter().any(|r| r.status != TransactionStatus::Pending) {
+            return Err(AppError::TransactionNotPending(refund_id.to_string()));
+        }
+
+        // Per-leg TB resolution. Tolerate already-resolved errors from the TB
+        // layer in case a LINKED chain auto-resolves the tail.
+        for r in &rows {
+            if r.tb_transfer_id != 0 {
+                let res = match direction {
+                    RefundResolution::Post => {
+                        self.ledger_repo
+                            .post_pending_transfer(r.tb_transfer_id)
+                            .await
+                    }
+                    RefundResolution::Void => {
+                        self.ledger_repo
+                            .void_pending_transfer(r.tb_transfer_id)
+                            .await
+                    }
+                };
+                match res {
+                    Ok(()) => {}
+                    Err(AppError::TbPendingAlreadyResolved) => {} // tolerate; row will be UPDATEd anyway
+                    Err(e) => return Err(e),
+                }
+            }
+        }
+
+        sqlx::query(
+            r#"UPDATE transactions
+               SET status = $1, updated_at = now()
+               WHERE correlation_id = $2 AND status = 'pending'"#,
+        )
+        .bind(direction.target_sql())
+        .bind(refund_id)
+        .execute(&mut *tx)
+        .await
+        .map_err(|e| AppError::DatabaseError(e.to_string()))?;
+
+        tx.commit().await?;
+
+        // Post-commit read to build the result (no lock needed).
+        let updated = self
+            .transaction_repo
+            .find_by_correlation_id(refund_id)
+            .await?;
+        self.build_refund_result_from_rows(pb_account_id, refund_id, &updated)
+            .await
+    }
+
+    async fn build_refund_result_from_rows(
+        &self,
+        pb_account_id: Uuid,
+        refund_id: Uuid,
+        rows: &[TransactionRecord],
+    ) -> Result<RefundResult, AppError> {
+        let amount_to_self: u64 = rows
+            .iter()
+            .filter(|r| r.pool.as_deref() == Some("self"))
+            .map(|r| r.amount)
+            .sum();
+        let amount_to_others: u64 = rows
+            .iter()
+            .filter(|r| r.pool.as_deref() == Some("others"))
+            .map(|r| r.amount)
+            .sum();
+        let total_amount = amount_to_self + amount_to_others;
+
+        // Derive original_payment_id and original_amount via reverses_transaction_id.
+        let reverses_id = rows
+            .first()
+            .and_then(|r| r.reverses_transaction_id)
+            .ok_or_else(|| {
+                AppError::DatabaseError("refund row missing reverses_transaction_id".into())
+            })?;
+        let original_row = self.transaction_repo.get_transaction(reverses_id).await?;
+        let original_payment_id = original_row.correlation_id.unwrap_or(original_row.id);
+        let originals = self
+            .transaction_repo
+            .find_by_correlation_id(original_payment_id)
+            .await?;
+        let original_amount: u64 = originals.iter().map(|r| r.amount).sum();
+
+        let mut total_refunded: u64 = 0;
+        for o in &originals {
+            total_refunded += self.transaction_repo.sum_refunds_of(o.id).await?;
+        }
+        let remaining_refundable = original_amount.saturating_sub(total_refunded);
+
+        let status = rows
+            .first()
+            .map(|r| r.status)
+            .unwrap_or(TransactionStatus::Settled);
+        let created_at = rows
+            .first()
+            .map(|r| r.created_at)
+            .unwrap_or_else(chrono::Utc::now);
+
+        Ok(RefundResult {
+            refund_id,
+            original_payment_id,
+            account_id: pb_account_id,
+            amount: total_amount,
+            amount_to_self,
+            amount_to_others,
+            original_amount,
+            remaining_refundable,
+            status,
+            correlation_id: refund_id,
+            created_at,
         })
     }
 

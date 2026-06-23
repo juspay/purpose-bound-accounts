@@ -1665,6 +1665,116 @@
                 }
             }
         },
+        "/pb-accounts/{account_id}/refunds/{refund_id}/post": {
+            "post": {
+                "operationId": "PostPBAccountRefund",
+                "parameters": [
+                    {
+                        "name": "account_id",
+                        "in": "path",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "required": true
+                    },
+                    {
+                        "name": "refund_id",
+                        "in": "path",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "PostPBAccountRefund 200 response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/PostPBAccountRefundResponseContent"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "TransactionNotFoundError 404 response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/TransactionNotFoundErrorResponseContent"
+                                }
+                            }
+                        }
+                    },
+                    "409": {
+                        "description": "TransactionNotPendingError 409 response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/TransactionNotPendingErrorResponseContent"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/pb-accounts/{account_id}/refunds/{refund_id}/void": {
+            "post": {
+                "operationId": "VoidPBAccountRefund",
+                "parameters": [
+                    {
+                        "name": "account_id",
+                        "in": "path",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "required": true
+                    },
+                    {
+                        "name": "refund_id",
+                        "in": "path",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "VoidPBAccountRefund 200 response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/VoidPBAccountRefundResponseContent"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "TransactionNotFoundError 404 response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/TransactionNotFoundErrorResponseContent"
+                                }
+                            }
+                        }
+                    },
+                    "409": {
+                        "description": "TransactionNotPendingError 409 response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/TransactionNotPendingErrorResponseContent"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
         "/pb-accounts/{account_id}/status": {
             "patch": {
                 "description": "Update account status (freeze, close, reactivate).",
@@ -3273,6 +3383,64 @@
                     "status"
                 ]
             },
+            "PostPBAccountRefundResponseContent": {
+                "type": "object",
+                "properties": {
+                    "refund_id": {
+                        "type": "string"
+                    },
+                    "original_payment_id": {
+                        "type": "string"
+                    },
+                    "account_id": {
+                        "type": "string"
+                    },
+                    "amount": {
+                        "type": "number",
+                        "description": "Monetary amount in the smallest currency unit (e.g., paise for INR)."
+                    },
+                    "amount_to_self": {
+                        "type": "number",
+                        "description": "Monetary amount in the smallest currency unit (e.g., paise for INR)."
+                    },
+                    "amount_to_others": {
+                        "type": "number",
+                        "description": "Monetary amount in the smallest currency unit (e.g., paise for INR)."
+                    },
+                    "original_amount": {
+                        "type": "number",
+                        "description": "Monetary amount in the smallest currency unit (e.g., paise for INR)."
+                    },
+                    "remaining_refundable": {
+                        "type": "number",
+                        "description": "Monetary amount in the smallest currency unit (e.g., paise for INR)."
+                    },
+                    "status": {
+                        "type": "string"
+                    },
+                    "correlation_id": {
+                        "type": "string"
+                    },
+                    "created_at": {
+                        "type": "string",
+                        "description": "ISO 8601 date-time.",
+                        "format": "date-time"
+                    }
+                },
+                "required": [
+                    "account_id",
+                    "amount",
+                    "amount_to_others",
+                    "amount_to_self",
+                    "correlation_id",
+                    "created_at",
+                    "original_amount",
+                    "original_payment_id",
+                    "refund_id",
+                    "remaining_refundable",
+                    "status"
+                ]
+            },
             "PurposeTypeNotFoundErrorResponseContent": {
                 "type": "object",
                 "properties": {
@@ -3336,6 +3504,12 @@
                     },
                     "idempotency_key": {
                         "type": "string"
+                    },
+                    "pending": {
+                        "type": "boolean"
+                    },
+                    "timeout_seconds": {
+                        "type": "number"
                     }
                 },
                 "required": [
@@ -3407,8 +3581,14 @@
                         "type": "number",
                         "description": "Monetary amount in the smallest currency unit (e.g., paise for INR)."
                     },
+                    "pending": {
+                        "type": "boolean"
+                    },
                     "gateway_ref": {
                         "type": "string"
+                    },
+                    "timeout_seconds": {
+                        "type": "number"
                     },
                     "description": {
                         "type": "string"
@@ -3483,6 +3663,36 @@
                 "enum": [
                     "inbound",
                     "outbound"
+                ]
+            },
+            "TransactionNotFoundErrorResponseContent": {
+                "type": "object",
+                "properties": {
+                    "error": {
+                        "type": "string"
+                    },
+                    "message": {
+                        "type": "string"
+                    }
+                },
+                "required": [
+                    "error",
+                    "message"
+                ]
+            },
+            "TransactionNotPendingErrorResponseContent": {
+                "type": "object",
+                "properties": {
+                    "error": {
+                        "type": "string"
+                    },
+                    "message": {
+                        "type": "string"
+                    }
+                },
+                "required": [
+                    "error",
+                    "message"
                 ]
             },
             "TransactionStatus": {
@@ -3995,6 +4205,64 @@
                     "amount",
                     "deposit_id",
                     "pool",
+                    "status"
+                ]
+            },
+            "VoidPBAccountRefundResponseContent": {
+                "type": "object",
+                "properties": {
+                    "refund_id": {
+                        "type": "string"
+                    },
+                    "original_payment_id": {
+                        "type": "string"
+                    },
+                    "account_id": {
+                        "type": "string"
+                    },
+                    "amount": {
+                        "type": "number",
+                        "description": "Monetary amount in the smallest currency unit (e.g., paise for INR)."
+                    },
+                    "amount_to_self": {
+                        "type": "number",
+                        "description": "Monetary amount in the smallest currency unit (e.g., paise for INR)."
+                    },
+                    "amount_to_others": {
+                        "type": "number",
+                        "description": "Monetary amount in the smallest currency unit (e.g., paise for INR)."
+                    },
+                    "original_amount": {
+                        "type": "number",
+                        "description": "Monetary amount in the smallest currency unit (e.g., paise for INR)."
+                    },
+                    "remaining_refundable": {
+                        "type": "number",
+                        "description": "Monetary amount in the smallest currency unit (e.g., paise for INR)."
+                    },
+                    "status": {
+                        "type": "string"
+                    },
+                    "correlation_id": {
+                        "type": "string"
+                    },
+                    "created_at": {
+                        "type": "string",
+                        "description": "ISO 8601 date-time.",
+                        "format": "date-time"
+                    }
+                },
+                "required": [
+                    "account_id",
+                    "amount",
+                    "amount_to_others",
+                    "amount_to_self",
+                    "correlation_id",
+                    "created_at",
+                    "original_amount",
+                    "original_payment_id",
+                    "refund_id",
+                    "remaining_refundable",
                     "status"
                 ]
             },
