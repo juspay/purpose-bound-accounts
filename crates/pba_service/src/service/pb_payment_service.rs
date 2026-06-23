@@ -654,9 +654,12 @@ impl PbPaymentService {
         refund_id: Uuid,
         direction: RefundResolution,
     ) -> Result<RefundResult, AppError> {
+        // Begin a transaction and lock the refund rows so concurrent post/void
+        // calls on the same refund serialise here.
+        let mut tx = self.transaction_repo.pool().begin().await?;
         let rows = self
             .transaction_repo
-            .find_by_correlation_id(refund_id)
+            .find_by_correlation_id_for_update(&mut tx, refund_id)
             .await?;
         if rows.is_empty() {
             return Err(AppError::TransactionNotFound(refund_id.to_string()));
@@ -673,8 +676,14 @@ impl PbPaymentService {
 
         // Idempotent same-direction no-op
         if rows.iter().all(|r| r.status == direction.target()) {
+            // Commit to release the lock, then rebuild result from pool.
+            tx.commit().await?;
+            let updated = self
+                .transaction_repo
+                .find_by_correlation_id(refund_id)
+                .await?;
             return self
-                .build_refund_result_from_rows(pb_account_id, refund_id, &rows)
+                .build_refund_result_from_rows(pb_account_id, refund_id, &updated)
                 .await;
         }
         if rows.iter().any(|r| r.status != TransactionStatus::Pending) {
@@ -697,10 +706,10 @@ impl PbPaymentService {
                             .await
                     }
                 };
-                if let Err(e) = res {
-                    if !format!("{e:?}").contains("already_") {
-                        return Err(e);
-                    }
+                match res {
+                    Ok(()) => {}
+                    Err(AppError::TbPendingAlreadyResolved) => {} // tolerate; row will be UPDATEd anyway
+                    Err(e) => return Err(e),
                 }
             }
         }
@@ -712,10 +721,13 @@ impl PbPaymentService {
         )
         .bind(direction.target_sql())
         .bind(refund_id)
-        .execute(self.transaction_repo.pool())
+        .execute(&mut *tx)
         .await
         .map_err(|e| AppError::DatabaseError(e.to_string()))?;
 
+        tx.commit().await?;
+
+        // Post-commit read to build the result (no lock needed).
         let updated = self
             .transaction_repo
             .find_by_correlation_id(refund_id)

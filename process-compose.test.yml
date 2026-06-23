@@ -50,9 +50,9 @@ processes:
   pba-service:
     command: |
       if [ -n "${CI:-}" ]; then
-        AUTH_ENABLED=false DB_NAME=pba_service_test TIGERBEETLE_ADDRESSES=3001 PORT=3031 DB_MIGRATION_MODE=run DEPOSIT_POLLER_INTERVAL_SECONDS=1 target/debug/pba-service
+        AUTH_ENABLED=false DB_NAME=pba_service_test TIGERBEETLE_ADDRESSES=3001 PORT=3031 DB_MIGRATION_MODE=run PENDING_POLLER_INTERVAL_SECONDS=1 target/debug/pba-service
       else
-        AUTH_ENABLED=false DB_NAME=pba_service_test TIGERBEETLE_ADDRESSES=3001 PORT=3031 DB_MIGRATION_MODE=run DEPOSIT_POLLER_INTERVAL_SECONDS=1 cargo run -p pba-service
+        AUTH_ENABLED=false DB_NAME=pba_service_test TIGERBEETLE_ADDRESSES=3001 PORT=3031 DB_MIGRATION_MODE=run PENDING_POLLER_INTERVAL_SECONDS=1 cargo run -p pba-service
       fi
     depends_on:
       db-reset:

@@ -309,9 +309,7 @@ impl LedgerRepo {
         self.client
             .create_transfers(vec![transfer])
             .await
-            .map_err(|e| {
-                AppError::TigerBeetleError(format!("post_pending_transfer failed: {e:?}"))
-            })?;
+            .map_err(|e| classify_pending_resolution_error(e, "post_pending_transfer"))?;
 
         tracing::info!(pending_id = %pending_id, "Posted pending TB transfer");
         Ok(())
@@ -326,9 +324,7 @@ impl LedgerRepo {
         self.client
             .create_transfers(vec![transfer])
             .await
-            .map_err(|e| {
-                AppError::TigerBeetleError(format!("void_pending_transfer failed: {e:?}"))
-            })?;
+            .map_err(|e| classify_pending_resolution_error(e, "void_pending_transfer"))?;
 
         tracing::info!(pending_id = %pending_id, "Voided pending TB transfer");
         Ok(())
@@ -739,6 +735,29 @@ fn datetime_to_system_time(dt: DateTime<Utc>) -> Option<SystemTime> {
         .try_into()
         .ok()?;
     Some(SystemTime::UNIX_EPOCH + Duration::from_nanos(nanos.try_into().ok()?))
+}
+
+/// Classify a TigerBeetle error from post/void pending into an appropriate AppError.
+/// Returns `TbPendingAlreadyResolved` when the pending transfer was already posted
+/// or voided (safe to tolerate on idempotent retries). All other errors become the
+/// generic `TigerBeetleError`.
+fn classify_pending_resolution_error(
+    e: tb::error::CreateTransfersError,
+    context: &str,
+) -> AppError {
+    if let tb::error::CreateTransfersError::Api(ref api_err) = e {
+        let already_resolved = api_err.as_slice().iter().any(|individual| {
+            matches!(
+                individual.kind(),
+                CreateTransferErrorKind::PendingTransferAlreadyPosted
+                    | CreateTransferErrorKind::PendingTransferAlreadyVoided
+            )
+        });
+        if already_resolved {
+            return AppError::TbPendingAlreadyResolved;
+        }
+    }
+    AppError::TigerBeetleError(format!("{context} failed: {e:?}"))
 }
 
 /// Classify a TigerBeetle transfer error into an appropriate AppError.

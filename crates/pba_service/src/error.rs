@@ -52,6 +52,10 @@ pub enum AppError {
     /// Transfer rejected by TigerBeetle because debit would exceed credits (overdraft).
     /// This is retryable with a fresh balance read.
     ExceedsBalance,
+    /// A pending TB transfer was already posted or voided (e.g. by a concurrent
+    /// resolve call or by a LINKED chain auto-resolution). Safe to tolerate in
+    /// idempotent post/void flows.
+    TbPendingAlreadyResolved,
     TigerBeetleError(String),
     DatabaseError(String),
     Unauthorized(String),
@@ -109,6 +113,9 @@ impl std::fmt::Display for AppError {
                 write!(f, "Payment {id} has already been fully refunded")
             }
             Self::ExceedsBalance => write!(f, "Transfer exceeds available balance"),
+            Self::TbPendingAlreadyResolved => {
+                write!(f, "Pending TB transfer already posted or voided")
+            }
             Self::TigerBeetleError(msg) => write!(f, "TigerBeetle error: {msg}"),
             Self::DatabaseError(msg) => write!(f, "Database error: {msg}"),
             Self::Unauthorized(msg) => write!(f, "Unauthorized: {msg}"),
@@ -151,6 +158,9 @@ impl IntoResponse for AppError {
             }
             AppError::PaymentFullyRefunded(_) => (StatusCode::CONFLICT, "PaymentFullyRefunded"),
             AppError::ExceedsBalance => (StatusCode::UNPROCESSABLE_ENTITY, "InsufficientFunds"),
+            AppError::TbPendingAlreadyResolved => {
+                (StatusCode::INTERNAL_SERVER_ERROR, "TigerBeetleError")
+            }
             AppError::TigerBeetleError(_) => {
                 (StatusCode::INTERNAL_SERVER_ERROR, "TigerBeetleError")
             }
