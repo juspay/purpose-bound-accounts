@@ -171,6 +171,10 @@ operation RefundPBAccountPayment {
         gateway_ref: String
 
         idempotency_key: String
+
+        pending: Boolean
+
+        timeout_seconds: Integer
     }
     output := with [RefundResponseMixin] {}
     errors: [

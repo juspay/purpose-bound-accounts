@@ -3336,6 +3336,12 @@
                     },
                     "idempotency_key": {
                         "type": "string"
+                    },
+                    "pending": {
+                        "type": "boolean"
+                    },
+                    "timeout_seconds": {
+                        "type": "number"
                     }
                 },
                 "required": [
