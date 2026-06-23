@@ -50,3 +50,15 @@ Feature: Two-phase reversal of normal -> PB transfers
     And I post the pending reversal
     And I attempt to void the reversal
     Then the operation fails with "TransactionNotPending"
+
+  @api
+  Scenario: Pending reversal with short timeout ages out and frees re-reversal
+    Given a normal account exists for holder "tr2p-s05-eve"
+    And the normal account has balance 20000
+    And a "health" account exists for holder "tr2p-s05-eve" with origin IFSC "HDFC0091005" and account number "9091005001"
+    When I transfer 20000 paisa from the normal account to the PB account
+    And I initiate a pending reversal of 20000 paisa on the last transfer with timeout 1 second
+    And I wait 3 seconds for the timeout poller
+    Then the last reversal has status "voided"
+    When I initiate a reversal of 20000 paisa on the last transfer
+    Then the reversal is successful

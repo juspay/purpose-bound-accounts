@@ -775,6 +775,110 @@ async fn concurrent_pending_refunds(world: &mut PbaWorld, count: usize, amount: 
     world.concurrent_refund_total_amount = Some(total);
 }
 
+#[when(
+    regex = r#"^I initiate a pending refund of (\d+) paisa from the last payment with timeout (\d+) seconds?$"#
+)]
+async fn initiate_pending_refund_with_timeout(
+    world: &mut PbaWorld,
+    amount: i64,
+    timeout_seconds: i32,
+) {
+    world.previous_refund_correlation_id = world.last_refund_correlation_id.take();
+    let account_id = world.account_id.as_ref().expect("No account ID").clone();
+    let payment_id = world
+        .last_payment
+        .as_ref()
+        .expect("No prior payment")
+        .payment_id
+        .clone();
+    let result = world
+        .client
+        .refund_pb_account_payment()
+        .account_id(account_id)
+        .payment_id(payment_id)
+        .amount(amount)
+        .pending(true)
+        .timeout_seconds(timeout_seconds)
+        .send()
+        .await;
+    match result {
+        Ok(out) => {
+            world.last_refund_correlation_id = Some(out.correlation_id().to_string());
+            world.last_refund_amount_to_self = Some(out.amount_to_self());
+            world.last_refund_amount_to_others = Some(out.amount_to_others());
+            world.last_refund_remaining = Some(out.remaining_refundable());
+            world.last_refund_status = Some(out.status().to_string());
+            world.last_error = None;
+        }
+        Err(e) => {
+            let s = format!("{e:?}");
+            world.last_error = Some(crate::PbaError {
+                kind: classify_refund_error(&s).to_string(),
+                message: Some(s),
+            });
+        }
+    }
+}
+
+#[when(regex = r#"^I wait (\d+) seconds? for the timeout poller$"#)]
+async fn wait_for_poller(_world: &mut PbaWorld, seconds: u64) {
+    // Poller runs on a configurable interval (DEPOSIT_POLLER_INTERVAL_SECONDS).
+    // For tests to pass, the service must be started with
+    // DEPOSIT_POLLER_INTERVAL_SECONDS=1 so a 3-second wait is sufficient.
+    tokio::time::sleep(std::time::Duration::from_secs(seconds)).await;
+}
+
+#[then(regex = r#"^the refund of the last payment has status "([^"]*)"$"#)]
+async fn refund_of_last_payment_has_status(world: &mut PbaWorld, expected_status: String) {
+    let account_id = world.account_id.as_ref().expect("No account ID").clone();
+    let refund_correlation_id = world
+        .last_refund_correlation_id
+        .as_ref()
+        .expect("No refund correlation_id recorded")
+        .clone();
+
+    let txns = world
+        .client
+        .list_pb_account_transactions()
+        .account_id(&account_id)
+        .send()
+        .await
+        .expect("Failed to list PB account transactions");
+
+    let refund_txn = txns
+        .transactions()
+        .iter()
+        .find(|t| t.correlation_id() == Some(refund_correlation_id.as_str()))
+        .unwrap_or_else(|| {
+            panic!("No transaction found with correlation_id '{refund_correlation_id}'")
+        });
+
+    assert_eq!(
+        refund_txn.status().as_str(),
+        expected_status.as_str(),
+        "Refund status mismatch: expected '{}' but got '{}'",
+        expected_status,
+        refund_txn.status().as_str()
+    );
+
+    world.last_refund_status = Some(refund_txn.status().as_str().to_string());
+
+    // If the refund ended up voided (e.g. by timeout), call the void endpoint
+    // (idempotent no-op) to refresh last_refund_remaining from the server response.
+    if expected_status == "voided" {
+        if let Ok(out) = world
+            .client
+            .void_pb_account_refund()
+            .account_id(&account_id)
+            .refund_id(&refund_correlation_id)
+            .send()
+            .await
+        {
+            world.last_refund_remaining = Some(out.remaining_refundable());
+        }
+    }
+}
+
 // ── End of refund step bindings ───────────────────────────────────────────────
 
 #[then("the payment legs share correlation_id equal to the payment_id")]

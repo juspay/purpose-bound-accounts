@@ -297,8 +297,8 @@ async fn main() {
         path_prefix: config.path_prefix,
     };
 
-    // Spawn background deposit timeout poller
-    tokio::spawn(service::deposit_timeout::run_deposit_timeout_poller(
+    // Spawn background pending-transaction timeout poller
+    tokio::spawn(service::pending_timeout::run_pending_timeout_poller(
         Arc::clone(&transaction_repo),
         config.deposit_poller_interval_seconds,
     ));

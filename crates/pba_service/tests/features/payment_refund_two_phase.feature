@@ -111,3 +111,15 @@ Feature: Two-phase refund of PB -> merchant payments
     And I post the pending refund
     Then the refund status is "settled"
     And the remaining refundable amount is 15000
+
+  @api
+  Scenario: Pending refund with short timeout ages out and restores remaining
+    Given a normal account exists for holder "pr2p-s10-jay"
+    And the normal account has balance 30000
+    And a "health" account exists for holder "pr2p-s10-jay" with origin IFSC "HDFC0092010" and account number "9092010001"
+    When I transfer 30000 paisa from the normal account to the PB account
+    And I pay 30000 to merchant "HOSP10" with MCC "8062" described as "timeout-refund"
+    And I initiate a pending refund of 10000 paisa from the last payment with timeout 1 second
+    And I wait 3 seconds for the timeout poller
+    Then the refund of the last payment has status "voided"
+    And the remaining refundable amount is 30000

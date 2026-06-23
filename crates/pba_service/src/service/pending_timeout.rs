@@ -4,12 +4,15 @@ use std::time::Duration;
 use crate::domain::transaction::TransactionStatus;
 use crate::repository::transaction_repo::TransactionRepo;
 
-pub async fn run_deposit_timeout_poller(
+pub async fn run_pending_timeout_poller(
     transaction_repo: Arc<TransactionRepo>,
     poll_interval_seconds: u64,
 ) {
     let interval = Duration::from_secs(poll_interval_seconds);
-    tracing::info!(poll_interval_seconds, "Starting deposit timeout poller");
+    tracing::info!(
+        poll_interval_seconds,
+        "Starting pending-transaction timeout poller"
+    );
 
     loop {
         tokio::time::sleep(interval).await;
@@ -42,7 +45,7 @@ pub async fn run_deposit_timeout_poller(
                                 tracing::warn!(
                                     correlation_id = %correlation_id,
                                     rows_voided = result.rows_affected(),
-                                    "Pending transfer timed out and voided (both legs)"
+                                    "Pending transaction timed out and voided (all legs)"
                                 );
                             }
                             Err(e) => {
@@ -65,14 +68,14 @@ pub async fn run_deposit_timeout_poller(
                                     account_id = %txn.account_id,
                                     gateway_ref = txn.gateway_ref.as_deref().unwrap_or("none"),
                                     amount = txn.amount,
-                                    "Pending deposit timed out and voided"
+                                    "Pending solo transaction timed out and voided"
                                 );
                             }
                             Err(e) => {
                                 tracing::error!(
                                     transaction_id = %txn.id,
                                     error = %e,
-                                    "Failed to update timed-out deposit status"
+                                    "Failed to update timed-out transaction status"
                                 );
                             }
                         }
@@ -80,7 +83,7 @@ pub async fn run_deposit_timeout_poller(
                 }
             }
             Err(e) => {
-                tracing::error!(error = %e, "Failed to query timed-out deposits");
+                tracing::error!(error = %e, "Failed to query timed-out pending transactions");
             }
         }
     }

@@ -1032,3 +1032,77 @@ async fn operation_fails_with(world: &mut PbaWorld, kind: String) {
         kind, e.kind
     );
 }
+
+// ── Two-phase reversal timeout steps ─────────────────────────────────────────
+
+#[when(
+    regex = r#"^I initiate a pending reversal of (\d+) paisa on the last transfer with timeout (\d+) seconds?$"#
+)]
+async fn initiate_pending_reversal_with_timeout(
+    world: &mut PbaWorld,
+    amount: i64,
+    timeout_seconds: i32,
+) {
+    let normal_id = world
+        .last_normal_account_id
+        .clone()
+        .expect("no normal account");
+    let transfer_id = world.last_transfer_id.clone().expect("no transfer");
+    let result = world
+        .client
+        .reverse_normal_account_transfer()
+        .account_id(&normal_id)
+        .transfer_id(&transfer_id)
+        .amount(amount)
+        .pending(true)
+        .timeout_seconds(timeout_seconds)
+        .send()
+        .await;
+    match result {
+        Ok(out) => {
+            world.last_reversal_id = Some(out.reversal_id().to_string());
+            world.last_reversal_correlation_id = Some(out.correlation_id().to_string());
+            world.last_reversal_status = Some(out.status().to_string());
+            world.last_error = None;
+        }
+        Err(e) => {
+            let kind = extract_transfer_error_kind(&e);
+            let message = extract_transfer_error_message(&e);
+            world.last_error = Some(crate::PbaError { kind, message });
+        }
+    }
+}
+
+#[then(regex = r#"^the last reversal has status "([^"]*)"$"#)]
+async fn last_reversal_has_status(world: &mut PbaWorld, expected: String) {
+    let normal_id = world
+        .last_normal_account_id
+        .clone()
+        .expect("no normal account");
+    let reversal_id = world.last_reversal_id.clone().expect("no reversal id");
+
+    // Fetch the reversal's current status from the normal-account transaction list.
+    let txns = world
+        .client
+        .list_normal_account_transactions()
+        .account_id(&normal_id)
+        .send()
+        .await
+        .expect("Failed to list normal account transactions");
+
+    let reversal_txn = txns
+        .transactions()
+        .iter()
+        .find(|t| t.id() == reversal_id.as_str())
+        .unwrap_or_else(|| panic!("No transaction found with id '{reversal_id}'"));
+
+    assert_eq!(
+        reversal_txn.status().as_str(),
+        expected.as_str(),
+        "Reversal status mismatch: expected '{}' but got '{}'",
+        expected,
+        reversal_txn.status().as_str()
+    );
+
+    world.last_reversal_status = Some(reversal_txn.status().as_str().to_string());
+}
