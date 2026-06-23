@@ -1508,7 +1508,11 @@ pub async fn admin_post_refund(
     State(state): State<AppState>,
     Path((account_id, refund_id)): Path<(Uuid, Uuid)>,
 ) -> Result<Redirect, impl IntoResponse> {
-    match state.pb_payment_service.post_refund(account_id, refund_id).await {
+    match state
+        .pb_payment_service
+        .post_refund(account_id, refund_id)
+        .await
+    {
         Ok(_) => Ok(Redirect::to(&format!(
             "{}/admin/transactions/{}",
             state.path_prefix, refund_id
@@ -1521,7 +1525,11 @@ pub async fn admin_void_refund(
     State(state): State<AppState>,
     Path((account_id, refund_id)): Path<(Uuid, Uuid)>,
 ) -> Result<Redirect, impl IntoResponse> {
-    match state.pb_payment_service.void_refund(account_id, refund_id).await {
+    match state
+        .pb_payment_service
+        .void_refund(account_id, refund_id)
+        .await
+    {
         Ok(_) => Ok(Redirect::to(&format!(
             "{}/admin/transactions/{}",
             state.path_prefix, refund_id
