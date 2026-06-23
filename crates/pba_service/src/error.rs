@@ -159,7 +159,7 @@ impl IntoResponse for AppError {
             AppError::PaymentFullyRefunded(_) => (StatusCode::CONFLICT, "PaymentFullyRefunded"),
             AppError::ExceedsBalance => (StatusCode::UNPROCESSABLE_ENTITY, "InsufficientFunds"),
             AppError::TbPendingAlreadyResolved => {
-                (StatusCode::INTERNAL_SERVER_ERROR, "TigerBeetleError")
+                (StatusCode::CONFLICT, "TransactionNotPending")
             }
             AppError::TigerBeetleError(_) => {
                 (StatusCode::INTERNAL_SERVER_ERROR, "TigerBeetleError")

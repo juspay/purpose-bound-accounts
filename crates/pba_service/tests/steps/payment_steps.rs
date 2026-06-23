@@ -822,9 +822,9 @@ async fn initiate_pending_refund_with_timeout(
 
 #[when(regex = r#"^I wait (\d+) seconds? for the timeout poller$"#)]
 async fn wait_for_poller(_world: &mut PbaWorld, seconds: u64) {
-    // Poller runs on a configurable interval (DEPOSIT_POLLER_INTERVAL_SECONDS).
+    // Poller runs on a configurable interval (PENDING_POLLER_INTERVAL_SECONDS).
     // For tests to pass, the service must be started with
-    // DEPOSIT_POLLER_INTERVAL_SECONDS=1 so a 3-second wait is sufficient.
+    // PENDING_POLLER_INTERVAL_SECONDS=1 so a 3-second wait is sufficient.
     tokio::time::sleep(std::time::Duration::from_secs(seconds)).await;
 }
 

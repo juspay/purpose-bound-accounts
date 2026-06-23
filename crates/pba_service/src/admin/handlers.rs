@@ -1218,7 +1218,9 @@ pub async fn transaction_detail(
                     match state.transaction_repo.find_refunds_of(o.id).await {
                         Ok(refs) => {
                             for r in refs {
-                                total_refunded += r.amount;
+                                if !matches!(r.status, TransactionStatus::Voided) {
+                                    total_refunded += r.amount;
+                                }
                                 let cid = r.correlation_id.unwrap_or(r.id);
                                 let entry =
                                     by_corr.entry(cid).or_insert((r.created_at, 0, 0, r.status));
@@ -1406,8 +1408,11 @@ pub struct RefundPaymentForm {
     pub description: Option<String>,
     #[serde(default)]
     pub mode: Option<String>,
+    // Option<String> instead of Option<u32> so an empty form value
+    // ("timeout_seconds=") deserialises to None rather than failing with
+    // "cannot parse integer from empty string". Parsed in the handler.
     #[serde(default)]
-    pub timeout_seconds: Option<u32>,
+    pub timeout_seconds: Option<String>,
 }
 
 async fn build_refund_template(
@@ -1475,6 +1480,11 @@ pub async fn process_refund_payment(
     axum::extract::Form(form): axum::extract::Form<RefundPaymentForm>,
 ) -> Response {
     let is_pending = form.mode.as_deref() == Some("pending");
+    let timeout_seconds: Option<u32> = form
+        .timeout_seconds
+        .as_deref()
+        .filter(|s| !s.is_empty())
+        .and_then(|s| s.parse().ok());
     match state
         .pb_payment_service
         .refund_payment(
@@ -1482,7 +1492,7 @@ pub async fn process_refund_payment(
             payment_id,
             form.amount_paisa,
             is_pending,
-            form.timeout_seconds,
+            timeout_seconds,
             form.description.as_deref(),
             None,
             None,

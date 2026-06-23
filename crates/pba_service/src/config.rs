@@ -75,6 +75,10 @@ impl AppConfig {
             .unwrap_or_else(|_| "60".to_string())
             .parse()
             .expect("PENDING_POLLER_INTERVAL_SECONDS must be a valid u64");
+        assert!(
+            pending_poller_interval_seconds > 0,
+            "PENDING_POLLER_INTERVAL_SECONDS must be greater than 0"
+        );
 
         let oidc_issuer_url = std::env::var("OIDC_ISSUER_URL")
             .unwrap_or_else(|_| "http://localhost:8180/realms/pba".to_string());

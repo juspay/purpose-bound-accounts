@@ -427,8 +427,11 @@ pub struct ReverseTransferForm {
     pub description: Option<String>,
     #[serde(default)]
     pub mode: Option<String>,
+    // Option<String> instead of Option<u32> so an empty form value
+    // ("timeout_seconds=") deserialises to None rather than failing with
+    // "cannot parse integer from empty string". Parsed in the handler.
     #[serde(default)]
-    pub timeout_seconds: Option<u32>,
+    pub timeout_seconds: Option<String>,
 }
 
 async fn build_reverse_template(
@@ -497,6 +500,11 @@ pub async fn process_reverse_transfer(
     };
 
     let is_pending = form.mode.as_deref() == Some("pending");
+    let timeout_seconds: Option<u32> = form
+        .timeout_seconds
+        .as_deref()
+        .filter(|s| !s.is_empty())
+        .and_then(|s| s.parse().ok());
     match state
         .transfer_service
         .reverse_transfer(
@@ -504,7 +512,7 @@ pub async fn process_reverse_transfer(
             transfer_id,
             form.amount_paisa,
             is_pending,
-            form.timeout_seconds,
+            timeout_seconds,
             None,
             form.description.as_deref(),
             None,

@@ -536,8 +536,7 @@ async fn when_click_refund_and_submit(world: &mut UiWorld, amount_paisa: u64) {
         .expect("Failed to navigate to refund form");
     sleep(Duration::from_millis(400)).await;
 
-    // Clear pre-filled amount and remove optional timeout_seconds to avoid
-    // "cannot parse integer from empty string" deserialization error.
+    // Clear pre-filled amount so the test can type its own value.
     let page = world.ensure_page().await;
     let prep_js = r#"
     var inp = document.querySelector("input[name='amount_paisa']");
@@ -545,8 +544,6 @@ async fn when_click_refund_and_submit(world: &mut UiWorld, amount_paisa: u64) {
         inp.removeAttribute('max');
         inp.value = '';
     }
-    var ts = document.querySelector("input[name='timeout_seconds']");
-    if (ts) ts.remove();
 "#;
     let _ = page.evaluate(prep_js.to_string()).await;
 
@@ -736,13 +733,6 @@ async fn when_enter_refund_amount(world: &mut UiWorld, amount: u64) {
 /// refund detail page. Captures `last_refund_id` from the redirected page URL.
 #[when("I submit the refund form")]
 async fn when_submit_refund_form(world: &mut UiWorld) {
-    // Remove the optional timeout_seconds input to avoid a
-    // "cannot parse integer from empty string" deserialization error.
-    let page = world.ensure_page().await;
-    let clear_js =
-        "var ts = document.querySelector(\"input[name='timeout_seconds']\"); if (ts) ts.remove();";
-    page.evaluate(clear_js.to_string()).await.ok();
-
     let page = world.ensure_page().await;
     let submit = page
         .find_element("button[type='submit']")

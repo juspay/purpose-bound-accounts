@@ -427,11 +427,6 @@ async fn when_click_reverse_and_submit(world: &mut UiWorld, amount_paisa: u64) {
     let clear_js = "document.querySelector(\"input[name='amount_paisa']\").value = '';";
     page.evaluate(clear_js.to_string()).await.ok();
 
-    // Remove the optional timeout_seconds input to avoid deserialization error
-    let ts_js =
-        "var ts = document.querySelector(\"input[name='timeout_seconds']\"); if (ts) ts.remove();";
-    page.evaluate(ts_js.to_string()).await.ok();
-
     let amount_input = page
         .find_element("input[name='amount_paisa']")
         .await
@@ -662,14 +657,6 @@ async fn when_open_reverse_form(world: &mut UiWorld) {
 /// subsequent status-check steps operate on the right row.
 #[when("I submit the reverse form")]
 async fn when_submit_reverse_form(world: &mut UiWorld) {
-    // Remove the optional timeout_seconds input to avoid a
-    // "cannot parse integer from empty string" deserialization error
-    // when the placeholder field is left blank.
-    let page = world.ensure_page().await;
-    let clear_js =
-        "var ts = document.querySelector(\"input[name='timeout_seconds']\"); if (ts) ts.remove();";
-    page.evaluate(clear_js.to_string()).await.ok();
-
     let page = world.ensure_page().await;
     let submit = page
         .find_element("button[type='submit']")
