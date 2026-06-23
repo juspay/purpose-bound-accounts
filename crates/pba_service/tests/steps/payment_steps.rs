@@ -351,6 +351,8 @@ fn classify_refund_error(err_str: &str) -> &'static str {
         "PaymentFullyRefunded"
     } else if err_str.contains("PbAccountNotActive") {
         "PbAccountNotActive"
+    } else if err_str.contains("TransactionNotPending") {
+        "TransactionNotPending"
     } else if err_str.contains("TransactionNotFound") {
         "TransactionNotFound"
     } else {
@@ -667,6 +669,110 @@ async fn initiate_pending_refund(world: &mut PbaWorld, amount: i64) {
 #[then(regex = r#"^the refund status is "([^"]*)"$"#)]
 async fn refund_status_is(world: &mut PbaWorld, expected: String) {
     assert_eq!(world.last_refund_status.as_deref(), Some(expected.as_str()));
+}
+
+#[when(regex = r#"^I post the pending refund$"#)]
+async fn post_pending_refund(world: &mut PbaWorld) {
+    let account_id = world.account_id.clone().expect("no account");
+    let refund_id = world.last_refund_correlation_id.clone().expect("no refund");
+    let result = world
+        .client
+        .post_pb_account_refund()
+        .account_id(&account_id)
+        .refund_id(&refund_id)
+        .send()
+        .await;
+    match result {
+        Ok(out) => {
+            world.last_refund_status = Some(out.status().to_string());
+            world.last_refund_remaining = Some(out.remaining_refundable());
+            world.last_refund_amount_to_self = Some(out.amount_to_self());
+            world.last_refund_amount_to_others = Some(out.amount_to_others());
+            world.last_error = None;
+        }
+        Err(e) => {
+            let s = format!("{e:?}");
+            world.last_error = Some(crate::PbaError {
+                kind: classify_refund_error(&s).to_string(),
+                message: Some(s),
+            });
+        }
+    }
+}
+
+#[when(regex = r#"^I void the pending refund$"#)]
+async fn void_pending_refund(world: &mut PbaWorld) {
+    let account_id = world.account_id.clone().expect("no account");
+    let refund_id = world.last_refund_correlation_id.clone().expect("no refund");
+    let result = world
+        .client
+        .void_pb_account_refund()
+        .account_id(&account_id)
+        .refund_id(&refund_id)
+        .send()
+        .await;
+    match result {
+        Ok(out) => {
+            world.last_refund_status = Some(out.status().to_string());
+            world.last_refund_remaining = Some(out.remaining_refundable());
+            world.last_error = None;
+        }
+        Err(e) => {
+            let s = format!("{e:?}");
+            world.last_error = Some(crate::PbaError {
+                kind: classify_refund_error(&s).to_string(),
+                message: Some(s),
+            });
+        }
+    }
+}
+
+#[when(regex = r#"^I attempt to void the pending refund$"#)]
+async fn attempt_void_pending_refund(world: &mut PbaWorld) {
+    void_pending_refund(world).await;
+}
+
+#[when(
+    regex = r#"^(\d+) concurrent pending refunds of (\d+) paisa each are attempted on the last payment$"#
+)]
+async fn concurrent_pending_refunds(world: &mut PbaWorld, count: usize, amount: i64) {
+    let account_id = world.account_id.clone().expect("No account ID");
+    let payment_id = world
+        .last_payment
+        .as_ref()
+        .expect("No prior payment")
+        .payment_id
+        .clone();
+    let client = world.client.clone();
+    let futures: Vec<_> = (0..count)
+        .map(|_| {
+            let client = client.clone();
+            let account_id = account_id.clone();
+            let payment_id = payment_id.clone();
+            async move {
+                client
+                    .refund_pb_account_payment()
+                    .account_id(&account_id)
+                    .payment_id(&payment_id)
+                    .amount(amount)
+                    .pending(true)
+                    .send()
+                    .await
+            }
+        })
+        .collect();
+    let results = futures::future::join_all(futures).await;
+    let mut successes = 0usize;
+    let mut total = 0i64;
+    for r in &results {
+        if let Ok(out) = r {
+            successes += 1;
+            total += out.amount();
+        }
+    }
+    world.concurrent_successes = Some(successes);
+    world.concurrent_failures = Some(results.len() - successes);
+    world.concurrent_refund_total_amount = Some(total);
 }
 
 // ── End of refund step bindings ───────────────────────────────────────────────
