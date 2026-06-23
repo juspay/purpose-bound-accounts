@@ -15,6 +15,7 @@ pub struct PbPaymentService {
     pub account_repo: Arc<PbAccountRepo>,
     pub ledger_repo: Arc<LedgerRepo>,
     pub transaction_repo: Arc<TransactionRepo>,
+    pub default_timeout_seconds: u32,
 }
 
 impl PbPaymentService {
@@ -22,11 +23,13 @@ impl PbPaymentService {
         account_repo: Arc<PbAccountRepo>,
         ledger_repo: Arc<LedgerRepo>,
         transaction_repo: Arc<TransactionRepo>,
+        default_timeout_seconds: u32,
     ) -> Self {
         Self {
             account_repo,
             ledger_repo,
             transaction_repo,
+            default_timeout_seconds,
         }
     }
 
@@ -237,6 +240,8 @@ impl PbPaymentService {
         pb_account_id: Uuid,
         original_payment_id: Uuid,
         amount: u64,
+        pending: bool,
+        timeout_seconds: Option<u32>,
         description: Option<&str>,
         gateway_ref: Option<&str>,
         idempotency_key: Option<&str>,
@@ -395,6 +400,18 @@ impl PbPaymentService {
             return Err(AppError::PbAccountNotActive(pb_account_id.to_string()));
         }
 
+        // Step 2 (extended): compute row status and timeout once.
+        let row_status = if pending {
+            TransactionStatus::Pending
+        } else {
+            TransactionStatus::Settled
+        };
+        let timeout = if pending {
+            Some(timeout_seconds.unwrap_or(self.default_timeout_seconds))
+        } else {
+            None
+        };
+
         // Step 6: allocate self-first.
         let take_self = amount.min(self_remaining);
         let take_others = amount - take_self;
@@ -418,14 +435,14 @@ impl PbPaymentService {
                     pb_account_id,
                     crate::domain::account_kind::AccountKind::Pb,
                     TransactionType::Payment,
-                    TransactionStatus::Settled,
+                    row_status,
                     take_self,
                     Some("self"),
                     TransactionDirection::Inbound,
                     None,
                     None,
                     gateway_ref,
-                    None,
+                    timeout,
                     p_self_row.merchant_id.as_deref(),
                     p_self_row.merchant_mcc.as_deref(),
                     description,
@@ -454,14 +471,14 @@ impl PbPaymentService {
                     pb_account_id,
                     crate::domain::account_kind::AccountKind::Pb,
                     TransactionType::Payment,
-                    TransactionStatus::Settled,
+                    row_status,
                     take_others,
                     Some("others"),
                     TransactionDirection::Inbound,
                     None,
                     None,
                     gateway_ref,
-                    None,
+                    timeout,
                     p_others_row.merchant_id.as_deref(),
                     p_others_row.merchant_mcc.as_deref(),
                     description,
@@ -475,28 +492,92 @@ impl PbPaymentService {
         }
 
         // Step 8: TB transfer(s).
-        if take_self > 0 && take_others > 0 {
-            self.ledger_repo
-                .create_payment_refund_split(
-                    account.tb_self_account_id,
-                    account.tb_others_account_id,
-                    take_self,
-                    take_others,
-                )
-                .await?;
-        } else if take_self > 0 {
-            self.ledger_repo
-                .create_payment_refund(account.tb_self_account_id, take_self)
-                .await?;
-        } else {
-            self.ledger_repo
-                .create_payment_refund(account.tb_others_account_id, take_others)
-                .await?;
-        }
+        let (tb_self_id, tb_others_id): (Option<u128>, Option<u128>) =
+            if take_self > 0 && take_others > 0 {
+                if pending {
+                    let (s, o) = self
+                        .ledger_repo
+                        .create_pending_payment_refund_split(
+                            account.tb_self_account_id,
+                            account.tb_others_account_id,
+                            take_self,
+                            take_others,
+                            timeout.expect("timeout populated when pending=true"),
+                        )
+                        .await?;
+                    (Some(s), Some(o))
+                } else {
+                    self.ledger_repo
+                        .create_payment_refund_split(
+                            account.tb_self_account_id,
+                            account.tb_others_account_id,
+                            take_self,
+                            take_others,
+                        )
+                        .await?;
+                    (None, None)
+                }
+            } else if take_self > 0 {
+                if pending {
+                    let id = self
+                        .ledger_repo
+                        .create_pending_payment_refund(
+                            account.tb_self_account_id,
+                            take_self,
+                            timeout.expect("timeout populated when pending=true"),
+                        )
+                        .await?;
+                    (Some(id), None)
+                } else {
+                    self.ledger_repo
+                        .create_payment_refund(account.tb_self_account_id, take_self)
+                        .await?;
+                    (None, None)
+                }
+            } else if pending {
+                let id = self
+                    .ledger_repo
+                    .create_pending_payment_refund(
+                        account.tb_others_account_id,
+                        take_others,
+                        timeout.expect("timeout populated when pending=true"),
+                    )
+                    .await?;
+                (None, Some(id))
+            } else {
+                self.ledger_repo
+                    .create_payment_refund(account.tb_others_account_id, take_others)
+                    .await?;
+                (None, None)
+            };
 
-        // Step 9 deferred: tb_transfer_id propagation matches make_payment's posture
-        // (rows carry tb_transfer_id=0; the existing helpers don't surface TB ids).
-        // See plan Task 6b note.
+        // Step 4 (brief): persist returned TB ids when pending.
+        if pending {
+            if let Some(tb_id) = tb_self_id {
+                sqlx::query(
+                    r#"UPDATE transactions
+                       SET tb_transfer_id = $1::numeric, updated_at = now()
+                       WHERE correlation_id = $2 AND pool = 'self'"#,
+                )
+                .bind(tb_id.to_string())
+                .bind(refund_correlation_id)
+                .execute(&mut *tx)
+                .await
+                .map_err(|e| AppError::DatabaseError(e.to_string()))?;
+            }
+            if let Some(tb_id) = tb_others_id {
+                sqlx::query(
+                    r#"UPDATE transactions
+                       SET tb_transfer_id = $1::numeric, updated_at = now()
+                       WHERE correlation_id = $2 AND pool = 'others'"#,
+                )
+                .bind(tb_id.to_string())
+                .bind(refund_correlation_id)
+                .execute(&mut *tx)
+                .await
+                .map_err(|e| AppError::DatabaseError(e.to_string()))?;
+            }
+        }
 
         tx.commit().await?;
 
@@ -520,7 +601,7 @@ impl PbPaymentService {
             amount_to_others: take_others,
             original_amount,
             remaining_refundable,
-            status: TransactionStatus::Settled,
+            status: row_status,
             correlation_id: refund_correlation_id,
             created_at: chrono::Utc::now(),
         })

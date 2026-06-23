@@ -243,6 +243,7 @@ async fn main() {
         Arc::clone(&pb_account_repo),
         Arc::clone(&ledger_repo),
         Arc::clone(&transaction_repo),
+        config.deposit_timeout_seconds,
     ));
     let pb_withdrawal_service = Arc::new(PbWithdrawalService::new(
         Arc::clone(&pb_account_repo),

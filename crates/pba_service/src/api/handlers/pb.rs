@@ -205,6 +205,8 @@ pub async fn refund_payment(
             account_id,
             payment_id,
             req.amount,
+            false,
+            None,
             req.description.as_deref(),
             req.gateway_ref.as_deref(),
             req.idempotency_key.as_deref(),
