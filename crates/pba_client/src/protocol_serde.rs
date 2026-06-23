@@ -63,6 +63,8 @@ pub(crate) mod shape_post_normal_account_transfer;
 
 pub(crate) mod shape_post_pb_account_deposit;
 
+pub(crate) mod shape_post_pb_account_refund;
+
 pub(crate) mod shape_refund_pb_account_payment;
 
 pub(crate) mod shape_reverse_normal_account_transfer;
@@ -82,6 +84,8 @@ pub(crate) mod shape_void_normal_account_deposit;
 pub(crate) mod shape_void_normal_account_transfer;
 
 pub(crate) mod shape_void_pb_account_deposit;
+
+pub(crate) mod shape_void_pb_account_refund;
 
 pub(crate) mod shape_withdraw;
 
@@ -136,6 +140,10 @@ pub(crate) mod shape_refund_not_refundable_error;
 pub(crate) mod shape_refund_pb_account_payment_input;
 
 pub(crate) mod shape_reverse_normal_account_transfer_input;
+
+pub(crate) mod shape_transaction_not_found_error;
+
+pub(crate) mod shape_transaction_not_pending_error;
 
 pub(crate) mod shape_transfer_to_pb_account_input;
 

@@ -23,6 +23,10 @@ pub enum Error {
     RefundAmountInvalidError(crate::types::error::RefundAmountInvalidError),
     #[allow(missing_docs)] // documentation missing in model
     RefundNotRefundableError(crate::types::error::RefundNotRefundableError),
+    #[allow(missing_docs)] // documentation missing in model
+    TransactionNotFoundError(crate::types::error::TransactionNotFoundError),
+    #[allow(missing_docs)] // documentation missing in model
+    TransactionNotPendingError(crate::types::error::TransactionNotPendingError),
     /// An unexpected error occurred (e.g., invalid JSON returned by the service or an unknown error code).
     #[deprecated(note = "Matching `Unhandled` directly is not forwards compatible. Instead, match using a \
     variable wildcard pattern and check `.code()`:
@@ -45,6 +49,8 @@ impl ::std::fmt::Display for Error {
             Error::PurposeTypeNotFoundError(inner) => inner.fmt(f),
             Error::RefundAmountInvalidError(inner) => inner.fmt(f),
             Error::RefundNotRefundableError(inner) => inner.fmt(f),
+            Error::TransactionNotFoundError(inner) => inner.fmt(f),
+            Error::TransactionNotPendingError(inner) => inner.fmt(f),
             Error::Unhandled(_) => if let ::std::option::Option::Some(code) = ::aws_smithy_types::error::metadata::ProvideErrorMetadata::code(self) {
                                         write!(f, "unhandled error ({code})")
                                     } else {
@@ -71,6 +77,8 @@ Self::PaymentFullyRefundedError(inner) => inner.meta(),
 Self::PurposeTypeNotFoundError(inner) => inner.meta(),
 Self::RefundAmountInvalidError(inner) => inner.meta(),
 Self::RefundNotRefundableError(inner) => inner.meta(),
+Self::TransactionNotFoundError(inner) => inner.meta(),
+Self::TransactionNotPendingError(inner) => inner.meta(),
                         Self::Unhandled(inner) => &inner.meta,
                     }
                 }
@@ -611,6 +619,29 @@ impl From<crate::operation::post_pb_account_deposit::PostPBAccountDepositError> 
         }
     }
 }
+impl<R> From<::aws_smithy_runtime_api::client::result::SdkError<crate::operation::post_pb_account_refund::PostPBAccountRefundError, R>> for Error where R: Send + Sync + std::fmt::Debug + 'static {
+    fn from(err: ::aws_smithy_runtime_api::client::result::SdkError<crate::operation::post_pb_account_refund::PostPBAccountRefundError, R>) -> Self {
+        match err {
+            ::aws_smithy_runtime_api::client::result::SdkError::ServiceError(context) => Self::from(context.into_err()),
+            _ => Error::Unhandled(
+                                        crate::error::sealed_unhandled::Unhandled {
+                                            meta: ::aws_smithy_types::error::metadata::ProvideErrorMetadata::meta(&err).clone(),
+                                            source: err.into(),
+                                        }
+                                    ),
+        }
+    }
+}
+impl From<crate::operation::post_pb_account_refund::PostPBAccountRefundError> for Error {
+    fn from(err: crate::operation::post_pb_account_refund::PostPBAccountRefundError) -> Self {
+        match err {
+            crate::operation::post_pb_account_refund::PostPBAccountRefundError::AccountNotFoundError(inner) => Error::AccountNotFoundError(inner),
+            crate::operation::post_pb_account_refund::PostPBAccountRefundError::TransactionNotFoundError(inner) => Error::TransactionNotFoundError(inner),
+            crate::operation::post_pb_account_refund::PostPBAccountRefundError::TransactionNotPendingError(inner) => Error::TransactionNotPendingError(inner),
+            crate::operation::post_pb_account_refund::PostPBAccountRefundError::Unhandled(inner) => Error::Unhandled(inner),
+        }
+    }
+}
 impl<R> From<::aws_smithy_runtime_api::client::result::SdkError<crate::operation::refund_pb_account_payment::RefundPBAccountPaymentError, R>> for Error where R: Send + Sync + std::fmt::Debug + 'static {
     fn from(err: ::aws_smithy_runtime_api::client::result::SdkError<crate::operation::refund_pb_account_payment::RefundPBAccountPaymentError, R>) -> Self {
         match err {
@@ -830,6 +861,29 @@ impl From<crate::operation::void_pb_account_deposit::VoidPBAccountDepositError> 
         }
     }
 }
+impl<R> From<::aws_smithy_runtime_api::client::result::SdkError<crate::operation::void_pb_account_refund::VoidPBAccountRefundError, R>> for Error where R: Send + Sync + std::fmt::Debug + 'static {
+    fn from(err: ::aws_smithy_runtime_api::client::result::SdkError<crate::operation::void_pb_account_refund::VoidPBAccountRefundError, R>) -> Self {
+        match err {
+            ::aws_smithy_runtime_api::client::result::SdkError::ServiceError(context) => Self::from(context.into_err()),
+            _ => Error::Unhandled(
+                                        crate::error::sealed_unhandled::Unhandled {
+                                            meta: ::aws_smithy_types::error::metadata::ProvideErrorMetadata::meta(&err).clone(),
+                                            source: err.into(),
+                                        }
+                                    ),
+        }
+    }
+}
+impl From<crate::operation::void_pb_account_refund::VoidPBAccountRefundError> for Error {
+    fn from(err: crate::operation::void_pb_account_refund::VoidPBAccountRefundError) -> Self {
+        match err {
+            crate::operation::void_pb_account_refund::VoidPBAccountRefundError::AccountNotFoundError(inner) => Error::AccountNotFoundError(inner),
+            crate::operation::void_pb_account_refund::VoidPBAccountRefundError::TransactionNotFoundError(inner) => Error::TransactionNotFoundError(inner),
+            crate::operation::void_pb_account_refund::VoidPBAccountRefundError::TransactionNotPendingError(inner) => Error::TransactionNotPendingError(inner),
+            crate::operation::void_pb_account_refund::VoidPBAccountRefundError::Unhandled(inner) => Error::Unhandled(inner),
+        }
+    }
+}
 impl<R> From<::aws_smithy_runtime_api::client::result::SdkError<crate::operation::withdraw::WithdrawError, R>> for Error where R: Send + Sync + std::fmt::Debug + 'static {
     fn from(err: ::aws_smithy_runtime_api::client::result::SdkError<crate::operation::withdraw::WithdrawError, R>) -> Self {
         match err {
@@ -912,6 +966,8 @@ impl ::std::error::Error for Error {
             Error::PurposeTypeNotFoundError(inner) => inner.source(),
             Error::RefundAmountInvalidError(inner) => inner.source(),
             Error::RefundNotRefundableError(inner) => inner.source(),
+            Error::TransactionNotFoundError(inner) => inner.source(),
+            Error::TransactionNotPendingError(inner) => inner.source(),
             Error::Unhandled(inner) => ::std::option::Option::Some(&*inner.source)
         }
     }

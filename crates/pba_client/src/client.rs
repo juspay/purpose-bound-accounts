@@ -181,6 +181,8 @@ mod post_normal_account_transfer;
 
 mod post_pb_account_deposit;
 
+mod post_pb_account_refund;
+
 mod refund_pb_account_payment;
 
 mod reverse_normal_account_transfer;
@@ -200,6 +202,8 @@ mod void_normal_account_deposit;
 mod void_normal_account_transfer;
 
 mod void_pb_account_deposit;
+
+mod void_pb_account_refund;
 
 mod withdraw;
 

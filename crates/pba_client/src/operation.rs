@@ -75,6 +75,9 @@ pub mod post_normal_account_transfer;
 /// Types for the `PostPBAccountDeposit` operation.
 pub mod post_pb_account_deposit;
 
+/// Types for the `PostPBAccountRefund` operation.
+pub mod post_pb_account_refund;
+
 /// Types for the `RefundPBAccountPayment` operation.
 pub mod refund_pb_account_payment;
 
@@ -104,6 +107,9 @@ pub mod void_normal_account_transfer;
 
 /// Types for the `VoidPBAccountDeposit` operation.
 pub mod void_pb_account_deposit;
+
+/// Types for the `VoidPBAccountRefund` operation.
+pub mod void_pb_account_refund;
 
 /// Types for the `Withdraw` operation.
 pub mod withdraw;

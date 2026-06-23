@@ -278,6 +278,33 @@ if builder.status.is_none() { builder.status = Some(Default::default()) }
                 builder
             }
 
+pub(crate) fn transaction_not_found_error_correct_errors(mut builder: crate::types::error::builders::TransactionNotFoundErrorBuilder) -> crate::types::error::builders::TransactionNotFoundErrorBuilder {
+                if builder.error.is_none() { builder.error = Some(Default::default()) }
+if builder.message.is_none() { builder.message = Some(Default::default()) }
+                builder
+            }
+
+pub(crate) fn transaction_not_pending_error_correct_errors(mut builder: crate::types::error::builders::TransactionNotPendingErrorBuilder) -> crate::types::error::builders::TransactionNotPendingErrorBuilder {
+                if builder.error.is_none() { builder.error = Some(Default::default()) }
+if builder.message.is_none() { builder.message = Some(Default::default()) }
+                builder
+            }
+
+pub(crate) fn post_pb_account_refund_output_output_correct_errors(mut builder: crate::operation::post_pb_account_refund::builders::PostPbAccountRefundOutputBuilder) -> crate::operation::post_pb_account_refund::builders::PostPbAccountRefundOutputBuilder {
+                if builder.refund_id.is_none() { builder.refund_id = Some(Default::default()) }
+if builder.original_payment_id.is_none() { builder.original_payment_id = Some(Default::default()) }
+if builder.account_id.is_none() { builder.account_id = Some(Default::default()) }
+if builder.amount.is_none() { builder.amount = Some(Default::default()) }
+if builder.amount_to_self.is_none() { builder.amount_to_self = Some(Default::default()) }
+if builder.amount_to_others.is_none() { builder.amount_to_others = Some(Default::default()) }
+if builder.original_amount.is_none() { builder.original_amount = Some(Default::default()) }
+if builder.remaining_refundable.is_none() { builder.remaining_refundable = Some(Default::default()) }
+if builder.status.is_none() { builder.status = Some(Default::default()) }
+if builder.correlation_id.is_none() { builder.correlation_id = Some(Default::default()) }
+if builder.created_at.is_none() { builder.created_at = Some(::aws_smithy_types::DateTime::from_fractional_secs(0, 0_f64)) }
+                builder
+            }
+
 pub(crate) fn refund_not_refundable_error_correct_errors(mut builder: crate::types::error::builders::RefundNotRefundableErrorBuilder) -> crate::types::error::builders::RefundNotRefundableErrorBuilder {
                 if builder.error.is_none() { builder.error = Some(Default::default()) }
 if builder.message.is_none() { builder.message = Some(Default::default()) }
@@ -405,6 +432,21 @@ if builder.account_id.is_none() { builder.account_id = Some(Default::default()) 
 if builder.amount.is_none() { builder.amount = Some(Default::default()) }
 if builder.pool.is_none() { builder.pool = Some(Default::default()) }
 if builder.status.is_none() { builder.status = Some(Default::default()) }
+                builder
+            }
+
+pub(crate) fn void_pb_account_refund_output_output_correct_errors(mut builder: crate::operation::void_pb_account_refund::builders::VoidPbAccountRefundOutputBuilder) -> crate::operation::void_pb_account_refund::builders::VoidPbAccountRefundOutputBuilder {
+                if builder.refund_id.is_none() { builder.refund_id = Some(Default::default()) }
+if builder.original_payment_id.is_none() { builder.original_payment_id = Some(Default::default()) }
+if builder.account_id.is_none() { builder.account_id = Some(Default::default()) }
+if builder.amount.is_none() { builder.amount = Some(Default::default()) }
+if builder.amount_to_self.is_none() { builder.amount_to_self = Some(Default::default()) }
+if builder.amount_to_others.is_none() { builder.amount_to_others = Some(Default::default()) }
+if builder.original_amount.is_none() { builder.original_amount = Some(Default::default()) }
+if builder.remaining_refundable.is_none() { builder.remaining_refundable = Some(Default::default()) }
+if builder.status.is_none() { builder.status = Some(Default::default()) }
+if builder.correlation_id.is_none() { builder.correlation_id = Some(Default::default()) }
+if builder.created_at.is_none() { builder.created_at = Some(::aws_smithy_types::DateTime::from_fractional_secs(0, 0_f64)) }
                 builder
             }
 
