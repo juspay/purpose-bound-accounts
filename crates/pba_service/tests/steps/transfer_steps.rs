@@ -232,6 +232,38 @@ async fn post_transfer(world: &mut PbaWorld) {
     }
 }
 
+#[when("I void the pending transfer")]
+async fn void_pending_transfer(world: &mut PbaWorld) {
+    let normal_account_id = world
+        .last_normal_account_id
+        .as_ref()
+        .expect("No normal account ID")
+        .clone();
+    let transfer_id = world
+        .last_transfer_id
+        .as_ref()
+        .expect("No transfer ID")
+        .clone();
+    let result = world
+        .client
+        .void_normal_account_transfer()
+        .account_id(&normal_account_id)
+        .transfer_id(&transfer_id)
+        .send()
+        .await;
+    match result {
+        Ok(output) => {
+            world.last_transfer_status = Some(output.status().to_string());
+            world.last_error = None;
+        }
+        Err(e) => {
+            let kind = extract_transfer_error_kind(&e);
+            let message = extract_transfer_error_message(&e);
+            world.last_error = Some(crate::PbaError { kind, message });
+        }
+    }
+}
+
 #[when("I void the transfer")]
 async fn void_transfer(world: &mut PbaWorld) {
     let normal_account_id = world
@@ -393,6 +425,24 @@ async fn second_post_is_no_op(world: &mut PbaWorld) {
     assert_eq!(
         status, "posted",
         "expected second post to return status 'posted' but got '{}'",
+        status
+    );
+}
+
+#[then("the second void is a no-op")]
+async fn second_void_is_no_op(world: &mut PbaWorld) {
+    assert!(
+        world.last_error.is_none(),
+        "expected second void to be a no-op (no error) but got {:?}",
+        world.last_error
+    );
+    let status = world
+        .last_transfer_status
+        .as_deref()
+        .expect("No transfer status recorded after second void");
+    assert_eq!(
+        status, "voided",
+        "expected second void to return status 'voided' but got '{}'",
         status
     );
 }
