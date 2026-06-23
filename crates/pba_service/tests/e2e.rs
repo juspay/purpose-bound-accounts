@@ -93,6 +93,8 @@ pub struct PbaWorld {
     last_refund_amount_to_others: Option<i64>,
     /// Last refund's remaining_refundable (after this refund)
     last_refund_remaining: Option<i64>,
+    /// Last refund's status string (e.g. "pending", "completed")
+    last_refund_status: Option<String>,
     /// Previous refund correlation_id (snapshot used by idempotency-replay assertion)
     previous_refund_correlation_id: Option<String>,
     /// Total refunded amount across a concurrent-refund burst
@@ -182,6 +184,7 @@ impl Default for PbaWorld {
             last_refund_amount_to_self: None,
             last_refund_amount_to_others: None,
             last_refund_remaining: None,
+            last_refund_status: None,
             previous_refund_correlation_id: None,
             concurrent_refund_total_amount: None,
         }

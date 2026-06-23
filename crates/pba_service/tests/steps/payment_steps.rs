@@ -626,6 +626,49 @@ async fn refunds_share_correlation(world: &mut PbaWorld) {
     );
 }
 
+#[when(regex = r#"^I initiate a pending refund of (\d+) paisa from the last payment$"#)]
+async fn initiate_pending_refund(world: &mut PbaWorld, amount: i64) {
+    world.previous_refund_correlation_id = world.last_refund_correlation_id.take();
+    let account_id = world.account_id.as_ref().expect("No account ID").clone();
+    let payment_id = world
+        .last_payment
+        .as_ref()
+        .expect("No prior payment")
+        .payment_id
+        .clone();
+    let result = world
+        .client
+        .refund_pb_account_payment()
+        .account_id(account_id)
+        .payment_id(payment_id)
+        .amount(amount)
+        .pending(true)
+        .send()
+        .await;
+    match result {
+        Ok(out) => {
+            world.last_refund_correlation_id = Some(out.correlation_id().to_string());
+            world.last_refund_amount_to_self = Some(out.amount_to_self());
+            world.last_refund_amount_to_others = Some(out.amount_to_others());
+            world.last_refund_remaining = Some(out.remaining_refundable());
+            world.last_refund_status = Some(out.status().to_string());
+            world.last_error = None;
+        }
+        Err(e) => {
+            let s = format!("{e:?}");
+            world.last_error = Some(crate::PbaError {
+                kind: classify_refund_error(&s).to_string(),
+                message: Some(s),
+            });
+        }
+    }
+}
+
+#[then(regex = r#"^the refund status is "([^"]*)"$"#)]
+async fn refund_status_is(world: &mut PbaWorld, expected: String) {
+    assert_eq!(world.last_refund_status.as_deref(), Some(expected.as_str()));
+}
+
 // ── End of refund step bindings ───────────────────────────────────────────────
 
 #[then("the payment legs share correlation_id equal to the payment_id")]
