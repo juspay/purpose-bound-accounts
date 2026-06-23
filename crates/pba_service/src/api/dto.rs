@@ -442,6 +442,10 @@ pub struct RefundPaymentRequest {
     pub description: Option<String>,
     pub gateway_ref: Option<String>,
     pub idempotency_key: Option<String>,
+    #[serde(default)]
+    pub pending: bool,
+    #[serde(default)]
+    pub timeout_seconds: Option<u32>,
 }
 
 #[derive(Debug, Serialize)]
