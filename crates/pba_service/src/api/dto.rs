@@ -488,3 +488,99 @@ impl From<crate::service::pb_payment_service::RefundResult> for RefundResponse {
         }
     }
 }
+
+// ── Contribution Return ──
+
+#[derive(Debug, Deserialize)]
+pub struct ContributionReturnRequest {
+    pub amount: u64,
+    pub funding_type: String,
+    #[serde(default)]
+    pub pending: bool,
+    pub timeout_seconds: Option<u32>,
+    pub gateway_ref: Option<String>,
+    pub description: Option<String>,
+    pub idempotency_key: Option<String>,
+}
+
+#[derive(Debug, Serialize)]
+pub struct AllocationEntryDto {
+    pub original_transaction_id: Uuid,
+    pub amount: u64,
+}
+
+impl From<crate::service::pb_contribution_return_service::AllocationEntry> for AllocationEntryDto {
+    fn from(a: crate::service::pb_contribution_return_service::AllocationEntry) -> Self {
+        Self {
+            original_transaction_id: a.original_transaction_id,
+            amount: a.amount,
+        }
+    }
+}
+
+#[derive(Debug, Serialize)]
+pub struct ContributionReturnResponse {
+    pub return_id: Uuid,
+    pub correlation_id: Uuid,
+    pub account_id: Uuid,
+    pub funding_type: String,
+    pub amount: u64,
+    pub allocations: Vec<AllocationEntryDto>,
+    pub remaining_returnable_after: u64,
+    pub status: String,
+    pub created_at: chrono::DateTime<chrono::Utc>,
+}
+
+impl From<crate::service::pb_contribution_return_service::ContributionReturnResult>
+    for ContributionReturnResponse
+{
+    fn from(r: crate::service::pb_contribution_return_service::ContributionReturnResult) -> Self {
+        Self {
+            return_id: r.return_id,
+            correlation_id: r.correlation_id,
+            account_id: r.account_id,
+            funding_type: r.funding_type,
+            amount: r.amount,
+            allocations: r.allocations.into_iter().map(Into::into).collect(),
+            remaining_returnable_after: r.remaining_returnable_after,
+            status: r.status.as_str().to_string(),
+            created_at: r.created_at,
+        }
+    }
+}
+
+#[derive(Debug, Serialize)]
+pub struct FundingTypeSummaryDto {
+    pub total_contributed: u64,
+    pub total_returned: u64,
+    pub remaining_returnable: u64,
+}
+
+impl From<crate::service::pb_contribution_return_service::FundingTypeSummary>
+    for FundingTypeSummaryDto
+{
+    fn from(s: crate::service::pb_contribution_return_service::FundingTypeSummary) -> Self {
+        Self {
+            total_contributed: s.total_contributed,
+            total_returned: s.total_returned,
+            remaining_returnable: s.remaining_returnable,
+        }
+    }
+}
+
+#[derive(Debug, Serialize)]
+pub struct ContributionSummaryResponse {
+    pub trust: FundingTypeSummaryDto,
+    pub third_party: FundingTypeSummaryDto,
+}
+
+impl From<crate::service::pb_contribution_return_service::ContributionSummary>
+    for ContributionSummaryResponse
+{
+    fn from(s: crate::service::pb_contribution_return_service::ContributionSummary) -> Self {
+        Self {
+            trust: s.trust.into(),
+            third_party: s.third_party.into(),
+        }
+    }
+}
