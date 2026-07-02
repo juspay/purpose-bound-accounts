@@ -38,6 +38,27 @@ pub struct ContributionReturnResult {
     pub created_at: chrono::DateTime<chrono::Utc>,
 }
 
+enum ContributionReturnResolution {
+    Post,
+    Void,
+}
+
+impl ContributionReturnResolution {
+    fn target(&self) -> TransactionStatus {
+        match self {
+            Self::Post => TransactionStatus::Settled,
+            Self::Void => TransactionStatus::Voided,
+        }
+    }
+
+    fn target_sql(&self) -> &'static str {
+        match self {
+            Self::Post => "settled",
+            Self::Void => "voided",
+        }
+    }
+}
+
 impl PbContributionReturnService {
     pub fn new(
         pb_account_repo: Arc<PbAccountRepo>,
@@ -319,6 +340,145 @@ impl PbContributionReturnService {
             correlation_id: return_correlation_id,
             created_at: chrono::Utc::now(),
         })
+    }
+
+    async fn resolve_contribution_return(
+        &self,
+        pb_account_id: Uuid,
+        return_id: Uuid,
+        direction: ContributionReturnResolution,
+    ) -> Result<ContributionReturnResult, AppError> {
+        let mut tx = self.transaction_repo.pool().begin().await?;
+        let rows = self
+            .transaction_repo
+            .find_by_correlation_id_for_update(&mut tx, return_id)
+            .await?;
+        if rows.is_empty() {
+            return Err(AppError::TransactionNotFound(return_id.to_string()));
+        }
+        for r in &rows {
+            if r.account_kind != AccountKind::Pb
+                || r.account_id != pb_account_id
+                || r.transaction_type != TransactionType::Withdrawal
+                || r.pool.as_deref() != Some("others")
+                || r.reverses_transaction_id.is_none()
+            {
+                return Err(AppError::TransactionNotFound(return_id.to_string()));
+            }
+        }
+
+        // Idempotent same-direction no-op
+        if rows.iter().all(|r| r.status == direction.target()) {
+            tx.commit().await?;
+            let updated = self
+                .transaction_repo
+                .find_by_correlation_id(return_id)
+                .await?;
+            return self
+                .build_result_from_rows(pb_account_id, return_id, &updated)
+                .await;
+        }
+        if rows.iter().any(|r| r.status != TransactionStatus::Pending) {
+            return Err(AppError::TransactionNotPending(return_id.to_string()));
+        }
+
+        for r in &rows {
+            if r.tb_transfer_id != 0 {
+                let res = match direction {
+                    ContributionReturnResolution::Post => {
+                        self.ledger_repo.post_pending_transfer(r.tb_transfer_id).await
+                    }
+                    ContributionReturnResolution::Void => {
+                        self.ledger_repo.void_pending_transfer(r.tb_transfer_id).await
+                    }
+                };
+                match res {
+                    Ok(()) => {}
+                    Err(AppError::TbPendingAlreadyResolved) => {}
+                    Err(e) => return Err(e),
+                }
+            }
+        }
+
+        sqlx::query(
+            r#"UPDATE transactions
+               SET status = $1, updated_at = now()
+               WHERE correlation_id = $2 AND status = 'pending'"#,
+        )
+        .bind(direction.target_sql())
+        .bind(return_id)
+        .execute(&mut *tx)
+        .await
+        .map_err(|e| AppError::DatabaseError(e.to_string()))?;
+
+        tx.commit().await?;
+
+        let updated = self
+            .transaction_repo
+            .find_by_correlation_id(return_id)
+            .await?;
+        self.build_result_from_rows(pb_account_id, return_id, &updated)
+            .await
+    }
+
+    async fn build_result_from_rows(
+        &self,
+        pb_account_id: Uuid,
+        return_id: Uuid,
+        rows: &[TransactionRecord],
+    ) -> Result<ContributionReturnResult, AppError> {
+        let total: u64 = rows.iter().map(|r| r.amount).sum();
+        let allocations = rows
+            .iter()
+            .map(|r| AllocationEntry {
+                original_transaction_id: r
+                    .reverses_transaction_id
+                    .expect("return row missing reverses_transaction_id"),
+                amount: r.amount,
+            })
+            .collect();
+        let funding_type = rows
+            .first()
+            .and_then(|r| r.funding_type.clone())
+            .unwrap_or_else(|| "trust".to_string());
+        let remaining_returnable_after = self.compute_remaining(pb_account_id, &funding_type).await?;
+        let status = rows
+            .first()
+            .map(|r| r.status)
+            .unwrap_or(TransactionStatus::Settled);
+        let created_at = rows
+            .first()
+            .map(|r| r.created_at)
+            .unwrap_or_else(chrono::Utc::now);
+        Ok(ContributionReturnResult {
+            return_id,
+            account_id: pb_account_id,
+            funding_type,
+            amount: total,
+            allocations,
+            remaining_returnable_after,
+            status,
+            correlation_id: return_id,
+            created_at,
+        })
+    }
+
+    pub async fn post_contribution_return(
+        &self,
+        pb_account_id: Uuid,
+        return_id: Uuid,
+    ) -> Result<ContributionReturnResult, AppError> {
+        self.resolve_contribution_return(pb_account_id, return_id, ContributionReturnResolution::Post)
+            .await
+    }
+
+    pub async fn void_contribution_return(
+        &self,
+        pb_account_id: Uuid,
+        return_id: Uuid,
+    ) -> Result<ContributionReturnResult, AppError> {
+        self.resolve_contribution_return(pb_account_id, return_id, ContributionReturnResolution::Void)
+            .await
     }
 
     async fn resolve_credit_destination(
