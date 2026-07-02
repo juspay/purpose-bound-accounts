@@ -1215,7 +1215,7 @@ pub async fn transaction_detail(
 
                 for o in &originals {
                     total_original += o.amount;
-                    match state.transaction_repo.find_refunds_of(o.id).await {
+                    match state.transaction_repo.find_returns_of(o.id).await {
                         Ok(refs) => {
                             for r in refs {
                                 if !matches!(r.status, TransactionStatus::Voided) {
@@ -1442,7 +1442,7 @@ async fn build_refund_template(
         total_original += o.amount;
         total_refunded += state
             .transaction_repo
-            .sum_refunds_of(o.id)
+            .sum_returns_of(o.id)
             .await
             .map_err(|_| (StatusCode::INTERNAL_SERVER_ERROR, "Database error").into_response())?;
     }

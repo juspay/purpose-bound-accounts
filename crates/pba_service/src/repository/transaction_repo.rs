@@ -565,11 +565,11 @@ impl TransactionRepo {
         Ok(row.map(|r| r.into_domain()))
     }
 
-    /// Return every refund row (or, in general, every row whose
+    /// Return every return row (or, in general, every row whose
     /// `reverses_transaction_id` matches `original_row_id`). Used by payment
-    /// refund history and by `sum_refunds_of` consumers that want the rows
+    /// refund history and by `sum_returns_of` consumers that want the rows
     /// themselves. Type-agnostic — works for transfer reversal too.
-    pub async fn find_refunds_of(
+    pub async fn find_returns_of(
         &self,
         original_row_id: Uuid,
     ) -> Result<Vec<TransactionRecord>, AppError> {
@@ -595,7 +595,7 @@ impl TransactionRepo {
     /// Sum the `amount` of every row whose `reverses_transaction_id` matches.
     /// Type-agnostic. Used by `pb_payment_service::refund_payment` to compute
     /// per-pool remaining-unrefunded. Returns 0 when no rows match.
-    pub async fn sum_refunds_of(&self, original_row_id: Uuid) -> Result<u64, AppError> {
+    pub async fn sum_returns_of(&self, original_row_id: Uuid) -> Result<u64, AppError> {
         let row: (Option<i64>,) = sqlx::query_as(
             r#"SELECT COALESCE(SUM(amount), 0)::bigint
                FROM transactions
@@ -637,9 +637,9 @@ impl TransactionRepo {
         Ok(rows.into_iter().map(|r| r.into_domain()).collect())
     }
 
-    /// Locked variant of `sum_refunds_of` — runs inside the supplied transaction
+    /// Locked variant of `sum_returns_of` — runs inside the supplied transaction
     /// so reads see the same snapshot as the caller's `FOR UPDATE` lock.
-    pub async fn sum_refunds_of_in_tx(
+    pub async fn sum_returns_of_in_tx(
         &self,
         tx: &mut PgTransaction<'_, Postgres>,
         original_row_id: Uuid,
