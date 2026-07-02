@@ -88,7 +88,7 @@ concurrent initiates cannot over-return.
 |---|---|
 | Schema | None. Existing columns and indexes cover the query plans. |
 | Smithy | New `ReturnPBAccountContribution`, `PostPBAccountContributionReturn`, `VoidPBAccountContributionReturn` operations; new `GetPBAccountContributionSummary` read op. |
-| Routes | Four new REST routes under `/pb-accounts/{account_id}/contribution-returns/...`. |
+| Routes | Three new REST routes under `/pb-accounts/{account_id}/contribution-returns/...` plus one read at `/pb-accounts/{account_id}/contributions/summary`. |
 | Domain | None. Reuses `TransactionType::Withdrawal`; the pool + link + funding_type distinguish return rows. |
 | Repository | `transaction_repo` gains `find_returnable_originals_for_update`, `sum_returns_of_in_tx`, `sum_others_contributions`, `sum_others_returns`. Renames `sum_refunds_of[_in_tx]` → `sum_returns_of[_in_tx]` and `find_refunds_of` → `find_returns_of` for name/contract alignment. |
 | Ledger | New `CONTRIBUTION_RETURN_CODE = 310` plus `create_contribution_return` and `create_pending_contribution_return`. No LINKED-split — FIFO produces independent per-original TB transfers. |
@@ -186,7 +186,7 @@ per the make_payment / refund convention).
 ### Read — summary
 
 ```
-GET /pb-accounts/{account_id}/contribution-returns/summary
+GET /pb-accounts/{account_id}/contributions/summary
   → ContributionSummaryResponse {
       trust: {
         total_contributed: integer,
@@ -503,7 +503,7 @@ Trust (sponsor)      Contributed: ₹5,000.00   Returned: ₹1,200.00   Returnab
 Third-party          Contributed: ₹2,500.00   Returned: ₹0.00       Returnable: ₹2,500.00   [Return...]
 ```
 
-- Data from `contribution-returns/summary`.
+- Data from `GET /pb-accounts/{id}/contributions/summary`.
 - `[Return...]` links to `/admin/accounts/{id}/contribution-returns/new?funding_type=trust|third_party`.
 - Panel hidden when both totals are zero.
 
