@@ -38,6 +38,19 @@ pub struct ContributionReturnResult {
     pub created_at: chrono::DateTime<chrono::Utc>,
 }
 
+#[derive(Debug, Clone)]
+pub struct FundingTypeSummary {
+    pub total_contributed: u64,
+    pub total_returned: u64,
+    pub remaining_returnable: u64,
+}
+
+#[derive(Debug, Clone)]
+pub struct ContributionSummary {
+    pub trust: FundingTypeSummary,
+    pub third_party: FundingTypeSummary,
+}
+
 enum ContributionReturnResolution {
     Post,
     Void,
@@ -479,6 +492,36 @@ impl PbContributionReturnService {
     ) -> Result<ContributionReturnResult, AppError> {
         self.resolve_contribution_return(pb_account_id, return_id, ContributionReturnResolution::Void)
             .await
+    }
+
+    pub async fn summary(
+        &self,
+        pb_account_id: Uuid,
+    ) -> Result<ContributionSummary, AppError> {
+        let trust = self.summary_for(pb_account_id, "trust").await?;
+        let third_party = self.summary_for(pb_account_id, "third_party").await?;
+        Ok(ContributionSummary { trust, third_party })
+    }
+
+    async fn summary_for(
+        &self,
+        pb_account_id: Uuid,
+        funding_type: &str,
+    ) -> Result<FundingTypeSummary, AppError> {
+        let total_contributed = self
+            .transaction_repo
+            .sum_others_contributions(pb_account_id, funding_type)
+            .await?;
+        let total_returned = self
+            .transaction_repo
+            .sum_others_returns(pb_account_id, funding_type)
+            .await?;
+        let remaining_returnable = total_contributed.saturating_sub(total_returned);
+        Ok(FundingTypeSummary {
+            total_contributed,
+            total_returned,
+            remaining_returnable,
+        })
     }
 
     async fn resolve_credit_destination(
