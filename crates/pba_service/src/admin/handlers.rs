@@ -8,7 +8,7 @@ use uuid::Uuid;
 
 use crate::domain::banking::{AccountNumber, Ifsc};
 use crate::domain::purpose::PurposeType;
-use crate::domain::transaction::{TransactionRecord, TransactionStatus};
+use crate::domain::transaction::{TransactionRecord, TransactionStatus, TransactionType};
 use crate::AppState;
 
 fn render<T: Template>(tmpl: T) -> Response {
@@ -1107,6 +1107,10 @@ struct TransactionDetailTemplate {
     can_refund: bool,
     is_refund: bool,
     is_pending_refund: bool,
+    is_pending_contribution_return: bool,
+    /// correlation_id of the contribution-return group; only meaningful when
+    /// `is_pending_contribution_return` is true. Used for the Post/Void form actions.
+    contribution_return_correlation_id: String,
     refund_history: Vec<RefundHistoryRow>,
     remaining_refundable_display: String,
     refund_of_payment_id: String,
@@ -1225,6 +1229,17 @@ pub async fn transaction_detail(
     // Refund-related fields (Payment rows only).
     let is_refund = is_payment && txn.reverses_transaction_id.is_some();
     let is_pending_refund = is_refund && matches!(txn.status, TransactionStatus::Pending);
+
+    // Contribution-return fields (Withdrawal rows with reverses_transaction_id set).
+    let is_pending_contribution_return = matches!(txn.status, TransactionStatus::Pending)
+        && txn.transaction_type == TransactionType::Withdrawal
+        && txn.pool.as_deref() == Some("others")
+        && txn.reverses_transaction_id.is_some();
+    let contribution_return_correlation_id = if is_pending_contribution_return {
+        txn.correlation_id.unwrap_or(txn.id).to_string()
+    } else {
+        String::new()
+    };
 
     let fmt_paisa = |a: u64| format!("{}.{:02}", a / 100, a % 100);
 
@@ -1377,6 +1392,8 @@ pub async fn transaction_detail(
         can_refund,
         is_refund,
         is_pending_refund,
+        is_pending_contribution_return,
+        contribution_return_correlation_id,
         refund_history,
         remaining_refundable_display,
         refund_of_payment_id,
@@ -1711,6 +1728,44 @@ pub async fn admin_void_refund(
     }
 }
 
+// ─── Contribution return lifecycle handlers ───────────────────────────────────
+
+pub async fn admin_post_contribution_return(
+    State(state): State<AppState>,
+    Path((account_id, return_id)): Path<(Uuid, Uuid)>,
+) -> Response {
+    match state
+        .pb_contribution_return_service
+        .post_contribution_return(account_id, return_id)
+        .await
+    {
+        Ok(_) => Redirect::to(&prefixed(
+            &state,
+            &format!("/admin/transactions/{return_id}"),
+        ))
+        .into_response(),
+        Err(e) => (StatusCode::BAD_REQUEST, format!("post failed: {e}")).into_response(),
+    }
+}
+
+pub async fn admin_void_contribution_return(
+    State(state): State<AppState>,
+    Path((account_id, return_id)): Path<(Uuid, Uuid)>,
+) -> Response {
+    match state
+        .pb_contribution_return_service
+        .void_contribution_return(account_id, return_id)
+        .await
+    {
+        Ok(_) => Redirect::to(&prefixed(
+            &state,
+            &format!("/admin/transactions/{return_id}"),
+        ))
+        .into_response(),
+        Err(e) => (StatusCode::BAD_REQUEST, format!("void failed: {e}")).into_response(),
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -1752,6 +1807,8 @@ mod tests {
             can_refund: false,
             is_refund: false,
             is_pending_refund: false,
+            is_pending_contribution_return: false,
+            contribution_return_correlation_id: String::new(),
             refund_history: vec![],
             remaining_refundable_display: "0.00".to_string(),
             refund_of_payment_id: String::new(),
@@ -1795,6 +1852,8 @@ mod tests {
             can_refund: true,
             is_refund: false,
             is_pending_refund: false,
+            is_pending_contribution_return: false,
+            contribution_return_correlation_id: String::new(),
             refund_history: vec![],
             remaining_refundable_display: "12.34".to_string(),
             refund_of_payment_id: String::new(),
@@ -1838,6 +1897,8 @@ mod tests {
             can_refund: false,
             is_refund: false,
             is_pending_refund: false,
+            is_pending_contribution_return: false,
+            contribution_return_correlation_id: String::new(),
             refund_history: vec![],
             remaining_refundable_display: "0.00".to_string(),
             refund_of_payment_id: String::new(),

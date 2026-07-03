@@ -132,6 +132,17 @@
 </article>
 {% endif %}
 
+{% if is_pending_contribution_return %}
+<div class="row">
+    <form method="post" action="{{ prefix }}/admin/accounts/{{ account_id }}/contribution-returns/{{ contribution_return_correlation_id }}/post">
+        <button type="submit">Post return</button>
+    </form>
+    <form method="post" action="{{ prefix }}/admin/accounts/{{ account_id }}/contribution-returns/{{ contribution_return_correlation_id }}/void">
+        <button type="submit">Void return</button>
+    </form>
+</div>
+{% endif %}
+
 {% if !refund_history.is_empty() %}
 <article>
     <header>Refund history — ₹{{ remaining_refundable_display }} remaining</header>

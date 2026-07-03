@@ -152,6 +152,14 @@ pub fn create_router() -> Router<AppState> {
             "/admin/accounts/{account_id}/refunds/{refund_id}/void",
             post(handlers::admin_void_refund),
         )
+        .route(
+            "/admin/accounts/{account_id}/contribution-returns/{return_id}/post",
+            post(handlers::admin_post_contribution_return),
+        )
+        .route(
+            "/admin/accounts/{account_id}/contribution-returns/{return_id}/void",
+            post(handlers::admin_void_contribution_return),
+        )
         // Static assets (self-hosted so admin UI works offline / on locked-down networks).
         .route("/admin/static/htmx.min.js", get(serve_htmx))
         // TigerBeetle explorer
