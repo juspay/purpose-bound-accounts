@@ -84,6 +84,36 @@ async fn initiate_pending_return(world: &mut PbaWorld, amount: i64, funding_type
     }
 }
 
+#[when(
+    regex = r#"^I initiate a pending return of (\d+) paisa of "([^"]+)" contributions with timeout (\d+) seconds?$"#
+)]
+async fn initiate_pending_return_with_timeout(
+    world: &mut PbaWorld,
+    amount: i64,
+    funding_type: String,
+    timeout: i32,
+) {
+    let account_id = world.account_id.as_ref().expect("no account id").clone();
+    let result = world
+        .client
+        .return_pb_account_contribution()
+        .account_id(&account_id)
+        .amount(amount)
+        .funding_type(pba_client::types::FundingType::from(funding_type.as_str()))
+        .pending(true)
+        .timeout_seconds(timeout)
+        .send()
+        .await;
+    match result {
+        Ok(out) => {
+            world.last_return_correlation_id = Some(out.correlation_id().to_string());
+            world.last_return_status = Some(out.status().to_string());
+            world.last_error = None;
+        }
+        Err(e) => panic!("initiate pending return with timeout failed: {e:?}"),
+    }
+}
+
 #[when(regex = r#"^I attempt to return (\d+) paisa of "([^"]+)" contributions$"#)]
 async fn attempt_return(world: &mut PbaWorld, amount: i64, funding_type: String) {
     return_contribution(world, amount, funding_type).await;
