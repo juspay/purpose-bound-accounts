@@ -301,6 +301,15 @@ struct AccountDetailTemplate {
     created_at: String,
     updated_at: String,
     pending_deposits: Vec<PendingDepositRow>,
+    show_contributions_panel: bool,
+    trust_contributed_display: String,
+    trust_returned_display: String,
+    trust_returnable_paisa: u64,
+    trust_returnable_display: String,
+    third_party_contributed_display: String,
+    third_party_returned_display: String,
+    third_party_returnable_paisa: u64,
+    third_party_returnable_display: String,
 }
 
 pub async fn account_detail(
@@ -367,6 +376,29 @@ pub async fn account_detail(
         }
     };
 
+    let summary = state
+        .pb_contribution_return_service
+        .summary(account_id)
+        .await
+        .unwrap_or_else(|e| {
+            tracing::warn!(account_id = %account_id, error = %e, "Contribution summary failed; rendering zeros");
+            crate::service::pb_contribution_return_service::ContributionSummary {
+                trust: crate::service::pb_contribution_return_service::FundingTypeSummary {
+                    total_contributed: 0,
+                    total_returned: 0,
+                    remaining_returnable: 0,
+                },
+                third_party: crate::service::pb_contribution_return_service::FundingTypeSummary {
+                    total_contributed: 0,
+                    total_returned: 0,
+                    remaining_returnable: 0,
+                },
+            }
+        });
+
+    let show_contributions_panel =
+        summary.trust.total_contributed > 0 || summary.third_party.total_contributed > 0;
+
     render(AccountDetailTemplate {
         prefix: state.path_prefix.clone(),
         id: account.id.to_string(),
@@ -385,6 +417,15 @@ pub async fn account_detail(
         created_at: account.created_at.format("%Y-%m-%d %H:%M:%S").to_string(),
         updated_at: account.updated_at.format("%Y-%m-%d %H:%M:%S").to_string(),
         pending_deposits,
+        show_contributions_panel,
+        trust_contributed_display: fmt(summary.trust.total_contributed),
+        trust_returned_display: fmt(summary.trust.total_returned),
+        trust_returnable_paisa: summary.trust.remaining_returnable,
+        trust_returnable_display: fmt(summary.trust.remaining_returnable),
+        third_party_contributed_display: fmt(summary.third_party.total_contributed),
+        third_party_returned_display: fmt(summary.third_party.total_returned),
+        third_party_returnable_paisa: summary.third_party.remaining_returnable,
+        third_party_returnable_display: fmt(summary.third_party.remaining_returnable),
     })
 }
 
