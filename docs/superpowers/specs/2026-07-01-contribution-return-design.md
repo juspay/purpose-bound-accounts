@@ -669,6 +669,32 @@ scenarios):
 `just e2e-all` green, `just fmt-check` clean, `just lint` clean,
 Conventional Commit titles on every commit.
 
+## Known limitations (accepted for v1; follow-up tickets)
+
+- **Multi-allocation TB non-atomicity.** When a single return spans multiple
+  originals (FIFO), the service issues one TB transfer per allocation
+  independently (no `LINKED` chain). If allocation N (N>1) fails after
+  allocation 1 has already committed to TB, the PG transaction rolls back
+  but the earlier TB debits/credits remain — leaving PG and TB out of sync.
+  For the `pending=true` path this self-heals on retry (TB pending times
+  out; a fresh initiate re-drives it). For the `pending=false` path, the
+  most likely failure trigger is a concurrent operation draining the
+  others-pool below the outstanding amount, which surfaces as an
+  `ExceedsBalance` TigerBeetle error. Follow-up: batch the N transfers via
+  `create_transfers([...])` with `LINKED` flag on all-but-last so TB
+  guarantees per-batch atomicity.
+- **Transfer-reversal invisible to `remaining_returnable` summary.** A
+  prior `transfer_service::reverse_transfer` debits the trust others-pool
+  but is a `type='transfer'` row, not `type='withdrawal'`. `sum_others_returns`
+  filters on `type='withdrawal'`, so the summary's `remaining_returnable`
+  overstates the returnable amount after a reversal. TB's
+  `debits_must_not_exceed_credits` guard still prevents actual over-return
+  at ledger time, but the admin UI and API response can show numbers larger
+  than what the TB others-pool will actually honour. Follow-up: broaden
+  `sum_others_returns` to also count `type='transfer' AND direction='outbound'`
+  rows, or clamp `remaining_returnable` to the actual others-pool TB
+  balance.
+
 ## Out of scope
 
 - Webhook callbacks driving post/void.

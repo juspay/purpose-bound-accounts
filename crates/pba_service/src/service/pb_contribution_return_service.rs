@@ -552,12 +552,19 @@ impl PbContributionReturnService {
             .transaction_repo
             .find_by_correlation_id(correlation_id)
             .await?;
+        // Filter on direction=Outbound (the sponsor's debit leg) so a future
+        // refactor that inserts extra Normal-side rows under the same
+        // correlation_id (e.g. a sponsor fee leg) does not silently pick the
+        // wrong leg via created_at ordering.
         let normal_leg = legs
             .iter()
-            .find(|l| l.account_kind == AccountKind::Normal)
+            .find(|l| {
+                l.account_kind == AccountKind::Normal
+                    && l.direction == TransactionDirection::Outbound
+            })
             .ok_or_else(|| {
                 AppError::DatabaseError(
-                    "trust contribution original missing normal leg".to_string(),
+                    "trust contribution original missing outbound normal leg".to_string(),
                 )
             })?;
         let normal_account = self
