@@ -68,6 +68,10 @@ pub fn create_router() -> Router<AppState> {
             axum::routing::post(handlers::void_transaction),
         )
         .route(
+            "/admin/transactions/{txn_id}/returns.json",
+            get(handlers::admin_returns_list_json),
+        )
+        .route(
             "/admin/system-accounts",
             get(handlers::system_accounts_page),
         )

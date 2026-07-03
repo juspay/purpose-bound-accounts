@@ -1,8 +1,8 @@
 use askama::Template;
 use axum::extract::{Path, State};
 use axum::http::StatusCode;
-use axum::response::{Html, IntoResponse, Redirect, Response};
-use serde::Deserialize;
+use axum::response::{Html, IntoResponse, Json, Redirect, Response};
+use serde::{Deserialize, Serialize};
 use std::collections::BTreeMap;
 use uuid::Uuid;
 
@@ -1069,6 +1069,16 @@ struct RefundHistoryRow {
     is_voided: bool,
 }
 
+#[derive(Clone)]
+struct ReturnHistoryRow {
+    return_id: String,
+    return_id_short: String,
+    created_at: String,
+    amount_display: String,
+    status: String,
+    is_voided: bool,
+}
+
 #[derive(Template)]
 #[template(path = "admin/transaction_detail.html")]
 struct TransactionDetailTemplate {
@@ -1117,6 +1127,9 @@ struct TransactionDetailTemplate {
     /// Set when refund-row DB queries fail; the template shows a banner and
     /// hides the Refund button so the admin doesn't act on a wrong remaining.
     refund_load_failed: bool,
+    /// Contribution returns that reference this row as the original contribution.
+    /// Only Withdrawal-typed returns (pool=others) are surfaced here.
+    returns_of_this_row: Vec<ReturnHistoryRow>,
 }
 
 pub async fn transaction_detail(
@@ -1357,6 +1370,36 @@ pub async fn transaction_detail(
 
     let remaining_refundable_display = fmt_paisa(remaining_refundable_paisa);
 
+    // Contribution returns that point at THIS row as the original contribution.
+    // Only surface Withdrawal-typed returns (pool = "others"); payment refunds
+    // are shown in the refund_history table on payment detail.
+    let return_rows = state
+        .transaction_repo
+        .find_returns_of(txn.id)
+        .await
+        .unwrap_or_default();
+    let returns_of_this_row: Vec<ReturnHistoryRow> = return_rows
+        .iter()
+        .filter(|r| {
+            r.transaction_type == TransactionType::Withdrawal && r.pool.as_deref() == Some("others")
+        })
+        .map(|r| {
+            let id_str = r.correlation_id.unwrap_or(r.id).to_string();
+            let id_short = id_str.chars().take(8).collect::<String>();
+            let amount_display = format!("{}.{:02}", r.amount / 100, r.amount % 100);
+            let status = r.status.as_str().to_string();
+            let is_voided = matches!(r.status, TransactionStatus::Voided);
+            ReturnHistoryRow {
+                return_id: id_str,
+                return_id_short: id_short,
+                created_at: r.created_at.format("%Y-%m-%d %H:%M:%S").to_string(),
+                amount_display,
+                status,
+                is_voided,
+            }
+        })
+        .collect();
+
     render(TransactionDetailTemplate {
         prefix: state.path_prefix.clone(),
         id: id_str,
@@ -1398,6 +1441,7 @@ pub async fn transaction_detail(
         remaining_refundable_display,
         refund_of_payment_id,
         refund_load_failed,
+        returns_of_this_row,
     })
 }
 
@@ -1728,6 +1772,44 @@ pub async fn admin_void_refund(
     }
 }
 
+// ─── Test-support: returns list JSON endpoint ─────────────────────────────────
+
+#[derive(Serialize)]
+struct ReturnListItem {
+    return_id: String,
+    amount_display: String,
+    status: String,
+}
+
+#[derive(Serialize)]
+struct ReturnListResponse {
+    items: Vec<ReturnListItem>,
+}
+
+pub async fn admin_returns_list_json(
+    State(state): State<AppState>,
+    Path(txn_id): Path<Uuid>,
+) -> Response {
+    let rows = match state.transaction_repo.find_returns_of(txn_id).await {
+        Ok(r) => r,
+        Err(_) => {
+            return (StatusCode::INTERNAL_SERVER_ERROR, "db error").into_response();
+        }
+    };
+    let items: Vec<ReturnListItem> = rows
+        .iter()
+        .filter(|r| {
+            r.transaction_type == TransactionType::Withdrawal && r.pool.as_deref() == Some("others")
+        })
+        .map(|r| ReturnListItem {
+            return_id: r.correlation_id.unwrap_or(r.id).to_string(),
+            amount_display: format!("{}.{:02}", r.amount / 100, r.amount % 100),
+            status: r.status.as_str().to_string(),
+        })
+        .collect();
+    Json(ReturnListResponse { items }).into_response()
+}
+
 // ─── Contribution return lifecycle handlers ───────────────────────────────────
 
 pub async fn admin_post_contribution_return(
@@ -1813,6 +1895,7 @@ mod tests {
             remaining_refundable_display: "0.00".to_string(),
             refund_of_payment_id: String::new(),
             refund_load_failed: false,
+            returns_of_this_row: vec![],
         }
     }
 
@@ -1858,6 +1941,7 @@ mod tests {
             remaining_refundable_display: "12.34".to_string(),
             refund_of_payment_id: String::new(),
             refund_load_failed: false,
+            returns_of_this_row: vec![],
         }
     }
 
@@ -1903,6 +1987,7 @@ mod tests {
             remaining_refundable_display: "0.00".to_string(),
             refund_of_payment_id: String::new(),
             refund_load_failed: false,
+            returns_of_this_row: vec![],
         }
     }
 

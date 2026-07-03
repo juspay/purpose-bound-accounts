@@ -130,3 +130,14 @@ Feature: Reversal of normal → PB transfers
     Then the reversal is successful
     And the normal account has at least 2 transactions
     And the PB account has at least 2 transactions
+
+  @api
+  Scenario: Returned-by affordance surfaces contribution returns on the transfer detail
+    Given a normal account exists for holder "rby-sponsor"
+    And the normal account has balance 20000
+    And a "health" account exists for holder "rby-sponsor" with origin IFSC "HDFC0079999" and account number "7079999001"
+    When I transfer 20000 paisa from the normal account to the PB account
+    And I return 8000 paisa of "trust" contributions
+    And I fetch the transfer detail page returns list
+    Then the transfer detail returns list has 1 entry
+    And the transfer detail returns entry 1 amount is "80.00"

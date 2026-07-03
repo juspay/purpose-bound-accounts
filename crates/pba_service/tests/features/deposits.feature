@@ -96,3 +96,12 @@ Feature: Deposits
     And I void the pending deposit
     And I attempt to void the pending deposit again
     Then the operation should be rejected
+
+  @api
+  Scenario: Returned-by affordance surfaces contribution returns on the third-party deposit detail
+    Given a "health" account exists for holder "rby-third-party" with origin IFSC "HDFC0079998" and account number "7079998001"
+    And the PB account receives 12000 paisa via a third-party deposit
+    When I return 5000 paisa of "third_party" contributions
+    And I fetch the transfer detail page returns list
+    Then the transfer detail returns list has 1 entry
+    And the transfer detail returns entry 1 amount is "50.00"

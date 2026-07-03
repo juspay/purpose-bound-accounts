@@ -317,7 +317,7 @@ async fn total_returned_at_most(world: &mut PbaWorld, max: i64) {
 #[given(regex = r#"^the PB account receives (\d+) paisa via a third-party deposit$"#)]
 async fn pb_receives_third_party_deposit(world: &mut PbaWorld, amount: i64) {
     let account_id = world.account_id.as_ref().expect("no account id").clone();
-    world
+    let response = world
         .client
         .deposit_to_pb_account()
         .account_id(&account_id)
@@ -328,6 +328,7 @@ async fn pb_receives_third_party_deposit(world: &mut PbaWorld, amount: i64) {
         .send()
         .await
         .expect("third-party deposit failed");
+    world.last_deposit_id = Some(response.deposit_id().to_string());
 }
 
 #[when(
@@ -372,4 +373,76 @@ async fn both_returns_same_correlation(world: &mut PbaWorld) {
         .as_ref()
         .expect("no current return correlation_id");
     assert_eq!(prev, now, "idempotency failed: correlation_ids differ");
+}
+
+#[when("I fetch the transfer detail page returns list")]
+async fn fetch_returns_list(world: &mut PbaWorld) {
+    // Use the PB-side original deposit transaction ID from the most recent
+    // return allocation. This is the id that find_returns_of searches by
+    // (return rows store `reverses_transaction_id` = PB-side deposit row id).
+    // Fall back to last_deposit_id for deposit-only scenarios where no transfer
+    // step ran, then last_transfer_id as last resort.
+    let txn_id = world
+        .last_return_allocations
+        .as_ref()
+        .and_then(|allocs| allocs.first())
+        .map(|(original_txn_id, _)| original_txn_id.clone())
+        .or_else(|| world.last_deposit_id.clone())
+        .or_else(|| world.last_transfer_id.clone())
+        .expect("no allocation, deposit or transfer id");
+    let base =
+        std::env::var("PBA_SERVICE_URL").unwrap_or_else(|_| "http://127.0.0.1:3030".to_string());
+    let url = format!("{base}/admin/transactions/{txn_id}/returns.json");
+    let resp = reqwest::Client::new()
+        .get(&url)
+        .basic_auth("test", Some("test"))
+        .send()
+        .await
+        .expect("returns.json request failed");
+    let body: serde_json::Value = resp.json().await.expect("returns.json parse failed");
+    let items = body
+        .get("items")
+        .and_then(|v| v.as_array())
+        .cloned()
+        .unwrap_or_default();
+    world.last_transfer_returns_list = Some(
+        items
+            .iter()
+            .map(|it| {
+                (
+                    it.get("return_id")
+                        .and_then(|v| v.as_str())
+                        .unwrap_or("")
+                        .to_string(),
+                    it.get("amount_display")
+                        .and_then(|v| v.as_str())
+                        .unwrap_or("")
+                        .to_string(),
+                    it.get("status")
+                        .and_then(|v| v.as_str())
+                        .unwrap_or("")
+                        .to_string(),
+                )
+            })
+            .collect(),
+    );
+}
+
+#[then(regex = r#"^the transfer detail returns list has (\d+) entr(?:y|ies)$"#)]
+async fn returns_list_count(world: &mut PbaWorld, expected: usize) {
+    let list = world
+        .last_transfer_returns_list
+        .as_ref()
+        .expect("no returns list");
+    assert_eq!(list.len(), expected, "returns list length mismatch");
+}
+
+#[then(regex = r#"^the transfer detail returns entry (\d+) amount is "([^"]+)"$"#)]
+async fn returns_list_entry_amount(world: &mut PbaWorld, index: usize, expected: String) {
+    let list = world
+        .last_transfer_returns_list
+        .as_ref()
+        .expect("no returns list");
+    let entry = list.get(index - 1).expect("entry index out of range");
+    assert_eq!(entry.1, expected, "returns entry amount mismatch");
 }

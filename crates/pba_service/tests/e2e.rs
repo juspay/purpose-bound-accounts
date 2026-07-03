@@ -117,6 +117,9 @@ pub struct PbaWorld {
     contribution_summary_trust_remaining: Option<i64>,
     /// Summary read: third_party remaining_returnable
     contribution_summary_third_party_remaining: Option<i64>,
+    /// Returns list fetched from /admin/transactions/{id}/returns.json
+    /// Each entry is (return_id, amount_display, status).
+    last_transfer_returns_list: Option<Vec<(String, String, String)>>,
 }
 
 #[derive(Debug, Clone)]
@@ -214,6 +217,7 @@ impl Default for PbaWorld {
             previous_return_correlation_id: None,
             contribution_summary_trust_remaining: None,
             contribution_summary_third_party_remaining: None,
+            last_transfer_returns_list: None,
         }
     }
 }
