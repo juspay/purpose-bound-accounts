@@ -399,10 +399,14 @@ impl PbContributionReturnService {
             if r.tb_transfer_id != 0 {
                 let res = match direction {
                     ContributionReturnResolution::Post => {
-                        self.ledger_repo.post_pending_transfer(r.tb_transfer_id).await
+                        self.ledger_repo
+                            .post_pending_transfer(r.tb_transfer_id)
+                            .await
                     }
                     ContributionReturnResolution::Void => {
-                        self.ledger_repo.void_pending_transfer(r.tb_transfer_id).await
+                        self.ledger_repo
+                            .void_pending_transfer(r.tb_transfer_id)
+                            .await
                     }
                 };
                 match res {
@@ -454,7 +458,8 @@ impl PbContributionReturnService {
             .first()
             .and_then(|r| r.funding_type.clone())
             .unwrap_or_else(|| "trust".to_string());
-        let remaining_returnable_after = self.compute_remaining(pb_account_id, &funding_type).await?;
+        let remaining_returnable_after =
+            self.compute_remaining(pb_account_id, &funding_type).await?;
         let status = rows
             .first()
             .map(|r| r.status)
@@ -481,8 +486,12 @@ impl PbContributionReturnService {
         pb_account_id: Uuid,
         return_id: Uuid,
     ) -> Result<ContributionReturnResult, AppError> {
-        self.resolve_contribution_return(pb_account_id, return_id, ContributionReturnResolution::Post)
-            .await
+        self.resolve_contribution_return(
+            pb_account_id,
+            return_id,
+            ContributionReturnResolution::Post,
+        )
+        .await
     }
 
     pub async fn void_contribution_return(
@@ -490,14 +499,15 @@ impl PbContributionReturnService {
         pb_account_id: Uuid,
         return_id: Uuid,
     ) -> Result<ContributionReturnResult, AppError> {
-        self.resolve_contribution_return(pb_account_id, return_id, ContributionReturnResolution::Void)
-            .await
+        self.resolve_contribution_return(
+            pb_account_id,
+            return_id,
+            ContributionReturnResolution::Void,
+        )
+        .await
     }
 
-    pub async fn summary(
-        &self,
-        pb_account_id: Uuid,
-    ) -> Result<ContributionSummary, AppError> {
+    pub async fn summary(&self, pb_account_id: Uuid) -> Result<ContributionSummary, AppError> {
         let trust = self.summary_for(pb_account_id, "trust").await?;
         let third_party = self.summary_for(pb_account_id, "third_party").await?;
         Ok(ContributionSummary { trust, third_party })
