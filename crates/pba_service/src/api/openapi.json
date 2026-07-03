@@ -1342,6 +1342,224 @@
                 }
             }
         },
+        "/pb-accounts/{account_id}/contribution-returns": {
+            "post": {
+                "description": "Return a contribution to the originating funder.",
+                "operationId": "ReturnPBAccountContribution",
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/ReturnPBAccountContributionRequestContent"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "parameters": [
+                    {
+                        "name": "account_id",
+                        "in": "path",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "ReturnPBAccountContribution 201 response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ReturnPBAccountContributionResponseContent"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "ContributionAmountInvalidError 400 response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ContributionAmountInvalidErrorResponseContent"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "AccountNotFoundError 404 response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/AccountNotFoundErrorResponseContent"
+                                }
+                            }
+                        }
+                    },
+                    "409": {
+                        "description": "ContributionFullyReturnedError 409 response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ContributionFullyReturnedErrorResponseContent"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/pb-accounts/{account_id}/contribution-returns/{return_id}/post": {
+            "post": {
+                "description": "Post a pending contribution return (confirm the held reversal).",
+                "operationId": "PostPBAccountContributionReturn",
+                "parameters": [
+                    {
+                        "name": "account_id",
+                        "in": "path",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "required": true
+                    },
+                    {
+                        "name": "return_id",
+                        "in": "path",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "PostPBAccountContributionReturn 200 response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/PostPBAccountContributionReturnResponseContent"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "TransactionNotFoundError 404 response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/TransactionNotFoundErrorResponseContent"
+                                }
+                            }
+                        }
+                    },
+                    "409": {
+                        "description": "TransactionNotPendingError 409 response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/TransactionNotPendingErrorResponseContent"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/pb-accounts/{account_id}/contribution-returns/{return_id}/void": {
+            "post": {
+                "description": "Void a pending contribution return (cancel the held reversal).",
+                "operationId": "VoidPBAccountContributionReturn",
+                "parameters": [
+                    {
+                        "name": "account_id",
+                        "in": "path",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "required": true
+                    },
+                    {
+                        "name": "return_id",
+                        "in": "path",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "VoidPBAccountContributionReturn 200 response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/VoidPBAccountContributionReturnResponseContent"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "TransactionNotFoundError 404 response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/TransactionNotFoundErrorResponseContent"
+                                }
+                            }
+                        }
+                    },
+                    "409": {
+                        "description": "TransactionNotPendingError 409 response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/TransactionNotPendingErrorResponseContent"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/pb-accounts/{account_id}/contributions/summary": {
+            "get": {
+                "description": "Get a summary of contributions and returns per funding type.",
+                "operationId": "GetPBAccountContributionSummary",
+                "parameters": [
+                    {
+                        "name": "account_id",
+                        "in": "path",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "GetPBAccountContributionSummary 200 response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/GetPBAccountContributionSummaryResponseContent"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "AccountNotFoundError 404 response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/AccountNotFoundErrorResponseContent"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
         "/pb-accounts/{account_id}/deposits": {
             "post": {
                 "description": "Deposit funds into a purpose-bound account.\nAutomatically routes to self-contribution or others-contribution pool\nbased on whether the source matches the account's origin bank.\nSet `pending` to true for two-phase deposits (pending → post/void).",
@@ -2108,6 +2326,59 @@
                     "message"
                 ]
             },
+            "AllocationEntry": {
+                "type": "object",
+                "description": "Entry in the allocation list for a contribution return.",
+                "properties": {
+                    "original_transaction_id": {
+                        "type": "string"
+                    },
+                    "amount": {
+                        "type": "number",
+                        "description": "Monetary amount in the smallest currency unit (e.g., paise for INR)."
+                    }
+                },
+                "required": [
+                    "amount",
+                    "original_transaction_id"
+                ]
+            },
+            "ContributionAmountInvalidErrorResponseContent": {
+                "type": "object",
+                "properties": {
+                    "message": {
+                        "type": "string"
+                    },
+                    "requested": {
+                        "type": "number",
+                        "description": "Monetary amount in the smallest currency unit (e.g., paise for INR)."
+                    },
+                    "remaining": {
+                        "type": "number",
+                        "description": "Monetary amount in the smallest currency unit (e.g., paise for INR)."
+                    }
+                },
+                "required": [
+                    "message",
+                    "remaining",
+                    "requested"
+                ]
+            },
+            "ContributionFullyReturnedErrorResponseContent": {
+                "type": "object",
+                "properties": {
+                    "message": {
+                        "type": "string"
+                    },
+                    "pb_account_id": {
+                        "type": "string"
+                    }
+                },
+                "required": [
+                    "message",
+                    "pb_account_id"
+                ]
+            },
             "CreateAccountRequestContent": {
                 "type": "object",
                 "properties": {
@@ -2574,6 +2845,29 @@
                     "third_party"
                 ]
             },
+            "FundingTypeSummary": {
+                "type": "object",
+                "description": "Per-funding-type contribution summary.",
+                "properties": {
+                    "total_contributed": {
+                        "type": "number",
+                        "description": "Monetary amount in the smallest currency unit (e.g., paise for INR)."
+                    },
+                    "total_returned": {
+                        "type": "number",
+                        "description": "Monetary amount in the smallest currency unit (e.g., paise for INR)."
+                    },
+                    "remaining_returnable": {
+                        "type": "number",
+                        "description": "Monetary amount in the smallest currency unit (e.g., paise for INR)."
+                    }
+                },
+                "required": [
+                    "remaining_returnable",
+                    "total_contributed",
+                    "total_returned"
+                ]
+            },
             "GetAccountResponseContent": {
                 "type": "object",
                 "description": "Shared account fields.",
@@ -2773,6 +3067,21 @@
                     "pending_self",
                     "self_contribution",
                     "total"
+                ]
+            },
+            "GetPBAccountContributionSummaryResponseContent": {
+                "type": "object",
+                "properties": {
+                    "trust": {
+                        "$ref": "#/components/schemas/FundingTypeSummary"
+                    },
+                    "third_party": {
+                        "$ref": "#/components/schemas/FundingTypeSummary"
+                    }
+                },
+                "required": [
+                    "third_party",
+                    "trust"
                 ]
             },
             "GetPBAccountResponseContent": {
@@ -3346,6 +3655,57 @@
                     "transfer_id"
                 ]
             },
+            "PostPBAccountContributionReturnResponseContent": {
+                "type": "object",
+                "description": "Shared fields returned by all contribution-return operations.",
+                "properties": {
+                    "return_id": {
+                        "type": "string"
+                    },
+                    "correlation_id": {
+                        "type": "string"
+                    },
+                    "account_id": {
+                        "type": "string"
+                    },
+                    "funding_type": {
+                        "$ref": "#/components/schemas/FundingType"
+                    },
+                    "amount": {
+                        "type": "number",
+                        "description": "Monetary amount in the smallest currency unit (e.g., paise for INR)."
+                    },
+                    "allocations": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/AllocationEntry"
+                        }
+                    },
+                    "remaining_returnable_after": {
+                        "type": "number",
+                        "description": "Monetary amount in the smallest currency unit (e.g., paise for INR)."
+                    },
+                    "status": {
+                        "$ref": "#/components/schemas/TransactionStatus"
+                    },
+                    "created_at": {
+                        "type": "string",
+                        "description": "ISO 8601 date-time.",
+                        "format": "date-time"
+                    }
+                },
+                "required": [
+                    "account_id",
+                    "allocations",
+                    "amount",
+                    "correlation_id",
+                    "created_at",
+                    "funding_type",
+                    "remaining_returnable_after",
+                    "return_id",
+                    "status"
+                ]
+            },
             "PostPBAccountDepositResponseContent": {
                 "type": "object",
                 "properties": {
@@ -3571,6 +3931,88 @@
                     "original_payment_id",
                     "refund_id",
                     "remaining_refundable",
+                    "status"
+                ]
+            },
+            "ReturnPBAccountContributionRequestContent": {
+                "type": "object",
+                "properties": {
+                    "amount": {
+                        "type": "number",
+                        "description": "Monetary amount in the smallest currency unit (e.g., paise for INR)."
+                    },
+                    "funding_type": {
+                        "$ref": "#/components/schemas/FundingType"
+                    },
+                    "pending": {
+                        "type": "boolean"
+                    },
+                    "timeout_seconds": {
+                        "type": "number"
+                    },
+                    "gateway_ref": {
+                        "type": "string"
+                    },
+                    "description": {
+                        "type": "string"
+                    },
+                    "idempotency_key": {
+                        "type": "string"
+                    }
+                },
+                "required": [
+                    "amount",
+                    "funding_type"
+                ]
+            },
+            "ReturnPBAccountContributionResponseContent": {
+                "type": "object",
+                "description": "Shared fields returned by all contribution-return operations.",
+                "properties": {
+                    "return_id": {
+                        "type": "string"
+                    },
+                    "correlation_id": {
+                        "type": "string"
+                    },
+                    "account_id": {
+                        "type": "string"
+                    },
+                    "funding_type": {
+                        "$ref": "#/components/schemas/FundingType"
+                    },
+                    "amount": {
+                        "type": "number",
+                        "description": "Monetary amount in the smallest currency unit (e.g., paise for INR)."
+                    },
+                    "allocations": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/AllocationEntry"
+                        }
+                    },
+                    "remaining_returnable_after": {
+                        "type": "number",
+                        "description": "Monetary amount in the smallest currency unit (e.g., paise for INR)."
+                    },
+                    "status": {
+                        "$ref": "#/components/schemas/TransactionStatus"
+                    },
+                    "created_at": {
+                        "type": "string",
+                        "description": "ISO 8601 date-time.",
+                        "format": "date-time"
+                    }
+                },
+                "required": [
+                    "account_id",
+                    "allocations",
+                    "amount",
+                    "correlation_id",
+                    "created_at",
+                    "funding_type",
+                    "remaining_returnable_after",
+                    "return_id",
                     "status"
                 ]
             },
@@ -4161,6 +4603,57 @@
                     "source_account_id",
                     "status",
                     "transfer_id"
+                ]
+            },
+            "VoidPBAccountContributionReturnResponseContent": {
+                "type": "object",
+                "description": "Shared fields returned by all contribution-return operations.",
+                "properties": {
+                    "return_id": {
+                        "type": "string"
+                    },
+                    "correlation_id": {
+                        "type": "string"
+                    },
+                    "account_id": {
+                        "type": "string"
+                    },
+                    "funding_type": {
+                        "$ref": "#/components/schemas/FundingType"
+                    },
+                    "amount": {
+                        "type": "number",
+                        "description": "Monetary amount in the smallest currency unit (e.g., paise for INR)."
+                    },
+                    "allocations": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/AllocationEntry"
+                        }
+                    },
+                    "remaining_returnable_after": {
+                        "type": "number",
+                        "description": "Monetary amount in the smallest currency unit (e.g., paise for INR)."
+                    },
+                    "status": {
+                        "$ref": "#/components/schemas/TransactionStatus"
+                    },
+                    "created_at": {
+                        "type": "string",
+                        "description": "ISO 8601 date-time.",
+                        "format": "date-time"
+                    }
+                },
+                "required": [
+                    "account_id",
+                    "allocations",
+                    "amount",
+                    "correlation_id",
+                    "created_at",
+                    "funding_type",
+                    "remaining_returnable_after",
+                    "return_id",
+                    "status"
                 ]
             },
             "VoidPBAccountDepositRequestContent": {
