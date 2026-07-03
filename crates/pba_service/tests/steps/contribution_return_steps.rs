@@ -1,4 +1,4 @@
-use cucumber::{then, when};
+use cucumber::{given, then, when};
 
 use crate::PbaWorld;
 
@@ -282,4 +282,69 @@ async fn total_returned_at_most(world: &mut PbaWorld, max: i64) {
         .concurrent_refund_total_amount
         .expect("no total returned value");
     assert!(t <= max, "expected total returned <= {max}, got {t}");
+}
+
+#[given(regex = r#"^the PB account receives (\d+) paisa via a third-party deposit$"#)]
+async fn pb_receives_third_party_deposit(world: &mut PbaWorld, amount: i64) {
+    let account_id = world.account_id.as_ref().expect("no account id").clone();
+    world
+        .client
+        .deposit_to_pb_account()
+        .account_id(&account_id)
+        .amount(amount)
+        .source_ifsc("HDFC0009999")
+        .source_account_number("9999999999")
+        .funding_type(pba_client::types::FundingType::from("third_party"))
+        .send()
+        .await
+        .expect("third-party deposit failed");
+}
+
+#[when(
+    regex = r#"^I return (\d+) paisa of "([^"]+)" contributions with idempotency key "([^"]+)"$"#
+)]
+async fn return_with_idem(
+    world: &mut PbaWorld,
+    amount: i64,
+    funding_type: String,
+    key: String,
+) {
+    world.previous_return_correlation_id = world.last_return_correlation_id.take();
+    let account_id = world.account_id.as_ref().expect("no account id").clone();
+    let result = world
+        .client
+        .return_pb_account_contribution()
+        .account_id(&account_id)
+        .amount(amount)
+        .funding_type(pba_client::types::FundingType::from(funding_type.as_str()))
+        .idempotency_key(&key)
+        .send()
+        .await;
+    match result {
+        Ok(out) => {
+            world.last_return_correlation_id = Some(out.correlation_id().to_string());
+            world.last_return_status = Some(out.status().to_string());
+            world.last_error = None;
+        }
+        Err(e) => {
+            let s = format!("{e:?}");
+            world.last_error = Some(crate::PbaError {
+                kind: classify_return_error(&s).to_string(),
+                message: Some(s),
+            });
+        }
+    }
+}
+
+#[then("both returns share the same correlation_id")]
+async fn both_returns_same_correlation(world: &mut PbaWorld) {
+    let prev = world
+        .previous_return_correlation_id
+        .as_ref()
+        .expect("no previous return correlation_id");
+    let now = world
+        .last_return_correlation_id
+        .as_ref()
+        .expect("no current return correlation_id");
+    assert_eq!(prev, now, "idempotency failed: correlation_ids differ");
 }
