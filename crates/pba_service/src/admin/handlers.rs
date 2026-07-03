@@ -1555,6 +1555,128 @@ pub async fn process_refund_payment(
     }
 }
 
+// ─── Contribution return handlers ─────────────────────────────────────────────
+
+#[derive(Template)]
+#[template(path = "admin/contribution_return.html")]
+struct ContributionReturnTemplate {
+    prefix: String,
+    account_id: String,
+    account_id_short: String,
+    funding_type: String,
+    remaining_returnable_paisa: u64,
+    remaining_returnable_display: String,
+    error: Option<String>,
+}
+
+#[derive(Deserialize)]
+pub struct ContributionReturnFormQuery {
+    pub funding_type: Option<String>,
+}
+
+#[derive(Deserialize)]
+pub struct ContributionReturnForm {
+    pub amount_paisa: u64,
+    pub funding_type: String,
+    #[serde(default)]
+    pub mode: Option<String>,
+    // Option<String> not Option<u32> — empty submit ("timeout_seconds=") would fail
+    // integer parsing. Matches the pattern from PR #42.
+    #[serde(default)]
+    pub timeout_seconds: Option<String>,
+    pub description: Option<String>,
+    pub gateway_ref: Option<String>,
+}
+
+pub async fn contribution_return_form(
+    State(state): State<AppState>,
+    Path(account_id): Path<Uuid>,
+    axum::extract::Query(q): axum::extract::Query<ContributionReturnFormQuery>,
+) -> Response {
+    let funding_type = q.funding_type.unwrap_or_else(|| "trust".to_string());
+    if funding_type != "trust" && funding_type != "third_party" {
+        return (
+            StatusCode::BAD_REQUEST,
+            "funding_type must be 'trust' or 'third_party'",
+        )
+            .into_response();
+    }
+    let summary = match state
+        .pb_contribution_return_service
+        .summary(account_id)
+        .await
+    {
+        Ok(s) => s,
+        Err(e) => {
+            return (StatusCode::INTERNAL_SERVER_ERROR, format!("{e}")).into_response();
+        }
+    };
+    let (contributed, remaining) = if funding_type == "trust" {
+        (
+            summary.trust.total_contributed,
+            summary.trust.remaining_returnable,
+        )
+    } else {
+        (
+            summary.third_party.total_contributed,
+            summary.third_party.remaining_returnable,
+        )
+    };
+    if contributed == 0 {
+        return (
+            StatusCode::NOT_FOUND,
+            "No contributions of this funding_type",
+        )
+            .into_response();
+    }
+    let fmt = |a: u64| format!("{}.{:02}", a / 100, a % 100);
+    let account_id_str = account_id.to_string();
+    let account_id_short: String = account_id_str.chars().take(8).collect();
+    render(ContributionReturnTemplate {
+        prefix: state.path_prefix.clone(),
+        account_id: account_id_str,
+        account_id_short,
+        funding_type,
+        remaining_returnable_paisa: remaining,
+        remaining_returnable_display: fmt(remaining),
+        error: None,
+    })
+}
+
+pub async fn process_contribution_return(
+    State(state): State<AppState>,
+    Path(account_id): Path<Uuid>,
+    axum::extract::Form(form): axum::extract::Form<ContributionReturnForm>,
+) -> Response {
+    let is_pending = form.mode.as_deref() == Some("pending");
+    let timeout_seconds: Option<u32> = form
+        .timeout_seconds
+        .as_deref()
+        .filter(|s| !s.is_empty())
+        .and_then(|s| s.parse().ok());
+    match state
+        .pb_contribution_return_service
+        .return_contribution(
+            account_id,
+            form.amount_paisa,
+            &form.funding_type,
+            is_pending,
+            timeout_seconds,
+            form.gateway_ref.as_deref(),
+            form.description.as_deref(),
+            None,
+        )
+        .await
+    {
+        Ok(r) => Redirect::to(&prefixed(
+            &state,
+            &format!("/admin/transactions/{}", r.return_id),
+        ))
+        .into_response(),
+        Err(e) => (StatusCode::BAD_REQUEST, format!("Return failed: {e}")).into_response(),
+    }
+}
+
 pub async fn admin_post_refund(
     State(state): State<AppState>,
     Path((account_id, refund_id)): Path<(Uuid, Uuid)>,

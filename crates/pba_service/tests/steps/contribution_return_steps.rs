@@ -333,12 +333,7 @@ async fn pb_receives_third_party_deposit(world: &mut PbaWorld, amount: i64) {
 #[when(
     regex = r#"^I return (\d+) paisa of "([^"]+)" contributions with idempotency key "([^"]+)"$"#
 )]
-async fn return_with_idem(
-    world: &mut PbaWorld,
-    amount: i64,
-    funding_type: String,
-    key: String,
-) {
+async fn return_with_idem(world: &mut PbaWorld, amount: i64, funding_type: String, key: String) {
     world.previous_return_correlation_id = world.last_return_correlation_id.take();
     let account_id = world.account_id.as_ref().expect("no account id").clone();
     let result = world

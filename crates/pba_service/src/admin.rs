@@ -137,6 +137,14 @@ pub fn create_router() -> Router<AppState> {
             get(handlers::refund_payment_form).post(handlers::process_refund_payment),
         )
         .route(
+            "/admin/accounts/{account_id}/contribution-returns/new",
+            get(handlers::contribution_return_form),
+        )
+        .route(
+            "/admin/accounts/{account_id}/contribution-returns",
+            post(handlers::process_contribution_return),
+        )
+        .route(
             "/admin/accounts/{account_id}/refunds/{refund_id}/post",
             post(handlers::admin_post_refund),
         )
