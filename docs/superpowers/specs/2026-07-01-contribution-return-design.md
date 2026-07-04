@@ -669,6 +669,31 @@ scenarios):
 `just e2e-all` green, `just fmt-check` clean, `just lint` clean,
 Conventional Commit titles on every commit.
 
+## Idempotency replay semantics
+
+The idempotency replay path in `return_contribution` returns identity /
+audit fields from the stored rows (`correlation_id`, `amount`,
+`allocations`, `status`, `created_at`) but **recomputes**
+`remaining_returnable_after` freshly against the DB at reply time. If
+other returns or voids for the same `funding_type` land between the
+original call and a replay of the same idempotency key, the two responses
+will show different `remaining_returnable_after` values while all other
+fields remain identical.
+
+This is intentional and matches the equivalent pattern in
+`pb_payment_service::refund_payment` (introduced in PR #40): the
+`remaining_*` field is a **snapshot at reply time**, not a stable
+replay-identity field. Clients that need a fresh point-in-time figure
+should call `GET /pb-accounts/{id}/contributions/summary` — the identity
+fields on the response are what carry the idempotency guarantee.
+
+Making `remaining_*` fully replay-stable would require either storing
+the original value at insert time (a `remaining_after_paisa` column plus
+migration) or a dedicated idempotency-snapshot table. Both are worth
+doing as a single project-wide change covering refund, contribution
+return, and any future idempotent PB operations rather than a one-off
+here — filed as a follow-up.
+
 ## Known limitations (accepted for v1; follow-up tickets)
 
 - **Multi-allocation TB non-atomicity.** When a single return spans multiple
