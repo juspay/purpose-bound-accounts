@@ -302,6 +302,7 @@ struct AccountDetailTemplate {
     updated_at: String,
     pending_deposits: Vec<PendingDepositRow>,
     show_contributions_panel: bool,
+    contributions_load_failed: bool,
     trust_contributed_display: String,
     trust_returned_display: String,
     trust_returnable_paisa: u64,
@@ -376,28 +377,39 @@ pub async fn account_detail(
         }
     };
 
-    let summary = state
+    let (summary, contributions_load_failed) = match state
         .pb_contribution_return_service
         .summary(account_id)
         .await
-        .unwrap_or_else(|e| {
-            tracing::warn!(account_id = %account_id, error = %e, "Contribution summary failed; rendering zeros");
-            crate::service::pb_contribution_return_service::ContributionSummary {
-                trust: crate::service::pb_contribution_return_service::FundingTypeSummary {
-                    total_contributed: 0,
-                    total_returned: 0,
-                    remaining_returnable: 0,
+    {
+        Ok(s) => (s, false),
+        Err(e) => {
+            tracing::warn!(
+                account_id = %account_id,
+                error = %e,
+                "Contribution summary failed; showing 'data unavailable' banner"
+            );
+            let zero = crate::service::pb_contribution_return_service::FundingTypeSummary {
+                total_contributed: 0,
+                total_returned: 0,
+                remaining_returnable: 0,
+            };
+            (
+                crate::service::pb_contribution_return_service::ContributionSummary {
+                    trust: zero.clone(),
+                    third_party: zero,
                 },
-                third_party: crate::service::pb_contribution_return_service::FundingTypeSummary {
-                    total_contributed: 0,
-                    total_returned: 0,
-                    remaining_returnable: 0,
-                },
-            }
-        });
+                true,
+            )
+        }
+    };
 
-    let show_contributions_panel =
-        summary.trust.total_contributed > 0 || summary.third_party.total_contributed > 0;
+    // Show the panel whenever we have contributions OR the load failed —
+    // otherwise a load failure would hide the panel entirely and the admin
+    // would see "no contributions" instead of an explicit error banner.
+    let show_contributions_panel = contributions_load_failed
+        || summary.trust.total_contributed > 0
+        || summary.third_party.total_contributed > 0;
 
     render(AccountDetailTemplate {
         prefix: state.path_prefix.clone(),
@@ -418,6 +430,7 @@ pub async fn account_detail(
         updated_at: account.updated_at.format("%Y-%m-%d %H:%M:%S").to_string(),
         pending_deposits,
         show_contributions_panel,
+        contributions_load_failed,
         trust_contributed_display: fmt(summary.trust.total_contributed),
         trust_returned_display: fmt(summary.trust.total_returned),
         trust_returnable_paisa: summary.trust.remaining_returnable,

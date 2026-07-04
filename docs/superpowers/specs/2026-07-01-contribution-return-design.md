@@ -91,8 +91,8 @@ concurrent initiates cannot over-return.
 | Routes | Three new REST routes under `/pb-accounts/{account_id}/contribution-returns/...` plus one read at `/pb-accounts/{account_id}/contributions/summary`. |
 | Domain | None. Reuses `TransactionType::Withdrawal`; the pool + link + funding_type distinguish return rows. |
 | Repository | `transaction_repo` gains `find_returnable_originals_for_update`, `sum_returns_of_in_tx`, `sum_others_contributions`, `sum_others_returns`. Renames `sum_refunds_of[_in_tx]` → `sum_returns_of[_in_tx]` and `find_refunds_of` → `find_returns_of` for name/contract alignment. |
-| Ledger | New `CONTRIBUTION_RETURN_CODE = 310` plus `create_contribution_return` and `create_pending_contribution_return`. No LINKED-split — FIFO produces independent per-original TB transfers. |
-| Service | New `pb_contribution_return_service` with `return_contribution`, `post_contribution_return`, `void_contribution_return`, and a shared `resolve_contribution_return(direction: Post|Void)` helper mirroring the refund pattern. Also a `summary(pb_account_id)` read. |
+| Ledger | New `CONTRIBUTION_RETURN_CODE = 320` plus `create_contribution_return` and `create_pending_contribution_return`. No LINKED-split — FIFO produces independent per-original TB transfers. |
+| Service | New `pb_contribution_return_service` with `return_contribution`, `post_contribution_return`, `void_contribution_return`, and a shared `resolve_contribution_return(direction: Post\|Void)` helper mirroring the refund pattern. Also a `summary(pb_account_id)` read. |
 | Admin UI | Contributions panel on PB account detail; return form with Mode toggle; Post/Void buttons on pending return detail; "Returned by" affordance on original transfer/deposit detail pages. |
 | Tests | Two new Cucumber API feature files, one new UI feature file, extensions to two existing features for the "Returned by" affordance. |
 

@@ -131,6 +131,9 @@
 {% if show_contributions_panel %}
 <section class="card">
     <h2>Contributions</h2>
+    {% if contributions_load_failed %}
+    <div class="error-banner">Contribution data is temporarily unavailable. The figures below are placeholders — refresh to retry.</div>
+    {% endif %}
     <table>
         <thead>
             <tr>

@@ -31,7 +31,10 @@ const INTERNAL_TRANSFER_CODE: u16 = 400;
 const PENDING_INTERNAL_TRANSFER_CODE: u16 = 401;
 pub const INTERNAL_TRANSFER_REVERSAL_CODE: u16 = 410;
 pub const PAYMENT_REFUND_CODE: u16 = 210;
-pub const CONTRIBUTION_RETURN_CODE: u16 = 310;
+// 300 = PB self-pool withdrawal (pb_withdrawal_service),
+// 310 = normal-account withdrawal (normal_withdrawal_service),
+// 320 = PB others-pool contribution return.
+pub const CONTRIBUTION_RETURN_CODE: u16 = 320;
 
 #[allow(dead_code)]
 #[derive(Debug, Clone, Copy)]
