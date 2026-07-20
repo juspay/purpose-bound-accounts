@@ -40,6 +40,7 @@
             pkgs.tigerbeetle
 
             # Tools
+            pkgs.git
             pkgs.just
             pkgs.sqlx-cli
             pkgs.cargo-watch
