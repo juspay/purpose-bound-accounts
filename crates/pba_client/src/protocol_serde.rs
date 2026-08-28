@@ -155,6 +155,8 @@ pub(crate) mod shape_update_pb_account_status_input;
 
 pub(crate) mod shape_void_deposit_input;
 
+pub(crate) mod shape_void_normal_account_deposit_input;
+
 pub(crate) mod shape_void_pb_account_deposit_input;
 
 pub(crate) mod shape_withdraw_from_normal_account_input;

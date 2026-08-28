@@ -311,9 +311,9 @@ impl ::aws_smithy_runtime_api::client::result::CreateUnhandledError for ListPBAc
     }
 }
 
-pub use crate::operation::list_pb_account_transactions::_list_pb_account_transactions_output::ListPbAccountTransactionsOutput;
-
 pub use crate::operation::list_pb_account_transactions::_list_pb_account_transactions_input::ListPbAccountTransactionsInput;
+
+pub use crate::operation::list_pb_account_transactions::_list_pb_account_transactions_output::ListPbAccountTransactionsOutput;
 
 mod _list_pb_account_transactions_input;
 

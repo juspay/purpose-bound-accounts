@@ -344,9 +344,9 @@ impl ::aws_smithy_runtime_api::client::result::CreateUnhandledError for RefundPB
     }
 }
 
-pub use crate::operation::refund_pb_account_payment::_refund_pb_account_payment_output::RefundPbAccountPaymentOutput;
-
 pub use crate::operation::refund_pb_account_payment::_refund_pb_account_payment_input::RefundPbAccountPaymentInput;
+
+pub use crate::operation::refund_pb_account_payment::_refund_pb_account_payment_output::RefundPbAccountPaymentOutput;
 
 mod _refund_pb_account_payment_input;
 

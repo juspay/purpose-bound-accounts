@@ -290,9 +290,9 @@ impl ::aws_smithy_runtime_api::client::result::CreateUnhandledError for UpdatePB
     }
 }
 
-pub use crate::operation::update_pb_account_status::_update_pb_account_status_output::UpdatePbAccountStatusOutput;
-
 pub use crate::operation::update_pb_account_status::_update_pb_account_status_input::UpdatePbAccountStatusInput;
+
+pub use crate::operation::update_pb_account_status::_update_pb_account_status_output::UpdatePbAccountStatusOutput;
 
 mod _update_pb_account_status_input;
 

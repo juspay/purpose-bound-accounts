@@ -324,9 +324,9 @@ impl ::aws_smithy_runtime_api::client::result::CreateUnhandledError for PostPBAc
     }
 }
 
-pub use crate::operation::post_pb_account_refund::_post_pb_account_refund_output::PostPbAccountRefundOutput;
-
 pub use crate::operation::post_pb_account_refund::_post_pb_account_refund_input::PostPbAccountRefundInput;
+
+pub use crate::operation::post_pb_account_refund::_post_pb_account_refund_output::PostPbAccountRefundOutput;
 
 mod _post_pb_account_refund_input;
 

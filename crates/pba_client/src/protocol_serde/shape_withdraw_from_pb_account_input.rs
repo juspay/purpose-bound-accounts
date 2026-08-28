@@ -6,11 +6,14 @@ pub fn ser_withdraw_from_pb_account_input_input(
     if let Some(var_1) = &input.amount {
         object.key("amount").number(#[allow(clippy::useless_conversion)]::aws_smithy_types::Number::NegInt((*var_1).into()));
     }
-    if let Some(var_2) = &input.gateway_ref {
-        object.key("gateway_ref").string(var_2.as_str());
+    if let Some(var_2) = &input.description {
+        object.key("description").string(var_2.as_str());
     }
-    if let Some(var_3) = &input.idempotency_key {
-        object.key("idempotency_key").string(var_3.as_str());
+    if let Some(var_3) = &input.gateway_ref {
+        object.key("gateway_ref").string(var_3.as_str());
+    }
+    if let Some(var_4) = &input.idempotency_key {
+        object.key("idempotency_key").string(var_4.as_str());
     }
     Ok(())
 }

@@ -19,6 +19,8 @@ pub struct DepositInput  {
     pub gateway_ref: ::std::option::Option<::std::string::String>,
     #[allow(missing_docs)] // documentation missing in model
     pub timeout_seconds: ::std::option::Option<i32>,
+    /// Free-text narration for the deposit, stored on the transaction and returned by the transaction listings. Max 256 characters.
+    pub description: ::std::option::Option<::std::string::String>,
     #[allow(missing_docs)] // documentation missing in model
     pub idempotency_key: ::std::option::Option<::std::string::String>,
 }
@@ -55,6 +57,10 @@ impl  DepositInput  {
     pub fn timeout_seconds(&self) -> ::std::option::Option<i32> {
         self.timeout_seconds
     }
+    /// Free-text narration for the deposit, stored on the transaction and returned by the transaction listings. Max 256 characters.
+    pub fn description(&self) -> ::std::option::Option<&str> {
+        self.description.as_deref()
+    }
     #[allow(missing_docs)] // documentation missing in model
     pub fn idempotency_key(&self) -> ::std::option::Option<&str> {
         self.idempotency_key.as_deref()
@@ -79,6 +85,7 @@ pub struct DepositInputBuilder {
     pub(crate) pending: ::std::option::Option<bool>,
     pub(crate) gateway_ref: ::std::option::Option<::std::string::String>,
     pub(crate) timeout_seconds: ::std::option::Option<i32>,
+    pub(crate) description: ::std::option::Option<::std::string::String>,
     pub(crate) idempotency_key: ::std::option::Option<::std::string::String>,
 }
 impl DepositInputBuilder {
@@ -190,6 +197,19 @@ impl DepositInputBuilder {
     pub fn get_timeout_seconds(&self) -> &::std::option::Option<i32> {
         &self.timeout_seconds
     }
+    /// Free-text narration for the deposit, stored on the transaction and returned by the transaction listings. Max 256 characters.
+    pub fn description(mut self, input: impl ::std::convert::Into<::std::string::String>) -> Self {
+        self.description = ::std::option::Option::Some(input.into());
+        self
+    }
+    /// Free-text narration for the deposit, stored on the transaction and returned by the transaction listings. Max 256 characters.
+    pub fn set_description(mut self, input: ::std::option::Option<::std::string::String>) -> Self {
+        self.description = input; self
+    }
+    /// Free-text narration for the deposit, stored on the transaction and returned by the transaction listings. Max 256 characters.
+    pub fn get_description(&self) -> &::std::option::Option<::std::string::String> {
+        &self.description
+    }
     #[allow(missing_docs)] // documentation missing in model
     pub fn idempotency_key(mut self, input: impl ::std::convert::Into<::std::string::String>) -> Self {
         self.idempotency_key = ::std::option::Option::Some(input.into());
@@ -222,6 +242,8 @@ impl DepositInputBuilder {
                 gateway_ref: self.gateway_ref
                 ,
                 timeout_seconds: self.timeout_seconds
+                ,
+                description: self.description
                 ,
                 idempotency_key: self.idempotency_key
                 ,

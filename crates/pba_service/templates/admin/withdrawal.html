@@ -27,6 +27,10 @@
         <label>Gateway Reference (optional)
             <input type="text" name="gateway_ref" placeholder="e.g. gw-wd-12345">
         </label>
+        <label>
+            Description <span class="muted text-small">(optional)</span>
+            <textarea name="description" maxlength="256" placeholder="Statement narration..."></textarea>
+        </label>
         <div class="flex-gap">
             <button type="submit">Submit withdrawal</button>
             <a href="{{ prefix }}/admin/accounts/{{ account_id }}" class="btn outline">Cancel</a>

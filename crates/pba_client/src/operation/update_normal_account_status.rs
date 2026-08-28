@@ -290,9 +290,9 @@ impl ::aws_smithy_runtime_api::client::result::CreateUnhandledError for UpdateNo
     }
 }
 
-pub use crate::operation::update_normal_account_status::_update_normal_account_status_output::UpdateNormalAccountStatusOutput;
-
 pub use crate::operation::update_normal_account_status::_update_normal_account_status_input::UpdateNormalAccountStatusInput;
+
+pub use crate::operation::update_normal_account_status::_update_normal_account_status_output::UpdateNormalAccountStatusOutput;
 
 mod _update_normal_account_status_input;
 

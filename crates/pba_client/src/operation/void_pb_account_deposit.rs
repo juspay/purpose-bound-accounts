@@ -328,9 +328,9 @@ impl ::aws_smithy_runtime_api::client::result::CreateUnhandledError for VoidPBAc
     }
 }
 
-pub use crate::operation::void_pb_account_deposit::_void_pb_account_deposit_output::VoidPbAccountDepositOutput;
-
 pub use crate::operation::void_pb_account_deposit::_void_pb_account_deposit_input::VoidPbAccountDepositInput;
+
+pub use crate::operation::void_pb_account_deposit::_void_pb_account_deposit_output::VoidPbAccountDepositOutput;
 
 mod _void_pb_account_deposit_input;
 

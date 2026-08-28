@@ -101,6 +101,8 @@ operation DepositToNormalAccount {
 
         timeout_seconds: Integer
 
+        description: String
+
         idempotency_key: String
     }
     output := {
@@ -166,6 +168,8 @@ operation VoidNormalAccountDeposit {
         @required
         @httpLabel
         deposit_id: String
+
+        reason: String
     }
     output := {
         @required
@@ -199,6 +203,8 @@ operation WithdrawFromNormalAccount {
         amount: Money
 
         gateway_ref: String
+
+        description: String
 
         idempotency_key: String
     }

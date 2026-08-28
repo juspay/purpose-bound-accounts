@@ -7,7 +7,7 @@ pub struct VoidPbAccountDepositInput  {
     pub account_id: ::std::option::Option<::std::string::String>,
     #[allow(missing_docs)] // documentation missing in model
     pub deposit_id: ::std::option::Option<::std::string::String>,
-    #[allow(missing_docs)] // documentation missing in model
+    /// Why the deposit was cancelled. Stored on the voided transaction as `void_reason`. Max 256 characters.
     pub reason: ::std::option::Option<::std::string::String>,
 }
 impl  VoidPbAccountDepositInput  {
@@ -19,7 +19,7 @@ impl  VoidPbAccountDepositInput  {
     pub fn deposit_id(&self) -> ::std::option::Option<&str> {
         self.deposit_id.as_deref()
     }
-    #[allow(missing_docs)] // documentation missing in model
+    /// Why the deposit was cancelled. Stored on the voided transaction as `void_reason`. Max 256 characters.
     pub fn reason(&self) -> ::std::option::Option<&str> {
         self.reason.as_deref()
     }
@@ -68,16 +68,16 @@ impl VoidPbAccountDepositInputBuilder {
     pub fn get_deposit_id(&self) -> &::std::option::Option<::std::string::String> {
         &self.deposit_id
     }
-    #[allow(missing_docs)] // documentation missing in model
+    /// Why the deposit was cancelled. Stored on the voided transaction as `void_reason`. Max 256 characters.
     pub fn reason(mut self, input: impl ::std::convert::Into<::std::string::String>) -> Self {
         self.reason = ::std::option::Option::Some(input.into());
         self
     }
-    #[allow(missing_docs)] // documentation missing in model
+    /// Why the deposit was cancelled. Stored on the voided transaction as `void_reason`. Max 256 characters.
     pub fn set_reason(mut self, input: ::std::option::Option<::std::string::String>) -> Self {
         self.reason = input; self
     }
-    #[allow(missing_docs)] // documentation missing in model
+    /// Why the deposit was cancelled. Stored on the voided transaction as `void_reason`. Max 256 characters.
     pub fn get_reason(&self) -> &::std::option::Option<::std::string::String> {
         &self.reason
     }

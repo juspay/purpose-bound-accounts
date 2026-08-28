@@ -284,9 +284,9 @@ impl ::aws_smithy_runtime_api::client::result::CreateUnhandledError for CreateAc
     }
 }
 
-pub use crate::operation::create_account::_create_account_output::CreateAccountOutput;
-
 pub use crate::operation::create_account::_create_account_input::CreateAccountInput;
+
+pub use crate::operation::create_account::_create_account_output::CreateAccountOutput;
 
 mod _create_account_input;
 

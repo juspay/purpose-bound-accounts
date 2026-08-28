@@ -90,6 +90,15 @@ pub(crate) fn de_transaction_summary<'a, I>(tokens: &mut ::std::iter::Peekable<I
                                     ).transpose()?
                                 );
                             }
+                            "void_reason" => {
+                                builder = builder.set_void_reason(
+                                    ::aws_smithy_json::deserialize::token::expect_string_or_null(tokens.next())?.map(|s|
+                                        s.to_unescaped().map(|u|
+                                            u.into_owned()
+                                        )
+                                    ).transpose()?
+                                );
+                            }
                             "merchant_id" => {
                                 builder = builder.set_merchant_id(
                                     ::aws_smithy_json::deserialize::token::expect_string_or_null(tokens.next())?.map(|s|

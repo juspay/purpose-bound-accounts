@@ -324,9 +324,9 @@ impl ::aws_smithy_runtime_api::client::result::CreateUnhandledError for VoidPBAc
     }
 }
 
-pub use crate::operation::void_pb_account_refund::_void_pb_account_refund_output::VoidPbAccountRefundOutput;
-
 pub use crate::operation::void_pb_account_refund::_void_pb_account_refund_input::VoidPbAccountRefundInput;
+
+pub use crate::operation::void_pb_account_refund::_void_pb_account_refund_output::VoidPbAccountRefundOutput;
 
 mod _void_pb_account_refund_input;
 

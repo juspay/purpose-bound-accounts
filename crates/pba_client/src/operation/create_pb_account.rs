@@ -284,9 +284,9 @@ impl ::aws_smithy_runtime_api::client::result::CreateUnhandledError for CreatePB
     }
 }
 
-pub use crate::operation::create_pb_account::_create_pb_account_output::CreatePbAccountOutput;
-
 pub use crate::operation::create_pb_account::_create_pb_account_input::CreatePbAccountInput;
+
+pub use crate::operation::create_pb_account::_create_pb_account_output::CreatePbAccountOutput;
 
 mod _create_pb_account_input;
 

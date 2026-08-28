@@ -264,9 +264,9 @@ impl ::aws_smithy_runtime_api::client::result::CreateUnhandledError for ListPurp
     }
 }
 
-pub use crate::operation::list_purpose_types::_list_purpose_types_output::ListPurposeTypesOutput;
-
 pub use crate::operation::list_purpose_types::_list_purpose_types_input::ListPurposeTypesInput;
+
+pub use crate::operation::list_purpose_types::_list_purpose_types_output::ListPurposeTypesOutput;
 
 mod _list_purpose_types_input;
 

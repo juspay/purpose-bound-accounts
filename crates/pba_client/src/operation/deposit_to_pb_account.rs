@@ -306,9 +306,9 @@ impl ::aws_smithy_runtime_api::client::result::CreateUnhandledError for DepositT
     }
 }
 
-pub use crate::operation::deposit_to_pb_account::_deposit_to_pb_account_output::DepositToPbAccountOutput;
-
 pub use crate::operation::deposit_to_pb_account::_deposit_to_pb_account_input::DepositToPbAccountInput;
+
+pub use crate::operation::deposit_to_pb_account::_deposit_to_pb_account_output::DepositToPbAccountOutput;
 
 mod _deposit_to_pb_account_input;
 

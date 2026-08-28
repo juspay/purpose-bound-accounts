@@ -268,9 +268,9 @@ impl ::aws_smithy_runtime_api::client::result::CreateUnhandledError for CreateNo
     }
 }
 
-pub use crate::operation::create_normal_account::_create_normal_account_output::CreateNormalAccountOutput;
-
 pub use crate::operation::create_normal_account::_create_normal_account_input::CreateNormalAccountInput;
+
+pub use crate::operation::create_normal_account::_create_normal_account_output::CreateNormalAccountOutput;
 
 mod _create_normal_account_input;
 

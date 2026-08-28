@@ -16,6 +16,8 @@ operation WithdrawFromPBAccount {
         idempotency_key: String
 
         gateway_ref: String
+
+        description: String
     }
     output := {
         @required
@@ -47,6 +49,8 @@ operation Withdraw {
         idempotency_key: String
 
         gateway_ref: String
+
+        description: String
     }
     output := {
         @required

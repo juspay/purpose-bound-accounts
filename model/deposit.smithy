@@ -29,6 +29,8 @@ operation DepositToPBAccount {
 
         timeout_seconds: Integer
 
+        description: String
+
         idempotency_key: String
     }
     output := {
@@ -81,6 +83,8 @@ operation Deposit {
         gateway_ref: String
 
         timeout_seconds: Integer
+
+        description: String
 
         idempotency_key: String
     }

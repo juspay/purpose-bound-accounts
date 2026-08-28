@@ -524,6 +524,8 @@ pub struct DepositForm {
     #[serde(default)]
     pending: Option<String>,
     gateway_ref: Option<String>,
+    #[serde(default)]
+    description: Option<String>,
 }
 
 pub async fn process_deposit(
@@ -534,6 +536,7 @@ pub async fn process_deposit(
     let is_pending = form.pending.as_deref() == Some("true");
     let gateway_ref = form.gateway_ref.as_deref().filter(|s| !s.is_empty());
     let funding_type = form.funding_type.as_deref().filter(|s| !s.is_empty());
+    let description = form.description.as_deref().filter(|s| !s.is_empty());
     match state
         .pb_deposit_service
         .deposit(
@@ -545,6 +548,7 @@ pub async fn process_deposit(
             is_pending,
             gateway_ref,
             None,
+            description,
             None,
         )
         .await
@@ -587,13 +591,21 @@ pub async fn post_deposit(
     }
 }
 
+#[derive(Deserialize)]
+pub struct VoidDepositForm {
+    #[serde(default)]
+    reason: Option<String>,
+}
+
 pub async fn void_deposit(
     State(state): State<AppState>,
     Path((account_id, deposit_id)): Path<(Uuid, Uuid)>,
+    axum::extract::Form(form): axum::extract::Form<VoidDepositForm>,
 ) -> Response {
+    let reason = form.reason.as_deref().filter(|s| !s.is_empty());
     match state
         .pb_deposit_service
-        .void_deposit(account_id, deposit_id, None)
+        .void_deposit(account_id, deposit_id, reason)
         .await
     {
         Ok(_) => Redirect::to(&prefixed(&state, &format!("/admin/accounts/{account_id}")))
@@ -704,6 +716,8 @@ pub async fn withdrawal_form(
 pub struct WithdrawalForm {
     amount: u64,
     gateway_ref: Option<String>,
+    #[serde(default)]
+    description: Option<String>,
 }
 
 pub async fn process_withdrawal(
@@ -712,9 +726,10 @@ pub async fn process_withdrawal(
     axum::extract::Form(form): axum::extract::Form<WithdrawalForm>,
 ) -> Response {
     let gateway_ref = form.gateway_ref.as_deref().filter(|s| !s.is_empty());
+    let description = form.description.as_deref().filter(|s| !s.is_empty());
     match state
         .pb_withdrawal_service
-        .withdraw(account_id, form.amount, None, gateway_ref)
+        .withdraw(account_id, form.amount, None, gateway_ref, description)
         .await
     {
         Ok(_) => Redirect::to(&prefixed(&state, &format!("/admin/accounts/{account_id}")))
@@ -1055,6 +1070,7 @@ struct TransactionDetailTemplate {
     merchant_id: String,
     merchant_mcc: String,
     description: String,
+    void_reason: String,
     created_at: String,
     updated_at: String,
     timeout_seconds: String,
@@ -1176,6 +1192,7 @@ pub async fn transaction_detail(
     let merchant_id = txn.merchant_id.unwrap_or_else(|| dash.clone());
     let merchant_mcc = txn.merchant_mcc.unwrap_or_else(|| dash.clone());
     let description = txn.description.unwrap_or_else(|| dash.clone());
+    let void_reason = txn.void_reason.unwrap_or_else(|| dash.clone());
     let timeout_seconds = txn
         .timeout_seconds
         .map(|s| s.to_string())
@@ -1326,6 +1343,7 @@ pub async fn transaction_detail(
         merchant_id,
         merchant_mcc,
         description,
+        void_reason,
         created_at,
         updated_at,
         timeout_seconds,
@@ -1368,14 +1386,16 @@ pub async fn post_transaction(
 pub async fn void_transaction(
     State(state): State<AppState>,
     Path(transaction_id): Path<Uuid>,
+    axum::extract::Form(form): axum::extract::Form<VoidDepositForm>,
 ) -> Response {
     let txn = match state.transaction_repo.get_transaction(transaction_id).await {
         Ok(t) => t,
         Err(_) => return (StatusCode::NOT_FOUND, "Transaction not found").into_response(),
     };
+    let reason = form.reason.as_deref().filter(|s| !s.is_empty());
     if let Err(e) = state
         .pb_deposit_service
-        .void_deposit(txn.account_id, transaction_id, None)
+        .void_deposit(txn.account_id, transaction_id, reason)
         .await
     {
         tracing::error!("Failed to void deposit from detail page: {e}");
@@ -1579,6 +1599,7 @@ mod tests {
             merchant_id: "—".to_string(),
             merchant_mcc: "—".to_string(),
             description: "—".to_string(),
+            void_reason: "—".to_string(),
             created_at: "2026-04-30 12:00:00".to_string(),
             updated_at: "2026-04-30 12:00:00".to_string(),
             timeout_seconds: "—".to_string(),
@@ -1622,6 +1643,7 @@ mod tests {
             merchant_id: "MERCH-1".to_string(),
             merchant_mcc: "8011".to_string(),
             description: "Doctor visit".to_string(),
+            void_reason: "—".to_string(),
             created_at: "2026-04-30 12:00:00".to_string(),
             updated_at: "2026-04-30 12:00:00".to_string(),
             timeout_seconds: "—".to_string(),
@@ -1665,6 +1687,7 @@ mod tests {
             merchant_id: "—".to_string(),
             merchant_mcc: "—".to_string(),
             description: "—".to_string(),
+            void_reason: "—".to_string(),
             created_at: "2026-04-30 12:00:00".to_string(),
             updated_at: "2026-04-30 12:00:00".to_string(),
             timeout_seconds: "—".to_string(),
@@ -1816,6 +1839,50 @@ mod tests {
             snippet.contains("—"),
             "expected `—` after Gateway Ref label, got: {}",
             snippet
+        );
+    }
+
+    #[test]
+    fn renders_narration_section_for_a_deposit() {
+        // The description used to live in the payment-only Merchant card, so a
+        // deposit's narration was unreachable in the UI. It now has its own
+        // block rendered for every transaction type.
+        let mut fixture = deposit_pending_fixture();
+        fixture.description = "Salary credit March".to_string();
+        fixture.void_reason = "—".to_string();
+        let html = fixture.render().expect("render");
+        assert!(
+            html.contains("Narration"),
+            "Narration header missing: {html}"
+        );
+        assert!(
+            html.contains("Salary credit March"),
+            "deposit description missing: {html}"
+        );
+        assert!(
+            html.contains("Void reason:"),
+            "Void reason label missing: {html}"
+        );
+    }
+
+    #[test]
+    fn renders_void_reason_on_a_voided_deposit() {
+        let mut fixture = deposit_pending_fixture();
+        fixture.status = "voided".to_string();
+        fixture.void_reason = "Upstream charge failed".to_string();
+        let html = fixture.render().expect("render");
+        assert!(
+            html.contains("Upstream charge failed"),
+            "void_reason missing from detail page: {html}"
+        );
+    }
+
+    #[test]
+    fn void_form_offers_a_reason_input() {
+        let html = deposit_pending_fixture().render().expect("render");
+        assert!(
+            html.contains(r#"name="reason""#),
+            "void form should accept an optional reason: {html}"
         );
     }
 }

@@ -64,6 +64,14 @@ pub fn de_void_normal_account_deposit_http_response(_response_status: u16, _resp
     })
 }
 
+pub fn ser_void_normal_account_deposit_input(input: &crate::operation::void_normal_account_deposit::VoidNormalAccountDepositInput) -> ::std::result::Result<::aws_smithy_types::body::SdkBody, ::aws_smithy_types::error::operation::SerializationError> {
+    let mut out = String::new();
+    let mut object = ::aws_smithy_json::serialize::JsonObjectWriter::new(&mut out);
+    crate::protocol_serde::shape_void_normal_account_deposit_input::ser_void_normal_account_deposit_input_input(&mut object, input)?;
+    object.finish();
+    Ok(::aws_smithy_types::body::SdkBody::from(out))
+}
+
 pub(crate) fn de_void_normal_account_deposit(value: &[u8], mut builder: crate::operation::void_normal_account_deposit::builders::VoidNormalAccountDepositOutputBuilder) -> ::std::result::Result<crate::operation::void_normal_account_deposit::builders::VoidNormalAccountDepositOutputBuilder, ::aws_smithy_json::deserialize::error::DeserializeError> {
     let mut tokens_owned = ::aws_smithy_json::deserialize::json_token_iter(crate::protocol_serde::or_empty_doc(value)).peekable();
                         let tokens = &mut tokens_owned;

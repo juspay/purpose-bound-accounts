@@ -338,9 +338,9 @@ impl ::aws_smithy_runtime_api::client::result::CreateUnhandledError for MakePaym
     }
 }
 
-pub use crate::operation::make_payment::_make_payment_output::MakePaymentOutput;
-
 pub use crate::operation::make_payment::_make_payment_input::MakePaymentInput;
+
+pub use crate::operation::make_payment::_make_payment_output::MakePaymentOutput;
 
 mod _make_payment_input;
 

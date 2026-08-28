@@ -136,6 +136,7 @@ structure TransactionSummary {
     direction: TransactionDirection
 
     description: String
+    void_reason: String
     merchant_id: String
     merchant_mcc: String
     source_ifsc: String

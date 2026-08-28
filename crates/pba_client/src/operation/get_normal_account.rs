@@ -286,9 +286,9 @@ impl ::aws_smithy_runtime_api::client::result::CreateUnhandledError for GetNorma
     }
 }
 
-pub use crate::operation::get_normal_account::_get_normal_account_output::GetNormalAccountOutput;
-
 pub use crate::operation::get_normal_account::_get_normal_account_input::GetNormalAccountInput;
+
+pub use crate::operation::get_normal_account::_get_normal_account_output::GetNormalAccountOutput;
 
 mod _get_normal_account_input;
 

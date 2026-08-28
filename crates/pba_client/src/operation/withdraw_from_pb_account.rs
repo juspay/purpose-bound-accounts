@@ -322,9 +322,9 @@ impl ::aws_smithy_runtime_api::client::result::CreateUnhandledError for Withdraw
     }
 }
 
-pub use crate::operation::withdraw_from_pb_account::_withdraw_from_pb_account_output::WithdrawFromPbAccountOutput;
-
 pub use crate::operation::withdraw_from_pb_account::_withdraw_from_pb_account_input::WithdrawFromPbAccountInput;
+
+pub use crate::operation::withdraw_from_pb_account::_withdraw_from_pb_account_output::WithdrawFromPbAccountOutput;
 
 mod _withdraw_from_pb_account_input;
 

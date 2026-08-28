@@ -306,9 +306,9 @@ impl ::aws_smithy_runtime_api::client::result::CreateUnhandledError for DepositT
     }
 }
 
-pub use crate::operation::deposit_to_normal_account::_deposit_to_normal_account_output::DepositToNormalAccountOutput;
-
 pub use crate::operation::deposit_to_normal_account::_deposit_to_normal_account_input::DepositToNormalAccountInput;
+
+pub use crate::operation::deposit_to_normal_account::_deposit_to_normal_account_output::DepositToNormalAccountOutput;
 
 mod _deposit_to_normal_account_input;
 

@@ -4,6 +4,7 @@ use axum::Json;
 use uuid::Uuid;
 
 use crate::api::dto::{TransferResponse, TransferToPBAccountRequest};
+use crate::api::validation::validate_text_length;
 use crate::error::AppError;
 use crate::AppState;
 
@@ -20,13 +21,7 @@ pub async fn initiate_transfer(
             "timeout_seconds is only valid when pending=true".into(),
         ));
     }
-    if let Some(d) = req.description.as_deref() {
-        if d.len() > 256 {
-            return Err(AppError::Validation(
-                "description must be \u{2264} 256 chars".into(),
-            ));
-        }
-    }
+    validate_text_length("description", req.description.as_deref())?;
 
     let result = state
         .transfer_service
@@ -72,13 +67,7 @@ pub async fn reverse_transfer(
     Path((source_id, transfer_id)): Path<(Uuid, Uuid)>,
     Json(req): Json<crate::api::dto::ReverseTransferRequest>,
 ) -> Result<(StatusCode, Json<crate::api::dto::ReversalResponse>), AppError> {
-    if let Some(d) = req.description.as_deref() {
-        if d.len() > 256 {
-            return Err(AppError::Validation(
-                "description must be ≤ 256 chars".into(),
-            ));
-        }
-    }
+    validate_text_length("description", req.description.as_deref())?;
     let result = state
         .transfer_service
         .reverse_transfer(

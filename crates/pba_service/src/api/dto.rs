@@ -73,6 +73,7 @@ pub struct DepositRequest {
     pub pending: bool,
     pub gateway_ref: Option<String>,
     pub timeout_seconds: Option<u32>,
+    pub description: Option<String>,
     pub idempotency_key: Option<String>,
 }
 
@@ -93,6 +94,11 @@ pub struct DepositResponse {
 
 #[derive(Debug, Deserialize)]
 pub struct VoidDepositRequest {
+    pub reason: Option<String>,
+}
+
+#[derive(Debug, Default, Deserialize)]
+pub struct VoidNormalDepositRequest {
     pub reason: Option<String>,
 }
 
@@ -128,6 +134,7 @@ pub struct WithdrawalRequest {
     pub amount: u64,
     pub idempotency_key: Option<String>,
     pub gateway_ref: Option<String>,
+    pub description: Option<String>,
 }
 
 #[derive(Debug, Serialize)]
@@ -214,6 +221,8 @@ pub struct TransactionSummaryDto {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub description: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
+    pub void_reason: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub merchant_id: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub merchant_mcc: Option<String>,
@@ -244,6 +253,7 @@ impl From<crate::domain::transaction::TransactionRecord> for TransactionSummaryD
             pool: t.pool,
             direction: t.direction.as_str().to_string(),
             description: t.description,
+            void_reason: t.void_reason,
             merchant_id: t.merchant_id,
             merchant_mcc: t.merchant_mcc,
             source_ifsc: t.source_ifsc,
@@ -318,6 +328,7 @@ pub struct DepositToNormalAccountRequest {
     pub pending: bool,
     pub gateway_ref: Option<String>,
     pub timeout_seconds: Option<u32>,
+    pub description: Option<String>,
     pub idempotency_key: Option<String>,
 }
 
@@ -338,6 +349,7 @@ pub struct WithdrawFromNormalAccountRequest {
     pub amount: u64,
     pub idempotency_key: Option<String>,
     pub gateway_ref: Option<String>,
+    pub description: Option<String>,
 }
 
 #[derive(Debug, Serialize)]

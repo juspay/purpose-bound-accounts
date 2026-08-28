@@ -43,6 +43,7 @@ impl NormalDepositService {
         pending: bool,
         gateway_ref: Option<&str>,
         timeout_seconds: Option<u32>,
+        description: Option<&str>,
         idempotency_key: Option<&str>,
     ) -> Result<TransactionRecord, AppError> {
         if let Some(key) = idempotency_key {
@@ -84,7 +85,7 @@ impl NormalDepositService {
                     Some(timeout),
                     None,
                     None,
-                    None,
+                    description,
                     Some("trust"),
                     0,
                     idempotency_key,
@@ -136,7 +137,7 @@ impl NormalDepositService {
                     None,
                     None,
                     None,
-                    None,
+                    description,
                     Some("trust"),
                     0,
                     idempotency_key,
@@ -187,6 +188,7 @@ impl NormalDepositService {
         &self,
         account_id: Uuid,
         deposit_id: Uuid,
+        reason: Option<&str>,
     ) -> Result<TransactionRecord, AppError> {
         let txn = self
             .transaction_repo
@@ -199,7 +201,7 @@ impl NormalDepositService {
             .void_pending_transfer(txn.tb_transfer_id)
             .await?;
         self.transaction_repo
-            .update_status(deposit_id, TransactionStatus::Voided)
+            .update_status_with_reason(deposit_id, TransactionStatus::Voided, reason)
             .await
     }
 }

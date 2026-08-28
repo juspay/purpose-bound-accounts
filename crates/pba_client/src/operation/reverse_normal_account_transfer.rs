@@ -296,9 +296,9 @@ impl ::aws_smithy_runtime_api::client::result::CreateUnhandledError for ReverseN
     }
 }
 
-pub use crate::operation::reverse_normal_account_transfer::_reverse_normal_account_transfer_output::ReverseNormalAccountTransferOutput;
-
 pub use crate::operation::reverse_normal_account_transfer::_reverse_normal_account_transfer_input::ReverseNormalAccountTransferInput;
+
+pub use crate::operation::reverse_normal_account_transfer::_reverse_normal_account_transfer_output::ReverseNormalAccountTransferOutput;
 
 mod _reverse_normal_account_transfer_input;
 

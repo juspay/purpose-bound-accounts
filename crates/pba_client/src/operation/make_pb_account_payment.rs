@@ -338,9 +338,9 @@ impl ::aws_smithy_runtime_api::client::result::CreateUnhandledError for MakePBAc
     }
 }
 
-pub use crate::operation::make_pb_account_payment::_make_pb_account_payment_output::MakePbAccountPaymentOutput;
-
 pub use crate::operation::make_pb_account_payment::_make_pb_account_payment_input::MakePbAccountPaymentInput;
+
+pub use crate::operation::make_pb_account_payment::_make_pb_account_payment_output::MakePbAccountPaymentOutput;
 
 mod _make_pb_account_payment_input;
 

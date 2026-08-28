@@ -8,6 +8,7 @@ use crate::api::dto::{
     PaymentResponse, PurposeTypeResponse, RefundPaymentRequest, RefundResponse,
     UpdateStatusRequest, VoidDepositRequest, WithdrawalRequest, WithdrawalResponse,
 };
+use crate::api::validation::validate_text_length;
 use crate::domain::account::AccountStatus;
 use crate::domain::banking::{AccountNumber, Ifsc};
 use crate::error::AppError;
@@ -86,6 +87,8 @@ pub async fn deposit(
     Path(account_id): Path<Uuid>,
     Json(req): Json<DepositRequest>,
 ) -> Result<(axum::http::StatusCode, Json<DepositResponse>), AppError> {
+    validate_text_length("description", req.description.as_deref())?;
+
     let result = state
         .pb_deposit_service
         .deposit(
@@ -97,6 +100,7 @@ pub async fn deposit(
             req.pending,
             req.gateway_ref.as_deref(),
             req.timeout_seconds,
+            req.description.as_deref(),
             req.idempotency_key.as_deref(),
         )
         .await?;
@@ -142,6 +146,8 @@ pub async fn void_deposit(
     Path((account_id, deposit_id)): Path<(Uuid, Uuid)>,
     Json(req): Json<VoidDepositRequest>,
 ) -> Result<Json<DepositResponse>, AppError> {
+    validate_text_length("reason", req.reason.as_deref())?;
+
     let result = state
         .pb_deposit_service
         .void_deposit(account_id, deposit_id, req.reason.as_deref())
@@ -245,6 +251,8 @@ pub async fn withdraw(
     Path(account_id): Path<Uuid>,
     Json(req): Json<WithdrawalRequest>,
 ) -> Result<(axum::http::StatusCode, Json<WithdrawalResponse>), AppError> {
+    validate_text_length("description", req.description.as_deref())?;
+
     let result = state
         .pb_withdrawal_service
         .withdraw(
@@ -252,6 +260,7 @@ pub async fn withdraw(
             req.amount,
             req.idempotency_key.as_deref(),
             req.gateway_ref.as_deref(),
+            req.description.as_deref(),
         )
         .await?;
 

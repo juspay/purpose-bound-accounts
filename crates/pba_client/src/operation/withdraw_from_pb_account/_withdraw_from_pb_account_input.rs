@@ -11,6 +11,8 @@ pub struct WithdrawFromPbAccountInput  {
     pub idempotency_key: ::std::option::Option<::std::string::String>,
     #[allow(missing_docs)] // documentation missing in model
     pub gateway_ref: ::std::option::Option<::std::string::String>,
+    /// Free-text narration for the withdrawal, stored on the transaction and returned by the transaction listings. Max 256 characters.
+    pub description: ::std::option::Option<::std::string::String>,
 }
 impl  WithdrawFromPbAccountInput  {
     #[allow(missing_docs)] // documentation missing in model
@@ -29,6 +31,10 @@ impl  WithdrawFromPbAccountInput  {
     pub fn gateway_ref(&self) -> ::std::option::Option<&str> {
         self.gateway_ref.as_deref()
     }
+    /// Free-text narration for the withdrawal, stored on the transaction and returned by the transaction listings. Max 256 characters.
+    pub fn description(&self) -> ::std::option::Option<&str> {
+        self.description.as_deref()
+    }
 }
 impl WithdrawFromPbAccountInput {
     /// Creates a new builder-style object to manufacture [`WithdrawFromPbAccountInput`](crate::operation::withdraw_from_pb_account::WithdrawFromPbAccountInput).
@@ -45,6 +51,7 @@ pub struct WithdrawFromPbAccountInputBuilder {
     pub(crate) amount: ::std::option::Option<i64>,
     pub(crate) idempotency_key: ::std::option::Option<::std::string::String>,
     pub(crate) gateway_ref: ::std::option::Option<::std::string::String>,
+    pub(crate) description: ::std::option::Option<::std::string::String>,
 }
 impl WithdrawFromPbAccountInputBuilder {
     #[allow(missing_docs)] // documentation missing in model
@@ -101,6 +108,19 @@ impl WithdrawFromPbAccountInputBuilder {
     pub fn get_gateway_ref(&self) -> &::std::option::Option<::std::string::String> {
         &self.gateway_ref
     }
+    /// Free-text narration for the withdrawal, stored on the transaction and returned by the transaction listings. Max 256 characters.
+    pub fn description(mut self, input: impl ::std::convert::Into<::std::string::String>) -> Self {
+        self.description = ::std::option::Option::Some(input.into());
+        self
+    }
+    /// Free-text narration for the withdrawal, stored on the transaction and returned by the transaction listings. Max 256 characters.
+    pub fn set_description(mut self, input: ::std::option::Option<::std::string::String>) -> Self {
+        self.description = input; self
+    }
+    /// Free-text narration for the withdrawal, stored on the transaction and returned by the transaction listings. Max 256 characters.
+    pub fn get_description(&self) -> &::std::option::Option<::std::string::String> {
+        &self.description
+    }
     /// Consumes the builder and constructs a [`WithdrawFromPbAccountInput`](crate::operation::withdraw_from_pb_account::WithdrawFromPbAccountInput).
     pub fn build(self) -> ::std::result::Result<crate::operation::withdraw_from_pb_account::WithdrawFromPbAccountInput, ::aws_smithy_types::error::operation::BuildError> {
         ::std::result::Result::Ok(
@@ -112,6 +132,8 @@ impl WithdrawFromPbAccountInputBuilder {
                 idempotency_key: self.idempotency_key
                 ,
                 gateway_ref: self.gateway_ref
+                ,
+                description: self.description
                 ,
             }
         )

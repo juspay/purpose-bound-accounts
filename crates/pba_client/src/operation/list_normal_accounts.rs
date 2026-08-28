@@ -264,9 +264,9 @@ impl ::aws_smithy_runtime_api::client::result::CreateUnhandledError for ListNorm
     }
 }
 
-pub use crate::operation::list_normal_accounts::_list_normal_accounts_output::ListNormalAccountsOutput;
-
 pub use crate::operation::list_normal_accounts::_list_normal_accounts_input::ListNormalAccountsInput;
+
+pub use crate::operation::list_normal_accounts::_list_normal_accounts_output::ListNormalAccountsOutput;
 
 mod _list_normal_accounts_input;
 
