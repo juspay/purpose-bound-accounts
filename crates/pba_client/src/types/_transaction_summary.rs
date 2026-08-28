@@ -22,6 +22,8 @@ pub struct TransactionSummary  {
     #[allow(missing_docs)] // documentation missing in model
     pub description: ::std::option::Option<::std::string::String>,
     #[allow(missing_docs)] // documentation missing in model
+    pub void_reason: ::std::option::Option<::std::string::String>,
+    #[allow(missing_docs)] // documentation missing in model
     pub merchant_id: ::std::option::Option<::std::string::String>,
     #[allow(missing_docs)] // documentation missing in model
     pub merchant_mcc: ::std::option::Option<::std::string::String>,
@@ -76,6 +78,10 @@ impl  TransactionSummary  {
         self.description.as_deref()
     }
     #[allow(missing_docs)] // documentation missing in model
+    pub fn void_reason(&self) -> ::std::option::Option<&str> {
+        self.void_reason.as_deref()
+    }
+    #[allow(missing_docs)] // documentation missing in model
     pub fn merchant_id(&self) -> ::std::option::Option<&str> {
         self.merchant_id.as_deref()
     }
@@ -128,6 +134,7 @@ pub struct TransactionSummaryBuilder {
     pub(crate) pool: ::std::option::Option<crate::types::PoolType>,
     pub(crate) direction: ::std::option::Option<crate::types::TransactionDirection>,
     pub(crate) description: ::std::option::Option<::std::string::String>,
+    pub(crate) void_reason: ::std::option::Option<::std::string::String>,
     pub(crate) merchant_id: ::std::option::Option<::std::string::String>,
     pub(crate) merchant_mcc: ::std::option::Option<::std::string::String>,
     pub(crate) source_ifsc: ::std::option::Option<::std::string::String>,
@@ -261,6 +268,19 @@ impl TransactionSummaryBuilder {
     #[allow(missing_docs)] // documentation missing in model
     pub fn get_description(&self) -> &::std::option::Option<::std::string::String> {
         &self.description
+    }
+    #[allow(missing_docs)] // documentation missing in model
+    pub fn void_reason(mut self, input: impl ::std::convert::Into<::std::string::String>) -> Self {
+        self.void_reason = ::std::option::Option::Some(input.into());
+        self
+    }
+    #[allow(missing_docs)] // documentation missing in model
+    pub fn set_void_reason(mut self, input: ::std::option::Option<::std::string::String>) -> Self {
+        self.void_reason = input; self
+    }
+    #[allow(missing_docs)] // documentation missing in model
+    pub fn get_void_reason(&self) -> &::std::option::Option<::std::string::String> {
+        &self.void_reason
     }
     #[allow(missing_docs)] // documentation missing in model
     pub fn merchant_id(mut self, input: impl ::std::convert::Into<::std::string::String>) -> Self {
@@ -418,6 +438,8 @@ impl TransactionSummaryBuilder {
                     )?
                 ,
                 description: self.description
+                ,
+                void_reason: self.void_reason
                 ,
                 merchant_id: self.merchant_id
                 ,

@@ -286,9 +286,9 @@ impl ::aws_smithy_runtime_api::client::result::CreateUnhandledError for GetBalan
     }
 }
 
-pub use crate::operation::get_balance::_get_balance_output::GetBalanceOutput;
-
 pub use crate::operation::get_balance::_get_balance_input::GetBalanceInput;
+
+pub use crate::operation::get_balance::_get_balance_output::GetBalanceOutput;
 
 mod _get_balance_input;
 

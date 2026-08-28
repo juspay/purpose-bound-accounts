@@ -290,9 +290,9 @@ impl ::aws_smithy_runtime_api::client::result::CreateUnhandledError for Transfer
     }
 }
 
-pub use crate::operation::transfer_to_pb_account::_transfer_to_pb_account_output::TransferToPbAccountOutput;
-
 pub use crate::operation::transfer_to_pb_account::_transfer_to_pb_account_input::TransferToPbAccountInput;
+
+pub use crate::operation::transfer_to_pb_account::_transfer_to_pb_account_output::TransferToPbAccountOutput;
 
 mod _transfer_to_pb_account_input;
 

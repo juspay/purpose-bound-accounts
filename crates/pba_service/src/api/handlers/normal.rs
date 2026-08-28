@@ -4,6 +4,7 @@ use axum::Json;
 use uuid::Uuid;
 
 use crate::api::dto::*;
+use crate::api::validation::validate_text_length;
 use crate::domain::account::AccountStatus;
 use crate::domain::account_kind::AccountKind;
 use crate::domain::banking::{AccountNumber, Ifsc};
@@ -93,6 +94,8 @@ pub async fn deposit_to_normal_account(
             "timeout_seconds is only valid when pending=true".into(),
         ));
     }
+    validate_text_length("description", req.description.as_deref())?;
+
     let record = state
         .normal_deposit_service
         .deposit(
@@ -101,6 +104,7 @@ pub async fn deposit_to_normal_account(
             req.pending,
             req.gateway_ref.as_deref(),
             req.timeout_seconds,
+            req.description.as_deref(),
             req.idempotency_key.as_deref(),
         )
         .await?;
@@ -139,10 +143,14 @@ pub async fn post_normal_account_deposit(
 pub async fn void_normal_account_deposit(
     State(state): State<AppState>,
     Path((id, deposit_id)): Path<(Uuid, Uuid)>,
+    body: Option<Json<VoidNormalDepositRequest>>,
 ) -> Result<Json<NormalDepositResponse>, AppError> {
+    let req = body.map(|Json(r)| r).unwrap_or_default();
+    validate_text_length("reason", req.reason.as_deref())?;
+
     let record = state
         .normal_deposit_service
-        .void_deposit(id, deposit_id)
+        .void_deposit(id, deposit_id, req.reason.as_deref())
         .await?;
     Ok(Json(NormalDepositResponse {
         deposit_id: record.id,
@@ -162,6 +170,8 @@ pub async fn withdraw_from_normal_account(
     if req.amount == 0 {
         return Err(AppError::Validation("amount must be positive".into()));
     }
+    validate_text_length("description", req.description.as_deref())?;
+
     let record = state
         .normal_withdrawal_service
         .withdraw(
@@ -169,6 +179,7 @@ pub async fn withdraw_from_normal_account(
             req.amount,
             req.idempotency_key.as_deref(),
             req.gateway_ref.as_deref(),
+            req.description.as_deref(),
         )
         .await?;
 

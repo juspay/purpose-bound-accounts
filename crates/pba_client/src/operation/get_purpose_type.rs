@@ -286,9 +286,9 @@ impl ::aws_smithy_runtime_api::client::result::CreateUnhandledError for GetPurpo
     }
 }
 
-pub use crate::operation::get_purpose_type::_get_purpose_type_output::GetPurposeTypeOutput;
-
 pub use crate::operation::get_purpose_type::_get_purpose_type_input::GetPurposeTypeInput;
+
+pub use crate::operation::get_purpose_type::_get_purpose_type_output::GetPurposeTypeOutput;
 
 mod _get_purpose_type_input;
 

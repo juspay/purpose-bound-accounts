@@ -34,6 +34,7 @@ impl PbWithdrawalService {
         amount: u64,
         idempotency_key: Option<&str>,
         gateway_ref: Option<&str>,
+        description: Option<&str>,
     ) -> Result<WithdrawalResult, AppError> {
         // Idempotency check
         if let Some(key) = idempotency_key {
@@ -91,7 +92,7 @@ impl PbWithdrawalService {
                 None,
                 None,
                 None,
-                None,
+                description,
                 None, // funding_type
                 0,
                 idempotency_key,

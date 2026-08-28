@@ -335,6 +335,8 @@ pub struct NormalDepositForm {
     #[serde(default)]
     pending: Option<String>,
     gateway_ref: Option<String>,
+    #[serde(default)]
+    description: Option<String>,
     /// Submitted as a text input; empty string → None
     #[serde(default)]
     timeout_seconds: Option<String>,
@@ -353,6 +355,7 @@ pub async fn process_normal_deposit(
         .filter(|s| !s.is_empty())
         .and_then(|s| s.parse().ok());
 
+    let description = form.description.as_deref().filter(|s| !s.is_empty());
     match state
         .normal_deposit_service
         .deposit(
@@ -361,6 +364,7 @@ pub async fn process_normal_deposit(
             is_pending,
             gateway_ref,
             timeout_seconds,
+            description,
             None,
         )
         .await
@@ -420,6 +424,8 @@ pub async fn normal_withdrawal_form(
 pub struct NormalWithdrawalForm {
     amount: u64,
     gateway_ref: Option<String>,
+    #[serde(default)]
+    description: Option<String>,
 }
 
 pub async fn process_normal_withdrawal(
@@ -428,9 +434,10 @@ pub async fn process_normal_withdrawal(
     axum::extract::Form(form): axum::extract::Form<NormalWithdrawalForm>,
 ) -> Response {
     let gateway_ref = form.gateway_ref.as_deref().filter(|s| !s.is_empty());
+    let description = form.description.as_deref().filter(|s| !s.is_empty());
     match state
         .normal_withdrawal_service
-        .withdraw(account_id, form.amount, None, gateway_ref)
+        .withdraw(account_id, form.amount, None, gateway_ref, description)
         .await
     {
         Ok(_) => Redirect::to(&prefixed(

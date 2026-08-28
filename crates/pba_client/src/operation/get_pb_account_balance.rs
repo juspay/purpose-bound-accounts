@@ -286,9 +286,9 @@ impl ::aws_smithy_runtime_api::client::result::CreateUnhandledError for GetPBAcc
     }
 }
 
-pub use crate::operation::get_pb_account_balance::_get_pb_account_balance_output::GetPbAccountBalanceOutput;
-
 pub use crate::operation::get_pb_account_balance::_get_pb_account_balance_input::GetPbAccountBalanceInput;
+
+pub use crate::operation::get_pb_account_balance::_get_pb_account_balance_output::GetPbAccountBalanceOutput;
 
 mod _get_pb_account_balance_input;
 

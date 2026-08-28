@@ -65,6 +65,7 @@ struct TransactionRow {
     merchant_id: Option<String>,
     merchant_mcc: Option<String>,
     description: Option<String>,
+    void_reason: Option<String>,
     funding_type: Option<String>,
     tb_transfer_id: String,
     idempotency_key: Option<String>,
@@ -95,6 +96,7 @@ impl TransactionRow {
             merchant_id: self.merchant_id,
             merchant_mcc: self.merchant_mcc,
             description: self.description,
+            void_reason: self.void_reason,
             funding_type: self.funding_type,
             tb_transfer_id: self.tb_transfer_id.parse().unwrap_or(0),
             idempotency_key: self.idempotency_key,
@@ -152,7 +154,7 @@ impl TransactionRepo {
                       source_ifsc, source_account, gateway_ref, timeout_seconds,
                       merchant_id, merchant_mcc, description, funding_type,
                       tb_transfer_id::text as tb_transfer_id, idempotency_key, correlation_id,
-                      reverses_transaction_id, created_at, updated_at
+                      reverses_transaction_id, void_reason, created_at, updated_at
             "#,
         )
         .bind(id)
@@ -204,19 +206,30 @@ impl TransactionRepo {
         id: Uuid,
         new_status: TransactionStatus,
     ) -> Result<TransactionRecord, AppError> {
+        self.update_status_with_reason(id, new_status, None).await
+    }
+
+    pub async fn update_status_with_reason(
+        &self,
+        id: Uuid,
+        new_status: TransactionStatus,
+        reason: Option<&str>,
+    ) -> Result<TransactionRecord, AppError> {
         let row = sqlx::query_as::<_, TransactionRow>(
             r#"
-            UPDATE transactions SET status = $2, updated_at = now()
+            UPDATE transactions
+            SET status = $2, void_reason = COALESCE($3, void_reason), updated_at = now()
             WHERE id = $1
             RETURNING id, account_id, account_kind, type, status, amount, pool, direction,
                       source_ifsc, source_account, gateway_ref, timeout_seconds,
                       merchant_id, merchant_mcc, description, funding_type,
                       tb_transfer_id::text as tb_transfer_id, idempotency_key, correlation_id,
-                      reverses_transaction_id, created_at, updated_at
+                      reverses_transaction_id, void_reason, created_at, updated_at
             "#,
         )
         .bind(id)
         .bind(new_status.as_str())
+        .bind(reason)
         .fetch_optional(&self.pool)
         .await?
         .ok_or_else(|| AppError::TransactionNotFound(id.to_string()))?;
@@ -235,7 +248,7 @@ impl TransactionRepo {
                    source_ifsc, source_account, gateway_ref, timeout_seconds,
                    merchant_id, merchant_mcc, description, funding_type,
                    tb_transfer_id::text as tb_transfer_id, idempotency_key, correlation_id,
-                   reverses_transaction_id, created_at, updated_at
+                   reverses_transaction_id, void_reason, created_at, updated_at
             FROM transactions
             WHERE id = $1 AND account_id = $2
             "#,
@@ -256,7 +269,7 @@ impl TransactionRepo {
                    source_ifsc, source_account, gateway_ref, timeout_seconds,
                    merchant_id, merchant_mcc, description, funding_type,
                    tb_transfer_id::text as tb_transfer_id, idempotency_key, correlation_id,
-                   reverses_transaction_id, created_at, updated_at
+                   reverses_transaction_id, void_reason, created_at, updated_at
             FROM transactions
             WHERE id = $1
             "#,
@@ -281,7 +294,7 @@ impl TransactionRepo {
                    source_ifsc, source_account, gateway_ref, timeout_seconds,
                    merchant_id, merchant_mcc, description, funding_type,
                    tb_transfer_id::text as tb_transfer_id, idempotency_key, correlation_id,
-                   reverses_transaction_id, created_at, updated_at
+                   reverses_transaction_id, void_reason, created_at, updated_at
             FROM transactions
             WHERE account_kind = $1 AND account_id = $2 AND idempotency_key = $3
             "#,
@@ -310,7 +323,7 @@ impl TransactionRepo {
                    source_ifsc, source_account, gateway_ref, timeout_seconds,
                    merchant_id, merchant_mcc, description, funding_type,
                    tb_transfer_id::text as tb_transfer_id, idempotency_key, correlation_id,
-                   reverses_transaction_id, created_at, updated_at
+                   reverses_transaction_id, void_reason, created_at, updated_at
             FROM transactions
             WHERE account_kind = $1 AND account_id = $2
               AND ($5::timestamptz IS NULL OR created_at >= $5)
@@ -368,7 +381,7 @@ impl TransactionRepo {
                    source_ifsc, source_account, gateway_ref, timeout_seconds,
                    merchant_id, merchant_mcc, description, funding_type,
                    tb_transfer_id::text as tb_transfer_id, idempotency_key, correlation_id,
-                   reverses_transaction_id, created_at, updated_at
+                   reverses_transaction_id, void_reason, created_at, updated_at
             FROM transactions
             WHERE ($3::timestamptz IS NULL OR created_at >= $3)
               AND ($4::timestamptz IS NULL OR created_at <= $4)
@@ -481,7 +494,7 @@ impl TransactionRepo {
                    source_ifsc, source_account, gateway_ref, timeout_seconds,
                    merchant_id, merchant_mcc, description, funding_type,
                    tb_transfer_id::text as tb_transfer_id, idempotency_key, correlation_id,
-                   reverses_transaction_id, created_at, updated_at
+                   reverses_transaction_id, void_reason, created_at, updated_at
             FROM transactions
             WHERE account_id = $1 AND status = 'pending'
             ORDER BY created_at DESC
@@ -501,7 +514,7 @@ impl TransactionRepo {
                    source_ifsc, source_account, gateway_ref, timeout_seconds,
                    merchant_id, merchant_mcc, description, funding_type,
                    tb_transfer_id::text as tb_transfer_id, idempotency_key, correlation_id,
-                   reverses_transaction_id, created_at, updated_at
+                   reverses_transaction_id, void_reason, created_at, updated_at
             FROM transactions
             WHERE status = 'pending'
               AND timeout_seconds IS NOT NULL
@@ -525,7 +538,7 @@ impl TransactionRepo {
                    source_ifsc, source_account, gateway_ref, timeout_seconds,
                    merchant_id, merchant_mcc, description, funding_type,
                    tb_transfer_id::text as tb_transfer_id, idempotency_key, correlation_id,
-                   reverses_transaction_id, created_at, updated_at
+                   reverses_transaction_id, void_reason, created_at, updated_at
             FROM transactions
             WHERE correlation_id = $1
             ORDER BY created_at ASC
@@ -552,7 +565,7 @@ impl TransactionRepo {
                    source_ifsc, source_account, gateway_ref, timeout_seconds,
                    merchant_id, merchant_mcc, description, funding_type,
                    tb_transfer_id::text as tb_transfer_id, idempotency_key, correlation_id,
-                   reverses_transaction_id, created_at, updated_at
+                   reverses_transaction_id, void_reason, created_at, updated_at
             FROM transactions
             WHERE reverses_transaction_id = $1
               AND status IN ('pending', 'posted')
@@ -579,7 +592,7 @@ impl TransactionRepo {
                    source_ifsc, source_account, gateway_ref, timeout_seconds,
                    merchant_id, merchant_mcc, description, funding_type,
                    tb_transfer_id::text as tb_transfer_id, idempotency_key, correlation_id,
-                   reverses_transaction_id, created_at, updated_at
+                   reverses_transaction_id, void_reason, created_at, updated_at
             FROM transactions
             WHERE reverses_transaction_id = $1
             ORDER BY created_at ASC, id ASC
@@ -623,7 +636,7 @@ impl TransactionRepo {
                    source_ifsc, source_account, gateway_ref, timeout_seconds,
                    merchant_id, merchant_mcc, description, funding_type,
                    tb_transfer_id::text as tb_transfer_id, idempotency_key, correlation_id,
-                   reverses_transaction_id, created_at, updated_at
+                   reverses_transaction_id, void_reason, created_at, updated_at
             FROM transactions
             WHERE correlation_id = $1
             ORDER BY created_at ASC

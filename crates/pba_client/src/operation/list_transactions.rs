@@ -311,9 +311,9 @@ impl ::aws_smithy_runtime_api::client::result::CreateUnhandledError for ListTran
     }
 }
 
-pub use crate::operation::list_transactions::_list_transactions_output::ListTransactionsOutput;
-
 pub use crate::operation::list_transactions::_list_transactions_input::ListTransactionsInput;
+
+pub use crate::operation::list_transactions::_list_transactions_output::ListTransactionsOutput;
 
 mod _list_transactions_input;
 

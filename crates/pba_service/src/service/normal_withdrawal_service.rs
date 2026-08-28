@@ -37,6 +37,7 @@ impl NormalWithdrawalService {
         amount: u64,
         idempotency_key: Option<&str>,
         gateway_ref: Option<&str>,
+        description: Option<&str>,
     ) -> Result<TransactionRecord, AppError> {
         if let Some(key) = idempotency_key {
             if let Some(existing) = self
@@ -85,7 +86,7 @@ impl NormalWithdrawalService {
                 None,
                 None,
                 None,
-                None,
+                description,
                 None,
                 0,
                 idempotency_key,

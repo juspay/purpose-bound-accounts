@@ -324,9 +324,9 @@ impl ::aws_smithy_runtime_api::client::result::CreateUnhandledError for PostPBAc
     }
 }
 
-pub use crate::operation::post_pb_account_deposit::_post_pb_account_deposit_output::PostPbAccountDepositOutput;
-
 pub use crate::operation::post_pb_account_deposit::_post_pb_account_deposit_input::PostPbAccountDepositInput;
+
+pub use crate::operation::post_pb_account_deposit::_post_pb_account_deposit_output::PostPbAccountDepositOutput;
 
 mod _post_pb_account_deposit_input;
 

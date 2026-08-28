@@ -48,6 +48,7 @@ impl PbDepositService {
         pending: bool,
         gateway_ref: Option<&str>,
         timeout_seconds: Option<u32>,
+        description: Option<&str>,
         idempotency_key: Option<&str>,
     ) -> Result<TransactionRecord, AppError> {
         // Idempotency check
@@ -118,7 +119,7 @@ impl PbDepositService {
                     Some(timeout),
                     None,
                     None,
-                    None,
+                    description,
                     Some(resolved_funding_type),
                     0,
                     idempotency_key,
@@ -174,7 +175,7 @@ impl PbDepositService {
                     None,
                     None,
                     None,
-                    None,
+                    description,
                     Some(resolved_funding_type),
                     0,
                     idempotency_key,
@@ -230,7 +231,7 @@ impl PbDepositService {
         &self,
         account_id: Uuid,
         deposit_id: Uuid,
-        _reason: Option<&str>,
+        reason: Option<&str>,
     ) -> Result<TransactionRecord, AppError> {
         let txn = self
             .transaction_repo
@@ -249,10 +250,10 @@ impl PbDepositService {
         // Update PG
         let updated = self
             .transaction_repo
-            .update_status(deposit_id, TransactionStatus::Voided)
+            .update_status_with_reason(deposit_id, TransactionStatus::Voided, reason)
             .await?;
 
-        tracing::info!(deposit_id = %deposit_id, account_id = %account_id, amount = txn.amount, "Pending deposit voided");
+        tracing::info!(deposit_id = %deposit_id, account_id = %account_id, amount = txn.amount, reason = ?reason, "Pending deposit voided");
         Ok(updated)
     }
 }

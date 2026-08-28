@@ -322,9 +322,9 @@ impl ::aws_smithy_runtime_api::client::result::CreateUnhandledError for Withdraw
     }
 }
 
-pub use crate::operation::withdraw_from_normal_account::_withdraw_from_normal_account_output::WithdrawFromNormalAccountOutput;
-
 pub use crate::operation::withdraw_from_normal_account::_withdraw_from_normal_account_input::WithdrawFromNormalAccountInput;
+
+pub use crate::operation::withdraw_from_normal_account::_withdraw_from_normal_account_output::WithdrawFromNormalAccountOutput;
 
 mod _withdraw_from_normal_account_input;
 

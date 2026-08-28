@@ -289,9 +289,9 @@ impl ::aws_smithy_runtime_api::client::result::CreateUnhandledError for ListAllT
     }
 }
 
-pub use crate::operation::list_all_transactions::_list_all_transactions_output::ListAllTransactionsOutput;
-
 pub use crate::operation::list_all_transactions::_list_all_transactions_input::ListAllTransactionsInput;
+
+pub use crate::operation::list_all_transactions::_list_all_transactions_output::ListAllTransactionsOutput;
 
 mod _list_all_transactions_input;
 

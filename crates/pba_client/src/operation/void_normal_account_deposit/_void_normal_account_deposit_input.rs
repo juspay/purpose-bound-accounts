@@ -7,6 +7,8 @@ pub struct VoidNormalAccountDepositInput  {
     pub account_id: ::std::option::Option<::std::string::String>,
     #[allow(missing_docs)] // documentation missing in model
     pub deposit_id: ::std::option::Option<::std::string::String>,
+    /// Why the deposit was cancelled. Stored on the voided transaction as `void_reason`. Max 256 characters.
+    pub reason: ::std::option::Option<::std::string::String>,
 }
 impl  VoidNormalAccountDepositInput  {
     #[allow(missing_docs)] // documentation missing in model
@@ -16,6 +18,10 @@ impl  VoidNormalAccountDepositInput  {
     #[allow(missing_docs)] // documentation missing in model
     pub fn deposit_id(&self) -> ::std::option::Option<&str> {
         self.deposit_id.as_deref()
+    }
+    /// Why the deposit was cancelled. Stored on the voided transaction as `void_reason`. Max 256 characters.
+    pub fn reason(&self) -> ::std::option::Option<&str> {
+        self.reason.as_deref()
     }
 }
 impl VoidNormalAccountDepositInput {
@@ -31,6 +37,7 @@ impl VoidNormalAccountDepositInput {
 pub struct VoidNormalAccountDepositInputBuilder {
     pub(crate) account_id: ::std::option::Option<::std::string::String>,
     pub(crate) deposit_id: ::std::option::Option<::std::string::String>,
+    pub(crate) reason: ::std::option::Option<::std::string::String>,
 }
 impl VoidNormalAccountDepositInputBuilder {
     #[allow(missing_docs)] // documentation missing in model
@@ -61,6 +68,19 @@ impl VoidNormalAccountDepositInputBuilder {
     pub fn get_deposit_id(&self) -> &::std::option::Option<::std::string::String> {
         &self.deposit_id
     }
+    /// Why the deposit was cancelled. Stored on the voided transaction as `void_reason`. Max 256 characters.
+    pub fn reason(mut self, input: impl ::std::convert::Into<::std::string::String>) -> Self {
+        self.reason = ::std::option::Option::Some(input.into());
+        self
+    }
+    /// Why the deposit was cancelled. Stored on the voided transaction as `void_reason`. Max 256 characters.
+    pub fn set_reason(mut self, input: ::std::option::Option<::std::string::String>) -> Self {
+        self.reason = input; self
+    }
+    /// Why the deposit was cancelled. Stored on the voided transaction as `void_reason`. Max 256 characters.
+    pub fn get_reason(&self) -> &::std::option::Option<::std::string::String> {
+        &self.reason
+    }
     /// Consumes the builder and constructs a [`VoidNormalAccountDepositInput`](crate::operation::void_normal_account_deposit::VoidNormalAccountDepositInput).
     pub fn build(self) -> ::std::result::Result<crate::operation::void_normal_account_deposit::VoidNormalAccountDepositInput, ::aws_smithy_types::error::operation::BuildError> {
         ::std::result::Result::Ok(
@@ -68,6 +88,8 @@ impl VoidNormalAccountDepositInputBuilder {
                 account_id: self.account_id
                 ,
                 deposit_id: self.deposit_id
+                ,
+                reason: self.reason
                 ,
             }
         )

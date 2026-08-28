@@ -292,9 +292,9 @@ impl ::aws_smithy_runtime_api::client::result::CreateUnhandledError for VoidNorm
     }
 }
 
-pub use crate::operation::void_normal_account_transfer::_void_normal_account_transfer_output::VoidNormalAccountTransferOutput;
-
 pub use crate::operation::void_normal_account_transfer::_void_normal_account_transfer_input::VoidNormalAccountTransferInput;
+
+pub use crate::operation::void_normal_account_transfer::_void_normal_account_transfer_output::VoidNormalAccountTransferOutput;
 
 mod _void_normal_account_transfer_input;
 

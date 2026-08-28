@@ -306,9 +306,9 @@ impl ::aws_smithy_runtime_api::client::result::CreateUnhandledError for DepositE
     }
 }
 
-pub use crate::operation::deposit::_deposit_output::DepositOutput;
-
 pub use crate::operation::deposit::_deposit_input::DepositInput;
+
+pub use crate::operation::deposit::_deposit_output::DepositOutput;
 
 mod _deposit_input;
 

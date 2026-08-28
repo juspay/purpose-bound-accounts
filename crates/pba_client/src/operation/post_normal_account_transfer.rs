@@ -292,9 +292,9 @@ impl ::aws_smithy_runtime_api::client::result::CreateUnhandledError for PostNorm
     }
 }
 
-pub use crate::operation::post_normal_account_transfer::_post_normal_account_transfer_output::PostNormalAccountTransferOutput;
-
 pub use crate::operation::post_normal_account_transfer::_post_normal_account_transfer_input::PostNormalAccountTransferInput;
+
+pub use crate::operation::post_normal_account_transfer::_post_normal_account_transfer_output::PostNormalAccountTransferOutput;
 
 mod _post_normal_account_transfer_input;
 

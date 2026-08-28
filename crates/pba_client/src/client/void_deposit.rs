@@ -5,7 +5,7 @@ impl super::Client {
                             /// - The fluent builder is configurable:
     ///   - [`account_id(impl Into<String>)`](crate::operation::void_deposit::builders::VoidDepositFluentBuilder::account_id) / [`set_account_id(Option<String>)`](crate::operation::void_deposit::builders::VoidDepositFluentBuilder::set_account_id):<br>required: **true**<br>(undocumented)<br>
     ///   - [`deposit_id(impl Into<String>)`](crate::operation::void_deposit::builders::VoidDepositFluentBuilder::deposit_id) / [`set_deposit_id(Option<String>)`](crate::operation::void_deposit::builders::VoidDepositFluentBuilder::set_deposit_id):<br>required: **true**<br>(undocumented)<br>
-    ///   - [`reason(impl Into<String>)`](crate::operation::void_deposit::builders::VoidDepositFluentBuilder::reason) / [`set_reason(Option<String>)`](crate::operation::void_deposit::builders::VoidDepositFluentBuilder::set_reason):<br>required: **false**<br>(undocumented)<br>
+    ///   - [`reason(impl Into<String>)`](crate::operation::void_deposit::builders::VoidDepositFluentBuilder::reason) / [`set_reason(Option<String>)`](crate::operation::void_deposit::builders::VoidDepositFluentBuilder::set_reason):<br>required: **false**<br>Why the deposit was cancelled. Stored on the voided transaction as `void_reason`. Max 256 characters.<br>
                             /// - On success, responds with [`VoidDepositOutput`](crate::operation::void_deposit::VoidDepositOutput) with field(s):
     ///   - [`deposit_id(String)`](crate::operation::void_deposit::VoidDepositOutput::deposit_id): (undocumented)
     ///   - [`account_id(String)`](crate::operation::void_deposit::VoidDepositOutput::account_id): (undocumented)

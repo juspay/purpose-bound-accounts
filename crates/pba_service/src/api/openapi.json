@@ -792,6 +792,15 @@
             "post": {
                 "description": "Cancel a pending normal-account deposit (void the held funds).",
                 "operationId": "VoidNormalAccountDeposit",
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/VoidNormalAccountDepositRequestContent"
+                            }
+                        }
+                    }
+                },
                 "parameters": [
                     {
                         "name": "account_id",
@@ -2391,6 +2400,10 @@
                     "timeout_seconds": {
                         "type": "number"
                     },
+                    "description": {
+                        "type": "string",
+                        "description": "Free-text narration for the deposit, stored on the transaction and\nreturned by the transaction listings. Max 256 characters."
+                    },
                     "idempotency_key": {
                         "type": "string"
                     }
@@ -2455,6 +2468,10 @@
                     "timeout_seconds": {
                         "type": "number"
                     },
+                    "description": {
+                        "type": "string",
+                        "description": "Free-text narration for the deposit, stored on the transaction and\nreturned by the transaction listings. Max 256 characters."
+                    },
                     "idempotency_key": {
                         "type": "string"
                     }
@@ -2517,6 +2534,10 @@
                     },
                     "timeout_seconds": {
                         "type": "number"
+                    },
+                    "description": {
+                        "type": "string",
+                        "description": "Free-text narration for the deposit, stored on the transaction and\nreturned by the transaction listings. Max 256 characters."
                     },
                     "idempotency_key": {
                         "type": "string"
@@ -3736,6 +3757,9 @@
                     "description": {
                         "type": "string"
                     },
+                    "void_reason": {
+                        "type": "string"
+                    },
                     "merchant_id": {
                         "type": "string"
                     },
@@ -4054,7 +4078,8 @@
                 "type": "object",
                 "properties": {
                     "reason": {
-                        "type": "string"
+                        "type": "string",
+                        "description": "Why the deposit was cancelled. Stored on the voided transaction as\n`void_reason`. Max 256 characters."
                     }
                 }
             },
@@ -4094,6 +4119,15 @@
                     "pool",
                     "status"
                 ]
+            },
+            "VoidNormalAccountDepositRequestContent": {
+                "type": "object",
+                "properties": {
+                    "reason": {
+                        "type": "string",
+                        "description": "Why the deposit was cancelled. Stored on the voided transaction as\n`void_reason`. Max 256 characters."
+                    }
+                }
             },
             "VoidNormalAccountDepositResponseContent": {
                 "type": "object",
@@ -4167,7 +4201,8 @@
                 "type": "object",
                 "properties": {
                     "reason": {
-                        "type": "string"
+                        "type": "string",
+                        "description": "Why the deposit was cancelled. Stored on the voided transaction as\n`void_reason`. Max 256 characters."
                     }
                 }
             },
@@ -4276,6 +4311,10 @@
                     "gateway_ref": {
                         "type": "string"
                     },
+                    "description": {
+                        "type": "string",
+                        "description": "Free-text narration for the withdrawal, stored on the transaction and\nreturned by the transaction listings. Max 256 characters."
+                    },
                     "idempotency_key": {
                         "type": "string"
                     }
@@ -4315,6 +4354,10 @@
                     },
                     "gateway_ref": {
                         "type": "string"
+                    },
+                    "description": {
+                        "type": "string",
+                        "description": "Free-text narration for the withdrawal, stored on the transaction and\nreturned by the transaction listings. Max 256 characters."
                     }
                 },
                 "required": [
@@ -4352,6 +4395,10 @@
                     },
                     "gateway_ref": {
                         "type": "string"
+                    },
+                    "description": {
+                        "type": "string",
+                        "description": "Free-text narration for the withdrawal, stored on the transaction and\nreturned by the transaction listings. Max 256 characters."
                     }
                 },
                 "required": [

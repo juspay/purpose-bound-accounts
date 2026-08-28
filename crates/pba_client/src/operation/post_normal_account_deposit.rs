@@ -324,9 +324,9 @@ impl ::aws_smithy_runtime_api::client::result::CreateUnhandledError for PostNorm
     }
 }
 
-pub use crate::operation::post_normal_account_deposit::_post_normal_account_deposit_output::PostNormalAccountDepositOutput;
-
 pub use crate::operation::post_normal_account_deposit::_post_normal_account_deposit_input::PostNormalAccountDepositInput;
+
+pub use crate::operation::post_normal_account_deposit::_post_normal_account_deposit_output::PostNormalAccountDepositOutput;
 
 mod _post_normal_account_deposit_input;
 

@@ -324,9 +324,9 @@ impl ::aws_smithy_runtime_api::client::result::CreateUnhandledError for PostDepo
     }
 }
 
-pub use crate::operation::post_deposit::_post_deposit_output::PostDepositOutput;
-
 pub use crate::operation::post_deposit::_post_deposit_input::PostDepositInput;
+
+pub use crate::operation::post_deposit::_post_deposit_output::PostDepositOutput;
 
 mod _post_deposit_input;
 

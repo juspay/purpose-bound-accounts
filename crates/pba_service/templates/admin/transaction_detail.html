@@ -16,6 +16,7 @@
             <button type="submit">Post</button>
         </form>
         <form method="post" action="{{ prefix }}/admin/transactions/{{ id }}/void" class="inline-form" onsubmit="return confirm('Void this pending transaction? Reserved funds will be released.');">
+            <input type="text" name="reason" maxlength="256" placeholder="Reason (optional)" aria-label="Void reason">
             <button type="submit" class="btn-danger">Void</button>
         </form>
         {% endif %}
@@ -76,6 +77,18 @@
     </div>
 </article>
 
+<article>
+    <header>Narration</header>
+    <div class="grid" style="grid-template-columns: 1fr 1fr;">
+        <div class="kv">
+            <div><strong>Description:</strong></div><div>{{ description }}</div>
+        </div>
+        <div class="kv">
+            <div><strong>Void reason:</strong></div><div>{{ void_reason }}</div>
+        </div>
+    </div>
+</article>
+
 {% if is_deposit %}
 <article>
     <header>Source</header>
@@ -99,7 +112,6 @@
             <div>Merchant MCC</div><div class="mono">{{ merchant_mcc }}</div>
         </div>
         <div class="kv">
-            <div>Description</div><div>{{ description }}</div>
             <div><strong>Gateway Ref:</strong></div><div class="mono">{{ gateway_ref }}</div>
         </div>
     </div>

@@ -328,9 +328,9 @@ impl ::aws_smithy_runtime_api::client::result::CreateUnhandledError for VoidDepo
     }
 }
 
-pub use crate::operation::void_deposit::_void_deposit_output::VoidDepositOutput;
-
 pub use crate::operation::void_deposit::_void_deposit_input::VoidDepositInput;
+
+pub use crate::operation::void_deposit::_void_deposit_output::VoidDepositOutput;
 
 mod _void_deposit_input;
 
