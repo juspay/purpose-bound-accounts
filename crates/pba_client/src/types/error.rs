@@ -17,6 +17,10 @@ pub use crate::types::error::_transaction_not_pending_error::TransactionNotPendi
 
 pub use crate::types::error::_transaction_not_found_error::TransactionNotFoundError;
 
+pub use crate::types::error::_contribution_fully_returned_error::ContributionFullyReturnedError;
+
+pub use crate::types::error::_contribution_amount_invalid_error::ContributionAmountInvalidError;
+
 pub use crate::types::error::_payment_fully_refunded_error::PaymentFullyRefundedError;
 
 pub use crate::types::error::_refund_amount_invalid_error::RefundAmountInvalidError;
@@ -26,6 +30,10 @@ pub use crate::types::error::_refund_not_refundable_error::RefundNotRefundableEr
 mod _account_not_active_error;
 
 mod _account_not_found_error;
+
+mod _contribution_amount_invalid_error;
+
+mod _contribution_fully_returned_error;
 
 mod _deposit_not_found_error;
 

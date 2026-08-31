@@ -1,14 +1,14 @@
 use askama::Template;
 use axum::extract::{Path, State};
 use axum::http::StatusCode;
-use axum::response::{Html, IntoResponse, Redirect, Response};
-use serde::Deserialize;
+use axum::response::{Html, IntoResponse, Json, Redirect, Response};
+use serde::{Deserialize, Serialize};
 use std::collections::BTreeMap;
 use uuid::Uuid;
 
 use crate::domain::banking::{AccountNumber, Ifsc};
 use crate::domain::purpose::PurposeType;
-use crate::domain::transaction::{TransactionRecord, TransactionStatus};
+use crate::domain::transaction::{TransactionRecord, TransactionStatus, TransactionType};
 use crate::AppState;
 
 fn render<T: Template>(tmpl: T) -> Response {
@@ -301,6 +301,16 @@ struct AccountDetailTemplate {
     created_at: String,
     updated_at: String,
     pending_deposits: Vec<PendingDepositRow>,
+    show_contributions_panel: bool,
+    contributions_load_failed: bool,
+    trust_contributed_display: String,
+    trust_returned_display: String,
+    trust_returnable_paisa: u64,
+    trust_returnable_display: String,
+    third_party_contributed_display: String,
+    third_party_returned_display: String,
+    third_party_returnable_paisa: u64,
+    third_party_returnable_display: String,
 }
 
 pub async fn account_detail(
@@ -367,6 +377,40 @@ pub async fn account_detail(
         }
     };
 
+    let (summary, contributions_load_failed) = match state
+        .pb_contribution_return_service
+        .summary(account_id)
+        .await
+    {
+        Ok(s) => (s, false),
+        Err(e) => {
+            tracing::warn!(
+                account_id = %account_id,
+                error = %e,
+                "Contribution summary failed; showing 'data unavailable' banner"
+            );
+            let zero = crate::service::pb_contribution_return_service::FundingTypeSummary {
+                total_contributed: 0,
+                total_returned: 0,
+                remaining_returnable: 0,
+            };
+            (
+                crate::service::pb_contribution_return_service::ContributionSummary {
+                    trust: zero.clone(),
+                    third_party: zero,
+                },
+                true,
+            )
+        }
+    };
+
+    // Show the panel whenever we have contributions OR the load failed —
+    // otherwise a load failure would hide the panel entirely and the admin
+    // would see "no contributions" instead of an explicit error banner.
+    let show_contributions_panel = contributions_load_failed
+        || summary.trust.total_contributed > 0
+        || summary.third_party.total_contributed > 0;
+
     render(AccountDetailTemplate {
         prefix: state.path_prefix.clone(),
         id: account.id.to_string(),
@@ -385,6 +429,16 @@ pub async fn account_detail(
         created_at: account.created_at.format("%Y-%m-%d %H:%M:%S").to_string(),
         updated_at: account.updated_at.format("%Y-%m-%d %H:%M:%S").to_string(),
         pending_deposits,
+        show_contributions_panel,
+        contributions_load_failed,
+        trust_contributed_display: fmt(summary.trust.total_contributed),
+        trust_returned_display: fmt(summary.trust.total_returned),
+        trust_returnable_paisa: summary.trust.remaining_returnable,
+        trust_returnable_display: fmt(summary.trust.remaining_returnable),
+        third_party_contributed_display: fmt(summary.third_party.total_contributed),
+        third_party_returned_display: fmt(summary.third_party.total_returned),
+        third_party_returnable_paisa: summary.third_party.remaining_returnable,
+        third_party_returnable_display: fmt(summary.third_party.remaining_returnable),
     })
 }
 
@@ -1028,6 +1082,16 @@ struct RefundHistoryRow {
     is_voided: bool,
 }
 
+#[derive(Clone)]
+struct ReturnHistoryRow {
+    return_id: String,
+    return_id_short: String,
+    created_at: String,
+    amount_display: String,
+    status: String,
+    is_voided: bool,
+}
+
 #[derive(Template)]
 #[template(path = "admin/transaction_detail.html")]
 struct TransactionDetailTemplate {
@@ -1066,12 +1130,19 @@ struct TransactionDetailTemplate {
     can_refund: bool,
     is_refund: bool,
     is_pending_refund: bool,
+    is_pending_contribution_return: bool,
+    /// correlation_id of the contribution-return group; only meaningful when
+    /// `is_pending_contribution_return` is true. Used for the Post/Void form actions.
+    contribution_return_correlation_id: String,
     refund_history: Vec<RefundHistoryRow>,
     remaining_refundable_display: String,
     refund_of_payment_id: String,
     /// Set when refund-row DB queries fail; the template shows a banner and
     /// hides the Refund button so the admin doesn't act on a wrong remaining.
     refund_load_failed: bool,
+    /// Contribution returns that reference this row as the original contribution.
+    /// Only Withdrawal-typed returns (pool=others) are surfaced here.
+    returns_of_this_row: Vec<ReturnHistoryRow>,
 }
 
 pub async fn transaction_detail(
@@ -1185,6 +1256,17 @@ pub async fn transaction_detail(
     let is_refund = is_payment && txn.reverses_transaction_id.is_some();
     let is_pending_refund = is_refund && matches!(txn.status, TransactionStatus::Pending);
 
+    // Contribution-return fields (Withdrawal rows with reverses_transaction_id set).
+    let is_pending_contribution_return = matches!(txn.status, TransactionStatus::Pending)
+        && txn.transaction_type == TransactionType::Withdrawal
+        && txn.pool.as_deref() == Some("others")
+        && txn.reverses_transaction_id.is_some();
+    let contribution_return_correlation_id = if is_pending_contribution_return {
+        txn.correlation_id.unwrap_or(txn.id).to_string()
+    } else {
+        String::new()
+    };
+
     let fmt_paisa = |a: u64| format!("{}.{:02}", a / 100, a % 100);
 
     let (
@@ -1215,7 +1297,7 @@ pub async fn transaction_detail(
 
                 for o in &originals {
                     total_original += o.amount;
-                    match state.transaction_repo.find_refunds_of(o.id).await {
+                    match state.transaction_repo.find_returns_of(o.id).await {
                         Ok(refs) => {
                             for r in refs {
                                 if !matches!(r.status, TransactionStatus::Voided) {
@@ -1301,6 +1383,36 @@ pub async fn transaction_detail(
 
     let remaining_refundable_display = fmt_paisa(remaining_refundable_paisa);
 
+    // Contribution returns that point at THIS row as the original contribution.
+    // Only surface Withdrawal-typed returns (pool = "others"); payment refunds
+    // are shown in the refund_history table on payment detail.
+    let return_rows = state
+        .transaction_repo
+        .find_returns_of(txn.id)
+        .await
+        .unwrap_or_default();
+    let returns_of_this_row: Vec<ReturnHistoryRow> = return_rows
+        .iter()
+        .filter(|r| {
+            r.transaction_type == TransactionType::Withdrawal && r.pool.as_deref() == Some("others")
+        })
+        .map(|r| {
+            let id_str = r.correlation_id.unwrap_or(r.id).to_string();
+            let id_short = id_str.chars().take(8).collect::<String>();
+            let amount_display = format!("{}.{:02}", r.amount / 100, r.amount % 100);
+            let status = r.status.as_str().to_string();
+            let is_voided = matches!(r.status, TransactionStatus::Voided);
+            ReturnHistoryRow {
+                return_id: id_str,
+                return_id_short: id_short,
+                created_at: r.created_at.format("%Y-%m-%d %H:%M:%S").to_string(),
+                amount_display,
+                status,
+                is_voided,
+            }
+        })
+        .collect();
+
     render(TransactionDetailTemplate {
         prefix: state.path_prefix.clone(),
         id: id_str,
@@ -1336,10 +1448,13 @@ pub async fn transaction_detail(
         can_refund,
         is_refund,
         is_pending_refund,
+        is_pending_contribution_return,
+        contribution_return_correlation_id,
         refund_history,
         remaining_refundable_display,
         refund_of_payment_id,
         refund_load_failed,
+        returns_of_this_row,
     })
 }
 
@@ -1442,7 +1557,7 @@ async fn build_refund_template(
         total_original += o.amount;
         total_refunded += state
             .transaction_repo
-            .sum_refunds_of(o.id)
+            .sum_returns_of(o.id)
             .await
             .map_err(|_| (StatusCode::INTERNAL_SERVER_ERROR, "Database error").into_response())?;
     }
@@ -1514,6 +1629,128 @@ pub async fn process_refund_payment(
     }
 }
 
+// ─── Contribution return handlers ─────────────────────────────────────────────
+
+#[derive(Template)]
+#[template(path = "admin/contribution_return.html")]
+struct ContributionReturnTemplate {
+    prefix: String,
+    account_id: String,
+    account_id_short: String,
+    funding_type: String,
+    remaining_returnable_paisa: u64,
+    remaining_returnable_display: String,
+    error: Option<String>,
+}
+
+#[derive(Deserialize)]
+pub struct ContributionReturnFormQuery {
+    pub funding_type: Option<String>,
+}
+
+#[derive(Deserialize)]
+pub struct ContributionReturnForm {
+    pub amount_paisa: u64,
+    pub funding_type: String,
+    #[serde(default)]
+    pub mode: Option<String>,
+    // Option<String> not Option<u32> — empty submit ("timeout_seconds=") would fail
+    // integer parsing. Matches the pattern from PR #42.
+    #[serde(default)]
+    pub timeout_seconds: Option<String>,
+    pub description: Option<String>,
+    pub gateway_ref: Option<String>,
+}
+
+pub async fn contribution_return_form(
+    State(state): State<AppState>,
+    Path(account_id): Path<Uuid>,
+    axum::extract::Query(q): axum::extract::Query<ContributionReturnFormQuery>,
+) -> Response {
+    let funding_type = q.funding_type.unwrap_or_else(|| "trust".to_string());
+    if funding_type != "trust" && funding_type != "third_party" {
+        return (
+            StatusCode::BAD_REQUEST,
+            "funding_type must be 'trust' or 'third_party'",
+        )
+            .into_response();
+    }
+    let summary = match state
+        .pb_contribution_return_service
+        .summary(account_id)
+        .await
+    {
+        Ok(s) => s,
+        Err(e) => {
+            return (StatusCode::INTERNAL_SERVER_ERROR, format!("{e}")).into_response();
+        }
+    };
+    let (contributed, remaining) = if funding_type == "trust" {
+        (
+            summary.trust.total_contributed,
+            summary.trust.remaining_returnable,
+        )
+    } else {
+        (
+            summary.third_party.total_contributed,
+            summary.third_party.remaining_returnable,
+        )
+    };
+    if contributed == 0 {
+        return (
+            StatusCode::NOT_FOUND,
+            "No contributions of this funding_type",
+        )
+            .into_response();
+    }
+    let fmt = |a: u64| format!("{}.{:02}", a / 100, a % 100);
+    let account_id_str = account_id.to_string();
+    let account_id_short: String = account_id_str.chars().take(8).collect();
+    render(ContributionReturnTemplate {
+        prefix: state.path_prefix.clone(),
+        account_id: account_id_str,
+        account_id_short,
+        funding_type,
+        remaining_returnable_paisa: remaining,
+        remaining_returnable_display: fmt(remaining),
+        error: None,
+    })
+}
+
+pub async fn process_contribution_return(
+    State(state): State<AppState>,
+    Path(account_id): Path<Uuid>,
+    axum::extract::Form(form): axum::extract::Form<ContributionReturnForm>,
+) -> Response {
+    let is_pending = form.mode.as_deref() == Some("pending");
+    let timeout_seconds: Option<u32> = form
+        .timeout_seconds
+        .as_deref()
+        .filter(|s| !s.is_empty())
+        .and_then(|s| s.parse().ok());
+    match state
+        .pb_contribution_return_service
+        .return_contribution(
+            account_id,
+            form.amount_paisa,
+            &form.funding_type,
+            is_pending,
+            timeout_seconds,
+            form.gateway_ref.as_deref(),
+            form.description.as_deref(),
+            None,
+        )
+        .await
+    {
+        Ok(r) => Redirect::to(&prefixed(
+            &state,
+            &format!("/admin/transactions/{}", r.return_id),
+        ))
+        .into_response(),
+        Err(e) => (StatusCode::BAD_REQUEST, format!("Return failed: {e}")).into_response(),
+    }
+}
+
 pub async fn admin_post_refund(
     State(state): State<AppState>,
     Path((account_id, refund_id)): Path<(Uuid, Uuid)>,
@@ -1545,6 +1782,82 @@ pub async fn admin_void_refund(
             state.path_prefix, refund_id
         ))),
         Err(e) => Err((StatusCode::BAD_REQUEST, format!("void failed: {e:?}")).into_response()),
+    }
+}
+
+// ─── Test-support: returns list JSON endpoint ─────────────────────────────────
+
+#[derive(Serialize)]
+struct ReturnListItem {
+    return_id: String,
+    amount_display: String,
+    status: String,
+}
+
+#[derive(Serialize)]
+struct ReturnListResponse {
+    items: Vec<ReturnListItem>,
+}
+
+pub async fn admin_returns_list_json(
+    State(state): State<AppState>,
+    Path(txn_id): Path<Uuid>,
+) -> Response {
+    let rows = match state.transaction_repo.find_returns_of(txn_id).await {
+        Ok(r) => r,
+        Err(_) => {
+            return (StatusCode::INTERNAL_SERVER_ERROR, "db error").into_response();
+        }
+    };
+    let items: Vec<ReturnListItem> = rows
+        .iter()
+        .filter(|r| {
+            r.transaction_type == TransactionType::Withdrawal && r.pool.as_deref() == Some("others")
+        })
+        .map(|r| ReturnListItem {
+            return_id: r.correlation_id.unwrap_or(r.id).to_string(),
+            amount_display: format!("{}.{:02}", r.amount / 100, r.amount % 100),
+            status: r.status.as_str().to_string(),
+        })
+        .collect();
+    Json(ReturnListResponse { items }).into_response()
+}
+
+// ─── Contribution return lifecycle handlers ───────────────────────────────────
+
+pub async fn admin_post_contribution_return(
+    State(state): State<AppState>,
+    Path((account_id, return_id)): Path<(Uuid, Uuid)>,
+) -> Response {
+    match state
+        .pb_contribution_return_service
+        .post_contribution_return(account_id, return_id)
+        .await
+    {
+        Ok(_) => Redirect::to(&prefixed(
+            &state,
+            &format!("/admin/transactions/{return_id}"),
+        ))
+        .into_response(),
+        Err(e) => (StatusCode::BAD_REQUEST, format!("post failed: {e}")).into_response(),
+    }
+}
+
+pub async fn admin_void_contribution_return(
+    State(state): State<AppState>,
+    Path((account_id, return_id)): Path<(Uuid, Uuid)>,
+) -> Response {
+    match state
+        .pb_contribution_return_service
+        .void_contribution_return(account_id, return_id)
+        .await
+    {
+        Ok(_) => Redirect::to(&prefixed(
+            &state,
+            &format!("/admin/transactions/{return_id}"),
+        ))
+        .into_response(),
+        Err(e) => (StatusCode::BAD_REQUEST, format!("void failed: {e}")).into_response(),
     }
 }
 
@@ -1589,10 +1902,13 @@ mod tests {
             can_refund: false,
             is_refund: false,
             is_pending_refund: false,
+            is_pending_contribution_return: false,
+            contribution_return_correlation_id: String::new(),
             refund_history: vec![],
             remaining_refundable_display: "0.00".to_string(),
             refund_of_payment_id: String::new(),
             refund_load_failed: false,
+            returns_of_this_row: vec![],
         }
     }
 
@@ -1632,10 +1948,13 @@ mod tests {
             can_refund: true,
             is_refund: false,
             is_pending_refund: false,
+            is_pending_contribution_return: false,
+            contribution_return_correlation_id: String::new(),
             refund_history: vec![],
             remaining_refundable_display: "12.34".to_string(),
             refund_of_payment_id: String::new(),
             refund_load_failed: false,
+            returns_of_this_row: vec![],
         }
     }
 
@@ -1675,10 +1994,13 @@ mod tests {
             can_refund: false,
             is_refund: false,
             is_pending_refund: false,
+            is_pending_contribution_return: false,
+            contribution_return_correlation_id: String::new(),
             refund_history: vec![],
             remaining_refundable_display: "0.00".to_string(),
             refund_of_payment_id: String::new(),
             refund_load_failed: false,
+            returns_of_this_row: vec![],
         }
     }
 

@@ -144,6 +144,12 @@ if builder.pending_others.is_none() { builder.pending_others = Some(Default::def
                 builder
             }
 
+pub(crate) fn get_pb_account_contribution_summary_output_output_correct_errors(mut builder: crate::operation::get_pb_account_contribution_summary::builders::GetPbAccountContributionSummaryOutputBuilder) -> crate::operation::get_pb_account_contribution_summary::builders::GetPbAccountContributionSummaryOutputBuilder {
+                if builder.trust.is_none() { builder.trust = { let builder = crate::types::builders::FundingTypeSummaryBuilder::default(); crate::serde_util::funding_type_summary_correct_errors(builder).build().ok() } }
+if builder.third_party.is_none() { builder.third_party = { let builder = crate::types::builders::FundingTypeSummaryBuilder::default(); crate::serde_util::funding_type_summary_correct_errors(builder).build().ok() } }
+                builder
+            }
+
 pub(crate) fn get_purpose_type_output_output_correct_errors(mut builder: crate::operation::get_purpose_type::builders::GetPurposeTypeOutputBuilder) -> crate::operation::get_purpose_type::builders::GetPurposeTypeOutputBuilder {
                 if builder.purpose_code.is_none() { builder.purpose_code = Some(Default::default()) }
 if builder.allowed_mccs.is_none() { builder.allowed_mccs = Some(Default::default()) }
@@ -269,15 +275,6 @@ if builder.created_at.is_none() { builder.created_at = Some(::aws_smithy_types::
                 builder
             }
 
-pub(crate) fn post_pb_account_deposit_output_output_correct_errors(mut builder: crate::operation::post_pb_account_deposit::builders::PostPbAccountDepositOutputBuilder) -> crate::operation::post_pb_account_deposit::builders::PostPbAccountDepositOutputBuilder {
-                if builder.deposit_id.is_none() { builder.deposit_id = Some(Default::default()) }
-if builder.account_id.is_none() { builder.account_id = Some(Default::default()) }
-if builder.amount.is_none() { builder.amount = Some(Default::default()) }
-if builder.pool.is_none() { builder.pool = Some(Default::default()) }
-if builder.status.is_none() { builder.status = Some(Default::default()) }
-                builder
-            }
-
 pub(crate) fn transaction_not_found_error_correct_errors(mut builder: crate::types::error::builders::TransactionNotFoundErrorBuilder) -> crate::types::error::builders::TransactionNotFoundErrorBuilder {
                 if builder.error.is_none() { builder.error = Some(Default::default()) }
 if builder.message.is_none() { builder.message = Some(Default::default()) }
@@ -287,6 +284,28 @@ if builder.message.is_none() { builder.message = Some(Default::default()) }
 pub(crate) fn transaction_not_pending_error_correct_errors(mut builder: crate::types::error::builders::TransactionNotPendingErrorBuilder) -> crate::types::error::builders::TransactionNotPendingErrorBuilder {
                 if builder.error.is_none() { builder.error = Some(Default::default()) }
 if builder.message.is_none() { builder.message = Some(Default::default()) }
+                builder
+            }
+
+pub(crate) fn post_pb_account_contribution_return_output_output_correct_errors(mut builder: crate::operation::post_pb_account_contribution_return::builders::PostPbAccountContributionReturnOutputBuilder) -> crate::operation::post_pb_account_contribution_return::builders::PostPbAccountContributionReturnOutputBuilder {
+                if builder.return_id.is_none() { builder.return_id = Some(Default::default()) }
+if builder.correlation_id.is_none() { builder.correlation_id = Some(Default::default()) }
+if builder.account_id.is_none() { builder.account_id = Some(Default::default()) }
+if builder.funding_type.is_none() { builder.funding_type = "no value was set".parse::<crate::types::FundingType>().ok() }
+if builder.amount.is_none() { builder.amount = Some(Default::default()) }
+if builder.allocations.is_none() { builder.allocations = Some(Default::default()) }
+if builder.remaining_returnable_after.is_none() { builder.remaining_returnable_after = Some(Default::default()) }
+if builder.status.is_none() { builder.status = "no value was set".parse::<crate::types::TransactionStatus>().ok() }
+if builder.created_at.is_none() { builder.created_at = Some(::aws_smithy_types::DateTime::from_fractional_secs(0, 0_f64)) }
+                builder
+            }
+
+pub(crate) fn post_pb_account_deposit_output_output_correct_errors(mut builder: crate::operation::post_pb_account_deposit::builders::PostPbAccountDepositOutputBuilder) -> crate::operation::post_pb_account_deposit::builders::PostPbAccountDepositOutputBuilder {
+                if builder.deposit_id.is_none() { builder.deposit_id = Some(Default::default()) }
+if builder.account_id.is_none() { builder.account_id = Some(Default::default()) }
+if builder.amount.is_none() { builder.amount = Some(Default::default()) }
+if builder.pool.is_none() { builder.pool = Some(Default::default()) }
+if builder.status.is_none() { builder.status = Some(Default::default()) }
                 builder
             }
 
@@ -334,6 +353,32 @@ if builder.original_amount.is_none() { builder.original_amount = Some(Default::d
 if builder.remaining_refundable.is_none() { builder.remaining_refundable = Some(Default::default()) }
 if builder.status.is_none() { builder.status = Some(Default::default()) }
 if builder.correlation_id.is_none() { builder.correlation_id = Some(Default::default()) }
+if builder.created_at.is_none() { builder.created_at = Some(::aws_smithy_types::DateTime::from_fractional_secs(0, 0_f64)) }
+                builder
+            }
+
+pub(crate) fn contribution_amount_invalid_error_correct_errors(mut builder: crate::types::error::builders::ContributionAmountInvalidErrorBuilder) -> crate::types::error::builders::ContributionAmountInvalidErrorBuilder {
+                if builder.message.is_none() { builder.message = Some(Default::default()) }
+if builder.requested.is_none() { builder.requested = Some(Default::default()) }
+if builder.remaining.is_none() { builder.remaining = Some(Default::default()) }
+                builder
+            }
+
+pub(crate) fn contribution_fully_returned_error_correct_errors(mut builder: crate::types::error::builders::ContributionFullyReturnedErrorBuilder) -> crate::types::error::builders::ContributionFullyReturnedErrorBuilder {
+                if builder.message.is_none() { builder.message = Some(Default::default()) }
+if builder.pb_account_id.is_none() { builder.pb_account_id = Some(Default::default()) }
+                builder
+            }
+
+pub(crate) fn return_pb_account_contribution_output_output_correct_errors(mut builder: crate::operation::return_pb_account_contribution::builders::ReturnPbAccountContributionOutputBuilder) -> crate::operation::return_pb_account_contribution::builders::ReturnPbAccountContributionOutputBuilder {
+                if builder.return_id.is_none() { builder.return_id = Some(Default::default()) }
+if builder.correlation_id.is_none() { builder.correlation_id = Some(Default::default()) }
+if builder.account_id.is_none() { builder.account_id = Some(Default::default()) }
+if builder.funding_type.is_none() { builder.funding_type = "no value was set".parse::<crate::types::FundingType>().ok() }
+if builder.amount.is_none() { builder.amount = Some(Default::default()) }
+if builder.allocations.is_none() { builder.allocations = Some(Default::default()) }
+if builder.remaining_returnable_after.is_none() { builder.remaining_returnable_after = Some(Default::default()) }
+if builder.status.is_none() { builder.status = "no value was set".parse::<crate::types::TransactionStatus>().ok() }
 if builder.created_at.is_none() { builder.created_at = Some(::aws_smithy_types::DateTime::from_fractional_secs(0, 0_f64)) }
                 builder
             }
@@ -426,6 +471,19 @@ if builder.created_at.is_none() { builder.created_at = Some(::aws_smithy_types::
                 builder
             }
 
+pub(crate) fn void_pb_account_contribution_return_output_output_correct_errors(mut builder: crate::operation::void_pb_account_contribution_return::builders::VoidPbAccountContributionReturnOutputBuilder) -> crate::operation::void_pb_account_contribution_return::builders::VoidPbAccountContributionReturnOutputBuilder {
+                if builder.return_id.is_none() { builder.return_id = Some(Default::default()) }
+if builder.correlation_id.is_none() { builder.correlation_id = Some(Default::default()) }
+if builder.account_id.is_none() { builder.account_id = Some(Default::default()) }
+if builder.funding_type.is_none() { builder.funding_type = "no value was set".parse::<crate::types::FundingType>().ok() }
+if builder.amount.is_none() { builder.amount = Some(Default::default()) }
+if builder.allocations.is_none() { builder.allocations = Some(Default::default()) }
+if builder.remaining_returnable_after.is_none() { builder.remaining_returnable_after = Some(Default::default()) }
+if builder.status.is_none() { builder.status = "no value was set".parse::<crate::types::TransactionStatus>().ok() }
+if builder.created_at.is_none() { builder.created_at = Some(::aws_smithy_types::DateTime::from_fractional_secs(0, 0_f64)) }
+                builder
+            }
+
 pub(crate) fn void_pb_account_deposit_output_output_correct_errors(mut builder: crate::operation::void_pb_account_deposit::builders::VoidPbAccountDepositOutputBuilder) -> crate::operation::void_pb_account_deposit::builders::VoidPbAccountDepositOutputBuilder {
                 if builder.deposit_id.is_none() { builder.deposit_id = Some(Default::default()) }
 if builder.account_id.is_none() { builder.account_id = Some(Default::default()) }
@@ -464,6 +522,19 @@ if builder.amount.is_none() { builder.amount = Some(Default::default()) }
 
 pub(crate) fn withdraw_from_pb_account_output_output_correct_errors(mut builder: crate::operation::withdraw_from_pb_account::builders::WithdrawFromPbAccountOutputBuilder) -> crate::operation::withdraw_from_pb_account::builders::WithdrawFromPbAccountOutputBuilder {
                 if builder.account_id.is_none() { builder.account_id = Some(Default::default()) }
+if builder.amount.is_none() { builder.amount = Some(Default::default()) }
+                builder
+            }
+
+pub(crate) fn funding_type_summary_correct_errors(mut builder: crate::types::builders::FundingTypeSummaryBuilder) -> crate::types::builders::FundingTypeSummaryBuilder {
+                if builder.total_contributed.is_none() { builder.total_contributed = Some(Default::default()) }
+if builder.total_returned.is_none() { builder.total_returned = Some(Default::default()) }
+if builder.remaining_returnable.is_none() { builder.remaining_returnable = Some(Default::default()) }
+                builder
+            }
+
+pub(crate) fn allocation_entry_correct_errors(mut builder: crate::types::builders::AllocationEntryBuilder) -> crate::types::builders::AllocationEntryBuilder {
+                if builder.original_transaction_id.is_none() { builder.original_transaction_id = Some(Default::default()) }
 if builder.amount.is_none() { builder.amount = Some(Default::default()) }
                 builder
             }

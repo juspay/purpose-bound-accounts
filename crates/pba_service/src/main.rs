@@ -23,6 +23,7 @@ use service::normal_account_service::NormalAccountService;
 use service::normal_deposit_service::NormalDepositService;
 use service::normal_withdrawal_service::NormalWithdrawalService;
 use service::pb_account_service::PbAccountService;
+use service::pb_contribution_return_service::PbContributionReturnService;
 use service::pb_deposit_service::PbDepositService;
 use service::pb_payment_service::PbPaymentService;
 use service::pb_withdrawal_service::PbWithdrawalService;
@@ -33,6 +34,7 @@ pub struct AppState {
     pub pb_account_service: Arc<PbAccountService>,
     pub pb_deposit_service: Arc<PbDepositService>,
     pub pb_payment_service: Arc<PbPaymentService>,
+    pub pb_contribution_return_service: Arc<PbContributionReturnService>,
     pub pb_withdrawal_service: Arc<PbWithdrawalService>,
     pub pb_account_repo: Arc<PbAccountRepo>,
     pub normal_account_service: Arc<NormalAccountService>,
@@ -275,6 +277,13 @@ async fn main() {
         Arc::clone(&transaction_repo),
         config.default_pending_timeout_seconds,
     ));
+    let pb_contribution_return_service = Arc::new(PbContributionReturnService::new(
+        Arc::clone(&pb_account_repo),
+        Arc::clone(&normal_account_repo),
+        Arc::clone(&transaction_repo),
+        Arc::clone(&ledger_repo),
+        config.default_pending_timeout_seconds,
+    ));
 
     let path_prefix = config.path_prefix.clone();
 
@@ -282,6 +291,7 @@ async fn main() {
         pb_account_service,
         pb_deposit_service,
         pb_payment_service,
+        pb_contribution_return_service,
         pb_withdrawal_service,
         pb_account_repo,
         normal_account_service,

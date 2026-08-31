@@ -3,7 +3,8 @@ use axum::Json;
 use uuid::Uuid;
 
 use crate::api::dto::{
-    AccountResponse, BalanceResponse, CreateAccountRequest, DepositRequest, DepositResponse,
+    AccountResponse, BalanceResponse, ContributionReturnRequest, ContributionReturnResponse,
+    ContributionSummaryResponse, CreateAccountRequest, DepositRequest, DepositResponse,
     ListPurposeTypesResponse, ListTransactionsQuery, ListTransactionsResponse, PaymentRequest,
     PaymentResponse, PurposeTypeResponse, RefundPaymentRequest, RefundResponse,
     UpdateStatusRequest, VoidDepositRequest, WithdrawalRequest, WithdrawalResponse,
@@ -234,6 +235,62 @@ pub async fn void_refund(
     let result = state
         .pb_payment_service
         .void_refund(account_id, refund_id)
+        .await?;
+    Ok((axum::http::StatusCode::OK, Json(result.into())))
+}
+
+// ── Contribution Return ──
+
+pub async fn return_contribution(
+    State(state): State<AppState>,
+    Path(account_id): Path<Uuid>,
+    Json(req): Json<ContributionReturnRequest>,
+) -> Result<(axum::http::StatusCode, Json<ContributionReturnResponse>), AppError> {
+    let result = state
+        .pb_contribution_return_service
+        .return_contribution(
+            account_id,
+            req.amount,
+            &req.funding_type,
+            req.pending,
+            req.timeout_seconds,
+            req.gateway_ref.as_deref(),
+            req.description.as_deref(),
+            req.idempotency_key.as_deref(),
+        )
+        .await?;
+    Ok((axum::http::StatusCode::CREATED, Json(result.into())))
+}
+
+pub async fn post_contribution_return(
+    State(state): State<AppState>,
+    Path((account_id, return_id)): Path<(Uuid, Uuid)>,
+) -> Result<(axum::http::StatusCode, Json<ContributionReturnResponse>), AppError> {
+    let result = state
+        .pb_contribution_return_service
+        .post_contribution_return(account_id, return_id)
+        .await?;
+    Ok((axum::http::StatusCode::OK, Json(result.into())))
+}
+
+pub async fn void_contribution_return(
+    State(state): State<AppState>,
+    Path((account_id, return_id)): Path<(Uuid, Uuid)>,
+) -> Result<(axum::http::StatusCode, Json<ContributionReturnResponse>), AppError> {
+    let result = state
+        .pb_contribution_return_service
+        .void_contribution_return(account_id, return_id)
+        .await?;
+    Ok((axum::http::StatusCode::OK, Json(result.into())))
+}
+
+pub async fn get_contribution_summary(
+    State(state): State<AppState>,
+    Path(account_id): Path<Uuid>,
+) -> Result<(axum::http::StatusCode, Json<ContributionSummaryResponse>), AppError> {
+    let result = state
+        .pb_contribution_return_service
+        .summary(account_id)
         .await?;
     Ok((axum::http::StatusCode::OK, Json(result.into())))
 }

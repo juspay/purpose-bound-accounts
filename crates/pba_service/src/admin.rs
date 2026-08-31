@@ -68,6 +68,10 @@ pub fn create_router() -> Router<AppState> {
             axum::routing::post(handlers::void_transaction),
         )
         .route(
+            "/admin/transactions/{txn_id}/returns.json",
+            get(handlers::admin_returns_list_json),
+        )
+        .route(
             "/admin/system-accounts",
             get(handlers::system_accounts_page),
         )
@@ -137,12 +141,28 @@ pub fn create_router() -> Router<AppState> {
             get(handlers::refund_payment_form).post(handlers::process_refund_payment),
         )
         .route(
+            "/admin/accounts/{account_id}/contribution-returns/new",
+            get(handlers::contribution_return_form),
+        )
+        .route(
+            "/admin/accounts/{account_id}/contribution-returns",
+            post(handlers::process_contribution_return),
+        )
+        .route(
             "/admin/accounts/{account_id}/refunds/{refund_id}/post",
             post(handlers::admin_post_refund),
         )
         .route(
             "/admin/accounts/{account_id}/refunds/{refund_id}/void",
             post(handlers::admin_void_refund),
+        )
+        .route(
+            "/admin/accounts/{account_id}/contribution-returns/{return_id}/post",
+            post(handlers::admin_post_contribution_return),
+        )
+        .route(
+            "/admin/accounts/{account_id}/contribution-returns/{return_id}/void",
+            post(handlers::admin_void_contribution_return),
         )
         // Static assets (self-hosted so admin UI works offline / on locked-down networks).
         .route("/admin/static/htmx.min.js", get(serve_htmx))

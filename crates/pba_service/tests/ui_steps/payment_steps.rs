@@ -959,3 +959,313 @@ async fn given_payment_with_voided_and_settled_refund(_world: &mut UiWorld) {
     // @todo: implement complex setup for history scenario
     panic!("@todo scenario not yet implemented — tag with @todo to skip");
 }
+
+// ---------------------------------------------------------------------------
+// Contribution return UI steps
+// ---------------------------------------------------------------------------
+
+/// Navigate to the PB account detail page (uses world.account_id, which after
+/// a transfer step points to the PB account).
+#[when("I open the PB account detail page")]
+async fn when_open_pb_account_detail(world: &mut UiWorld) {
+    let account_id = world
+        .account_id
+        .clone()
+        .expect("No PB account ID — run a transfer step first");
+    let url = world.url(&format!("/admin/accounts/{}", account_id));
+    let page = world.ensure_page().await;
+    page.goto(url)
+        .await
+        .expect("Failed to navigate to PB account detail");
+    sleep(Duration::from_millis(400)).await;
+}
+
+/// Navigate directly to the contribution return form for the given funding type.
+#[when(regex = r#"^I open the return form for (\w+)$"#)]
+async fn when_open_contribution_return_form(world: &mut UiWorld, funding_type: String) {
+    let account_id = world
+        .account_id
+        .clone()
+        .expect("No PB account ID — run a transfer step first");
+    let url = world.url(&format!(
+        "/admin/accounts/{}/contribution-returns/new?funding_type={}",
+        account_id, funding_type
+    ));
+    let page = world.ensure_page().await;
+    page.goto(url)
+        .await
+        .expect("Failed to navigate to contribution return form");
+    sleep(Duration::from_millis(400)).await;
+}
+
+/// Click the "Return..." link for the given funding type on the account detail page.
+#[when(regex = r#"^I click "Return\.\.\." for (\w+)$"#)]
+async fn when_click_return_link(world: &mut UiWorld, funding_type: String) {
+    let account_id = world
+        .account_id
+        .clone()
+        .expect("No PB account ID — run a transfer step first");
+    let expected_href = format!(
+        "/admin/accounts/{}/contribution-returns/new?funding_type={}",
+        account_id, funding_type
+    );
+    let page = world.ensure_page().await;
+    let content = page
+        .content()
+        .await
+        .expect("Failed to get page content for Return link");
+    assert!(
+        content.contains(&expected_href),
+        "Return link for funding_type '{}' not found on page. Expected href: {}",
+        funding_type,
+        expected_href
+    );
+    // Navigate to the link URL directly (clicking anchor via JS may race with HTMX)
+    let url = world.url(&format!(
+        "/admin/accounts/{}/contribution-returns/new?funding_type={}",
+        account_id, funding_type
+    ));
+    let page = world.ensure_page().await;
+    page.goto(url)
+        .await
+        .expect("Failed to navigate to contribution return form via Return link");
+    sleep(Duration::from_millis(400)).await;
+}
+
+/// Type the given amount (paisa) into the return form's amount_paisa input.
+#[when(regex = r#"^I enter (\d+) as the return amount$"#)]
+async fn when_enter_return_amount(world: &mut UiWorld, amount: u64) {
+    let page = world.ensure_page().await;
+    // Clear existing value first via JS
+    let clear_js = "document.querySelector(\"input[name='amount_paisa']\").value = '';";
+    page.evaluate(clear_js.to_string()).await.ok();
+    let input = page
+        .find_element("input[name='amount_paisa']")
+        .await
+        .expect("Could not find amount_paisa input on contribution return form");
+    input
+        .click()
+        .await
+        .expect("Failed to click amount_paisa input");
+    input
+        .type_str(&amount.to_string())
+        .await
+        .expect("Failed to type amount_paisa");
+}
+
+/// Select the "Hold as pending" radio on the contribution return form.
+#[when(r#"I select "Hold as pending" mode for return"#)]
+async fn when_select_hold_as_pending_for_return(world: &mut UiWorld) {
+    let page = world.ensure_page().await;
+    let js = "document.querySelector(\"input[name='mode'][value='pending']\").click();";
+    page.evaluate(js.to_string())
+        .await
+        .expect("Failed to select 'Hold as pending' radio on return form");
+}
+
+/// Submit the contribution return form and capture the return correlation_id from the
+/// redirected URL or page content.
+#[when("I submit the contribution return form")]
+async fn when_submit_contribution_return_form(world: &mut UiWorld) {
+    let page = world.ensure_page().await;
+    let submit = page
+        .find_element("button[type='submit']")
+        .await
+        .expect("Could not find submit button on contribution return form");
+    submit.click().await.expect("Failed to click submit");
+    sleep(Duration::from_millis(1200)).await;
+
+    // The server redirects to /admin/transactions/{return_id} on success.
+    // Capture the return id from the URL first.
+    let current_url = world
+        .ensure_page()
+        .await
+        .url()
+        .await
+        .expect("Failed to get URL after return form submit")
+        .unwrap_or_default();
+
+    let re = Regex::new(r"/admin/transactions/([0-9a-f-]{36})").unwrap();
+    if let Some(cap) = re.captures(&current_url) {
+        world.last_return_id = Some(cap[1].to_string());
+        return;
+    }
+
+    // Fall back: scan page content for a transaction link.
+    let content = world
+        .ensure_page()
+        .await
+        .content()
+        .await
+        .expect("Failed to read page content after return form submit");
+    if let Some(cap) = re.captures(&content) {
+        world.last_return_id = Some(cap[1].to_string());
+    }
+}
+
+/// Navigate to the return detail page using the captured last_return_id.
+#[when("I open the return detail page")]
+async fn when_open_return_detail(world: &mut UiWorld) {
+    let return_id = world
+        .last_return_id
+        .clone()
+        .expect("No return ID captured — submit the return form first");
+    let url = world.url(&format!("/admin/transactions/{}", return_id));
+    let page = world.ensure_page().await;
+    page.goto(url)
+        .await
+        .expect("Failed to navigate to return detail page");
+    sleep(Duration::from_millis(400)).await;
+}
+
+/// Click the "Post return" button on the return detail page.
+#[when(r#"I click the Post return button"#)]
+async fn when_click_post_return_button(world: &mut UiWorld) {
+    let return_id = world
+        .last_return_id
+        .clone()
+        .expect("No return ID — submit the return form first");
+    let url = world.url(&format!("/admin/transactions/{}", return_id));
+    let page = world.ensure_page().await;
+    page.goto(url)
+        .await
+        .expect("Failed to navigate to return detail for Post");
+    sleep(Duration::from_millis(400)).await;
+
+    // Submit via JS to avoid confirm() dialog blocking
+    let account_id = world
+        .account_id
+        .clone()
+        .expect("No account ID for Post return");
+    let page = world.ensure_page().await;
+    let js = format!(
+        r#"
+        const forms = Array.from(document.querySelectorAll('form'));
+        const f = forms.find(f => f.action && f.action.includes('/contribution-returns/') && f.action.endsWith('/post'));
+        if (f) {{ f.submit(); }} else {{ throw new Error('Post return form not found for account {}'); }}
+        "#,
+        account_id
+    );
+    page.evaluate(js)
+        .await
+        .expect("Failed to submit Post return form");
+    sleep(Duration::from_millis(800)).await;
+    // Wait for redirect back to transaction detail
+    for _ in 0..20 {
+        sleep(Duration::from_millis(300)).await;
+        let page = world.ensure_page().await;
+        let curr = page
+            .url()
+            .await
+            .expect("Failed to get URL")
+            .unwrap_or_default();
+        if curr.contains("/admin/transactions/") {
+            return;
+        }
+    }
+}
+
+/// Assert the return detail page shows the expected status (case-insensitive).
+#[then(regex = r#"^the return detail page shows status "([^"]+)"$"#)]
+async fn then_return_detail_shows_status(world: &mut UiWorld, expected: String) {
+    // Ensure we are on the return detail page.
+    let return_id = world
+        .last_return_id
+        .clone()
+        .expect("No return ID captured — submit the return form first");
+    let url = world.url(&format!("/admin/transactions/{}", return_id));
+    let page = world.ensure_page().await;
+    page.goto(url)
+        .await
+        .expect("Failed to navigate to return detail");
+    sleep(Duration::from_millis(400)).await;
+
+    let page = world.ensure_page().await;
+    let content = page
+        .content()
+        .await
+        .expect("Failed to read return detail page");
+    assert!(
+        content
+            .to_ascii_lowercase()
+            .contains(&expected.to_ascii_lowercase()),
+        "Expected return detail page to show status '{}'. Page snippet: {}",
+        expected,
+        &content[..content.len().min(2000)]
+    );
+}
+
+/// Assert the contributions panel shows the expected value for a given funding type
+/// and field (contributed / returnable).
+#[then(regex = r#"^the contributions panel shows (\w+) (contributed|returnable) as "([^"]+)"$"#)]
+async fn then_contributions_panel_field(
+    world: &mut UiWorld,
+    funding_type: String,
+    field: String,
+    expected: String,
+) {
+    let page = world.ensure_page().await;
+    let content = page.content().await.expect("Failed to read page content");
+    // The template renders "Trust (sponsor)" or "Third-party" as the Source column.
+    let label = if funding_type == "trust" {
+        "Trust (sponsor)"
+    } else {
+        "Third-party"
+    };
+    assert!(
+        content.contains(label),
+        "Contributions panel label '{}' not found on page. Page snippet: {}",
+        label,
+        &content[..content.len().min(2000)]
+    );
+    assert!(
+        content.contains(&expected),
+        "Expected {} {} '{}' for {} not found on page. Page snippet: {}",
+        funding_type,
+        field,
+        expected,
+        funding_type,
+        &content[..content.len().min(2000)]
+    );
+}
+
+/// Assert the return form shows the funding_type value (in page content).
+#[then(regex = r#"^the return form shows funding_type "([^"]+)"$"#)]
+async fn then_return_form_shows_funding_type(world: &mut UiWorld, expected: String) {
+    let page = world.ensure_page().await;
+    let content = page
+        .content()
+        .await
+        .expect("Failed to read return form page");
+    // The template shows <p><strong>Funding type:</strong> {{ funding_type }}</p>
+    assert!(
+        content.contains(&expected),
+        "Expected funding_type '{}' on return form. Page snippet: {}",
+        expected,
+        &content[..content.len().min(2000)]
+    );
+}
+
+/// Assert the "Post return" button is present on the current page.
+#[then("the Post return button is visible")]
+async fn then_post_return_button_visible(world: &mut UiWorld) {
+    let page = world.ensure_page().await;
+    let content = page.content().await.expect("Failed to read page content");
+    assert!(
+        content.contains("Post return"),
+        "Expected 'Post return' button to be visible. Page snippet: {}",
+        &content[..content.len().min(2000)]
+    );
+}
+
+/// Assert the "Void return" button is present on the current page.
+#[then("the Void return button is visible")]
+async fn then_void_return_button_visible(world: &mut UiWorld) {
+    let page = world.ensure_page().await;
+    let content = page.content().await.expect("Failed to read page content");
+    assert!(
+        content.contains("Void return"),
+        "Expected 'Void return' button to be visible. Page snippet: {}",
+        &content[..content.len().min(2000)]
+    );
+}

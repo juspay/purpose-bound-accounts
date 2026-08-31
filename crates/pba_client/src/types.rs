@@ -19,7 +19,15 @@ pub use crate::types::_funding_type::FundingType;
 
 pub use crate::types::_status::Status;
 
+pub use crate::types::_funding_type_summary::FundingTypeSummary;
+
+pub use crate::types::_allocation_entry::AllocationEntry;
+
+mod _allocation_entry;
+
 mod _funding_type;
+
+mod _funding_type_summary;
 
 mod _mcc_entry;
 

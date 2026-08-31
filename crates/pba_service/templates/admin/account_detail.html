@@ -128,6 +128,50 @@
 </figure>
 {% endif %}
 
+{% if show_contributions_panel %}
+<section class="card">
+    <h2>Contributions</h2>
+    {% if contributions_load_failed %}
+    <div class="error-banner">Contribution data is temporarily unavailable. The figures below are placeholders — refresh to retry.</div>
+    {% endif %}
+    <table>
+        <thead>
+            <tr>
+                <th>Source</th>
+                <th>Contributed</th>
+                <th>Returned</th>
+                <th>Returnable</th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td>Trust (sponsor)</td>
+                <td>{{ trust_contributed_display }}</td>
+                <td>{{ trust_returned_display }}</td>
+                <td>{{ trust_returnable_display }}</td>
+                <td>
+                    {% if trust_returnable_paisa > 0 %}
+                    <a href="{{ prefix }}/admin/accounts/{{ id }}/contribution-returns/new?funding_type=trust">Return...</a>
+                    {% endif %}
+                </td>
+            </tr>
+            <tr>
+                <td>Third-party</td>
+                <td>{{ third_party_contributed_display }}</td>
+                <td>{{ third_party_returned_display }}</td>
+                <td>{{ third_party_returnable_display }}</td>
+                <td>
+                    {% if third_party_returnable_paisa > 0 %}
+                    <a href="{{ prefix }}/admin/accounts/{{ id }}/contribution-returns/new?funding_type=third_party">Return...</a>
+                    {% endif %}
+                </td>
+            </tr>
+        </tbody>
+    </table>
+</section>
+{% endif %}
+
 <h2>Transaction history</h2>
 <div id="transfers" hx-get="{{ prefix }}/admin/accounts/{{ id }}/transfers" hx-trigger="load" hx-swap="innerHTML">
     <article><p class="muted" aria-busy="true">Loading transfers…</p></article>

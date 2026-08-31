@@ -99,6 +99,27 @@ pub struct PbaWorld {
     previous_refund_correlation_id: Option<String>,
     /// Total refunded amount across a concurrent-refund burst
     concurrent_refund_total_amount: Option<i64>,
+    /// Last contribution-return correlation_id
+    last_return_correlation_id: Option<String>,
+    /// Last contribution-return status
+    last_return_status: Option<String>,
+    /// Last contribution-return total amount
+    last_return_amount: Option<i64>,
+    /// Last contribution-return remaining_returnable_after
+    last_return_remaining_after: Option<i64>,
+    /// Last contribution-return allocations count
+    last_return_allocations_count: Option<usize>,
+    /// Last contribution-return per-allocation (original_transaction_id, amount)
+    last_return_allocations: Option<Vec<(String, i64)>>,
+    /// Previous contribution-return correlation_id (snapshot used by idempotency-replay assertion)
+    previous_return_correlation_id: Option<String>,
+    /// Summary read: trust remaining_returnable
+    contribution_summary_trust_remaining: Option<i64>,
+    /// Summary read: third_party remaining_returnable
+    contribution_summary_third_party_remaining: Option<i64>,
+    /// Returns list fetched from /admin/transactions/{id}/returns.json
+    /// Each entry is (return_id, amount_display, status).
+    last_transfer_returns_list: Option<Vec<(String, String, String)>>,
 }
 
 #[derive(Debug, Clone)]
@@ -187,6 +208,16 @@ impl Default for PbaWorld {
             last_refund_status: None,
             previous_refund_correlation_id: None,
             concurrent_refund_total_amount: None,
+            last_return_correlation_id: None,
+            last_return_status: None,
+            last_return_amount: None,
+            last_return_remaining_after: None,
+            last_return_allocations_count: None,
+            last_return_allocations: None,
+            previous_return_correlation_id: None,
+            contribution_summary_trust_remaining: None,
+            contribution_summary_third_party_remaining: None,
+            last_transfer_returns_list: None,
         }
     }
 }

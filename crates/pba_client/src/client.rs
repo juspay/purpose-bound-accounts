@@ -155,6 +155,8 @@ mod get_pb_account;
 
 mod get_pb_account_balance;
 
+mod get_pb_account_contribution_summary;
+
 mod get_purpose_type;
 
 mod list_all_transactions;
@@ -179,11 +181,15 @@ mod post_normal_account_deposit;
 
 mod post_normal_account_transfer;
 
+mod post_pb_account_contribution_return;
+
 mod post_pb_account_deposit;
 
 mod post_pb_account_refund;
 
 mod refund_pb_account_payment;
+
+mod return_pb_account_contribution;
 
 mod reverse_normal_account_transfer;
 
@@ -200,6 +206,8 @@ mod void_deposit;
 mod void_normal_account_deposit;
 
 mod void_normal_account_transfer;
+
+mod void_pb_account_contribution_return;
 
 mod void_pb_account_deposit;
 

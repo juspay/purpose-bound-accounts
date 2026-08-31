@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+{% block title %}Return contribution{% endblock %}
+{% block content %}
+<section class="card">
+    <h2>Return contribution</h2>
+    {% if let Some(err) = error %}
+    <div class="error-banner">{{ err }}</div>
+    {% endif %}
+    <p><strong>Account:</strong> {{ account_id_short }} ({{ account_id }})</p>
+    <p><strong>Funding type:</strong> {{ funding_type }}</p>
+    <p><strong>Returnable:</strong> {{ remaining_returnable_display }}</p>
+
+    <form method="post" action="{{ prefix }}/admin/accounts/{{ account_id }}/contribution-returns">
+        <input type="hidden" name="funding_type" value="{{ funding_type }}">
+
+        <label>
+            Amount (paisa)
+            <input type="number" name="amount_paisa" min="1" max="{{ remaining_returnable_paisa }}" required>
+        </label>
+
+        <fieldset>
+            <legend>Mode</legend>
+            <label><input type="radio" name="mode" value="settle" checked> Settle now</label>
+            <label><input type="radio" name="mode" value="pending"> Hold as pending</label>
+        </fieldset>
+
+        <label>
+            Timeout (seconds, optional)
+            <input type="number" name="timeout_seconds" min="1" placeholder="default">
+        </label>
+
+        <label>
+            Description
+            <input type="text" name="description">
+        </label>
+
+        <label>
+            Gateway ref
+            <input type="text" name="gateway_ref">
+        </label>
+
+        <button type="submit">Submit return</button>
+        <a href="{{ prefix }}/admin/accounts/{{ account_id }}">Cancel</a>
+    </form>
+</section>
+{% endblock %}

@@ -63,6 +63,22 @@ pub fn protected_router() -> Router<AppState> {
             post(handlers::pb::void_refund),
         )
         .route(
+            "/pb-accounts/{account_id}/contribution-returns",
+            post(handlers::pb::return_contribution),
+        )
+        .route(
+            "/pb-accounts/{account_id}/contribution-returns/{return_id}/post",
+            post(handlers::pb::post_contribution_return),
+        )
+        .route(
+            "/pb-accounts/{account_id}/contribution-returns/{return_id}/void",
+            post(handlers::pb::void_contribution_return),
+        )
+        .route(
+            "/pb-accounts/{account_id}/contributions/summary",
+            get(handlers::pb::get_contribution_summary),
+        )
+        .route(
             "/pb-accounts/{account_id}/withdrawals",
             post(handlers::pb::withdraw),
         )
