@@ -27,6 +27,10 @@ pub struct AppConfig {
     pub auth_enabled: bool,
     pub path_prefix: String,
     pub db_migration_mode: MigrationMode,
+    /// When enabled, PB accounts may be created without origin bank details and
+    /// deposits may pass `funding_type = "self"` explicitly. Defaults to `false`
+    /// (origin details required; explicit `self` rejected).
+    pub optional_origin_enabled: bool,
 }
 
 impl AppConfig {
@@ -94,6 +98,10 @@ impl AppConfig {
             .unwrap_or_else(|_| "true".to_string())
             .parse::<bool>()
             .unwrap_or(true);
+        let optional_origin_enabled = std::env::var("PBA_OPTIONAL_ORIGIN_ENABLED")
+            .unwrap_or_else(|_| "false".to_string())
+            .parse::<bool>()
+            .unwrap_or(false);
 
         let db_migration_mode = match std::env::var("DB_MIGRATION_MODE")
             .unwrap_or_else(|_| "none".to_string())
@@ -131,6 +139,7 @@ impl AppConfig {
             auth_enabled,
             path_prefix,
             db_migration_mode,
+            optional_origin_enabled,
         }
     }
 }

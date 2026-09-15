@@ -76,7 +76,6 @@ impl CreateAccountInputBuilder {
         &self.purpose_code
     }
     #[allow(missing_docs)] // documentation missing in model
-    /// This field is required.
     pub fn origin_ifsc(mut self, input: impl ::std::convert::Into<::std::string::String>) -> Self {
         self.origin_ifsc = ::std::option::Option::Some(input.into());
         self
@@ -90,7 +89,6 @@ impl CreateAccountInputBuilder {
         &self.origin_ifsc
     }
     #[allow(missing_docs)] // documentation missing in model
-    /// This field is required.
     pub fn origin_account_number(mut self, input: impl ::std::convert::Into<::std::string::String>) -> Self {
         self.origin_account_number = ::std::option::Option::Some(input.into());
         self

@@ -21,8 +21,16 @@ async fn account_has_balances(world: &mut PbaWorld, self_amount: i64, others_amo
             .client
             .deposit()
             .account_id(&account_id)
-            .source_ifsc(account.origin_ifsc())
-            .source_account_number(account.origin_account_number())
+            .source_ifsc(
+                account
+                    .origin_ifsc()
+                    .expect("account has no origin IFSC to deposit from"),
+            )
+            .source_account_number(
+                account
+                    .origin_account_number()
+                    .expect("account has no origin account number to deposit from"),
+            )
             .amount(self_amount)
             .send()
             .await

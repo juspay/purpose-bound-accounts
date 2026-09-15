@@ -11,9 +11,9 @@ pub struct UpdatePbAccountStatusOutput  {
     #[allow(missing_docs)] // documentation missing in model
     pub purpose_code: ::std::string::String,
     #[allow(missing_docs)] // documentation missing in model
-    pub origin_ifsc: ::std::string::String,
+    pub origin_ifsc: ::std::option::Option<::std::string::String>,
     #[allow(missing_docs)] // documentation missing in model
-    pub origin_account_number: ::std::string::String,
+    pub origin_account_number: ::std::option::Option<::std::string::String>,
     #[allow(missing_docs)] // documentation missing in model
     pub vpa: ::std::option::Option<::std::string::String>,
     #[allow(missing_docs)] // documentation missing in model
@@ -43,12 +43,12 @@ impl  UpdatePbAccountStatusOutput  {
         use std::ops::Deref; self.purpose_code.deref()
     }
     #[allow(missing_docs)] // documentation missing in model
-    pub fn origin_ifsc(&self) -> &str {
-        use std::ops::Deref; self.origin_ifsc.deref()
+    pub fn origin_ifsc(&self) -> ::std::option::Option<&str> {
+        self.origin_ifsc.as_deref()
     }
     #[allow(missing_docs)] // documentation missing in model
-    pub fn origin_account_number(&self) -> &str {
-        use std::ops::Deref; self.origin_account_number.deref()
+    pub fn origin_account_number(&self) -> ::std::option::Option<&str> {
+        self.origin_account_number.as_deref()
     }
     #[allow(missing_docs)] // documentation missing in model
     pub fn vpa(&self) -> ::std::option::Option<&str> {
@@ -147,7 +147,6 @@ impl UpdatePbAccountStatusOutputBuilder {
         &self.purpose_code
     }
     #[allow(missing_docs)] // documentation missing in model
-    /// This field is required.
     pub fn origin_ifsc(mut self, input: impl ::std::convert::Into<::std::string::String>) -> Self {
         self.origin_ifsc = ::std::option::Option::Some(input.into());
         self
@@ -161,7 +160,6 @@ impl UpdatePbAccountStatusOutputBuilder {
         &self.origin_ifsc
     }
     #[allow(missing_docs)] // documentation missing in model
-    /// This field is required.
     pub fn origin_account_number(mut self, input: impl ::std::convert::Into<::std::string::String>) -> Self {
         self.origin_account_number = ::std::option::Option::Some(input.into());
         self
@@ -274,8 +272,6 @@ impl UpdatePbAccountStatusOutputBuilder {
     /// - [`id`](crate::operation::update_pb_account_status::builders::UpdatePbAccountStatusOutputBuilder::id)
     /// - [`holder_id`](crate::operation::update_pb_account_status::builders::UpdatePbAccountStatusOutputBuilder::holder_id)
     /// - [`purpose_code`](crate::operation::update_pb_account_status::builders::UpdatePbAccountStatusOutputBuilder::purpose_code)
-    /// - [`origin_ifsc`](crate::operation::update_pb_account_status::builders::UpdatePbAccountStatusOutputBuilder::origin_ifsc)
-    /// - [`origin_account_number`](crate::operation::update_pb_account_status::builders::UpdatePbAccountStatusOutputBuilder::origin_account_number)
     /// - [`kyc_tier`](crate::operation::update_pb_account_status::builders::UpdatePbAccountStatusOutputBuilder::kyc_tier)
     /// - [`status`](crate::operation::update_pb_account_status::builders::UpdatePbAccountStatusOutputBuilder::status)
     /// - [`created_at`](crate::operation::update_pb_account_status::builders::UpdatePbAccountStatusOutputBuilder::created_at)
@@ -299,14 +295,8 @@ impl UpdatePbAccountStatusOutputBuilder {
                     )?
                 ,
                 origin_ifsc: self.origin_ifsc
-                    .ok_or_else(||
-                        ::aws_smithy_types::error::operation::BuildError::missing_field("origin_ifsc", "origin_ifsc was not specified but it is required when building UpdatePbAccountStatusOutput")
-                    )?
                 ,
                 origin_account_number: self.origin_account_number
-                    .ok_or_else(||
-                        ::aws_smithy_types::error::operation::BuildError::missing_field("origin_account_number", "origin_account_number was not specified but it is required when building UpdatePbAccountStatusOutput")
-                    )?
                 ,
                 vpa: self.vpa
                 ,

@@ -226,8 +226,8 @@ pub async fn create_account(
         .create_account(
             holder_id,
             &form.purpose_code,
-            &origin_ifsc,
-            &origin_account_number,
+            Some(&origin_ifsc),
+            Some(&origin_account_number),
         )
         .await
     {
@@ -374,8 +374,14 @@ pub async fn account_detail(
         purpose_code: account.purpose_code,
         status: status_str,
         status_class,
-        origin_ifsc: account.origin_ifsc.to_string(),
-        origin_account_number: account.origin_account_number.to_string(),
+        origin_ifsc: account
+            .origin_ifsc
+            .map(|v| v.to_string())
+            .unwrap_or_else(|| "—".to_string()),
+        origin_account_number: account
+            .origin_account_number
+            .map(|v| v.to_string())
+            .unwrap_or_else(|| "—".to_string()),
         vpa: account.vpa.unwrap_or_else(|| "N/A".to_string()),
         self_balance: fmt(balance.self_contribution),
         others_balance: fmt(balance.others_contribution),

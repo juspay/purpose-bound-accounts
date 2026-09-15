@@ -2126,8 +2126,6 @@
                 },
                 "required": [
                     "holder_id",
-                    "origin_account_number",
-                    "origin_ifsc",
                     "purpose_code"
                 ]
             },
@@ -2181,8 +2179,6 @@
                     "holder_id",
                     "id",
                     "kyc_tier",
-                    "origin_account_number",
-                    "origin_ifsc",
                     "purpose_code",
                     "status",
                     "updated_at"
@@ -2274,8 +2270,6 @@
                 },
                 "required": [
                     "holder_id",
-                    "origin_account_number",
-                    "origin_ifsc",
                     "purpose_code"
                 ]
             },
@@ -2329,8 +2323,6 @@
                     "holder_id",
                     "id",
                     "kyc_tier",
-                    "origin_account_number",
-                    "origin_ifsc",
                     "purpose_code",
                     "status",
                     "updated_at"
@@ -2571,7 +2563,8 @@
                 "description": "Funding source type for deposits.",
                 "enum": [
                     "trust",
-                    "third_party"
+                    "third_party",
+                    "self"
                 ]
             },
             "GetAccountResponseContent": {
@@ -2624,8 +2617,6 @@
                     "holder_id",
                     "id",
                     "kyc_tier",
-                    "origin_account_number",
-                    "origin_ifsc",
                     "purpose_code",
                     "status",
                     "updated_at"
@@ -2825,8 +2816,6 @@
                     "holder_id",
                     "id",
                     "kyc_tier",
-                    "origin_account_number",
-                    "origin_ifsc",
                     "purpose_code",
                     "status",
                     "updated_at"
@@ -3913,8 +3902,6 @@
                     "holder_id",
                     "id",
                     "kyc_tier",
-                    "origin_account_number",
-                    "origin_ifsc",
                     "purpose_code",
                     "status",
                     "updated_at"
@@ -4043,8 +4030,6 @@
                     "holder_id",
                     "id",
                     "kyc_tier",
-                    "origin_account_number",
-                    "origin_ifsc",
                     "purpose_code",
                     "status",
                     "updated_at"

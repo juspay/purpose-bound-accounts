@@ -87,7 +87,7 @@ impl std::fmt::Display for AppError {
             Self::TransactionNotPending(id) => {
                 write!(f, "Transaction is not in pending state: {id}")
             }
-            Self::FundingTypeRequired => write!(f, "funding_type is required for non-origin deposits (must be 'trust' or 'third_party')"),
+            Self::FundingTypeRequired => write!(f, "funding_type is required for non-origin deposits (must be 'third_party', or 'self' when self-funding is enabled)"),
             Self::TrustDepositRequiresTransfer => write!(
                 f,
                 "Trust-funded deposits to PB accounts have been removed. Use POST /normal-accounts/{{id}}/transfers instead."

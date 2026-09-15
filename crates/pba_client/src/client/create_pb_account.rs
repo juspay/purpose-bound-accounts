@@ -5,14 +5,14 @@ impl super::Client {
                             /// - The fluent builder is configurable:
     ///   - [`holder_id(impl Into<String>)`](crate::operation::create_pb_account::builders::CreatePBAccountFluentBuilder::holder_id) / [`set_holder_id(Option<String>)`](crate::operation::create_pb_account::builders::CreatePBAccountFluentBuilder::set_holder_id):<br>required: **true**<br>(undocumented)<br>
     ///   - [`purpose_code(impl Into<String>)`](crate::operation::create_pb_account::builders::CreatePBAccountFluentBuilder::purpose_code) / [`set_purpose_code(Option<String>)`](crate::operation::create_pb_account::builders::CreatePBAccountFluentBuilder::set_purpose_code):<br>required: **true**<br>(undocumented)<br>
-    ///   - [`origin_ifsc(impl Into<String>)`](crate::operation::create_pb_account::builders::CreatePBAccountFluentBuilder::origin_ifsc) / [`set_origin_ifsc(Option<String>)`](crate::operation::create_pb_account::builders::CreatePBAccountFluentBuilder::set_origin_ifsc):<br>required: **true**<br>(undocumented)<br>
-    ///   - [`origin_account_number(impl Into<String>)`](crate::operation::create_pb_account::builders::CreatePBAccountFluentBuilder::origin_account_number) / [`set_origin_account_number(Option<String>)`](crate::operation::create_pb_account::builders::CreatePBAccountFluentBuilder::set_origin_account_number):<br>required: **true**<br>(undocumented)<br>
+    ///   - [`origin_ifsc(impl Into<String>)`](crate::operation::create_pb_account::builders::CreatePBAccountFluentBuilder::origin_ifsc) / [`set_origin_ifsc(Option<String>)`](crate::operation::create_pb_account::builders::CreatePBAccountFluentBuilder::set_origin_ifsc):<br>required: **false**<br>(undocumented)<br>
+    ///   - [`origin_account_number(impl Into<String>)`](crate::operation::create_pb_account::builders::CreatePBAccountFluentBuilder::origin_account_number) / [`set_origin_account_number(Option<String>)`](crate::operation::create_pb_account::builders::CreatePBAccountFluentBuilder::set_origin_account_number):<br>required: **false**<br>(undocumented)<br>
                             /// - On success, responds with [`CreatePbAccountOutput`](crate::operation::create_pb_account::CreatePbAccountOutput) with field(s):
     ///   - [`id(String)`](crate::operation::create_pb_account::CreatePbAccountOutput::id): (undocumented)
     ///   - [`holder_id(String)`](crate::operation::create_pb_account::CreatePbAccountOutput::holder_id): (undocumented)
     ///   - [`purpose_code(String)`](crate::operation::create_pb_account::CreatePbAccountOutput::purpose_code): (undocumented)
-    ///   - [`origin_ifsc(String)`](crate::operation::create_pb_account::CreatePbAccountOutput::origin_ifsc): (undocumented)
-    ///   - [`origin_account_number(String)`](crate::operation::create_pb_account::CreatePbAccountOutput::origin_account_number): (undocumented)
+    ///   - [`origin_ifsc(Option<String>)`](crate::operation::create_pb_account::CreatePbAccountOutput::origin_ifsc): (undocumented)
+    ///   - [`origin_account_number(Option<String>)`](crate::operation::create_pb_account::CreatePbAccountOutput::origin_account_number): (undocumented)
     ///   - [`vpa(Option<String>)`](crate::operation::create_pb_account::CreatePbAccountOutput::vpa): (undocumented)
     ///   - [`virtual_ifsc(Option<String>)`](crate::operation::create_pb_account::CreatePbAccountOutput::virtual_ifsc): (undocumented)
     ///   - [`virtual_account_number(Option<String>)`](crate::operation::create_pb_account::CreatePbAccountOutput::virtual_account_number): (undocumented)

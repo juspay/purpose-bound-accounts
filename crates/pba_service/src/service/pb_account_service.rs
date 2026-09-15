@@ -24,8 +24,8 @@ impl PbAccountService {
         &self,
         holder_id: &str,
         purpose_code: &str,
-        origin_ifsc: &Ifsc,
-        origin_account_number: &AccountNumber,
+        origin_ifsc: Option<&Ifsc>,
+        origin_account_number: Option<&AccountNumber>,
     ) -> Result<PurposeBoundAccount, AppError> {
         // Validate purpose code exists
         self.account_repo.get_purpose_type(purpose_code).await?;

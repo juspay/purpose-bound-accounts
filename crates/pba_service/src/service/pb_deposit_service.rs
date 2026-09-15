@@ -20,6 +20,9 @@ pub struct PbDepositService {
     pub ledger_repo: Arc<LedgerRepo>,
     pub transaction_repo: Arc<TransactionRepo>,
     pub default_timeout_seconds: u32,
+    /// When enabled, an explicit `funding_type = "self"` is honored (skipping
+    /// origin matching). When disabled, `self` is rejected as an input.
+    pub optional_origin_enabled: bool,
 }
 
 impl PbDepositService {
@@ -28,12 +31,14 @@ impl PbDepositService {
         ledger_repo: Arc<LedgerRepo>,
         transaction_repo: Arc<TransactionRepo>,
         default_timeout_seconds: u32,
+        optional_origin_enabled: bool,
     ) -> Self {
         Self {
             account_repo,
             ledger_repo,
             transaction_repo,
             default_timeout_seconds,
+            optional_origin_enabled,
         }
     }
 
@@ -75,17 +80,10 @@ impl PbDepositService {
             return Err(AppError::PbAccountNotActive(account_id.to_string()));
         }
 
-        let is_self = account.is_origin_source(source_ifsc, source_account_number);
-
-        let (pool, resolved_funding_type, debit_sentinel) = if is_self {
-            ("self", "self", SELF_FUNDING_SOURCE_TB_ID)
-        } else {
-            match funding_type {
-                Some("trust") => ("others", "trust", TRUST_FUNDING_SOURCE_TB_ID),
-                Some("third_party") => ("others", "third_party", THIRD_PARTY_FUNDING_SOURCE_TB_ID),
-                _ => return Err(AppError::FundingTypeRequired),
-            }
-        };
+        let is_origin_match = account.is_origin_source(source_ifsc, source_account_number);
+        let (pool, resolved_funding_type, debit_sentinel) =
+            resolve_funding(self.optional_origin_enabled, is_origin_match, funding_type)?;
+        let is_self = pool == "self";
 
         let credit_tb_id = if is_self {
             account.tb_self_account_id
@@ -254,5 +252,79 @@ impl PbDepositService {
 
         tracing::info!(deposit_id = %deposit_id, account_id = %account_id, amount = txn.amount, "Pending deposit voided");
         Ok(updated)
+    }
+}
+
+/// Resolves the `(pool, funding_type, debit sentinel)` for a deposit.
+///
+/// An explicit `funding_type = "self"` is honored (bypassing origin matching)
+/// only when `optional_origin_enabled` is on; otherwise it falls through to the
+/// `FundingTypeRequired` error. A source that matches the account origin is
+/// always classified as self, preserving the legacy behavior.
+fn resolve_funding(
+    optional_origin_enabled: bool,
+    is_origin_match: bool,
+    funding_type: Option<&str>,
+) -> Result<(&'static str, &'static str, u128), AppError> {
+    let explicit_self = optional_origin_enabled && funding_type == Some("self");
+    if explicit_self || is_origin_match {
+        return Ok(("self", "self", SELF_FUNDING_SOURCE_TB_ID));
+    }
+    match funding_type {
+        Some("trust") => Ok(("others", "trust", TRUST_FUNDING_SOURCE_TB_ID)),
+        Some("third_party") => Ok(("others", "third_party", THIRD_PARTY_FUNDING_SOURCE_TB_ID)),
+        _ => Err(AppError::FundingTypeRequired),
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn origin_match_is_always_self() {
+        // Regardless of the flag or funding_type, an origin match => self pool.
+        for flag in [false, true] {
+            let (pool, ft, sentinel) = resolve_funding(flag, true, None).unwrap();
+            assert_eq!(
+                (pool, ft, sentinel),
+                ("self", "self", SELF_FUNDING_SOURCE_TB_ID)
+            );
+        }
+    }
+
+    #[test]
+    fn explicit_self_honored_only_when_flag_on() {
+        // Flag on: explicit self is trusted even without an origin match.
+        let (pool, ft, sentinel) = resolve_funding(true, false, Some("self")).unwrap();
+        assert_eq!(
+            (pool, ft, sentinel),
+            ("self", "self", SELF_FUNDING_SOURCE_TB_ID)
+        );
+
+        // Flag off: explicit self is rejected (no origin match, no valid type).
+        assert!(matches!(
+            resolve_funding(false, false, Some("self")),
+            Err(AppError::FundingTypeRequired)
+        ));
+    }
+
+    #[test]
+    fn third_party_goes_to_others() {
+        for flag in [false, true] {
+            let (pool, ft, sentinel) = resolve_funding(flag, false, Some("third_party")).unwrap();
+            assert_eq!(
+                (pool, ft, sentinel),
+                ("others", "third_party", THIRD_PARTY_FUNDING_SOURCE_TB_ID)
+            );
+        }
+    }
+
+    #[test]
+    fn missing_funding_type_without_origin_is_rejected() {
+        assert!(matches!(
+            resolve_funding(true, false, None),
+            Err(AppError::FundingTypeRequired)
+        ));
     }
 }

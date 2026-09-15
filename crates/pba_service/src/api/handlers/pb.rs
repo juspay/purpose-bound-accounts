@@ -15,20 +15,45 @@ use crate::AppState;
 
 // ── Account ──
 
+/// Origin bank details are mandatory unless the optional-origin feature is on.
+/// Returns `true` when the request must be rejected for missing origin details.
+fn origin_details_missing_but_required(
+    optional_origin_enabled: bool,
+    origin_ifsc: Option<&Ifsc>,
+    origin_account_number: Option<&AccountNumber>,
+) -> bool {
+    !optional_origin_enabled && (origin_ifsc.is_none() || origin_account_number.is_none())
+}
+
 pub async fn create_account(
     State(state): State<AppState>,
     Json(req): Json<CreateAccountRequest>,
 ) -> Result<(axum::http::StatusCode, Json<AccountResponse>), AppError> {
-    let origin_ifsc = Ifsc::parse(&req.origin_ifsc)?;
-    let origin_account_number = AccountNumber::parse(&req.origin_account_number)?;
+    let origin_ifsc = req.origin_ifsc.as_deref().map(Ifsc::parse).transpose()?;
+    let origin_account_number = req
+        .origin_account_number
+        .as_deref()
+        .map(AccountNumber::parse)
+        .transpose()?;
+
+    // Unless the feature flag is on, origin bank details remain mandatory.
+    if origin_details_missing_but_required(
+        state.optional_origin_enabled,
+        origin_ifsc.as_ref(),
+        origin_account_number.as_ref(),
+    ) {
+        return Err(AppError::Validation(
+            "origin_ifsc and origin_account_number are required".to_string(),
+        ));
+    }
 
     let account = state
         .pb_account_service
         .create_account(
             &req.holder_id,
             &req.purpose_code,
-            &origin_ifsc,
-            &origin_account_number,
+            origin_ifsc.as_ref(),
+            origin_account_number.as_ref(),
         )
         .await?;
 
@@ -371,4 +396,45 @@ pub async fn swagger_ui() -> axum::response::Html<&'static str> {
 </body>
 </html>"##,
     )
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn ifsc() -> Ifsc {
+        Ifsc::parse("HDFC0001234").unwrap()
+    }
+    fn account_number() -> AccountNumber {
+        AccountNumber::parse("1234567890").unwrap()
+    }
+
+    #[test]
+    fn flag_off_requires_both_origin_fields() {
+        let i = ifsc();
+        let a = account_number();
+        // Both present: allowed.
+        assert!(!origin_details_missing_but_required(
+            false,
+            Some(&i),
+            Some(&a)
+        ));
+        // Any missing: rejected.
+        assert!(origin_details_missing_but_required(false, None, Some(&a)));
+        assert!(origin_details_missing_but_required(false, Some(&i), None));
+        assert!(origin_details_missing_but_required(false, None, None));
+    }
+
+    #[test]
+    fn flag_on_allows_missing_origin() {
+        let i = ifsc();
+        let a = account_number();
+        assert!(!origin_details_missing_but_required(true, None, None));
+        assert!(!origin_details_missing_but_required(true, Some(&i), None));
+        assert!(!origin_details_missing_but_required(
+            true,
+            Some(&i),
+            Some(&a)
+        ));
+    }
 }

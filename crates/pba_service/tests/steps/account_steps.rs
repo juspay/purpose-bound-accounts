@@ -60,6 +60,75 @@ async fn create_account_when(
     }
 }
 
+#[given(regex = r#"^a "([^"]*)" account exists for holder "([^"]*)" without origin bank details$"#)]
+async fn create_account_without_origin_given(
+    world: &mut PbaWorld,
+    purpose: String,
+    holder_id: String,
+) {
+    let result = world
+        .client
+        .create_account()
+        .holder_id(&holder_id)
+        .purpose_code(&purpose)
+        .send()
+        .await;
+    match result {
+        Ok(output) => {
+            world.account_id = Some(output.id().to_string());
+            world.last_account_status = Some(output.status().to_string());
+        }
+        Err(e) => panic!("Failed to create account without origin: {e:?}"),
+    }
+}
+
+#[when(
+    regex = r#"^I create a "([^"]*)" account for holder "([^"]*)" without origin bank details$"#
+)]
+async fn create_account_without_origin_when(
+    world: &mut PbaWorld,
+    purpose: String,
+    holder_id: String,
+) {
+    let result = world
+        .client
+        .create_account()
+        .holder_id(&holder_id)
+        .purpose_code(&purpose)
+        .send()
+        .await;
+    match result {
+        Ok(output) => {
+            world.account_id = Some(output.id().to_string());
+            world.last_account_status = Some(output.status().to_string());
+            world.last_error = None;
+        }
+        Err(e) => panic!("Failed to create account without origin: {e:?}"),
+    }
+}
+
+#[then("the account should have no origin bank details")]
+async fn account_has_no_origin(world: &mut PbaWorld) {
+    let account_id = world.account_id.as_ref().expect("No account ID");
+    let output = world
+        .client
+        .get_account()
+        .account_id(account_id)
+        .send()
+        .await
+        .expect("Failed to get account");
+    assert!(
+        output.origin_ifsc().is_none(),
+        "Expected no origin IFSC, got {:?}",
+        output.origin_ifsc()
+    );
+    assert!(
+        output.origin_account_number().is_none(),
+        "Expected no origin account number, got {:?}",
+        output.origin_account_number()
+    );
+}
+
 #[then("the account should be created successfully")]
 async fn account_created(world: &mut PbaWorld) {
     assert!(

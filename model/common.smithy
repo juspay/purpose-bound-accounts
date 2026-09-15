@@ -43,6 +43,7 @@ string TransactionDirection
 @enum([
     { value: "trust", name: "TRUST" },
     { value: "third_party", name: "THIRD_PARTY" },
+    { value: "self", name: "SELF" },
 ])
 string FundingType
 
