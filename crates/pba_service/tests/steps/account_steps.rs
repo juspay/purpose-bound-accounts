@@ -117,15 +117,15 @@ async fn account_has_no_origin(world: &mut PbaWorld) {
         .send()
         .await
         .expect("Failed to get account");
+    // Note: do not format the origin values into the assertion messages —
+    // account numbers are sensitive and must not be written to logs.
     assert!(
         output.origin_ifsc().is_none(),
-        "Expected no origin IFSC, got {:?}",
-        output.origin_ifsc()
+        "Expected the account to have no origin IFSC"
     );
     assert!(
         output.origin_account_number().is_none(),
-        "Expected no origin account number, got {:?}",
-        output.origin_account_number()
+        "Expected the account to have no origin account number"
     );
 }
 
