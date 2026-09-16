@@ -38,11 +38,11 @@
                 </label>
             </div>
             <div class="grid">
-                <label>Origin IFSC
-                    <input type="text" name="origin_ifsc" placeholder="HDFC0001234" required>
+                <label>Origin IFSC{% if optional_origin_enabled %} <small>(optional)</small>{% endif %}
+                    <input type="text" name="origin_ifsc" placeholder="HDFC0001234"{% if !optional_origin_enabled %} required{% endif %}>
                 </label>
-                <label>Origin Account Number
-                    <input type="text" name="origin_account_number" placeholder="1234567890" required>
+                <label>Origin Account Number{% if optional_origin_enabled %} <small>(optional)</small>{% endif %}
+                    <input type="text" name="origin_account_number" placeholder="1234567890"{% if !optional_origin_enabled %} required{% endif %}>
                 </label>
             </div>
             <button type="submit">Create account</button>
