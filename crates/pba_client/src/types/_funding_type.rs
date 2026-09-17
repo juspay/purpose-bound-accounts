@@ -12,6 +12,7 @@
 /// ```text
 /// # let fundingtype = unimplemented!();
 /// match fundingtype {
+///     FundingType::SelfValue => { /* ... */ },
 ///     FundingType::ThirdParty => { /* ... */ },
 ///     FundingType::Trust => { /* ... */ },
 ///     other @ _ if other.as_str() == "NewFeature" => { /* handles a case for `NewFeature` */ },
@@ -37,9 +38,14 @@
 /// - It might inadvertently shadow other intended match arms.
 /// 
 /// Funding source type for deposits.
+///
+/// _Note: `FundingType::Self` has been renamed to `::SelfValue`._
 #[non_exhaustive]
 #[derive(::std::clone::Clone, ::std::cmp::Eq, ::std::cmp::Ord, ::std::cmp::PartialEq, ::std::cmp::PartialOrd, ::std::fmt::Debug, ::std::hash::Hash)]
 pub enum FundingType {
+    ///
+    /// _Note: `::Self` has been renamed to `::SelfValue`._
+    SelfValue,
     #[allow(missing_docs)] // documentation missing in model
     ThirdParty,
     #[allow(missing_docs)] // documentation missing in model
@@ -51,7 +57,8 @@ pub enum FundingType {
 impl ::std::convert::From<&str> for FundingType {
                     fn from(s: &str) -> Self {
                         match s {
-                            "third_party" => FundingType::ThirdParty,
+                            "self" => FundingType::SelfValue,
+"third_party" => FundingType::ThirdParty,
 "trust" => FundingType::Trust,
 other => FundingType::Unknown(crate::primitives::sealed_enum_unknown::UnknownVariantValue(other.to_owned()))
                         }
@@ -68,6 +75,7 @@ impl FundingType {
                 /// Returns the `&str` value of the enum member.
                 pub fn as_str(&self) -> &str {
                     match self {
+    FundingType::SelfValue => "self",
     FundingType::ThirdParty => "third_party",
     FundingType::Trust => "trust",
     FundingType::Unknown(value) => value.as_str()
@@ -75,7 +83,7 @@ impl FundingType {
                 }
                 /// Returns all the `&str` representations of the enum members.
                 pub const fn values() -> &'static [&'static str] {
-                    &["third_party", "trust"]
+                    &["self", "third_party", "trust"]
                 }
             }
 impl ::std::convert::AsRef<str> for FundingType {
@@ -98,7 +106,8 @@ impl FundingType {
 impl ::std::fmt::Display for FundingType {
                         fn fmt(&self, f: &mut ::std::fmt::Formatter) -> ::std::fmt::Result {
                             match self {
-                                FundingType::ThirdParty => write!(f, "third_party"),
+                                FundingType::SelfValue => write!(f, "self"),
+FundingType::ThirdParty => write!(f, "third_party"),
 FundingType::Trust => write!(f, "trust"),
 FundingType::Unknown(value) => write!(f, "{}", value)
                             }

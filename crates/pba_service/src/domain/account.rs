@@ -40,8 +40,8 @@ pub struct PurposeBoundAccount {
     pub id: Uuid,
     pub holder_id: String,
     pub purpose_code: String,
-    pub origin_ifsc: Ifsc,
-    pub origin_account_number: AccountNumber,
+    pub origin_ifsc: Option<Ifsc>,
+    pub origin_account_number: Option<AccountNumber>,
     pub vpa: Option<String>,
     pub virtual_ifsc: Option<Ifsc>,
     pub virtual_account_number: Option<AccountNumber>,
@@ -55,9 +55,17 @@ pub struct PurposeBoundAccount {
 
 impl PurposeBoundAccount {
     /// Check if a deposit source matches the origin bank details.
+    ///
+    /// Returns `false` when origin details are absent — an account with no
+    /// origin can never be matched as a self source, so callers must pass an
+    /// explicit `funding_type` (e.g. `self`) to reach the self pool.
     pub fn is_origin_source(&self, source_ifsc: &str, source_account_number: &str) -> bool {
-        self.origin_ifsc.as_str() == source_ifsc
-            && self.origin_account_number.as_str() == source_account_number
+        match (&self.origin_ifsc, &self.origin_account_number) {
+            (Some(ifsc), Some(account_number)) => {
+                ifsc.as_str() == source_ifsc && account_number.as_str() == source_account_number
+            }
+            _ => false,
+        }
     }
 }
 
@@ -96,8 +104,8 @@ mod tests {
             id: Uuid::now_v7(),
             holder_id: "test-holder".to_string(),
             purpose_code: "health".to_string(),
-            origin_ifsc: Ifsc::parse("HDFC0001234").unwrap(),
-            origin_account_number: AccountNumber::parse("1234567890").unwrap(),
+            origin_ifsc: Some(Ifsc::parse("HDFC0001234").unwrap()),
+            origin_account_number: Some(AccountNumber::parse("1234567890").unwrap()),
             vpa: None,
             virtual_ifsc: None,
             virtual_account_number: None,
@@ -112,5 +120,27 @@ mod tests {
         assert!(account.is_origin_source("HDFC0001234", "1234567890"));
         assert!(!account.is_origin_source("ICIC0005678", "1234567890"));
         assert!(!account.is_origin_source("HDFC0001234", "9999999999"));
+    }
+
+    #[test]
+    fn origin_source_never_matches_when_origin_absent() {
+        let account = PurposeBoundAccount {
+            id: Uuid::now_v7(),
+            holder_id: "test-holder".to_string(),
+            purpose_code: "health".to_string(),
+            origin_ifsc: None,
+            origin_account_number: None,
+            vpa: None,
+            virtual_ifsc: None,
+            virtual_account_number: None,
+            tb_self_account_id: 1,
+            tb_others_account_id: 2,
+            kyc_tier: "minimum".to_string(),
+            status: AccountStatus::Active,
+            created_at: Utc::now(),
+            updated_at: Utc::now(),
+        };
+
+        assert!(!account.is_origin_source("HDFC0001234", "1234567890"));
     }
 }

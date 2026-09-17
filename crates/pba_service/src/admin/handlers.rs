@@ -123,6 +123,7 @@ struct AccountsListTemplate {
     purpose_codes: Vec<String>,
     error: Option<String>,
     success: Option<String>,
+    optional_origin_enabled: bool,
 }
 
 struct AccountRow {
@@ -184,14 +185,26 @@ async fn render_accounts_list(
         purpose_codes,
         error,
         success,
+        optional_origin_enabled: state.optional_origin_enabled,
     })
+}
+
+/// Parses a trimmed form input, treating an empty string as absent (`None`).
+fn parse_optional<T, E>(input: &str, parse: impl Fn(&str) -> Result<T, E>) -> Result<Option<T>, E> {
+    if input.is_empty() {
+        Ok(None)
+    } else {
+        parse(input).map(Some)
+    }
 }
 
 #[derive(Deserialize)]
 pub struct CreateAccountForm {
     holder_id: String,
     purpose_code: String,
+    #[serde(default)]
     origin_ifsc: String,
+    #[serde(default)]
     origin_account_number: String,
 }
 
@@ -212,11 +225,24 @@ pub async fn create_account(
         .await;
     }
 
-    let origin_ifsc = match Ifsc::parse(&form.origin_ifsc) {
+    // Blank inputs mean "omitted". When the optional-origin feature is off,
+    // both remain mandatory (mirrors the JSON API handler).
+    let ifsc_input = form.origin_ifsc.trim();
+    let account_input = form.origin_account_number.trim();
+    if !state.optional_origin_enabled && (ifsc_input.is_empty() || account_input.is_empty()) {
+        return render_accounts_list(
+            &state,
+            Some("origin_ifsc and origin_account_number are required".to_string()),
+            None,
+        )
+        .await;
+    }
+
+    let origin_ifsc = match parse_optional(ifsc_input, Ifsc::parse) {
         Ok(v) => v,
         Err(e) => return render_accounts_list(&state, Some(e.to_string()), None).await,
     };
-    let origin_account_number = match AccountNumber::parse(&form.origin_account_number) {
+    let origin_account_number = match parse_optional(account_input, AccountNumber::parse) {
         Ok(v) => v,
         Err(e) => return render_accounts_list(&state, Some(e.to_string()), None).await,
     };
@@ -226,8 +252,8 @@ pub async fn create_account(
         .create_account(
             holder_id,
             &form.purpose_code,
-            &origin_ifsc,
-            &origin_account_number,
+            origin_ifsc.as_ref(),
+            origin_account_number.as_ref(),
         )
         .await
     {
@@ -374,8 +400,14 @@ pub async fn account_detail(
         purpose_code: account.purpose_code,
         status: status_str,
         status_class,
-        origin_ifsc: account.origin_ifsc.to_string(),
-        origin_account_number: account.origin_account_number.to_string(),
+        origin_ifsc: account
+            .origin_ifsc
+            .map(|v| v.to_string())
+            .unwrap_or_else(|| "—".to_string()),
+        origin_account_number: account
+            .origin_account_number
+            .map(|v| v.to_string())
+            .unwrap_or_else(|| "—".to_string()),
         vpa: account.vpa.unwrap_or_else(|| "N/A".to_string()),
         self_balance: fmt(balance.self_contribution),
         others_balance: fmt(balance.others_contribution),
@@ -1817,5 +1849,51 @@ mod tests {
             "expected `—` after Gateway Ref label, got: {}",
             snippet
         );
+    }
+
+    fn accounts_list_fixture(optional_origin_enabled: bool) -> AccountsListTemplate {
+        AccountsListTemplate {
+            prefix: String::new(),
+            accounts: vec![],
+            purpose_codes: vec!["health".to_string()],
+            error: None,
+            success: None,
+            optional_origin_enabled,
+        }
+    }
+
+    #[test]
+    fn origin_inputs_required_when_flag_off() {
+        let html = accounts_list_fixture(false).render().expect("render");
+        assert_eq!(
+            html.matches("required").count(),
+            4,
+            "holder_id, purpose_code, origin_ifsc, origin_account_number should all be required"
+        );
+        assert!(!html.contains("(optional)"));
+    }
+
+    #[test]
+    fn origin_inputs_optional_when_flag_on() {
+        let html = accounts_list_fixture(true).render().expect("render");
+        // Only holder_id and purpose_code stay required; the two origin fields drop it.
+        assert_eq!(html.matches("required").count(), 2);
+        assert_eq!(
+            html.matches("(optional)").count(),
+            2,
+            "both origin fields should be labelled optional"
+        );
+    }
+
+    #[test]
+    fn parse_optional_treats_empty_as_none() {
+        assert!(parse_optional("", Ifsc::parse).unwrap().is_none());
+        assert_eq!(
+            parse_optional("HDFC0001234", Ifsc::parse)
+                .unwrap()
+                .map(|v| v.as_str().to_string()),
+            Some("HDFC0001234".to_string())
+        );
+        assert!(parse_optional("not-an-ifsc", Ifsc::parse).is_err());
     }
 }

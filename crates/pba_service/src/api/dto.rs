@@ -7,8 +7,8 @@ use uuid::Uuid;
 pub struct CreateAccountRequest {
     pub holder_id: String,
     pub purpose_code: String,
-    pub origin_ifsc: String,
-    pub origin_account_number: String,
+    pub origin_ifsc: Option<String>,
+    pub origin_account_number: Option<String>,
 }
 
 #[derive(Debug, Serialize)]
@@ -16,8 +16,10 @@ pub struct AccountResponse {
     pub id: Uuid,
     pub holder_id: String,
     pub purpose_code: String,
-    pub origin_ifsc: String,
-    pub origin_account_number: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub origin_ifsc: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub origin_account_number: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub vpa: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -36,8 +38,8 @@ impl From<crate::domain::account::PurposeBoundAccount> for AccountResponse {
             id: a.id,
             holder_id: a.holder_id,
             purpose_code: a.purpose_code,
-            origin_ifsc: a.origin_ifsc.to_string(),
-            origin_account_number: a.origin_account_number.to_string(),
+            origin_ifsc: a.origin_ifsc.map(|v| v.to_string()),
+            origin_account_number: a.origin_account_number.map(|v| v.to_string()),
             vpa: a.vpa,
             virtual_ifsc: a.virtual_ifsc.map(|v| v.to_string()),
             virtual_account_number: a.virtual_account_number.map(|v| v.to_string()),

@@ -11,10 +11,8 @@ operation CreatePBAccount {
         @required
         purpose_code: String
 
-        @required
         origin_ifsc: String
 
-        @required
         origin_account_number: String
     }
     output := with [AccountMixin] {}
@@ -31,10 +29,8 @@ operation CreateAccount {
         @required
         purpose_code: String
 
-        @required
         origin_ifsc: String
 
-        @required
         origin_account_number: String
     }
     output := with [AccountMixin] {}
@@ -171,10 +167,8 @@ structure AccountMixin {
     @required
     purpose_code: String
 
-    @required
     origin_ifsc: String
 
-    @required
     origin_account_number: String
 
     vpa: String

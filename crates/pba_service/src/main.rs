@@ -47,6 +47,9 @@ pub struct AppState {
     pub tb_addresses: Vec<String>,
     pub auth: AuthContext,
     pub path_prefix: String,
+    /// Feature flag: allow PB accounts without origin bank details and explicit
+    /// `funding_type = "self"` on deposits.
+    pub optional_origin_enabled: bool,
 }
 
 /// Shared auth context available to all routes.
@@ -238,6 +241,7 @@ async fn main() {
         Arc::clone(&ledger_repo),
         Arc::clone(&transaction_repo),
         config.default_pending_timeout_seconds,
+        config.optional_origin_enabled,
     ));
     let pb_payment_service = Arc::new(PbPaymentService::new(
         Arc::clone(&pb_account_repo),
@@ -295,6 +299,7 @@ async fn main() {
         tb_addresses: config.tigerbeetle_addresses.clone(),
         auth: auth_ctx,
         path_prefix: config.path_prefix,
+        optional_origin_enabled: config.optional_origin_enabled,
     };
 
     // Spawn background pending-transaction timeout poller

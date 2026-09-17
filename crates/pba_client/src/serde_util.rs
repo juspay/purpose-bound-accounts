@@ -9,8 +9,6 @@ pub(crate) fn create_account_output_output_correct_errors(mut builder: crate::op
                 if builder.id.is_none() { builder.id = Some(Default::default()) }
 if builder.holder_id.is_none() { builder.holder_id = Some(Default::default()) }
 if builder.purpose_code.is_none() { builder.purpose_code = Some(Default::default()) }
-if builder.origin_ifsc.is_none() { builder.origin_ifsc = Some(Default::default()) }
-if builder.origin_account_number.is_none() { builder.origin_account_number = Some(Default::default()) }
 if builder.kyc_tier.is_none() { builder.kyc_tier = Some(Default::default()) }
 if builder.status.is_none() { builder.status = Some(Default::default()) }
 if builder.created_at.is_none() { builder.created_at = Some(::aws_smithy_types::DateTime::from_fractional_secs(0, 0_f64)) }
@@ -32,8 +30,6 @@ pub(crate) fn create_pb_account_output_output_correct_errors(mut builder: crate:
                 if builder.id.is_none() { builder.id = Some(Default::default()) }
 if builder.holder_id.is_none() { builder.holder_id = Some(Default::default()) }
 if builder.purpose_code.is_none() { builder.purpose_code = Some(Default::default()) }
-if builder.origin_ifsc.is_none() { builder.origin_ifsc = Some(Default::default()) }
-if builder.origin_account_number.is_none() { builder.origin_account_number = Some(Default::default()) }
 if builder.kyc_tier.is_none() { builder.kyc_tier = Some(Default::default()) }
 if builder.status.is_none() { builder.status = Some(Default::default()) }
 if builder.created_at.is_none() { builder.created_at = Some(::aws_smithy_types::DateTime::from_fractional_secs(0, 0_f64)) }
@@ -85,8 +81,6 @@ pub(crate) fn get_account_output_output_correct_errors(mut builder: crate::opera
                 if builder.id.is_none() { builder.id = Some(Default::default()) }
 if builder.holder_id.is_none() { builder.holder_id = Some(Default::default()) }
 if builder.purpose_code.is_none() { builder.purpose_code = Some(Default::default()) }
-if builder.origin_ifsc.is_none() { builder.origin_ifsc = Some(Default::default()) }
-if builder.origin_account_number.is_none() { builder.origin_account_number = Some(Default::default()) }
 if builder.kyc_tier.is_none() { builder.kyc_tier = Some(Default::default()) }
 if builder.status.is_none() { builder.status = Some(Default::default()) }
 if builder.created_at.is_none() { builder.created_at = Some(::aws_smithy_types::DateTime::from_fractional_secs(0, 0_f64)) }
@@ -125,8 +119,6 @@ pub(crate) fn get_pb_account_output_output_correct_errors(mut builder: crate::op
                 if builder.id.is_none() { builder.id = Some(Default::default()) }
 if builder.holder_id.is_none() { builder.holder_id = Some(Default::default()) }
 if builder.purpose_code.is_none() { builder.purpose_code = Some(Default::default()) }
-if builder.origin_ifsc.is_none() { builder.origin_ifsc = Some(Default::default()) }
-if builder.origin_account_number.is_none() { builder.origin_account_number = Some(Default::default()) }
 if builder.kyc_tier.is_none() { builder.kyc_tier = Some(Default::default()) }
 if builder.status.is_none() { builder.status = Some(Default::default()) }
 if builder.created_at.is_none() { builder.created_at = Some(::aws_smithy_types::DateTime::from_fractional_secs(0, 0_f64)) }
@@ -366,8 +358,6 @@ pub(crate) fn update_account_status_output_output_correct_errors(mut builder: cr
                 if builder.id.is_none() { builder.id = Some(Default::default()) }
 if builder.holder_id.is_none() { builder.holder_id = Some(Default::default()) }
 if builder.purpose_code.is_none() { builder.purpose_code = Some(Default::default()) }
-if builder.origin_ifsc.is_none() { builder.origin_ifsc = Some(Default::default()) }
-if builder.origin_account_number.is_none() { builder.origin_account_number = Some(Default::default()) }
 if builder.kyc_tier.is_none() { builder.kyc_tier = Some(Default::default()) }
 if builder.status.is_none() { builder.status = Some(Default::default()) }
 if builder.created_at.is_none() { builder.created_at = Some(::aws_smithy_types::DateTime::from_fractional_secs(0, 0_f64)) }
@@ -389,8 +379,6 @@ pub(crate) fn update_pb_account_status_output_output_correct_errors(mut builder:
                 if builder.id.is_none() { builder.id = Some(Default::default()) }
 if builder.holder_id.is_none() { builder.holder_id = Some(Default::default()) }
 if builder.purpose_code.is_none() { builder.purpose_code = Some(Default::default()) }
-if builder.origin_ifsc.is_none() { builder.origin_ifsc = Some(Default::default()) }
-if builder.origin_account_number.is_none() { builder.origin_account_number = Some(Default::default()) }
 if builder.kyc_tier.is_none() { builder.kyc_tier = Some(Default::default()) }
 if builder.status.is_none() { builder.status = Some(Default::default()) }
 if builder.created_at.is_none() { builder.created_at = Some(::aws_smithy_types::DateTime::from_fractional_secs(0, 0_f64)) }
