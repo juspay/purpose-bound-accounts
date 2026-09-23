@@ -8,7 +8,7 @@ use serde::Serialize;
 #[serde(transparent)]
 pub struct Ifsc(String);
 
-/// Indian bank account number — 9 to 18 digits.
+/// Indian bank account number — 1 to 18 digits.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, sqlx::Type)]
 #[sqlx(transparent)]
 #[serde(transparent)]
@@ -68,10 +68,10 @@ impl fmt::Display for Ifsc {
     }
 }
 
-/// Validates that the string is 9-18 ASCII digits.
+/// Validates that the string is 1-18 ASCII digits.
 fn is_valid_account_number(s: &str) -> bool {
     let bytes = s.as_bytes();
-    (9..=18).contains(&bytes.len()) && bytes.iter().all(|b| b.is_ascii_digit())
+    (1..=18).contains(&bytes.len()) && bytes.iter().all(|b| b.is_ascii_digit())
 }
 
 impl AccountNumber {
@@ -79,7 +79,7 @@ impl AccountNumber {
         let trimmed = s.trim();
         if !is_valid_account_number(trimmed) {
             return Err(BankingValidationError::InvalidAccountNumber(format!(
-                "must be 9-18 digits, got {} char(s)",
+                "must be 1-18 digits, got {} char(s)",
                 trimmed.chars().count()
             )));
         }
@@ -132,14 +132,17 @@ mod tests {
     }
 
     #[test]
-    fn account_number_accepts_9_to_18_digits() {
+    fn account_number_accepts_1_to_18_digits() {
+        assert!(AccountNumber::parse("1").is_ok());
+        assert!(AccountNumber::parse("12345678").is_ok());
         assert!(AccountNumber::parse("123456789").is_ok());
         assert!(AccountNumber::parse("123456789012345678").is_ok());
     }
 
     #[test]
-    fn account_number_rejects_too_short_or_long() {
-        assert!(AccountNumber::parse("12345678").is_err());
+    fn account_number_rejects_empty_or_too_long() {
+        assert!(AccountNumber::parse("").is_err());
+        assert!(AccountNumber::parse("   ").is_err());
         assert!(AccountNumber::parse("1234567890123456789").is_err());
     }
 
