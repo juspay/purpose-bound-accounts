@@ -31,6 +31,10 @@ const INTERNAL_TRANSFER_CODE: u16 = 400;
 const PENDING_INTERNAL_TRANSFER_CODE: u16 = 401;
 pub const INTERNAL_TRANSFER_REVERSAL_CODE: u16 = 410;
 pub const PAYMENT_REFUND_CODE: u16 = 210;
+// 300 = PB self-pool withdrawal (pb_withdrawal_service),
+// 310 = normal-account withdrawal (normal_withdrawal_service),
+// 320 = PB others-pool contribution return.
+pub const CONTRIBUTION_RETURN_CODE: u16 = 320;
 
 #[allow(dead_code)]
 #[derive(Debug, Clone, Copy)]
@@ -532,6 +536,45 @@ impl LedgerRepo {
             "Created pending LINKED payment-refund TB transfers"
         );
         Ok((id_self, id_others))
+    }
+
+    /// Immediate contribution-return TB transfer. Debits the PB others-pool
+    /// and credits the destination (a sponsor normal account for `trust`,
+    /// or `THIRD_PARTY_FUNDING_SOURCE_TB_ID` for `third_party`).
+    #[allow(dead_code)]
+    pub async fn create_contribution_return(
+        &self,
+        debit_pb_others_tb_id: u128,
+        credit_destination_tb_id: u128,
+        amount: u64,
+    ) -> Result<(), AppError> {
+        self.create_transfer(
+            debit_pb_others_tb_id,
+            credit_destination_tb_id,
+            amount,
+            CONTRIBUTION_RETURN_CODE,
+        )
+        .await
+    }
+
+    /// Pending contribution-return TB transfer. Returns the TB transfer id for
+    /// the service to persist on the DB row so later post/void can resolve it.
+    #[allow(dead_code)]
+    pub async fn create_pending_contribution_return(
+        &self,
+        debit_pb_others_tb_id: u128,
+        credit_destination_tb_id: u128,
+        amount: u64,
+        timeout_seconds: u32,
+    ) -> Result<u128, AppError> {
+        self.create_pending_transfer(
+            debit_pb_others_tb_id,
+            credit_destination_tb_id,
+            amount,
+            CONTRIBUTION_RETURN_CODE,
+            timeout_seconds,
+        )
+        .await
     }
 
     #[allow(dead_code)]

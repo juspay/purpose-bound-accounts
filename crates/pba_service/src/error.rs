@@ -49,6 +49,13 @@ pub enum AppError {
     },
     /// Payment has already been fully refunded (sum of refunds == original).
     PaymentFullyRefunded(String),
+    /// Contribution return amount is invalid (0 or exceeds remaining).
+    ContributionAmountInvalid {
+        requested: u64,
+        remaining: u64,
+    },
+    /// Contribution has already been fully returned.
+    ContributionFullyReturned(String),
     /// Transfer rejected by TigerBeetle because debit would exceed credits (overdraft).
     /// This is retryable with a fresh balance read.
     ExceedsBalance,
@@ -112,6 +119,18 @@ impl std::fmt::Display for AppError {
             Self::PaymentFullyRefunded(id) => {
                 write!(f, "Payment {id} has already been fully refunded")
             }
+            Self::ContributionAmountInvalid { requested, remaining } => {
+                write!(
+                    f,
+                    "contribution return amount invalid: requested {requested}, remaining {remaining}"
+                )
+            }
+            Self::ContributionFullyReturned(account_id) => {
+                write!(
+                    f,
+                    "contribution fully returned for pb_account {account_id}"
+                )
+            }
             Self::ExceedsBalance => write!(f, "Transfer exceeds available balance"),
             Self::TbPendingAlreadyResolved => {
                 write!(f, "Pending TB transfer already posted or voided")
@@ -157,6 +176,12 @@ impl IntoResponse for AppError {
                 (StatusCode::BAD_REQUEST, "RefundAmountInvalid")
             }
             AppError::PaymentFullyRefunded(_) => (StatusCode::CONFLICT, "PaymentFullyRefunded"),
+            AppError::ContributionAmountInvalid { .. } => {
+                (StatusCode::BAD_REQUEST, "ContributionAmountInvalid")
+            }
+            AppError::ContributionFullyReturned(_) => {
+                (StatusCode::CONFLICT, "ContributionFullyReturned")
+            }
             AppError::ExceedsBalance => (StatusCode::UNPROCESSABLE_ENTITY, "InsufficientFunds"),
             AppError::TbPendingAlreadyResolved => (StatusCode::CONFLICT, "TransactionNotPending"),
             AppError::TigerBeetleError(_) => {

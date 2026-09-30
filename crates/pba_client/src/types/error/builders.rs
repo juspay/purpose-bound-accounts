@@ -17,6 +17,10 @@ pub use crate::types::error::_transaction_not_pending_error::TransactionNotPendi
 
 pub use crate::types::error::_transaction_not_found_error::TransactionNotFoundErrorBuilder;
 
+pub use crate::types::error::_contribution_fully_returned_error::ContributionFullyReturnedErrorBuilder;
+
+pub use crate::types::error::_contribution_amount_invalid_error::ContributionAmountInvalidErrorBuilder;
+
 pub use crate::types::error::_payment_fully_refunded_error::PaymentFullyRefundedErrorBuilder;
 
 pub use crate::types::error::_refund_amount_invalid_error::RefundAmountInvalidErrorBuilder;

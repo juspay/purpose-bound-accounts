@@ -32,6 +32,8 @@ uuid = { version = "1", features = ["v4", "v7", "serde"] }
 cucumber = "0.22"
 http-body-util = "0.1"
 pba_client = { path = "../pba_client" }
+reqwest = { version = "0.12", features = ["json"] }
+serde_json = "1"
 tokio = { version = "1", features = ["macros", "rt-multi-thread"] }
 chromiumoxide = { version = "0.9" }
 futures = "0.3"

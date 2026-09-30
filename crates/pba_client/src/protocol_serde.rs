@@ -37,6 +37,8 @@ pub(crate) mod shape_get_pb_account;
 
 pub(crate) mod shape_get_pb_account_balance;
 
+pub(crate) mod shape_get_pb_account_contribution_summary;
+
 pub(crate) mod shape_get_purpose_type;
 
 pub(crate) mod shape_list_all_transactions;
@@ -61,11 +63,15 @@ pub(crate) mod shape_post_normal_account_deposit;
 
 pub(crate) mod shape_post_normal_account_transfer;
 
+pub(crate) mod shape_post_pb_account_contribution_return;
+
 pub(crate) mod shape_post_pb_account_deposit;
 
 pub(crate) mod shape_post_pb_account_refund;
 
 pub(crate) mod shape_refund_pb_account_payment;
+
+pub(crate) mod shape_return_pb_account_contribution;
 
 pub(crate) mod shape_reverse_normal_account_transfer;
 
@@ -82,6 +88,8 @@ pub(crate) mod shape_void_deposit;
 pub(crate) mod shape_void_normal_account_deposit;
 
 pub(crate) mod shape_void_normal_account_transfer;
+
+pub(crate) mod shape_void_pb_account_contribution_return;
 
 pub(crate) mod shape_void_pb_account_deposit;
 
@@ -104,6 +112,10 @@ pub(crate) fn or_empty_doc(data: &[u8]) -> &[u8] {
 pub(crate) mod shape_account_not_active_error;
 
 pub(crate) mod shape_account_not_found_error;
+
+pub(crate) mod shape_contribution_amount_invalid_error;
+
+pub(crate) mod shape_contribution_fully_returned_error;
 
 pub(crate) mod shape_create_account_input;
 
@@ -139,6 +151,8 @@ pub(crate) mod shape_refund_not_refundable_error;
 
 pub(crate) mod shape_refund_pb_account_payment_input;
 
+pub(crate) mod shape_return_pb_account_contribution_input;
+
 pub(crate) mod shape_reverse_normal_account_transfer_input;
 
 pub(crate) mod shape_transaction_not_found_error;
@@ -163,6 +177,10 @@ pub(crate) mod shape_withdraw_from_pb_account_input;
 
 pub(crate) mod shape_withdraw_input;
 
+pub(crate) mod shape_allocation_entries;
+
+pub(crate) mod shape_funding_type_summary;
+
 pub(crate) mod shape_mcc_entry_list;
 
 pub(crate) mod shape_normal_account_list;
@@ -170,6 +188,8 @@ pub(crate) mod shape_normal_account_list;
 pub(crate) mod shape_purpose_type_list;
 
 pub(crate) mod shape_transaction_list;
+
+pub(crate) mod shape_allocation_entry;
 
 pub(crate) mod shape_mcc_entry;
 

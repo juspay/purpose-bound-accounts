@@ -565,11 +565,11 @@ impl TransactionRepo {
         Ok(row.map(|r| r.into_domain()))
     }
 
-    /// Return every refund row (or, in general, every row whose
+    /// Return every return row (or, in general, every row whose
     /// `reverses_transaction_id` matches `original_row_id`). Used by payment
-    /// refund history and by `sum_refunds_of` consumers that want the rows
+    /// refund history and by `sum_returns_of` consumers that want the rows
     /// themselves. Type-agnostic — works for transfer reversal too.
-    pub async fn find_refunds_of(
+    pub async fn find_returns_of(
         &self,
         original_row_id: Uuid,
     ) -> Result<Vec<TransactionRecord>, AppError> {
@@ -595,7 +595,7 @@ impl TransactionRepo {
     /// Sum the `amount` of every row whose `reverses_transaction_id` matches.
     /// Type-agnostic. Used by `pb_payment_service::refund_payment` to compute
     /// per-pool remaining-unrefunded. Returns 0 when no rows match.
-    pub async fn sum_refunds_of(&self, original_row_id: Uuid) -> Result<u64, AppError> {
+    pub async fn sum_returns_of(&self, original_row_id: Uuid) -> Result<u64, AppError> {
         let row: (Option<i64>,) = sqlx::query_as(
             r#"SELECT COALESCE(SUM(amount), 0)::bigint
                FROM transactions
@@ -637,9 +637,9 @@ impl TransactionRepo {
         Ok(rows.into_iter().map(|r| r.into_domain()).collect())
     }
 
-    /// Locked variant of `sum_refunds_of` — runs inside the supplied transaction
+    /// Locked variant of `sum_returns_of` — runs inside the supplied transaction
     /// so reads see the same snapshot as the caller's `FOR UPDATE` lock.
-    pub async fn sum_refunds_of_in_tx(
+    pub async fn sum_returns_of_in_tx(
         &self,
         tx: &mut PgTransaction<'_, Postgres>,
         original_row_id: Uuid,
@@ -652,6 +652,100 @@ impl TransactionRepo {
         )
         .bind(original_row_id)
         .fetch_one(&mut **tx)
+        .await?;
+
+        Ok(row.0.unwrap_or(0) as u64)
+    }
+
+    /// Fetch inbound others-pool contribution rows of the given funding_type
+    /// that are candidates for return. FIFO-ordered by created_at. Holds a row
+    /// lock inside `tx` via SELECT ... FOR UPDATE.
+    #[allow(dead_code)]
+    pub async fn find_returnable_originals_for_update(
+        &self,
+        tx: &mut sqlx::Transaction<'_, sqlx::Postgres>,
+        pb_account_id: Uuid,
+        funding_type: &str,
+    ) -> Result<Vec<TransactionRecord>, AppError> {
+        let rows = sqlx::query_as::<_, TransactionRow>(
+            r#"
+            SELECT id, account_id, account_kind, type, status, amount, pool, direction,
+                   source_ifsc, source_account, gateway_ref, timeout_seconds,
+                   merchant_id, merchant_mcc, description, funding_type,
+                   tb_transfer_id::text as tb_transfer_id, idempotency_key,
+                   correlation_id, reverses_transaction_id, created_at, updated_at
+            FROM transactions
+            WHERE account_id = $1
+              AND account_kind = 'pb'
+              AND pool = 'others'
+              AND funding_type = $2
+              AND direction = 'inbound'
+              AND status IN ('posted', 'settled')
+              AND reverses_transaction_id IS NULL
+            ORDER BY created_at ASC
+            FOR UPDATE
+            "#,
+        )
+        .bind(pb_account_id)
+        .bind(funding_type)
+        .fetch_all(&mut **tx)
+        .await?;
+
+        Ok(rows.into_iter().map(|r| r.into_domain()).collect())
+    }
+
+    /// Sum of active inbound others-pool contributions of a given funding_type.
+    /// Excludes voided originals and rows that are themselves returns.
+    #[allow(dead_code)]
+    pub async fn sum_others_contributions(
+        &self,
+        pb_account_id: Uuid,
+        funding_type: &str,
+    ) -> Result<u64, AppError> {
+        let row: (Option<i64>,) = sqlx::query_as(
+            r#"
+            SELECT COALESCE(SUM(amount), 0)::bigint
+            FROM transactions
+            WHERE account_id = $1
+              AND account_kind = 'pb'
+              AND pool = 'others'
+              AND funding_type = $2
+              AND direction = 'inbound'
+              AND status IN ('posted', 'settled')
+              AND reverses_transaction_id IS NULL
+            "#,
+        )
+        .bind(pb_account_id)
+        .bind(funding_type)
+        .fetch_one(&self.pool)
+        .await?;
+
+        Ok(row.0.unwrap_or(0) as u64)
+    }
+
+    /// Sum of pending + settled Withdrawal rows in the others-pool of a given
+    /// funding_type. Counts reservations against the contribution budget.
+    #[allow(dead_code)]
+    pub async fn sum_others_returns(
+        &self,
+        pb_account_id: Uuid,
+        funding_type: &str,
+    ) -> Result<u64, AppError> {
+        let row: (Option<i64>,) = sqlx::query_as(
+            r#"
+            SELECT COALESCE(SUM(amount), 0)::bigint
+            FROM transactions
+            WHERE account_id = $1
+              AND account_kind = 'pb'
+              AND pool = 'others'
+              AND funding_type = $2
+              AND type = 'withdrawal'
+              AND status IN ('pending', 'settled')
+            "#,
+        )
+        .bind(pb_account_id)
+        .bind(funding_type)
+        .fetch_one(&self.pool)
         .await?;
 
         Ok(row.0.unwrap_or(0) as u64)

@@ -132,6 +132,17 @@
 </article>
 {% endif %}
 
+{% if is_pending_contribution_return %}
+<div class="row">
+    <form method="post" action="{{ prefix }}/admin/accounts/{{ account_id }}/contribution-returns/{{ contribution_return_correlation_id }}/post">
+        <button type="submit">Post return</button>
+    </form>
+    <form method="post" action="{{ prefix }}/admin/accounts/{{ account_id }}/contribution-returns/{{ contribution_return_correlation_id }}/void">
+        <button type="submit">Void return</button>
+    </form>
+</div>
+{% endif %}
+
 {% if !refund_history.is_empty() %}
 <article>
     <header>Refund history — ₹{{ remaining_refundable_display }} remaining</header>
@@ -159,5 +170,31 @@
         </tbody>
     </table>
 </article>
+{% endif %}
+
+{% if !returns_of_this_row.is_empty() %}
+<section class="card">
+    <h2>Returned in part</h2>
+    <table>
+        <thead>
+            <tr>
+                <th>Date</th>
+                <th>Amount</th>
+                <th>Status</th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for r in returns_of_this_row %}
+            <tr>
+                <td>{{ r.created_at }}</td>
+                <td>{% if r.is_voided %}<s>{{ r.amount_display }}</s>{% else %}{{ r.amount_display }}{% endif %}</td>
+                <td>{{ r.status }}</td>
+                <td><a href="{{ prefix }}/admin/transactions/{{ r.return_id }}">{{ r.return_id_short }}</a></td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</section>
 {% endif %}
 {% endblock %}

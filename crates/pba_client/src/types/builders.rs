@@ -7,3 +7,7 @@ pub use crate::types::_purpose_type_summary::PurposeTypeSummaryBuilder;
 
 pub use crate::types::_normal_account_summary::NormalAccountSummaryBuilder;
 
+pub use crate::types::_funding_type_summary::FundingTypeSummaryBuilder;
+
+pub use crate::types::_allocation_entry::AllocationEntryBuilder;
+

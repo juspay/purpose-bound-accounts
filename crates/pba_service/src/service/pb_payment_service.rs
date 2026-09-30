@@ -316,7 +316,7 @@ impl PbPaymentService {
                 // (others-pool row, optional self-pool row).
                 let mut total_refunded: u64 = 0;
                 for o in &originals {
-                    total_refunded += self.transaction_repo.sum_refunds_of(o.id).await?;
+                    total_refunded += self.transaction_repo.sum_returns_of(o.id).await?;
                 }
                 let remaining_refundable = original_amount.saturating_sub(total_refunded);
 
@@ -389,7 +389,7 @@ impl PbPaymentService {
         let self_remaining = match p_self {
             Some(r) => r.amount.saturating_sub(
                 self.transaction_repo
-                    .sum_refunds_of_in_tx(&mut tx, r.id)
+                    .sum_returns_of_in_tx(&mut tx, r.id)
                     .await?,
             ),
             None => 0,
@@ -397,7 +397,7 @@ impl PbPaymentService {
         let others_remaining = match p_others {
             Some(r) => r.amount.saturating_sub(
                 self.transaction_repo
-                    .sum_refunds_of_in_tx(&mut tx, r.id)
+                    .sum_returns_of_in_tx(&mut tx, r.id)
                     .await?,
             ),
             None => 0,
@@ -771,7 +771,7 @@ impl PbPaymentService {
 
         let mut total_refunded: u64 = 0;
         for o in &originals {
-            total_refunded += self.transaction_repo.sum_refunds_of(o.id).await?;
+            total_refunded += self.transaction_repo.sum_returns_of(o.id).await?;
         }
         let remaining_refundable = original_amount.saturating_sub(total_refunded);
 

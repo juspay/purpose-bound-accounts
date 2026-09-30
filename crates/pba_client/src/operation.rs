@@ -36,6 +36,9 @@ pub mod get_pb_account;
 /// Types for the `GetPBAccountBalance` operation.
 pub mod get_pb_account_balance;
 
+/// Types for the `GetPBAccountContributionSummary` operation.
+pub mod get_pb_account_contribution_summary;
+
 /// Types for the `GetPurposeType` operation.
 pub mod get_purpose_type;
 
@@ -72,6 +75,9 @@ pub mod post_normal_account_deposit;
 /// Types for the `PostNormalAccountTransfer` operation.
 pub mod post_normal_account_transfer;
 
+/// Types for the `PostPBAccountContributionReturn` operation.
+pub mod post_pb_account_contribution_return;
+
 /// Types for the `PostPBAccountDeposit` operation.
 pub mod post_pb_account_deposit;
 
@@ -80,6 +86,9 @@ pub mod post_pb_account_refund;
 
 /// Types for the `RefundPBAccountPayment` operation.
 pub mod refund_pb_account_payment;
+
+/// Types for the `ReturnPBAccountContribution` operation.
+pub mod return_pb_account_contribution;
 
 /// Types for the `ReverseNormalAccountTransfer` operation.
 pub mod reverse_normal_account_transfer;
@@ -104,6 +113,9 @@ pub mod void_normal_account_deposit;
 
 /// Types for the `VoidNormalAccountTransfer` operation.
 pub mod void_normal_account_transfer;
+
+/// Types for the `VoidPBAccountContributionReturn` operation.
+pub mod void_pb_account_contribution_return;
 
 /// Types for the `VoidPBAccountDeposit` operation.
 pub mod void_pb_account_deposit;

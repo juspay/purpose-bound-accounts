@@ -58,6 +58,11 @@ pub struct UiWorld {
     last_payment_id: Option<String>,
     /// Last refund correlation_id captured after submitting the refund form
     last_refund_id: Option<String>,
+    /// Last contribution return correlation_id captured after submitting the return form
+    last_return_id: Option<String>,
+    #[allow(dead_code)]
+    /// Last contribution return status captured after the return detail page is read
+    last_return_status: Option<String>,
 }
 
 impl std::fmt::Debug for UiWorld {
@@ -95,6 +100,8 @@ impl Default for UiWorld {
             last_reversal_id: None,
             last_payment_id: None,
             last_refund_id: None,
+            last_return_id: None,
+            last_return_status: None,
         }
     }
 }
